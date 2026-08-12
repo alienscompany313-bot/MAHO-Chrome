@@ -25,7 +25,7 @@
     .btn-outline{background:#fff;color:var(--ink);border-color:var(--line)}.btn-outline:hover{border-color:var(--gold)}
     .btn-danger{background:#fdecec;color:var(--red);border-color:#f4c9c9}.btn-danger:hover{background:#f9dada}
     .btn-sm{padding:6px 12px;font-size:13px}
-    .wrap{max-width:1050px;margin:22px auto;padding:0 16px}
+    .wrap{max-width:1050px;margin:22px auto;padding:0 16px 96px}
     .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:18px;box-shadow:0 2px 12px #0000000a}
     .card h2{margin:0 0 4px;font-size:20px}
     .card .sub{color:var(--muted);font-size:14px;margin-bottom:14px}
@@ -58,6 +58,11 @@
     .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:18px;padding:30px;max-width:360px;width:100%}
     .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;font-family:inherit;text-align:center;font-size:16px;margin:12px 0}
     .help li{margin-bottom:6px}
+    .savebar{position:fixed;inset-inline:0;bottom:0;z-index:50;background:var(--black);color:#fff;display:none;align-items:center;justify-content:center;gap:16px;padding:12px 16px;box-shadow:0 -8px 26px #00000030;flex-wrap:wrap}
+    .savebar.show{display:flex}
+    .savebar span{font-weight:700}
+    .savebar .pulse{color:var(--gold)}
+    .card-foot{margin-top:14px;display:flex;justify-content:flex-end}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
   </style>
 </head>
@@ -133,6 +138,7 @@
         <div class="field"><label>شماره تماس (English)</label><input id="s_phone_en" dir="ltr"></div>
       </div>
       <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnStore">ذخیره تغییرات</button></div>
     </div>
 
     <!-- PUBLISH / SETTINGS -->
@@ -152,6 +158,12 @@
     </div>
 
     <p class="note" style="text-align:center">MAHO — پنل مدیریت ساده و بدون کدنویسی</p>
+  </div>
+
+  <!-- floating save bar (appears when there are unsaved changes) -->
+  <div class="savebar" id="saveBar">
+    <span><span class="pulse">●</span> تغییرات ذخیره‌نشده دارید</span>
+    <button class="btn btn-gold" id="saveBtnFloat">ذخیره تغییرات</button>
   </div>
 
   <!-- product editor modal -->
@@ -229,7 +241,7 @@
     if(sessionStorage.getItem("maho_admin_ok")==="1") openApp();
 
     /* ---------- load ---------- */
-    function setDirty(v){dirty=v; document.body.classList.toggle("dirty",v);}
+    function setDirty(v){dirty=v; document.body.classList.toggle("dirty",v); var sb=$("#saveBar"); if(sb) sb.classList.toggle("show",v);}
     function fillStore(){
       var s=state.store||{};
       $("#s_name").value=s.name||""; $("#s_name_en").value=s.name_en||"";
@@ -310,11 +322,14 @@
     }
 
     /* ---------- save / export / import / reset ---------- */
-    $("#saveBtn").onclick=function(){
+    function saveAll(){
       collectStore();
       try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)); setDirty(false); alert("تغییرات ذخیره شد ✓\nحالا صفحه‌ی سایت را در همین مرورگر باز کنید تا تغییرات را ببینید."); }
       catch(e){ alert("ذخیره ناموفق بود: "+e.message); }
-    };
+    }
+    $("#saveBtn").onclick=saveAll;
+    $("#saveBtnFloat").onclick=saveAll;
+    $("#saveBtnStore").onclick=saveAll;
     $("#exportBtn").onclick=function(){
       collectStore();
       var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
