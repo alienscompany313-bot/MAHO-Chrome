@@ -137,6 +137,15 @@ p { margin: 0 0 1em; }
 
 .header-actions { display: flex; align-items: center; gap: 10px; }
 
+.lang-btn {
+  background: transparent; border: 1.5px solid rgba(255, 255, 255, .35); color: #fff;
+  font-family: inherit; font-weight: 700; font-size: 14px; padding: 8px 14px;
+  border-radius: 999px; cursor: pointer; transition: all .18s ease;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.lang-btn:hover { background: rgba(255, 255, 255, .1); border-color: var(--gold); color: var(--gold-soft); }
+.lang-btn .ic { width: 16px; height: 16px; }
+
 .nav-toggle {
   display: none; width: 44px; height: 44px; border: 0; border-radius: 12px;
   background: rgba(255, 255, 255, .08); cursor: pointer; padding: 0;
