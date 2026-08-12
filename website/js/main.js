@@ -18,29 +18,27 @@
   /* Inline SVG icon reference (uses the sprite in index.html) */
   const icon = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
 
-  /* Map product category -> icon id + media tint class */
-  const CAT_ICON = { digital: "phone", fashion: "shirt", home: "home", beauty: "sparkles" };
+  /* Map product category -> fallback icon id (per-product `icon` overrides this) */
+  const CAT_ICON = { clothing: "dress", scarf: "scarf", bagshoes: "bag", beauty: "sparkles", accessory: "ring" };
 
   /* -------------------- Data -------------------- */
   const PRODUCTS = [
-    { name: "گوشی هوشمند مدل X", cat: "digital", catLabel: "کالای دیجیتال", price: 42000, old: 48000, badge: "sale", badgeText: "۱۲٪ تخفیف" },
-    { name: "هدفون بی‌سیم پرو", cat: "digital", catLabel: "کالای دیجیتال", price: 6500, badge: "new", badgeText: "جدید" },
-    { name: "لپ‌تاپ اولترابوک", cat: "digital", catLabel: "کالای دیجیتال", price: 78000 },
-    { name: "کاپشن زمستانی مردانه", cat: "fashion", catLabel: "پوشاک", price: 3200, old: 4000, badge: "sale", badgeText: "۲۰٪ تخفیف" },
-    { name: "کفش کتانی ورزشی", cat: "fashion", catLabel: "پوشاک", price: 2800 },
-    { name: "پیراهن کلاسیک نخی", cat: "fashion", catLabel: "پوشاک", price: 1450, badge: "new", badgeText: "جدید" },
-    { name: "ست قابلمه استیل", cat: "home", catLabel: "لوازم خانه", price: 5600 },
-    { name: "چراغ رومیزی مدرن", cat: "home", catLabel: "لوازم خانه", price: 1200, old: 1400, badge: "sale", badgeText: "۱۵٪ تخفیف" },
-    { name: "قهوه‌ساز اتوماتیک", cat: "home", catLabel: "لوازم خانه", price: 4300, badge: "new", badgeText: "جدید" },
-    { name: "ست مراقبت پوست", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 1850 },
-    { name: "عطر لوکس MAHO", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 3900, old: 4300, badge: "sale", badgeText: "۱۰٪ تخفیف" },
-    { name: "سشوار حرفه‌ای", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 2100 },
+    { name: "پیراهن مجلسی بلند", cat: "clothing", catLabel: "پوشاک", icon: "dress", price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف" },
+    { name: "مانتو کژوال روزمره", cat: "clothing", catLabel: "پوشاک", icon: "coat", price: 3200, badge: "new", badgeText: "جدید" },
+    { name: "بلوز و شومیز آستین‌بلند", cat: "clothing", catLabel: "پوشاک", icon: "shirt", price: 1450 },
+    { name: "شال نخی طرح‌دار", cat: "scarf", catLabel: "شال و روسری", icon: "scarf", price: 650, badge: "new", badgeText: "جدید" },
+    { name: "روسری ابریشمی", cat: "scarf", catLabel: "شال و روسری", icon: "scarf", price: 1200, old: 1350, badge: "sale", badgeText: "۱۰٪ تخفیف" },
+    { name: "کیف دستی چرم", cat: "bagshoes", catLabel: "کیف و کفش", icon: "bag", price: 2800 },
+    { name: "کفش پاشنه‌بلند مجلسی", cat: "bagshoes", catLabel: "کیف و کفش", icon: "heel", price: 3100, old: 3900, badge: "sale", badgeText: "۲۰٪ تخفیف" },
+    { name: "کفش تخت راحتی", cat: "bagshoes", catLabel: "کیف و کفش", icon: "heel", price: 1900 },
+    { name: "ست لوازم آرایش", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "sparkles", price: 2500, badge: "new", badgeText: "جدید" },
+    { name: "عطر زنانه لوکس", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "perfume", price: 3900, old: 4400, badge: "sale", badgeText: "۱۲٪ تخفیف" },
+    { name: "ست گردنبند و دستبند", cat: "accessory", catLabel: "اکسسوری", icon: "ring", price: 1650 },
+    { name: "ساعت مچی زنانه", cat: "accessory", catLabel: "اکسسوری", icon: "watch", price: 3600, badge: "new", badgeText: "جدید" },
   ];
 
   const STORES = [
-    { name: "شعبه‌ی مرکزی", area: "کابل، جاده‌ی میوند", hours: "همه‌روزه ۹ صبح تا ۹ شب", phone: "۰۷۰۰ ۱۲۳ ۴۵۶", q: "MAHO+Store+Maiwand+Kabul" },
-    { name: "شعبه‌ی شهرنو", area: "کابل، شهرنو، جاده‌ی حاجی یعقوب", hours: "همه‌روزه ۱۰ صبح تا ۱۰ شب", phone: "۰۷۰۰ ۲۲۲ ۳۳۳", q: "Shahr-e+Naw+Kabul" },
-    { name: "شعبه‌ی کارته‌ی سه", area: "کابل، کارته‌ی سه، سرک اول", hours: "همه‌روزه ۹ صبح تا ۸ شب", phone: "۰۷۰۰ ۴۴۴ ۵۵۵", q: "Karte+Se+Kabul" },
+    { name: "بوتیک MAHO", area: "کابل، جاده‌ی میوند", hours: "شنبه تا پنج‌شنبه، ۹ صبح تا ۸ شب", phone: "۰۷۰۰ ۱۲۳ ۴۵۶", q: "MAHO+Boutique+Maiwand+Kabul" },
   ];
 
   /* -------------------- Render products -------------------- */
@@ -53,7 +51,7 @@
       const old = p.old ? `<del>${money(p.old)}</del>` : "";
       return `
         <article class="product-card" data-cat="${p.cat}">
-          <div class="product-media m-${p.cat}">${badge}${icon(CAT_ICON[p.cat] || "cart")}</div>
+          <div class="product-media m-${p.cat}">${badge}${icon(p.icon || CAT_ICON[p.cat] || "bag")}</div>
           <div class="product-body">
             <span class="cat">${p.catLabel}</span>
             <h3>${p.name}</h3>

@@ -278,10 +278,11 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .product-card:hover .product-media .ic { transform: scale(1.08) rotate(-3deg); }
 .product-media::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 80% 0%, rgba(255, 255, 255, .16), transparent 60%); }
 /* Per-category tinted tiles */
-.product-media.m-digital { background: linear-gradient(150deg, #16202b, #1f3a4d); }
-.product-media.m-fashion { background: linear-gradient(150deg, #2b1a1f, #4a2833); }
-.product-media.m-home    { background: linear-gradient(150deg, #1a2620, #274035); }
-.product-media.m-beauty  { background: linear-gradient(150deg, #241a2b, #3d2a4a); }
+.product-media.m-clothing  { background: linear-gradient(150deg, #2b1a22, #4a2a38); }
+.product-media.m-scarf     { background: linear-gradient(150deg, #142428, #1f3d44); }
+.product-media.m-bagshoes  { background: linear-gradient(150deg, #241c14, #3f2f1f); }
+.product-media.m-beauty    { background: linear-gradient(150deg, #241a2b, #3d2a4a); }
+.product-media.m-accessory { background: linear-gradient(150deg, #221d12, #3a2f18); }
 .product-badge {
   position: absolute; inset-block-start: 12px; inset-inline-start: 12px; z-index: 2;
   font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 999px;
@@ -320,6 +321,7 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 
 /* ---------- Stores ---------- */
 .store-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.store-grid.single { grid-template-columns: minmax(0, 460px); justify-content: center; }
 .store-card {
   background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 24px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px;
