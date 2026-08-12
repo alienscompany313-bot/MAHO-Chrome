@@ -217,9 +217,12 @@
         : "";
       const old = p.old ? `<del>${money(p.old)}</del>` : "";
       const name = LANG === "en" ? (p.name_en || p.name) : p.name;
+      const media = p.image
+        ? `<img src="${p.image}" alt="${name}" loading="lazy">`
+        : icon(p.icon || CAT_ICON[p.cat] || "bag");
       return `
         <article class="product-card" data-cat="${p.cat}">
-          <div class="product-media m-${p.cat}">${badge}${icon(p.icon || CAT_ICON[p.cat] || "bag")}</div>
+          <div class="product-media m-${p.cat}">${badge}${media}</div>
           <div class="product-body">
             <span class="cat">${CAT_LABEL[LANG][p.cat]}</span>
             <h3>${name}</h3>

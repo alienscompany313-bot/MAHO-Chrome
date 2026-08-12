@@ -63,6 +63,8 @@
     .savebar span{font-weight:700}
     .savebar .pulse{color:var(--gold)}
     .card-foot{margin-top:14px;display:flex;justify-content:flex-end}
+    .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
+    .toast.show{transform:none;opacity:1}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
   </style>
 </head>
@@ -160,6 +162,8 @@
     <p class="note" style="text-align:center">MAHO — پنل مدیریت ساده و بدون کدنویسی</p>
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <!-- floating save bar (appears when there are unsaved changes) -->
   <div class="savebar" id="saveBar">
     <span><span class="pulse">●</span> تغییرات ذخیره‌نشده دارید</span>
@@ -208,6 +212,15 @@
         </div>
         <div class="field" id="badgeTextWrap"><label>متن تخفیف (مثلاً ۲۰٪ تخفیف)</label><input id="f_badgeText" placeholder="۲۰٪ تخفیف"></div>
       </div>
+      <div class="field">
+        <label>عکس کالا (اختیاری)</label>
+        <input type="file" id="f_image" accept="image/*">
+        <div id="f_imgPreview" style="display:none;margin-top:10px;align-items:center;gap:12px">
+          <img id="f_imgThumb" alt="" style="width:74px;height:74px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">
+          <button type="button" class="btn btn-danger btn-sm" id="f_imgRemove">حذف عکس</button>
+        </div>
+        <p class="note">اگر عکس بگذارید، به‌جای آیکن روی سایت نشان داده می‌شود. عکس‌ها به‌صورت خودکار کوچک می‌شوند.</p>
+      </div>
       <p class="note" id="modalMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="cancelBtn">لغو</button>
@@ -228,7 +241,26 @@
     var money=function(n){return toFa(Number(n).toLocaleString("en-US"))+" افغانی"};
     var icon=function(id){return '<svg class="ic"><use href="#i-'+id+'"/></svg>'};
 
-    var state={products:[],store:{}}, editIndex=-1, dirty=false;
+    var state={products:[],store:{}}, editIndex=-1, dirty=false, modalImage="";
+
+    /* toast */
+    var toastTimer;
+    function toast(msg){ var el=$("#toast"); if(!el)return; el.textContent=msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.classList.remove("show")},2600); }
+
+    /* downscale an uploaded image to keep it small enough for storage */
+    function resizeImage(file,maxDim,quality,cb){
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height,scale=Math.min(1,maxDim/Math.max(w,h));
+        var cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale));
+        var c=document.createElement("canvas"); c.width=cw; c.height=ch;
+        c.getContext("2d").drawImage(img,0,0,cw,ch);
+        URL.revokeObjectURL(url);
+        try{ cb(c.toDataURL("image/jpeg",quality)); }catch(e){ cb(null); }
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); cb(null); };
+      img.src=url;
+    }
 
     /* ---------- gate ---------- */
     function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
@@ -254,8 +286,9 @@
       var b=$("#prodBody"); b.innerHTML="";
       state.products.forEach(function(p,i){
         var badge=p.badge?('<span class="tag '+p.badge+'">'+(p.badge==="new"?"جدید":(p.badgeText||"تخفیف"))+'</span>'):'<span class="tag">—</span>';
+        var thumb=p.image?('<div class="p-ico"><img src="'+p.image+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>'):('<div class="p-ico">'+icon(p.icon||"bag")+'</div>');
         var tr=document.createElement("tr");
-        tr.innerHTML='<td><div class="p-ico">'+icon(p.icon||"bag")+'</div></td>'+
+        tr.innerHTML='<td>'+thumb+'</td>'+
           '<td><b>'+(p.name||"")+'</b></td>'+
           '<td>'+(CAT_LABEL[p.cat]||p.cat||"")+'</td>'+
           '<td class="hide-sm">'+badge+'</td>'+
@@ -282,11 +315,22 @@
       $("#f_cat").value=p.cat||"clothing"; $("#f_icon").value=p.icon||"dress";
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
+      modalImage=p.image||""; $("#f_image").value=""; updateImgPreview();
       toggleBadgeText();
       $("#overlay").classList.add("show");
     }
     function closeModal(){$("#overlay").classList.remove("show")}
     function toggleBadgeText(){ $("#badgeTextWrap").style.display=$("#f_badge").value==="sale"?"block":"none"; }
+    function updateImgPreview(){
+      var box=$("#f_imgPreview");
+      if(modalImage){ $("#f_imgThumb").src=modalImage; box.style.display="flex"; }
+      else { box.style.display="none"; $("#f_imgThumb").removeAttribute("src"); }
+    }
+    $("#f_image").addEventListener("change",function(e){
+      var f=e.target.files[0]; if(!f)return;
+      resizeImage(f,800,0.72,function(dataUrl){ if(dataUrl){ modalImage=dataUrl; updateImgPreview(); } else alert("خواندن عکس ناموفق بود."); });
+    });
+    $("#f_imgRemove").onclick=function(){ modalImage=""; $("#f_image").value=""; updateImgPreview(); };
     $("#f_badge").onchange=toggleBadgeText;
     $("#addBtn").onclick=function(){openModal()};
     $("#cancelBtn").onclick=closeModal;
@@ -305,6 +349,7 @@
       var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
+      if(modalImage) p.image=modalImage;
       if(editIndex>=0) state.products[editIndex]=p; else state.products.push(p);
       renderTable(); setDirty(true); closeModal();
     };
@@ -324,8 +369,16 @@
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
       collectStore();
-      try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)); setDirty(false); alert("تغییرات ذخیره شد ✓\nحالا صفحه‌ی سایت را در همین مرورگر باز کنید تا تغییرات را ببینید."); }
-      catch(e){ alert("ذخیره ناموفق بود: "+e.message); }
+      try{
+        localStorage.setItem(DATA_KEY, JSON.stringify(state));
+        setDirty(false);
+        toast("تغییرات ذخیره شد ✓");
+      }catch(e){
+        var quota = (e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014));
+        alert(quota
+          ? "حجم عکس‌ها زیاد است و جا نشد. لطفاً تعداد یا حجم عکس‌ها را کمتر کنید و دوباره ذخیره کنید."
+          : "ذخیره ناموفق بود: "+(e&&e.message?e.message:e));
+      }
     }
     $("#saveBtn").onclick=saveAll;
     $("#saveBtnFloat").onclick=saveAll;
