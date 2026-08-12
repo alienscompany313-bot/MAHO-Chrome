@@ -1,0 +1,246 @@
+/* ===========================================================
+   MAHO Retail — storefront interactivity
+   No dependencies. Progressive enhancement over static HTML.
+   =========================================================== */
+(function () {
+  "use strict";
+
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+  /* Convert Latin digits to Persian for display */
+  const faDigits = (value) =>
+    String(value).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+
+  /* Format a price in Afghani with thousands separators + Persian digits */
+  const money = (amount) => faDigits(amount.toLocaleString("en-US")) + " افغانی";
+
+  /* -------------------- Data -------------------- */
+  const PRODUCTS = [
+    { name: "گوشی هوشمند مدل X", cat: "digital", catLabel: "کالای دیجیتال", icon: "📱", price: 42000, old: 48000, badge: "sale", badgeText: "۱۲٪ تخفیف" },
+    { name: "هدفون بی‌سیم پرو", cat: "digital", catLabel: "کالای دیجیتال", icon: "🎧", price: 6500, badge: "new", badgeText: "جدید" },
+    { name: "لپ‌تاپ اولترابوک", cat: "digital", catLabel: "کالای دیجیتال", icon: "💻", price: 78000 },
+    { name: "کاپشن زمستانی مردانه", cat: "fashion", catLabel: "پوشاک", icon: "🧥", price: 3200, badge: "sale", badgeText: "۲۰٪ تخفیف", old: 4000 },
+    { name: "کفش کتانی ورزشی", cat: "fashion", catLabel: "پوشاک", icon: "👟", price: 2800 },
+    { name: "پیراهن کلاسیک نخی", cat: "fashion", catLabel: "پوشاک", icon: "👔", price: 1450, badge: "new", badgeText: "جدید" },
+    { name: "ست قابلمه استیل", cat: "home", catLabel: "لوازم خانه", icon: "🍲", price: 5600 },
+    { name: "چراغ رومیزی مدرن", cat: "home", catLabel: "لوازم خانه", icon: "💡", price: 1200, badge: "sale", badgeText: "۱۵٪ تخفیف", old: 1400 },
+    { name: "قهوه‌ساز اتوماتیک", cat: "home", catLabel: "لوازم خانه", icon: "☕", price: 4300, badge: "new", badgeText: "جدید" },
+    { name: "ست مراقبت پوست", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "🧴", price: 1850 },
+    { name: "عطر لوکس MAHO", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "🌸", price: 3900, badge: "sale", badgeText: "۱۰٪ تخفیف", old: 4300 },
+    { name: "سشوار حرفه‌ای", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "💇", price: 2100 },
+  ];
+
+  const STORES = [
+    { name: "شعبه‌ی مرکزی", area: "کابل، جاده‌ی میوند", hours: "همه‌روزه ۹ صبح تا ۹ شب", phone: "۰۷۰۰ ۱۲۳ ۴۵۶", q: "MAHO+Store+Maiwand+Kabul" },
+    { name: "شعبه‌ی شهرنو", area: "کابل، شهرنو، جاده‌ی حاجی یعقوب", hours: "همه‌روزه ۱۰ صبح تا ۱۰ شب", phone: "۰۷۰۰ ۲۲۲ ۳۳۳", q: "Shahr-e+Naw+Kabul" },
+    { name: "شعبه‌ی کارته‌ی سه", area: "کابل، کارته‌ی سه، سرک اول", hours: "همه‌روزه ۹ صبح تا ۸ شب", phone: "۰۷۰۰ ۴۴۴ ۵۵۵", q: "Karte+Se+Kabul" },
+  ];
+
+  /* -------------------- Render products -------------------- */
+  const productGrid = $("#productGrid");
+  if (productGrid) {
+    productGrid.innerHTML = PRODUCTS.map((p) => {
+      const badge = p.badge
+        ? `<span class="product-badge ${p.badge === "new" ? "new" : ""}">${p.badgeText}</span>`
+        : "";
+      const old = p.old ? `<del>${money(p.old)}</del>` : "";
+      return `
+        <article class="product-card" data-cat="${p.cat}">
+          <div class="product-media">${badge}<span>${p.icon}</span></div>
+          <div class="product-body">
+            <span class="cat">${p.catLabel}</span>
+            <h3>${p.name}</h3>
+            <div class="product-foot">
+              <span class="price">${money(p.price)} ${old}</span>
+              <button class="icon-btn" type="button" aria-label="افزودن به سبد خرید" data-add="${p.name}">🛒</button>
+            </div>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  /* -------------------- Render stores -------------------- */
+  const storeGrid = $("#storeGrid");
+  if (storeGrid) {
+    storeGrid.innerHTML = STORES.map((s) => `
+      <article class="store-card reveal">
+        <div class="store-top">
+          <h3>${s.name}</h3>
+          <span class="badge-open">باز است</span>
+        </div>
+        <div class="store-row"><span class="ico">📍</span><span>${s.area}</span></div>
+        <div class="store-row"><span class="ico">🕘</span><span>${s.hours}</span></div>
+        <div class="store-row"><span class="ico">📞</span><span>${s.phone}</span></div>
+        <a class="btn btn-outline" target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/?api=1&query=${s.q}">مسیریابی روی نقشه ←</a>
+      </article>`).join("");
+  }
+
+  /* -------------------- Product filtering -------------------- */
+  const filterBar = $("#filterBar");
+  if (filterBar) {
+    filterBar.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      $$(".chip", filterBar).forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      const filter = chip.dataset.filter;
+      $$(".product-card", productGrid).forEach((card) => {
+        const show = filter === "all" || card.dataset.cat === filter;
+        card.classList.toggle("is-hidden", !show);
+      });
+    });
+  }
+
+  /* -------------------- Add to cart (demo) -------------------- */
+  let cartCount = 0;
+  document.addEventListener("click", (e) => {
+    const addBtn = e.target.closest("[data-add]");
+    if (!addBtn) return;
+    cartCount += 1;
+    showToast(`«${addBtn.dataset.add}» به سبد خرید اضافه شد (${faDigits(cartCount)})`);
+  });
+
+  /* -------------------- Toast -------------------- */
+  const toast = $("#toast");
+  const toastMsg = $("#toastMsg");
+  let toastTimer;
+  function showToast(msg) {
+    if (!toast) return;
+    toastMsg.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+
+  /* -------------------- Mobile nav -------------------- */
+  const navToggle = $("#navToggle");
+  const nav = $("#nav");
+  if (navToggle && nav) {
+    navToggle.addEventListener("click", () => {
+      const open = document.body.classList.toggle("nav-open");
+      navToggle.setAttribute("aria-expanded", String(open));
+    });
+    nav.addEventListener("click", (e) => {
+      if (e.target.closest("a")) {
+        document.body.classList.remove("nav-open");
+        navToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  /* -------------------- Header shadow on scroll -------------------- */
+  const header = $("#header");
+  const toTop = $("#toTop");
+  const onScroll = () => {
+    const y = window.scrollY;
+    if (header) header.classList.toggle("scrolled", y > 20);
+    if (toTop) toTop.classList.toggle("show", y > 500);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  if (toTop) {
+    toTop.addEventListener("click", () =>
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    );
+  }
+
+  /* -------------------- Active nav link on scroll -------------------- */
+  const navLinks = $$(".main-nav a");
+  const sections = navLinks
+    .map((a) => document.querySelector(a.getAttribute("href")))
+    .filter(Boolean);
+  if ("IntersectionObserver" in window && sections.length) {
+    const spy = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = "#" + entry.target.id;
+            navLinks.forEach((a) =>
+              a.classList.toggle("active", a.getAttribute("href") === id)
+            );
+          }
+        });
+      },
+      { rootMargin: "-45% 0px -50% 0px" }
+    );
+    sections.forEach((s) => spy.observe(s));
+  }
+
+  /* -------------------- Scroll reveal -------------------- */
+  const revealables = () => $$(".reveal:not(.in)");
+  if ("IntersectionObserver" in window) {
+    const revObs = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    // Observe now and again shortly after (store/product cards render async above)
+    revealables().forEach((el) => revObs.observe(el));
+    setTimeout(() => revealables().forEach((el) => revObs.observe(el)), 50);
+  } else {
+    revealables().forEach((el) => el.classList.add("in"));
+  }
+
+  /* -------------------- Animated stat counters -------------------- */
+  const counters = $$("[data-count]");
+  if (counters.length && "IntersectionObserver" in window) {
+    const countObs = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseInt(el.dataset.count, 10);
+        const dur = 1400;
+        const start = performance.now();
+        const tick = (now) => {
+          const t = Math.min((now - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = faDigits(Math.floor(eased * target));
+          if (t < 1) requestAnimationFrame(tick);
+          else el.textContent = faDigits(target);
+        };
+        requestAnimationFrame(tick);
+        obs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    counters.forEach((c) => countObs.observe(c));
+  }
+
+  /* -------------------- Newsletter form -------------------- */
+  const form = $("#newsletterForm");
+  const emailInput = $("#emailInput");
+  const note = $("#formNote");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const value = (emailInput.value || "").trim();
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      if (!valid) {
+        note.textContent = "لطفاً یک ایمیل معتبر وارد کنید.";
+        note.className = "form-note err";
+        emailInput.focus();
+        return;
+      }
+      note.textContent = "عضویت شما ثبت شد! به‌زودی پیشنهادهای ویژه‌ی MAHO را دریافت می‌کنید.";
+      note.className = "form-note ok";
+      form.reset();
+      showToast("عضویت در خبرنامه با موفقیت انجام شد ✓");
+    });
+  }
+
+  /* -------------------- Footer year (Persian) -------------------- */
+  const yearEl = $("#year");
+  if (yearEl) {
+    // Approximate current Solar Hijri year for display
+    const gy = new Date().getFullYear();
+    yearEl.textContent = faDigits(gy - 621);
+  }
+})();
