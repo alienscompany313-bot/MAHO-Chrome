@@ -161,7 +161,7 @@
   /* -------------------- Data -------------------- */
   const CAT_ICON = { clothing: "dress", scarf: "scarf", bagshoes: "bag", beauty: "sparkles", accessory: "ring" };
 
-  const PRODUCTS = [
+  let PRODUCTS = [
     { name: "پیراهن مجلسی بلند", name_en: "Long Evening Dress", cat: "clothing", icon: "dress", price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف", badgeText_en: "16% off" },
     { name: "مانتو کژوال روزمره", name_en: "Casual Manteau", cat: "clothing", icon: "coat", price: 3200, badge: "new", badgeText: "جدید", badgeText_en: "New" },
     { name: "بلوز و شومیز آستین‌بلند", name_en: "Long-sleeve Blouse", cat: "clothing", icon: "shirt", price: 1450 },
@@ -180,7 +180,7 @@
     en: { clothing: "Clothing", scarf: "Scarves", bagshoes: "Bags & Shoes", beauty: "Beauty", accessory: "Accessories" },
   };
 
-  const STORES = [
+  let STORES = [
     {
       name: "لباس و لوازم بانوان MAHO", name_en: "MAHO Women's Clothing & Essentials",
       area: "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
@@ -190,6 +190,20 @@
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
     },
   ];
+
+  /* -------------------- Catalog data source --------------------
+     Priority: owner's local draft (admin panel) > published data.json > built-in defaults.
+     This lets the owner manage the catalog with no code changes. */
+  const DATA_KEY = "maho_admin_data";
+  function applyData(d) {
+    if (d && Array.isArray(d.products) && d.products.length) PRODUCTS = d.products;
+    if (d && d.store) STORES = [d.store];
+  }
+  let hasLocalDraft = false;
+  try {
+    const raw = localStorage.getItem(DATA_KEY);
+    if (raw) { applyData(JSON.parse(raw)); hasLocalDraft = true; }
+  } catch (_) {}
 
   /* -------------------- Render products -------------------- */
   let activeFilter = "all";
@@ -415,4 +429,19 @@
 
   /* -------------------- Init -------------------- */
   applyLang(LANG);
+
+  /* Load the published catalog (data.json) unless the owner has a local draft.
+     Fails silently when opened from a single file (file://) — defaults are used. */
+  if (!hasLocalDraft) {
+    fetch("data.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.products) && d.products.length) {
+          applyData(d);
+          renderProducts();
+          renderStores();
+        }
+      })
+      .catch(() => {});
+  }
 })();

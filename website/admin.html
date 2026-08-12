@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پنل مدیریت | MAHO</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--black:#141414;--gold:#c8a35f;--gold-deep:#a9843f;--cream:#fbf8f1;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--radius:14px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Vazirmatn",Tahoma,sans-serif;background:#f3efe7;color:var(--ink);line-height:1.7}
+    a{color:inherit}
+    .topbar{position:sticky;top:0;z-index:20;background:var(--black);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .brand .logo{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;font-family:Georgia,serif;font-size:19px}
+    .brand small{display:block;font-weight:600;font-size:11px;color:var(--gold);letter-spacing:1px}
+    .tb-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{font-family:inherit;font-weight:700;font-size:14px;border-radius:999px;border:1.5px solid transparent;padding:9px 16px;cursor:pointer;transition:.15s;white-space:nowrap}
+    .btn-gold{background:var(--gold);color:#1a1509}.btn-gold:hover{background:var(--gold-deep)}
+    .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}.btn-ghost:hover{background:rgba(255,255,255,.12)}
+    .btn-outline{background:#fff;color:var(--ink);border-color:var(--line)}.btn-outline:hover{border-color:var(--gold)}
+    .btn-danger{background:#fdecec;color:var(--red);border-color:#f4c9c9}.btn-danger:hover{background:#f9dada}
+    .btn-sm{padding:6px 12px;font-size:13px}
+    .wrap{max-width:1050px;margin:22px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:18px;box-shadow:0 2px 12px #0000000a}
+    .card h2{margin:0 0 4px;font-size:20px}
+    .card .sub{color:var(--muted);font-size:14px;margin-bottom:14px}
+    .row-between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+    th{color:var(--muted);font-weight:700;font-size:13px}
+    .p-ico{width:40px;height:40px;border-radius:10px;background:linear-gradient(150deg,#241c22,#3f2f3a);display:grid;place-items:center;color:#fff}
+    .p-ico .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .price{font-weight:800;white-space:nowrap}
+    .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:#f3efe7;color:var(--muted)}
+    .tag.sale{background:#fff3d9;color:var(--gold-deep)}.tag.new{background:#e7f5ea;color:var(--green)}
+    .field{margin-bottom:12px}
+    .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
+    .field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
+    .field input:focus,.field select:focus{outline:none;border-color:var(--gold)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+    .note{font-size:13px;color:var(--muted)}
+    .ok{color:var(--green);font-weight:700}
+    .dirty-badge{font-size:12px;font-weight:700;color:var(--red);display:none}
+    .dirty .dirty-badge{display:inline}
+    /* modal */
+    .overlay{position:fixed;inset:0;background:#00000088;display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+    .overlay.show{display:flex}
+    .modal{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:20px}
+    .modal h3{margin:0 0 14px}
+    .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+    /* gate */
+    .gate{position:fixed;inset:0;background:var(--black);display:flex;align-items:center;justify-content:center;z-index:60;color:#fff;text-align:center;padding:20px}
+    .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:18px;padding:30px;max-width:360px;width:100%}
+    .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;font-family:inherit;text-align:center;font-size:16px;margin:12px 0}
+    .help li{margin-bottom:6px}
+    @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
+  </style>
+</head>
+<body>
+  <!-- product-icon sprite (for previews) -->
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M6.5 3.5 3 6l2 3.5 2-1V21h10V8.5l2 1L21 6l-3.5-2.5-2 .8a4 4 0 0 1-7 0z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6.2"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11 4c.6 3.2 1.8 4.4 5 5-3.2.6-4.4 1.8-5 5-.6-3.2-1.8-4.4-5-5 3.2-.6 4.4-1.8 5-5z"/><path d="M18.3 13.6c.3 1.3.8 1.8 2.1 2.1-1.3.3-1.8.8-2.1 2.1-.3-1.3-.8-1.8-2.1-2.1 1.3-.3 1.8-.8 2.1-2.1z"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.2"/><path d="M12 9v3l2 1.3"/><path d="M9.2 6.2 9.6 3h4.8l.4 3.2M9.2 17.8l.4 3.2h4.8l.4-3.2"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="5" rx="1"/><path d="M12 22V7"/><path d="M20 12v10H4V12"/><path d="M12 7H7.7a2.4 2.4 0 0 1 0-4.8C10.9 2.2 12 7 12 7z"/><path d="M12 7h4.3a2.4 2.4 0 0 0 0-4.8C13.1 2.2 12 7 12 7z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 9h13l1 11H4.5z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-dress" viewBox="0 0 24 24"><path d="M9 3 12 5 15 3 16 6 14 7.5V9.5L17.5 20a1 1 0 0 1-1 1.3H7.5a1 1 0 0 1-1-1.3L10 9.5V7.5L8 6z"/><path d="M10 9.5h4"/></symbol>
+    <symbol id="i-coat" viewBox="0 0 24 24"><path d="M7 4 5 8l2 1v11h10V9l2-1-2-4-5 2z"/><path d="M12 6v14"/><path d="M12 11h.01M12 14h.01M12 17h.01"/></symbol>
+    <symbol id="i-scarf" viewBox="0 0 24 24"><path d="M5 6c3 3.5 11 3.5 14 0"/><path d="M6.5 7.5 8.5 19l3.5-2.2 3.5 2.2 2-11.5"/></symbol>
+    <symbol id="i-heel" viewBox="0 0 24 24"><path d="M4 8c0 5 3 9 8 10h7l-1.5-3-6-2.5C8 11 7 9.5 7 8z"/><path d="M17.5 15 19 18"/></symbol>
+    <symbol id="i-ring" viewBox="0 0 24 24"><path d="M12 9a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M9.5 6 12 8.5 14.5 6 12 3z"/><path d="M9.5 6 12 9.2M14.5 6 12 9.2"/></symbol>
+    <symbol id="i-perfume" viewBox="0 0 24 24"><path d="M10 3h4v2h-4z"/><path d="M9.5 5h5v1.6l1 1V19a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 8.5 19V7.6l1-1z"/><path d="M15 6.5 17 5M17 5V3"/></symbol>
+  </svg>
+
+  <!-- passcode gate -->
+  <div class="gate" id="gate">
+    <div class="box">
+      <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
+      <div style="margin:4px 0 2px">پنل مدیریت</div>
+      <p class="note" style="color:#b9b3a6">برای ورود، رمز عبور را وارد کنید.</p>
+      <input type="password" id="gatePass" placeholder="رمز عبور" autocomplete="current-password">
+      <button class="btn btn-gold" style="width:100%" id="gateBtn">ورود</button>
+      <p class="note" id="gateMsg" style="color:#ff9d9d;min-height:18px;margin:8px 0 0"></p>
+      <p class="note" style="color:#7d7768;margin-top:10px">رمز پیش‌فرض: <b>maho1234</b></p>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="brand"><span class="logo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
+    <div class="tb-actions">
+      <span class="dirty-badge" id="dirtyBadge">● تغییرات ذخیره‌نشده</span>
+      <a class="btn btn-ghost btn-sm" href="index.html" target="_blank">مشاهده سایت ↗</a>
+      <button class="btn btn-gold btn-sm" id="saveBtn">ذخیره تغییرات</button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="app" style="display:none">
+
+    <!-- PRODUCTS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها. تغییرات پس از «ذخیره تغییرات» روی سایت شما (در همین مرورگر) دیده می‌شود.</div></div>
+        <button class="btn btn-gold" id="addBtn">+ افزودن محصول</button>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>تصویر</th><th>نام کالا</th><th>دسته</th><th class="hide-sm">برچسب</th><th>قیمت</th><th>عملیات</th></tr></thead>
+          <tbody id="prodBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STORE -->
+    <div class="card">
+      <h2>اطلاعات فروشگاه</h2>
+      <div class="sub">آدرس، ساعت کاری، شماره تماس و لینک نقشه.</div>
+      <div class="grid2">
+        <div class="field"><label>نام فروشگاه (دری)</label><input id="s_name"></div>
+        <div class="field"><label>نام فروشگاه (English)</label><input id="s_name_en" dir="ltr"></div>
+        <div class="field"><label>آدرس (دری)</label><input id="s_area"></div>
+        <div class="field"><label>آدرس (English)</label><input id="s_area_en" dir="ltr"></div>
+        <div class="field"><label>ساعت کاری (دری)</label><input id="s_hours"></div>
+        <div class="field"><label>ساعت کاری (English)</label><input id="s_hours_en" dir="ltr"></div>
+        <div class="field"><label>شماره تماس (دری)</label><input id="s_phone"></div>
+        <div class="field"><label>شماره تماس (English)</label><input id="s_phone_en" dir="ltr"></div>
+      </div>
+      <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
+    </div>
+
+    <!-- PUBLISH / SETTINGS -->
+    <div class="card">
+      <h2>انتشار و پشتیبان</h2>
+      <div class="sub">تغییرات شما فعلاً فقط در همین دستگاه ذخیره می‌شود. برای این‌که همه‌ی مشتری‌ها آن را ببینند، فایل را «دانلود» کنید و برای ما بفرستید تا روی سایت اصلی بگذاریم (یا اگر با GitHub کار می‌کنید، فایل <code>website/data.json</code> را با آن جایگزین کنید).</div>
+      <div class="tb-actions" style="gap:10px">
+        <button class="btn btn-gold btn-sm" id="exportBtn">⬇ دانلود فایل data.json</button>
+        <label class="btn btn-outline btn-sm" style="display:inline-block">⬆ وارد کردن فایل<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+        <button class="btn btn-outline btn-sm" id="resetBtn">بازگردانی به نسخه‌ی منتشرشده</button>
+      </div>
+      <div style="margin-top:16px" class="grid2">
+        <div class="field"><label>تغییر رمز عبور پنل</label><input id="newPass" placeholder="رمز جدید"></div>
+        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره رمز جدید</button></div>
+      </div>
+      <p class="note">توجه: این محافظت ساده است و جای امنیت واقعی را نمی‌گیرد؛ لینک این صفحه را خصوصی نگه دارید.</p>
+    </div>
+
+    <p class="note" style="text-align:center">MAHO — پنل مدیریت ساده و بدون کدنویسی</p>
+  </div>
+
+  <!-- product editor modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3 id="modalTitle">افزودن محصول</h3>
+      <div class="grid2">
+        <div class="field"><label>نام کالا (دری) *</label><input id="f_name"></div>
+        <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
+        <div class="field"><label>دسته</label>
+          <select id="f_cat">
+            <option value="clothing">پوشاک</option>
+            <option value="scarf">شال و روسری</option>
+            <option value="bagshoes">کیف و کفش</option>
+            <option value="beauty">آرایشی و بهداشتی</option>
+            <option value="accessory">اکسسوری</option>
+          </select>
+        </div>
+        <div class="field"><label>آیکن</label>
+          <select id="f_icon">
+            <option value="dress">پیراهن / لباس مجلسی</option>
+            <option value="coat">مانتو / پالتو</option>
+            <option value="shirt">بلوز / شومیز</option>
+            <option value="scarf">شال / روسری</option>
+            <option value="bag">کیف</option>
+            <option value="heel">کفش</option>
+            <option value="ring">انگشتر / بدلیجات</option>
+            <option value="watch">ساعت</option>
+            <option value="sparkles">لوازم آرایش</option>
+            <option value="perfume">عطر</option>
+            <option value="gift">هدیه / سایر</option>
+          </select>
+        </div>
+        <div class="field"><label>قیمت (افغانی) *</label><input id="f_price" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>قیمت قبلی (اختیاری - برای تخفیف)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>برچسب</label>
+          <select id="f_badge">
+            <option value="">بدون برچسب</option>
+            <option value="new">جدید</option>
+            <option value="sale">تخفیف</option>
+          </select>
+        </div>
+        <div class="field" id="badgeTextWrap"><label>متن تخفیف (مثلاً ۲۰٪ تخفیف)</label><input id="f_badgeText" placeholder="۲۰٪ تخفیف"></div>
+      </div>
+      <p class="note" id="modalMsg" style="color:var(--red);min-height:18px"></p>
+      <div class="modal-foot">
+        <button class="btn btn-outline" id="cancelBtn">لغو</button>
+        <button class="btn btn-gold" id="okBtn">ذخیره محصول</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    "use strict";
+    var $=function(s){return document.querySelector(s)};
+    var DATA_KEY="maho_admin_data", PASS_KEY="maho_admin_pass", DEFAULT_PASS="maho1234";
+    var CAT_LABEL={clothing:"پوشاک",scarf:"شال و روسری",bagshoes:"کیف و کفش",beauty:"آرایشی",accessory:"اکسسوری"};
+    var faMap="۰۱۲۳۴۵۶۷۸۹";
+    var toFa=function(v){return String(v).replace(/[0-9]/g,function(d){return faMap[d]})};
+    var toEn=function(v){return String(v==null?"":v).replace(/[۰-۹]/g,function(d){return faMap.indexOf(d)})};
+    var money=function(n){return toFa(Number(n).toLocaleString("en-US"))+" افغانی"};
+    var icon=function(id){return '<svg class="ic"><use href="#i-'+id+'"/></svg>'};
+
+    var state={products:[],store:{}}, editIndex=-1, dirty=false;
+
+    /* ---------- gate ---------- */
+    function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
+    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; }
+    $("#gateBtn").onclick=function(){
+      if($("#gatePass").value===pass()){ sessionStorage.setItem("maho_admin_ok","1"); openApp(); }
+      else $("#gateMsg").textContent="رمز عبور اشتباه است.";
+    };
+    $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
+    if(sessionStorage.getItem("maho_admin_ok")==="1") openApp();
+
+    /* ---------- load ---------- */
+    function setDirty(v){dirty=v; document.body.classList.toggle("dirty",v);}
+    function fillStore(){
+      var s=state.store||{};
+      $("#s_name").value=s.name||""; $("#s_name_en").value=s.name_en||"";
+      $("#s_area").value=s.area||""; $("#s_area_en").value=s.area_en||"";
+      $("#s_hours").value=s.hours||""; $("#s_hours_en").value=s.hours_en||"";
+      $("#s_phone").value=s.phone||""; $("#s_phone_en").value=s.phone_en||"";
+      $("#s_map").value=s.map||"";
+    }
+    function renderTable(){
+      var b=$("#prodBody"); b.innerHTML="";
+      state.products.forEach(function(p,i){
+        var badge=p.badge?('<span class="tag '+p.badge+'">'+(p.badge==="new"?"جدید":(p.badgeText||"تخفیف"))+'</span>'):'<span class="tag">—</span>';
+        var tr=document.createElement("tr");
+        tr.innerHTML='<td><div class="p-ico">'+icon(p.icon||"bag")+'</div></td>'+
+          '<td><b>'+(p.name||"")+'</b></td>'+
+          '<td>'+(CAT_LABEL[p.cat]||p.cat||"")+'</td>'+
+          '<td class="hide-sm">'+badge+'</td>'+
+          '<td class="price">'+money(p.price)+'</td>'+
+          '<td><button class="btn btn-outline btn-sm" data-edit="'+i+'">ویرایش</button> '+
+          '<button class="btn btn-danger btn-sm" data-del="'+i+'">حذف</button></td>';
+        b.appendChild(tr);
+      });
+    }
+    function loadInto(d){ state.products=(d&&d.products)||[]; state.store=(d&&d.store)||{}; renderTable(); fillStore(); }
+    function loadInitial(){
+      try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
+      fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{products:[],store:{}}); }).catch(function(){ loadInto({products:[],store:{}}); });
+    }
+    loadInitial();
+
+    /* ---------- product modal ---------- */
+    function openModal(i){
+      editIndex=(typeof i==="number")?i:-1;
+      $("#modalTitle").textContent=editIndex>=0?"ویرایش محصول":"افزودن محصول";
+      $("#modalMsg").textContent="";
+      var p=editIndex>=0?state.products[editIndex]:{cat:"clothing",icon:"dress",badge:""};
+      $("#f_name").value=p.name||""; $("#f_name_en").value=p.name_en||"";
+      $("#f_cat").value=p.cat||"clothing"; $("#f_icon").value=p.icon||"dress";
+      $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
+      $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
+      toggleBadgeText();
+      $("#overlay").classList.add("show");
+    }
+    function closeModal(){$("#overlay").classList.remove("show")}
+    function toggleBadgeText(){ $("#badgeTextWrap").style.display=$("#f_badge").value==="sale"?"block":"none"; }
+    $("#f_badge").onchange=toggleBadgeText;
+    $("#addBtn").onclick=function(){openModal()};
+    $("#cancelBtn").onclick=closeModal;
+    $("#overlay").addEventListener("click",function(e){if(e.target===$("#overlay"))closeModal()});
+    $("#prodBody").addEventListener("click",function(e){
+      var ed=e.target.getAttribute("data-edit"), dl=e.target.getAttribute("data-del");
+      if(ed!==null) openModal(parseInt(ed,10));
+      if(dl!==null){ var idx=parseInt(dl,10); if(confirm("این محصول حذف شود؟\n«"+(state.products[idx].name||"")+"»")){ state.products.splice(idx,1); renderTable(); setDirty(true); } }
+    });
+    $("#okBtn").onclick=function(){
+      var name=$("#f_name").value.trim(), price=toEn($("#f_price").value).trim();
+      if(!name){ $("#modalMsg").textContent="نام کالا الزامی است."; return; }
+      if(price===""||isNaN(Number(price))){ $("#modalMsg").textContent="قیمت معتبر وارد کنید."; return; }
+      var badge=$("#f_badge").value;
+      var p={ name:name, name_en:$("#f_name_en").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price) };
+      var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
+      if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
+      else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
+      if(editIndex>=0) state.products[editIndex]=p; else state.products.push(p);
+      renderTable(); setDirty(true); closeModal();
+    };
+
+    /* ---------- store fields ---------- */
+    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map"].forEach(function(id){
+      $("#"+id).addEventListener("input",function(){ setDirty(true); });
+    });
+    function collectStore(){
+      state.store={ name:$("#s_name").value.trim(), name_en:$("#s_name_en").value.trim(),
+        area:$("#s_area").value.trim(), area_en:$("#s_area_en").value.trim(),
+        hours:$("#s_hours").value.trim(), hours_en:$("#s_hours_en").value.trim(),
+        phone:$("#s_phone").value.trim(), phone_en:$("#s_phone_en").value.trim(),
+        map:$("#s_map").value.trim() };
+    }
+
+    /* ---------- save / export / import / reset ---------- */
+    $("#saveBtn").onclick=function(){
+      collectStore();
+      try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)); setDirty(false); alert("تغییرات ذخیره شد ✓\nحالا صفحه‌ی سایت را در همین مرورگر باز کنید تا تغییرات را ببینید."); }
+      catch(e){ alert("ذخیره ناموفق بود: "+e.message); }
+    };
+    $("#exportBtn").onclick=function(){
+      collectStore();
+      var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="data.json";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    };
+    $("#importFile").addEventListener("change",function(e){
+      var f=e.target.files[0]; if(!f)return;
+      var rd=new FileReader();
+      rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d||!Array.isArray(d.products)) throw new Error("ساختار فایل نادرست است"); loadInto(d); setDirty(true); alert("فایل بارگذاری شد. برای اعمال، «ذخیره تغییرات» را بزنید."); }catch(err){ alert("خطا در خواندن فایل: "+err.message); } };
+      rd.readAsText(f); e.target.value="";
+    });
+    $("#resetBtn").onclick=function(){
+      if(!confirm("همه‌ی تغییرات محلی پاک شود و به نسخه‌ی منتشرشده برگردد؟"))return;
+      try{ localStorage.removeItem(DATA_KEY); }catch(e){}
+      setDirty(false); loadInitial();
+    };
+
+    /* ---------- password change ---------- */
+    $("#passBtn").onclick=function(){
+      var np=$("#newPass").value.trim(); if(np.length<4){ alert("رمز باید حداقل ۴ نویسه باشد."); return; }
+      try{ localStorage.setItem(PASS_KEY,np); $("#newPass").value=""; alert("رمز جدید ذخیره شد ✓"); }catch(e){ alert("ذخیره نشد"); }
+    };
+    $("#logoutBtn").onclick=function(){ sessionStorage.removeItem("maho_admin_ok"); location.reload(); };
+
+    window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+  })();
+  </script>
+</body>
+</html>
