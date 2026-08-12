@@ -15,20 +15,26 @@
   /* Format a price in Afghani with thousands separators + Persian digits */
   const money = (amount) => faDigits(amount.toLocaleString("en-US")) + " افغانی";
 
+  /* Inline SVG icon reference (uses the sprite in index.html) */
+  const icon = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+  /* Map product category -> icon id + media tint class */
+  const CAT_ICON = { digital: "phone", fashion: "shirt", home: "home", beauty: "sparkles" };
+
   /* -------------------- Data -------------------- */
   const PRODUCTS = [
-    { name: "گوشی هوشمند مدل X", cat: "digital", catLabel: "کالای دیجیتال", icon: "📱", price: 42000, old: 48000, badge: "sale", badgeText: "۱۲٪ تخفیف" },
-    { name: "هدفون بی‌سیم پرو", cat: "digital", catLabel: "کالای دیجیتال", icon: "🎧", price: 6500, badge: "new", badgeText: "جدید" },
-    { name: "لپ‌تاپ اولترابوک", cat: "digital", catLabel: "کالای دیجیتال", icon: "💻", price: 78000 },
-    { name: "کاپشن زمستانی مردانه", cat: "fashion", catLabel: "پوشاک", icon: "🧥", price: 3200, badge: "sale", badgeText: "۲۰٪ تخفیف", old: 4000 },
-    { name: "کفش کتانی ورزشی", cat: "fashion", catLabel: "پوشاک", icon: "👟", price: 2800 },
-    { name: "پیراهن کلاسیک نخی", cat: "fashion", catLabel: "پوشاک", icon: "👔", price: 1450, badge: "new", badgeText: "جدید" },
-    { name: "ست قابلمه استیل", cat: "home", catLabel: "لوازم خانه", icon: "🍲", price: 5600 },
-    { name: "چراغ رومیزی مدرن", cat: "home", catLabel: "لوازم خانه", icon: "💡", price: 1200, badge: "sale", badgeText: "۱۵٪ تخفیف", old: 1400 },
-    { name: "قهوه‌ساز اتوماتیک", cat: "home", catLabel: "لوازم خانه", icon: "☕", price: 4300, badge: "new", badgeText: "جدید" },
-    { name: "ست مراقبت پوست", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "🧴", price: 1850 },
-    { name: "عطر لوکس MAHO", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "🌸", price: 3900, badge: "sale", badgeText: "۱۰٪ تخفیف", old: 4300 },
-    { name: "سشوار حرفه‌ای", cat: "beauty", catLabel: "آرایشی و بهداشتی", icon: "💇", price: 2100 },
+    { name: "گوشی هوشمند مدل X", cat: "digital", catLabel: "کالای دیجیتال", price: 42000, old: 48000, badge: "sale", badgeText: "۱۲٪ تخفیف" },
+    { name: "هدفون بی‌سیم پرو", cat: "digital", catLabel: "کالای دیجیتال", price: 6500, badge: "new", badgeText: "جدید" },
+    { name: "لپ‌تاپ اولترابوک", cat: "digital", catLabel: "کالای دیجیتال", price: 78000 },
+    { name: "کاپشن زمستانی مردانه", cat: "fashion", catLabel: "پوشاک", price: 3200, old: 4000, badge: "sale", badgeText: "۲۰٪ تخفیف" },
+    { name: "کفش کتانی ورزشی", cat: "fashion", catLabel: "پوشاک", price: 2800 },
+    { name: "پیراهن کلاسیک نخی", cat: "fashion", catLabel: "پوشاک", price: 1450, badge: "new", badgeText: "جدید" },
+    { name: "ست قابلمه استیل", cat: "home", catLabel: "لوازم خانه", price: 5600 },
+    { name: "چراغ رومیزی مدرن", cat: "home", catLabel: "لوازم خانه", price: 1200, old: 1400, badge: "sale", badgeText: "۱۵٪ تخفیف" },
+    { name: "قهوه‌ساز اتوماتیک", cat: "home", catLabel: "لوازم خانه", price: 4300, badge: "new", badgeText: "جدید" },
+    { name: "ست مراقبت پوست", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 1850 },
+    { name: "عطر لوکس MAHO", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 3900, old: 4300, badge: "sale", badgeText: "۱۰٪ تخفیف" },
+    { name: "سشوار حرفه‌ای", cat: "beauty", catLabel: "آرایشی و بهداشتی", price: 2100 },
   ];
 
   const STORES = [
@@ -47,13 +53,13 @@
       const old = p.old ? `<del>${money(p.old)}</del>` : "";
       return `
         <article class="product-card" data-cat="${p.cat}">
-          <div class="product-media">${badge}<span>${p.icon}</span></div>
+          <div class="product-media m-${p.cat}">${badge}${icon(CAT_ICON[p.cat] || "cart")}</div>
           <div class="product-body">
             <span class="cat">${p.catLabel}</span>
             <h3>${p.name}</h3>
             <div class="product-foot">
               <span class="price">${money(p.price)} ${old}</span>
-              <button class="icon-btn" type="button" aria-label="افزودن به سبد خرید" data-add="${p.name}">🛒</button>
+              <button class="icon-btn" type="button" aria-label="افزودن به سبد خرید" data-add="${p.name}">${icon("bag")}</button>
             </div>
           </div>
         </article>`;
@@ -69,9 +75,9 @@
           <h3>${s.name}</h3>
           <span class="badge-open">باز است</span>
         </div>
-        <div class="store-row"><span class="ico">📍</span><span>${s.area}</span></div>
-        <div class="store-row"><span class="ico">🕘</span><span>${s.hours}</span></div>
-        <div class="store-row"><span class="ico">📞</span><span>${s.phone}</span></div>
+        <div class="store-row"><span class="ico">${icon("pin")}</span><span>${s.area}</span></div>
+        <div class="store-row"><span class="ico">${icon("clock")}</span><span>${s.hours}</span></div>
+        <div class="store-row"><span class="ico">${icon("call")}</span><span>${s.phone}</span></div>
         <a class="btn btn-outline" target="_blank" rel="noopener"
            href="https://www.google.com/maps/search/?api=1&query=${s.q}">مسیریابی روی نقشه ←</a>
       </article>`).join("");

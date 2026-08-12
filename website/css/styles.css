@@ -59,6 +59,15 @@ p { margin: 0 0 1em; }
 
 .accent { color: var(--gold-deep); }
 
+/* ---------- Icons (inline SVG sprite) ---------- */
+.ic {
+  width: 1em; height: 1em; flex: none;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: middle;
+}
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
 /* ---------- Buttons ---------- */
 .btn {
   --_bg: var(--gold);
@@ -230,10 +239,14 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 }
 .cat-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); border-color: var(--gold-soft); }
 .cat-card .ico {
-  width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 16px;
-  display: grid; place-items: center; font-size: 30px;
-  background: linear-gradient(150deg, var(--cream), #fff); border: 1px solid var(--line);
+  width: 66px; height: 66px; border-radius: 20px; margin: 0 auto 16px;
+  display: grid; place-items: center; color: var(--gold-deep);
+  background: linear-gradient(150deg, #fff, var(--cream)); border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(200, 163, 95, .12);
+  transition: color .2s ease, background .2s ease, transform .2s ease;
 }
+.cat-card .ico .ic { width: 30px; height: 30px; stroke-width: 1.6; }
+.cat-card:hover .ico { color: #fff; background: linear-gradient(150deg, var(--gold), var(--gold-deep)); transform: translateY(-2px); }
 .cat-card h3 { font-size: 18px; margin-bottom: 4px; }
 .cat-card p { font-size: 13.5px; color: var(--muted); margin: 0; }
 
@@ -258,10 +271,17 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .product-card.is-hidden { display: none; }
 .product-media {
   position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center;
-  font-size: 58px; color: #fff;
+  color: #fff; overflow: hidden;
   background: linear-gradient(150deg, var(--black-soft), #2b2419);
 }
-.product-media::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 80% 0%, rgba(200, 163, 95, .3), transparent 60%); }
+.product-media .ic { width: 66px; height: 66px; stroke-width: 1.3; position: relative; z-index: 1; color: #fff; transition: transform .35s ease; }
+.product-card:hover .product-media .ic { transform: scale(1.08) rotate(-3deg); }
+.product-media::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 80% 0%, rgba(255, 255, 255, .16), transparent 60%); }
+/* Per-category tinted tiles */
+.product-media.m-digital { background: linear-gradient(150deg, #16202b, #1f3a4d); }
+.product-media.m-fashion { background: linear-gradient(150deg, #2b1a1f, #4a2833); }
+.product-media.m-home    { background: linear-gradient(150deg, #1a2620, #274035); }
+.product-media.m-beauty  { background: linear-gradient(150deg, #241a2b, #3d2a4a); }
 .product-badge {
   position: absolute; inset-block-start: 12px; inset-inline-start: 12px; z-index: 2;
   font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 999px;
@@ -276,11 +296,12 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .price small { color: var(--muted); font-weight: 600; font-size: 12px; }
 .price del { color: var(--muted); font-weight: 600; font-size: 13px; margin-inline-start: 6px; }
 .icon-btn {
-  width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid var(--line);
-  background: var(--cream); cursor: pointer; font-size: 18px; display: grid; place-items: center;
-  transition: all .18s ease;
+  width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--cream); cursor: pointer; display: grid; place-items: center;
+  color: var(--ink); transition: all .18s ease;
 }
-.icon-btn:hover { background: var(--gold); border-color: var(--gold); }
+.icon-btn .ic { width: 20px; height: 20px; }
+.icon-btn:hover { background: var(--gold); border-color: var(--gold); color: #1a1509; transform: translateY(-1px); }
 
 /* ---------- Features ---------- */
 .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
@@ -288,7 +309,12 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   padding: 26px; border-radius: var(--radius); background: var(--paper);
   border: 1px solid var(--line);
 }
-.feature .ico { font-size: 30px; margin-bottom: 12px; }
+.feature .ico {
+  width: 54px; height: 54px; border-radius: 15px; margin-bottom: 14px;
+  display: grid; place-items: center; color: var(--gold-deep);
+  background: linear-gradient(150deg, var(--cream), #fff); border: 1px solid var(--line);
+}
+.feature .ico .ic { width: 26px; height: 26px; }
 .feature h3 { font-size: 18px; }
 .feature p { color: var(--muted); font-size: 14.5px; margin: 0; }
 
@@ -304,7 +330,8 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .store-card h3 { font-size: 20px; margin: 0; }
 .badge-open { font-size: 12px; font-weight: 800; color: var(--green); background: #e7f5ea; padding: 4px 10px; border-radius: 999px; }
 .store-row { display: flex; gap: 10px; color: var(--ink); font-size: 14.5px; align-items: flex-start; }
-.store-row .ico { color: var(--gold-deep); flex: none; }
+.store-row .ico { color: var(--gold-deep); flex: none; display: grid; place-items: center; margin-top: 2px; }
+.store-row .ico .ic { width: 19px; height: 19px; }
 .store-card .btn { margin-top: 8px; align-self: flex-start; }
 
 /* ---------- Testimonials ---------- */
@@ -350,13 +377,15 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .site-footer .brand { color: #fff; margin-bottom: 14px; }
 .site-footer p { font-size: 14px; color: #a8a294; }
 .footer-col h4 { color: #fff; font-size: 15px; letter-spacing: 1px; margin-bottom: 14px; }
+.footer-col p .ic { width: 17px; height: 17px; color: var(--gold); margin-inline-start: 7px; vertical-align: -3px; }
 .footer-col a { display: block; padding: 5px 0; color: #bdb7a9; font-size: 14px; transition: color .15s ease; }
 .footer-col a:hover { color: var(--gold); }
 .socials { display: flex; gap: 10px; margin-top: 14px; }
 .socials a {
   width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
-  background: rgba(255, 255, 255, .07); color: #fff; font-size: 18px; transition: all .18s ease;
+  background: rgba(255, 255, 255, .07); color: #fff; transition: all .18s ease;
 }
+.socials a .ic { width: 19px; height: 19px; }
 .socials a:hover { background: var(--gold); color: #1a1509; }
 .footer-bottom {
   margin-top: 40px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .1);
@@ -367,9 +396,11 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .to-top {
   position: fixed; inset-block-end: 24px; inset-inline-start: 24px; z-index: 90;
   width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--gold); color: #1a1509; font-size: 20px; box-shadow: var(--shadow-gold);
+  display: grid; place-items: center;
+  background: var(--gold); color: #1a1509; box-shadow: var(--shadow-gold);
   opacity: 0; transform: translateY(16px) scale(.9); pointer-events: none; transition: all .25s ease;
 }
+.to-top .ic { width: 22px; height: 22px; stroke-width: 2.2; }
 .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
 
 /* ---------- Toast ---------- */
