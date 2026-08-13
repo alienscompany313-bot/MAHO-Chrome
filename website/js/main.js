@@ -123,6 +123,10 @@
       "pay.noBank": "اطلاعات حساب بانکی هنوز ثبت نشده است. لطفاً از واتساپ استفاده کنید.",
       "pay.noCard": "درگاه پرداخت آنلاین هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "pay.placeWhatsapp": "ثبت سفارش (واتساپ)", "pay.payCard": "پرداخت با کارت ←", "pay.placeBank": "ثبت سفارش و نمایش حساب",
+      "pay.hesab": "پرداخت با حساب پی (HesabPay)",
+      "pay.hesabInfo": "با حساب پی پرداخت کنید و رسید را در واتساپ بفرستید:",
+      "pay.hesabNumber": "شماره/آی‌دی حساب پی", "pay.hesabOpen": "پرداخت با حساب پی ←",
+      "pay.noHesab": "پرداخت با حساب پی هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "order.placed": "سفارش شما ثبت شد ✓",
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
       "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
@@ -240,6 +244,10 @@
       "pay.noBank": "Bank account details are not set yet. Please use WhatsApp.",
       "pay.noCard": "Online payment is not set up yet. Please use WhatsApp or bank transfer.",
       "pay.placeWhatsapp": "Place order (WhatsApp)", "pay.payCard": "Pay by card →", "pay.placeBank": "Place order & show account",
+      "pay.hesab": "Pay with HesabPay",
+      "pay.hesabInfo": "Pay via HesabPay and send the receipt on WhatsApp:",
+      "pay.hesabNumber": "HesabPay number/ID", "pay.hesabOpen": "Pay with HesabPay →",
+      "pay.noHesab": "HesabPay is not set up yet. Please use WhatsApp or bank transfer.",
       "order.placed": "Your order has been placed ✓",
       "orders.title": "My orders", "orders.empty": "You have no orders yet.",
       "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
@@ -300,6 +308,7 @@
   let CONFIG = {
     whatsapp: "93791505454", logo: "",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
+    hesab: { link: "", number: "" },
     emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
   };
 
@@ -326,6 +335,7 @@
     if (n.config) {
       CONFIG = Object.assign({}, CONFIG, n.config);
       CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
+      CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
       CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
     }
   }
@@ -588,10 +598,19 @@
   const payInfoEl = $("#payInfo");
   function bankInfo() { return CONFIG.bank || {}; }
   function paymentLink() { return CONFIG.paymentLink || ""; }
+  function hesabInfo() { return CONFIG.hesab || {}; }
   function updatePayInfo() {
     if (!payInfoEl) return;
     const placeBtn = $("#placeOrder");
-    if (payMethod === "bank") {
+    if (payMethod === "hesab") {
+      const h = hesabInfo();
+      if (h.link || h.number) {
+        payInfoEl.hidden = false;
+        payInfoEl.innerHTML = `${t("pay.hesabInfo")}<br>` +
+          (h.number ? `<b>${t("pay.hesabNumber")}:</b> <span dir="ltr">${h.number}</span>` : "");
+      } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noHesab"); }
+      if (placeBtn) placeBtn.textContent = h.link ? t("pay.hesabOpen") : t("pay.placeBank");
+    } else if (payMethod === "bank") {
       const b = bankInfo();
       if (b.holder || b.number || b.name) {
         payInfoEl.hidden = false;
@@ -679,7 +698,7 @@
       return "• " + inm + vs + code + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
     });
     const c = order.customer || {};
-    const payLabel = order.payment === "bank" ? t("pay.bank") : (order.payment === "card" ? t("pay.card") : t("pay.whatsapp"));
+    const payLabel = order.payment === "bank" ? t("pay.bank") : order.payment === "card" ? t("pay.card") : order.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
     return t("order.header") + "\n" + t("order.number") + ": " + order.id + "\n\n" + lines.join("\n") +
       "\n\n" + t("cart.total") + ": " + money(order.total) +
       "\n\n" + t("order.customer") + ": " + (c.name || "") + "\n" + t("acct.phone") + ": " + (c.phone || "") +
@@ -699,7 +718,13 @@
     const customer = { name: nm, phone: ph, address: ad, note: note, email: email };
 
     let order;
-    if (payMethod === "card") {
+    if (payMethod === "hesab") {
+      const h = hesabInfo();
+      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return; }
+      order = recordOrder(customer, "hesab", t("status.awaitPay"));
+      if (h.link) window.open(h.link, "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+    } else if (payMethod === "card") {
       const link = paymentLink();
       if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return; }
       order = recordOrder(customer, "card", t("status.awaitPay"));
@@ -745,7 +770,7 @@
       }).join("");
       const d = new Date(o.date);
       const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
-      const payLabel = o.payment === "bank" ? t("pay.bank") : (o.payment === "card" ? t("pay.card") : t("pay.whatsapp"));
+      const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
       const closed = o.status === t("status.cancelled") || o.status === t("status.returnReq");
       const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
       return `

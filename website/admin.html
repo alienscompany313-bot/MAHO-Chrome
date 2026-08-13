@@ -216,6 +216,12 @@
         <div class="field"><label>شماره حساب / کارت</label><input id="cfg_bank_number" dir="ltr"></div>
         <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="cfg_paylink" dir="ltr" placeholder="https://..."></div>
       </div>
+      <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
+      <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت شماره/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
+      <div class="grid2">
+        <div class="field"><label>لینک پرداخت حساب پی</label><input id="cfg_hesab_link" dir="ltr" placeholder="https://..."></div>
+        <div class="field"><label>شماره/آی‌دی حساب پی</label><input id="cfg_hesab_number" dir="ltr"></div>
+      </div>
 
       <h3 style="margin:16px 0 6px;font-size:16px">ایمیل (EmailJS)</h3>
       <div class="sub">برای ارسال «کد تأیید حساب» و «تأیید سفارش». یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید. تا خالی است، حالت آزمایشی فعال می‌ماند.</div>
@@ -404,6 +410,7 @@
       $("#cfg_whatsapp").value=c.whatsapp||"";
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
+      var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
@@ -414,6 +421,7 @@
         logo:(state.config&&state.config.logo)||"",
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
+        hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
       };
     }
@@ -557,7 +565,7 @@
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     $("#cfg_logo").addEventListener("change",function(e){

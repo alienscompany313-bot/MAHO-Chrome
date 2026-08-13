@@ -31,6 +31,7 @@
     "logo": "",
     "bank": { "holder": "", "name": "", "number": "" },
     "paymentLink": "",
+    "hesab": { "link": "", "number": "" },
     "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" }
   }
 }

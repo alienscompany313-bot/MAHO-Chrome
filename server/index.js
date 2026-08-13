@@ -208,7 +208,7 @@ app.post("/api/orders", (req, res) => {
     id: nextOrderNo(), date: Date.now(),
     items: items.map((it) => ({ name: it.name, name_en: it.name_en || "", code: it.code || "", price: it.price || 0, qty: it.qty || 1, size: it.size || "", color: it.color || "" })),
     total: total, customer: customer, payment: b.payment || "whatsapp",
-    status: (b.payment === "bank" || b.payment === "card") ? "awaiting_payment" : "pending",
+    status: (b.payment === "bank" || b.payment === "card" || b.payment === "hesab") ? "awaiting_payment" : "pending",
     userId: s && s.type === "user" ? s.userId : null,
   };
   db.orders.unshift(order);
