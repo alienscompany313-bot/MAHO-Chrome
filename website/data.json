@@ -24,7 +24,7 @@
     "phone_en": "+93 791 505 454",
     "whatsapp": "93791505454",
     "map": "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
-    "emailjs": { "serviceId": "", "templateId": "", "publicKey": "" },
+    "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" },
     "bank": { "holder": "", "name": "", "number": "" },
     "paymentLink": ""
   }

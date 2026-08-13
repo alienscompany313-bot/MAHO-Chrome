@@ -225,6 +225,13 @@ p { margin: 0 0 1em; }
 .cart-items .field label, .qv-body .field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 5px; }
 .cart-items .field input, .qv-body .field input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; }
 .cart-items .field input:focus, .qv-body .field input:focus { outline: none; border-color: var(--gold); }
+.qv-body .field select { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; background: #fff; }
+.qv-body .field select:focus { outline: none; border-color: var(--gold); }
+.qv-body h4 { font-size: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.pay-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 8px; font-size: 13.5px; }
+.pay-item .pi-num { color: var(--muted); }
+.pay-item button { background: none; border: 0; color: var(--red); cursor: pointer; font-weight: 700; font-size: 13px; }
+.pay-none { color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
 .tabs { display: flex; gap: 6px; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-bottom: 16px; }
 .tab { flex: 1; border: 0; background: transparent; font-family: inherit; font-weight: 700; font-size: 14px; padding: 9px; border-radius: 999px; cursor: pointer; color: var(--muted); }
 .tab.active { background: var(--black); color: #fff; }

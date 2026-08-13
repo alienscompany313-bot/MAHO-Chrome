@@ -126,6 +126,17 @@
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
       "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
       "status.pending": "در انتظار تأیید", "status.awaitPay": "در انتظار پرداخت",
+      "acct.custNo": "شماره مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
+      "acct.newPass": "رمز عبور جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
+      "acct.saved": "تغییرات ذخیره شد ✓",
+      "acct.emailChangeCode": "برای تغییر ایمیل، کد فرستاده‌شده به ایمیل جدید را وارد کنید.",
+      "acct.verifyNewEmail": "تأیید ایمیل جدید", "acct.emailUpdated": "ایمیل شما به‌روزرسانی شد ✓",
+      "pay.type": "نوع", "pay.tCard": "کارت بانکی", "pay.tBank": "حساب بانکی",
+      "pay.add": "افزودن معلومات پرداخت", "pay.none": "هنوز معلومات پرداختی اضافه نکرده‌اید.",
+      "pay.localNote": "این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.",
+      "co.email": "ایمیل (برای تأیید سفارش)",
+      "order.number": "شماره سفارش", "order.emailSent": "ایمیل تأیید سفارش برای شما فرستاده شد.",
+      "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
     },
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
@@ -225,6 +236,17 @@
       "orders.title": "My orders", "orders.empty": "You have no orders yet.",
       "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
       "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
+      "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
+      "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
+      "acct.saved": "Changes saved ✓",
+      "acct.emailChangeCode": "To change your email, enter the code sent to the new address.",
+      "acct.verifyNewEmail": "Verify new email", "acct.emailUpdated": "Your email was updated ✓",
+      "pay.type": "Type", "pay.tCard": "Bank card", "pay.tBank": "Bank account",
+      "pay.add": "Add payment info", "pay.none": "No saved payment info yet.",
+      "pay.localNote": "This info is stored only on your device.",
+      "co.email": "Email (for order confirmation)",
+      "order.number": "Order number", "order.emailSent": "An order confirmation email was sent to you.",
+      "order.emailIntro": "Your order at MAHO is confirmed. Details:",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -260,7 +282,7 @@
       phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
       whatsapp: "93791505454",
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
-      emailjs: { serviceId: "", templateId: "", publicKey: "" },
+      emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
       bank: { holder: "", name: "", number: "" },
       paymentLink: "",
     },
@@ -484,7 +506,11 @@
   if (toCheckoutBtn) toCheckoutBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
     const s = getSession();
-    if (s) { if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || ""; if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || s.id || ""; }
+    if (s) {
+      if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || "";
+      if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || "";
+      if ($("#co_email")) $("#co_email").value = $("#co_email").value || s.email || "";
+    }
     if ($("#coMsg")) $("#coMsg").textContent = "";
     payMethod = "whatsapp";
     if (payMethodsEl) $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
@@ -543,14 +569,38 @@
   const saveOrders = (o) => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(o)); } catch (_) {} };
   function recordOrder(customer, method, status) {
     const orders = getOrders();
-    orders.unshift({
+    const order = {
       id: "MAHO-" + Date.now().toString().slice(-6),
       date: Date.now(),
       items: CART.map((it) => ({ name: it.name, name_en: it.name_en, price: it.price, qty: it.qty, size: it.size, color: it.color })),
       total: cartPriceTotal(),
       customer: customer, payment: method, status: status,
-    });
+    };
+    orders.unshift(order);
     saveOrders(orders);
+    return order;
+  }
+  function orderSummaryText(order) {
+    const lines = order.items.map((it) => {
+      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const v = [];
+      if (it.size) v.push(t("qv.size") + " " + it.size);
+      if (it.color) v.push(t("qv.color") + " " + colorName(it.color));
+      const vs = v.length ? " (" + v.join("، ") + ")" : "";
+      return "• " + inm + vs + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+    });
+    return lines.join("\n") + "\n" + t("cart.total") + ": " + money(order.total);
+  }
+  function sendOrderEmail(order, email, name) {
+    const cfg = (STORES[0] && STORES[0].emailjs) || {};
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && cfg.serviceId && cfg.orderTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      emailjs.send(cfg.serviceId, cfg.orderTemplateId,
+        { to_email: email, email: email, to_name: name || "", order_no: order.id, order_summary: orderSummaryText(order), order_total: money(order.total) },
+        { publicKey: cfg.publicKey }
+      ).catch(() => {});
+      return true;
+    }
+    return false;
   }
   function orderMessage(nm, ph, ad, note, method) {
     const lines = CART.map((it) => {
@@ -572,24 +622,27 @@
     const ph = ($("#co_phone") && $("#co_phone").value.trim()) || "";
     const ad = ($("#co_address") && $("#co_address").value.trim()) || "";
     const note = ($("#co_note") && $("#co_note").value.trim()) || "";
+    const email = ($("#co_email") && $("#co_email").value.trim()) || "";
     if (!nm || !ph || !ad) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
     if ($("#coMsg")) $("#coMsg").textContent = "";
-    const customer = { name: nm, phone: ph, address: ad, note: note };
+    const customer = { name: nm, phone: ph, address: ad, note: note, email: email };
 
+    let order;
     if (payMethod === "card") {
       const link = paymentLink();
       if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return; }
-      recordOrder(customer, "card", t("status.awaitPay"));
+      order = recordOrder(customer, "card", t("status.awaitPay"));
       window.open(link, "_blank");
     } else if (payMethod === "bank") {
-      recordOrder(customer, "bank", t("status.awaitPay"));
+      order = recordOrder(customer, "bank", t("status.awaitPay"));
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "bank")), "_blank");
     } else {
-      recordOrder(customer, "whatsapp", t("status.pending"));
+      order = recordOrder(customer, "whatsapp", t("status.pending"));
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "whatsapp")), "_blank");
     }
+    const emailed = sendOrderEmail(order, email, nm);
     CART = []; saveCart(); updateCartBadge(); renderCart();
-    showToast(t("order.placed"));
+    showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
     closeCart();
     openOrders();
   });
@@ -707,16 +760,55 @@
   const saveUsers = (u) => { try { localStorage.setItem(USERS_KEY, JSON.stringify(u)); } catch (_) {} };
   const getSession = () => { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch (_) { return null; } };
   const setSession = (s) => { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {} };
+  const CUST_SEQ_KEY = "maho_cust_seq";
+  function nextCustomerNo() {
+    let n = 0; try { n = parseInt(localStorage.getItem(CUST_SEQ_KEY) || "0", 10) || 0; } catch (_) {}
+    n += 1; try { localStorage.setItem(CUST_SEQ_KEY, String(n)); } catch (_) {}
+    return "MO" + String(n).padStart(6, "0");
+  }
+  function findUserIndex(users, s) {
+    return users.findIndex((u) => (u.email && s.email && u.email.toLowerCase() === s.email.toLowerCase()) || (u.id && s.id && u.id === s.id));
+  }
+  function updateUser(mutator) {
+    const s = getSession(); if (!s) return null;
+    const users = getUsers(); const idx = findUserIndex(users, s); if (idx < 0) return null;
+    mutator(users[idx], users, idx); saveUsers(users); return users[idx];
+  }
+  function currentUser() {
+    const s = getSession(); if (!s) return null;
+    const users = getUsers(); const idx = findUserIndex(users, s); if (idx < 0) return null;
+    if (!users[idx].customerNo) { users[idx].customerNo = nextCustomerNo(); saveUsers(users); }
+    return users[idx];
+  }
+  const maskNum = (n) => { const d = toEnDigits(n).replace(/[^0-9]/g, ""); return d.length > 4 ? "•••• " + d.slice(-4) : d; };
   const acctOverlay = $("#acctOverlay");
+  function renderPayList(u) {
+    const list = $("#payList"); if (!list) return;
+    const pays = (u && u.payments) || [];
+    if (!pays.length) { list.innerHTML = `<p class="pay-none">${t("pay.none")}</p>`; return; }
+    list.innerHTML = pays.map((p) => {
+      const typeLabel = p.type === "bank" ? t("pay.tBank") : t("pay.tCard");
+      return `<div class="pay-item"><span><b>${typeLabel}</b>${p.holder ? " — " + p.holder : ""} <span class="pi-num" dir="ltr">${maskNum(p.number)}</span></span><button type="button" data-delpay="${p.id}">${t("cart.remove")}</button></div>`;
+    }).join("");
+  }
   function renderAccount() {
     const s = getSession();
     const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
     if (!out || !inn) return;
     if (s) {
+      const u = currentUser() || {};
       out.hidden = true; inn.hidden = false;
-      $("#acctName").textContent = s.name || "";
-      $("#acctId").textContent = s.id || "";
-      $("#acctAvatar").textContent = (s.name || "M").trim().charAt(0).toUpperCase();
+      $("#acctName").textContent = u.name || s.name || "";
+      $("#acctCustNo").textContent = (u.customerNo || s.customerNo) ? (t("acct.custNo") + ": " + (u.customerNo || s.customerNo)) : "";
+      $("#acctId").textContent = u.email || s.email || s.id || "";
+      $("#acctAvatar").textContent = (u.name || s.name || "M").trim().charAt(0).toUpperCase();
+      if ($("#pf_name")) $("#pf_name").value = u.name || "";
+      if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
+      if ($("#pf_email")) $("#pf_email").value = u.email || "";
+      if ($("#pf_pass")) $("#pf_pass").value = "";
+      if ($("#pfVerify")) $("#pfVerify").hidden = true;
+      if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
+      renderPayList(u);
     } else { out.hidden = false; inn.hidden = true; }
   }
   function openAcct() { renderAccount(); if (acctOverlay) acctOverlay.classList.add("show"); }
@@ -782,9 +874,10 @@
     const entered = toEnDigits(($("#vf_code").value || "").trim()).replace(/[^0-9]/g, "");
     if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
     const users = getUsers();
-    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, id: pendingSignup.email, pass: pendingSignup.pass, verified: true });
+    const customerNo = nextCustomerNo();
+    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, id: pendingSignup.email, pass: pendingSignup.pass, verified: true, customerNo: customerNo, payments: [] });
     saveUsers(users);
-    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone });
+    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone, customerNo: customerNo });
     const nm = pendingSignup.name; pendingSignup = null;
     if ($("#vf_code")) $("#vf_code").value = "";
     renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
@@ -805,11 +898,67 @@
     const id = ($("#lg_id").value || "").trim(), pass = ($("#lg_pass").value || "").trim();
     const u = getUsers().find((x) => pass === x.pass && [x.email, x.phone, x.id].some((v) => v && v.toLowerCase() === id.toLowerCase()));
     if (!u) { acctMsg(t("acct.bad")); return; }
-    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone }); renderAccount();
+    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone, customerNo: u.customerNo }); renderAccount();
     acctMsg(t("acct.hi") + "، " + u.name, true); showToast(t("acct.hi") + "، " + u.name);
   });
   const logoutBtn = $("#logoutBtn");
   if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); selectTab(true); renderAccount(); });
+
+  /* profile edit + payment info */
+  let pendingEmailChange = null;
+  function pfMsg(text, ok) { const m = $("#pfMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+  const saveProfileBtn = $("#saveProfileBtn");
+  if (saveProfileBtn) saveProfileBtn.addEventListener("click", () => {
+    const u = currentUser(); if (!u) return;
+    const name = ($("#pf_name").value || "").trim();
+    const phone = ($("#pf_phone").value || "").trim();
+    const email = ($("#pf_email").value || "").trim();
+    const newpass = ($("#pf_pass").value || "").trim();
+    if (!name || !phone || !email) { pfMsg(t("acct.needAll")); return; }
+    if (!emailOk(email)) { pfMsg(t("acct.badEmail")); return; }
+    const emailChanged = email.toLowerCase() !== (u.email || "").toLowerCase();
+    if (emailChanged && getUsers().some((x) => (x.email || "").toLowerCase() === email.toLowerCase())) { pfMsg(t("acct.emailExists")); return; }
+    updateUser((usr) => { usr.name = name; usr.phone = phone; if (newpass) usr.pass = newpass; });
+    setSession(Object.assign({}, getSession(), { name: name, phone: phone }));
+    if (emailChanged) {
+      const code = genCode(); pendingEmailChange = { email: email, code: code };
+      if ($("#pfVerify")) $("#pfVerify").hidden = false;
+      pfMsg(t("acct.sending"), true);
+      sendCode(email, name, code).then((res) => {
+        if (res.sent) pfMsg(t("acct.emailChangeCode"), true);
+        else pfMsg(t("acct.emailChangeCode") + " — " + t("acct.demoNote").replace("{code}", code), true);
+      }).catch(() => pfMsg(t("acct.sendFail")));
+    } else { renderAccount(); pfMsg(t("acct.saved"), true); showToast(t("acct.saved")); }
+  });
+  const pfVerifyBtn = $("#pfVerifyBtn");
+  if (pfVerifyBtn) pfVerifyBtn.addEventListener("click", () => {
+    if (!pendingEmailChange) return;
+    const entered = toEnDigits(($("#pf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (entered !== pendingEmailChange.code) { pfMsg(t("acct.badCode")); return; }
+    const newEmail = pendingEmailChange.email;
+    updateUser((usr) => { usr.email = newEmail; usr.id = newEmail; });
+    setSession(Object.assign({}, getSession(), { email: newEmail, id: newEmail }));
+    pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
+    renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
+  });
+  const addPayBtn = $("#addPayBtn");
+  if (addPayBtn) addPayBtn.addEventListener("click", () => {
+    const u = currentUser(); if (!u) return;
+    const type = $("#pay_type").value;
+    const holder = ($("#pay_holder").value || "").trim();
+    const number = ($("#pay_number").value || "").trim();
+    if (!number) { pfMsg(t("acct.needAll")); return; }
+    updateUser((usr) => { usr.payments = usr.payments || []; usr.payments.push({ id: Date.now(), type: type, holder: holder, number: number }); });
+    $("#pay_holder").value = ""; $("#pay_number").value = "";
+    renderPayList(currentUser()); showToast(t("acct.saved"));
+  });
+  const payListEl = $("#payList");
+  if (payListEl) payListEl.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-delpay]"); if (!b) return;
+    const id = b.getAttribute("data-delpay");
+    updateUser((usr) => { usr.payments = (usr.payments || []).filter((p) => String(p.id) !== String(id)); });
+    renderPayList(currentUser());
+  });
 
   /* category cards -> filter + scroll to products */
   const catGrid = document.querySelector(".cat-grid");
