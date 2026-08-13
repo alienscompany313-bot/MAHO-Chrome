@@ -111,7 +111,7 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-hidden="true">
+        <div class="hero-visual">
           <div class="hero-card c1 float">
             <span class="tag" data-i18n="herocard.tag1">پرفروش</span>
             <h4 data-i18n="herocard.t1">لباس مجلسی</h4>
@@ -296,7 +296,7 @@
   </footer>
 
   <!-- Quick view -->
-  <div class="ov" id="qvOverlay" aria-hidden="true">
+  <div class="ov" id="qvOverlay">
     <div class="qv-modal" role="dialog" aria-modal="true" aria-label="جزئیات محصول">
       <button class="modal-x" id="qvClose" aria-label="بستن">✕</button>
       <div class="qv-media" id="qvMedia"></div>
@@ -321,7 +321,7 @@
   </div>
 
   <!-- Cart drawer (with checkout steps) -->
-  <div class="ov" id="cartOverlay" aria-hidden="true">
+  <div class="ov" id="cartOverlay">
     <aside class="cart-drawer" role="dialog" aria-modal="true" aria-label="سبد خرید">
       <div class="cart-head">
         <h3 id="cartTitle" data-i18n="cart.title">سبد خرید</h3>
@@ -347,18 +347,27 @@
           <div class="field"><label data-i18n="co.phone">شماره تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
           <div class="field"><label data-i18n="co.address">آدرس تحویل *</label><input id="co_address"></div>
           <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
+          <div class="field">
+            <label data-i18n="co.payment">روش پرداخت</label>
+            <div class="pay-methods" id="payMethods">
+              <button type="button" class="pay-method active" data-method="whatsapp" data-i18n="pay.whatsapp">سفارش از طریق واتساپ (پرداخت هنگام تحویل)</button>
+              <button type="button" class="pay-method" data-method="bank" data-i18n="pay.bank">انتقال / پرداخت بانکی</button>
+              <button type="button" class="pay-method" data-method="card" data-i18n="pay.card">پرداخت آنلاین با کارت</button>
+            </div>
+            <div class="pay-info" id="payInfo" hidden></div>
+          </div>
           <p class="qv-msg" id="coMsg"></p>
         </div>
         <div class="cart-foot">
           <div class="cart-total"><span data-i18n="cart.total">مجموع</span><span id="cartTotal2"></span></div>
-          <button class="btn btn-lg" id="placeOrder" data-i18n="cart.checkout">ثبت سفارش از طریق واتساپ</button>
+          <button class="btn btn-lg" id="placeOrder" data-i18n="pay.placeWhatsapp">ثبت سفارش (واتساپ)</button>
         </div>
       </div>
     </aside>
   </div>
 
   <!-- Account modal -->
-  <div class="ov" id="acctOverlay" aria-hidden="true">
+  <div class="ov" id="acctOverlay">
     <div class="qv-modal" role="dialog" aria-modal="true" aria-label="حساب کاربری" style="max-width:440px">
       <button class="modal-x" id="acctClose" aria-label="بستن">✕</button>
       <div class="qv-body">
@@ -393,6 +402,18 @@
           <p class="muted" id="acctId" style="text-align:center"></p>
           <button class="btn btn-outline" id="logoutBtn" style="width:100%" data-i18n="acct.logout">خروج از حساب</button>
         </div>
+        <button class="btn btn-lg" id="ordersBtn" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Orders modal -->
+  <div class="ov" id="ordersOverlay">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-label="سفارشات من" style="max-width:540px">
+      <button class="modal-x" id="ordersClose" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <h3 data-i18n="orders.title">سفارشات من</h3>
+        <div id="ordersList" style="margin-top:10px"></div>
       </div>
     </div>
   </div>

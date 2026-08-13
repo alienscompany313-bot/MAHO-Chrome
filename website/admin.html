@@ -147,6 +147,14 @@
         <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
         <div class="field"><label>شماره واتساپ برای سفارش (مثلاً 0700123456)</label><input id="s_whatsapp" dir="ltr" placeholder="0700123456"></div>
       </div>
+      <h3 style="margin:18px 0 6px;font-size:16px">اطلاعات پرداخت (اختیاری)</h3>
+      <div class="sub">برای گزینه‌ی «انتقال/پرداخت بانکی» در سبد خرید. اگر لینک درگاه پرداخت آنلاین دارید، در خانه‌ی آخر بگذارید.</div>
+      <div class="grid2">
+        <div class="field"><label>نام صاحب حساب</label><input id="s_bank_holder"></div>
+        <div class="field"><label>نام بانک</label><input id="s_bank_name"></div>
+        <div class="field"><label>شماره حساب / کارت</label><input id="s_bank_number" dir="ltr"></div>
+        <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="s_paylink" dir="ltr" placeholder="https://..."></div>
+      </div>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnStore">ذخیره تغییرات</button></div>
     </div>
 
@@ -305,6 +313,7 @@
       $("#s_phone").value=s.phone||""; $("#s_phone_en").value=s.phone_en||"";
       $("#s_map").value=s.map||""; $("#s_whatsapp").value=s.whatsapp||"";
       var ej=s.emailjs||{}; $("#s_ejs_service").value=ej.serviceId||""; $("#s_ejs_template").value=ej.templateId||""; $("#s_ejs_key").value=ej.publicKey||"";
+      var bk=s.bank||{}; $("#s_bank_holder").value=bk.holder||""; $("#s_bank_name").value=bk.name||""; $("#s_bank_number").value=bk.number||""; $("#s_paylink").value=s.paymentLink||"";
     }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
@@ -385,7 +394,7 @@
     };
 
     /* ---------- store fields ---------- */
-    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp","s_ejs_service","s_ejs_template","s_ejs_key"].forEach(function(id){
+    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp","s_ejs_service","s_ejs_template","s_ejs_key","s_bank_holder","s_bank_name","s_bank_number","s_paylink"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     function collectStore(){
@@ -394,7 +403,9 @@
         hours:$("#s_hours").value.trim(), hours_en:$("#s_hours_en").value.trim(),
         phone:$("#s_phone").value.trim(), phone_en:$("#s_phone_en").value.trim(),
         map:$("#s_map").value.trim(), whatsapp:$("#s_whatsapp").value.trim(),
-        emailjs:{ serviceId:$("#s_ejs_service").value.trim(), templateId:$("#s_ejs_template").value.trim(), publicKey:$("#s_ejs_key").value.trim() } };
+        emailjs:{ serviceId:$("#s_ejs_service").value.trim(), templateId:$("#s_ejs_template").value.trim(), publicKey:$("#s_ejs_key").value.trim() },
+        bank:{ holder:$("#s_bank_holder").value.trim(), name:$("#s_bank_name").value.trim(), number:$("#s_bank_number").value.trim() },
+        paymentLink:$("#s_paylink").value.trim() };
     }
 
     /* ---------- save / export / import / reset ---------- */

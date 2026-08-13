@@ -114,6 +114,18 @@
       "acct.demoNote": "حالت آزمایشی: کد تأیید شما {code} است. برای ارسال واقعی ایمیل، تنظیمات EmailJS را در پنل مدیریت کامل کنید.",
       "order.customer": "مشتری", "order.addr": "آدرس", "order.note": "توضیحات",
       "order.header": "سلام، می‌خواهم این کالاها را سفارش بدهم:",
+      "co.payment": "روش پرداخت",
+      "pay.whatsapp": "سفارش از طریق واتساپ (پرداخت هنگام تحویل)",
+      "pay.bank": "انتقال / پرداخت بانکی", "pay.card": "پرداخت آنلاین با کارت",
+      "pay.bankInfo": "مبلغ را به حساب زیر انتقال دهید و رسید را در واتساپ بفرستید:",
+      "pay.holder": "به نام", "pay.bankName": "بانک", "pay.accountNo": "شماره حساب / کارت",
+      "pay.noBank": "اطلاعات حساب بانکی هنوز ثبت نشده است. لطفاً از واتساپ استفاده کنید.",
+      "pay.noCard": "درگاه پرداخت آنلاین هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
+      "pay.placeWhatsapp": "ثبت سفارش (واتساپ)", "pay.payCard": "پرداخت با کارت ←", "pay.placeBank": "ثبت سفارش و نمایش حساب",
+      "order.placed": "سفارش شما ثبت شد ✓",
+      "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
+      "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
+      "status.pending": "در انتظار تأیید", "status.awaitPay": "در انتظار پرداخت",
     },
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
@@ -201,6 +213,18 @@
       "acct.demoNote": "Demo mode: your verification code is {code}. To send real emails, configure EmailJS in the admin panel.",
       "order.customer": "Customer", "order.addr": "Address", "order.note": "Notes",
       "order.header": "Hello, I'd like to order these items:",
+      "co.payment": "Payment method",
+      "pay.whatsapp": "Order via WhatsApp (pay on delivery)",
+      "pay.bank": "Bank transfer / payment", "pay.card": "Pay online by card",
+      "pay.bankInfo": "Please transfer the amount to the account below and send the receipt on WhatsApp:",
+      "pay.holder": "Account holder", "pay.bankName": "Bank", "pay.accountNo": "Account / card number",
+      "pay.noBank": "Bank account details are not set yet. Please use WhatsApp.",
+      "pay.noCard": "Online payment is not set up yet. Please use WhatsApp or bank transfer.",
+      "pay.placeWhatsapp": "Place order (WhatsApp)", "pay.payCard": "Pay by card →", "pay.placeBank": "Place order & show account",
+      "order.placed": "Your order has been placed ✓",
+      "orders.title": "My orders", "orders.empty": "You have no orders yet.",
+      "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
+      "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -237,6 +261,8 @@
       whatsapp: "93791505454",
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
       emailjs: { serviceId: "", templateId: "", publicKey: "" },
+      bank: { holder: "", name: "", number: "" },
+      paymentLink: "",
     },
   ];
 
@@ -460,6 +486,9 @@
     const s = getSession();
     if (s) { if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || ""; if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || s.id || ""; }
     if ($("#coMsg")) $("#coMsg").textContent = "";
+    payMethod = "whatsapp";
+    if (payMethodsEl) $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
+    updatePayInfo();
     showScreen("checkout");
   });
   const backToCartBtn = $("#backToCart");
@@ -472,6 +501,70 @@
     if (s.charAt(0) === "0") s = "93" + s.slice(1);
     return s;
   }
+  /* payment method selection */
+  let payMethod = "whatsapp";
+  const payMethodsEl = $("#payMethods");
+  const payInfoEl = $("#payInfo");
+  function bankInfo() { return (STORES[0] && STORES[0].bank) || {}; }
+  function paymentLink() { return (STORES[0] && STORES[0].paymentLink) || ""; }
+  function updatePayInfo() {
+    if (!payInfoEl) return;
+    const placeBtn = $("#placeOrder");
+    if (payMethod === "bank") {
+      const b = bankInfo();
+      if (b.holder || b.number || b.name) {
+        payInfoEl.hidden = false;
+        payInfoEl.innerHTML = `${t("pay.bankInfo")}<br>` +
+          (b.holder ? `<b>${t("pay.holder")}:</b> ${b.holder}<br>` : "") +
+          (b.name ? `<b>${t("pay.bankName")}:</b> ${b.name}<br>` : "") +
+          (b.number ? `<b>${t("pay.accountNo")}:</b> <span dir="ltr">${b.number}</span>` : "");
+      } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noBank"); }
+      if (placeBtn) placeBtn.textContent = t("pay.placeBank");
+    } else if (payMethod === "card") {
+      payInfoEl.hidden = false;
+      payInfoEl.textContent = paymentLink() ? t("pay.card") : t("pay.noCard");
+      if (placeBtn) placeBtn.textContent = t("pay.payCard");
+    } else {
+      payInfoEl.hidden = true; payInfoEl.textContent = "";
+      if (placeBtn) placeBtn.textContent = t("pay.placeWhatsapp");
+    }
+  }
+  if (payMethodsEl) payMethodsEl.addEventListener("click", (e) => {
+    const b = e.target.closest(".pay-method"); if (!b) return;
+    payMethod = b.dataset.method;
+    $$(".pay-method", payMethodsEl).forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    updatePayInfo();
+  });
+
+  /* orders storage */
+  const ORDERS_KEY = "maho_orders";
+  const getOrders = () => { try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; } catch (_) { return []; } };
+  const saveOrders = (o) => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(o)); } catch (_) {} };
+  function recordOrder(customer, method, status) {
+    const orders = getOrders();
+    orders.unshift({
+      id: "MAHO-" + Date.now().toString().slice(-6),
+      date: Date.now(),
+      items: CART.map((it) => ({ name: it.name, name_en: it.name_en, price: it.price, qty: it.qty, size: it.size, color: it.color })),
+      total: cartPriceTotal(),
+      customer: customer, payment: method, status: status,
+    });
+    saveOrders(orders);
+  }
+  function orderMessage(nm, ph, ad, note, method) {
+    const lines = CART.map((it) => {
+      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const v = variantLabel(it) ? " (" + variantLabel(it) + ")" : "";
+      return "• " + inm + v + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+    });
+    const payLabel = method === "bank" ? t("pay.bank") : t("pay.whatsapp");
+    return t("order.header") + "\n\n" + lines.join("\n") +
+      "\n\n" + t("cart.total") + ": " + money(cartPriceTotal()) +
+      "\n\n" + t("order.customer") + ": " + nm + "\n" + t("acct.phone") + ": " + ph +
+      "\n" + t("order.addr") + ": " + ad + (note ? "\n" + t("order.note") + ": " + note : "") +
+      "\n" + t("co.payment") + ": " + payLabel;
+  }
   const placeOrderBtn = $("#placeOrder");
   if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
@@ -480,17 +573,64 @@
     const ad = ($("#co_address") && $("#co_address").value.trim()) || "";
     const note = ($("#co_note") && $("#co_note").value.trim()) || "";
     if (!nm || !ph || !ad) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
-    const lines = CART.map((it) => {
-      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
-      const v = variantLabel(it) ? " (" + variantLabel(it) + ")" : "";
-      return "• " + inm + v + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
-    });
-    const msg = t("order.header") + "\n\n" + lines.join("\n") +
-      "\n\n" + t("cart.total") + ": " + money(cartPriceTotal()) +
-      "\n\n" + t("order.customer") + ": " + nm + "\n" + t("acct.phone") + ": " + ph +
-      "\n" + t("order.addr") + ": " + ad + (note ? "\n" + t("order.note") + ": " + note : "");
-    window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(msg), "_blank");
+    if ($("#coMsg")) $("#coMsg").textContent = "";
+    const customer = { name: nm, phone: ph, address: ad, note: note };
+
+    if (payMethod === "card") {
+      const link = paymentLink();
+      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return; }
+      recordOrder(customer, "card", t("status.awaitPay"));
+      window.open(link, "_blank");
+    } else if (payMethod === "bank") {
+      recordOrder(customer, "bank", t("status.awaitPay"));
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "bank")), "_blank");
+    } else {
+      recordOrder(customer, "whatsapp", t("status.pending"));
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "whatsapp")), "_blank");
+    }
+    CART = []; saveCart(); updateCartBadge(); renderCart();
+    showToast(t("order.placed"));
+    closeCart();
+    openOrders();
   });
+
+  /* My Orders */
+  const ordersOverlay = $("#ordersOverlay");
+  function renderOrders() {
+    const list = $("#ordersList"); if (!list) return;
+    const orders = getOrders();
+    if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+    list.innerHTML = orders.map((o) => {
+      const items = o.items.map((it) => {
+        const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+        const variant = [];
+        if (it.size) variant.push(t("qv.size") + " " + it.size);
+        if (it.color) variant.push(t("qv.color") + " " + colorName(it.color));
+        const vs = variant.length ? " — " + variant.join("، ") : "";
+        return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}</li>`;
+      }).join("");
+      const d = new Date(o.date);
+      const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
+      const payLabel = o.payment === "bank" ? t("pay.bank") : (o.payment === "card" ? t("pay.card") : t("pay.whatsapp"));
+      return `
+        <div class="order-card">
+          <div class="order-top">
+            <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
+            <span class="order-status">${o.status || ""}</span>
+          </div>
+          <ul>${items}</ul>
+          <div class="order-top">
+            <span>${t("orders.pay")}: ${payLabel}</span>
+            <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
+          </div>
+        </div>`;
+    }).join("");
+  }
+  function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
+  function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
+  const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
+  const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
+  if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
 
   /* -------------------- Quick view (gallery + size/color) -------------------- */
   const qvOverlay = $("#qvOverlay");
@@ -559,7 +699,7 @@
     closeQuickView();
   });
 
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); closeAcct(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); closeAcct(); closeOrders(); } });
 
   /* -------------------- Accounts (client-side) -------------------- */
   const USERS_KEY = "maho_users", SESS_KEY = "maho_session";
@@ -823,6 +963,7 @@
     renderCart();
     updateCartBadge();
     renderAccount();
+    updatePayInfo();
     formatCounters();
     updateYear();
     const label = $("#langLabel");
