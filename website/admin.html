@@ -200,6 +200,10 @@
         <div class="field"><label>توضیح زیر عنوان (دری)</label><input id="c_heroLead"></div>
         <div class="field"><label>توضیح زیر عنوان (English)</label><input id="c_heroLead_en" dir="ltr"></div>
       </div>
+      <h3 style="margin:14px 0 6px;font-size:16px">آمار سربرگ (اعداد بالای صفحه)</h3>
+      <div class="sub">چهار عدد و برچسبی که بالای صفحه‌ی اصلی نمایش داده می‌شود (مثلاً «۵۰۰۰ مشتری راضی»).</div>
+      <div id="statsRows"></div>
+
       <h3 style="margin:14px 0 6px;font-size:16px">فوتر (پایین سایت)</h3>
       <div class="grid2">
         <div class="field"><label>توضیح فوتر (دری)</label><input id="c_footerDesc"></div>
@@ -242,6 +246,15 @@
         <div class="field"><label>شماره حساب / کارت</label><input id="cfg_bank_number" dir="ltr"></div>
         <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="cfg_paylink" dir="ltr" placeholder="https://..."></div>
       </div>
+      <h3 style="margin:14px 0 6px;font-size:16px">دلیوری (ارسال)</h3>
+      <div class="sub">هزینه‌ی دلیوری بر اساس فاصله محاسبه می‌شود. برای محاسبه‌ی خودکار فاصله، مختصات فروشگاه‌ها را (در بخش فروشگاه‌ها) وارد کنید.</div>
+      <div class="grid2">
+        <div class="field"><label>دلیوری فعال باشد؟</label><select id="cfg_delivery_enabled" class="ctrl"><option value="yes">بله</option><option value="no">خیر</option></select></div>
+        <div class="field"><label>قیمت هر کیلومتر (افغانی)</label><input id="cfg_delivery_perkm" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>تا این فاصله رایگان (کیلومتر)</label><input id="cfg_delivery_freekm" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>هزینه‌ی اضافه‌ی دلیوری عاجل (همان روز)</label><input id="cfg_delivery_urgent" type="number" min="0" inputmode="numeric"></div>
+      </div>
+
       <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
       <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت شماره/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
       <div class="grid2">
@@ -365,6 +378,11 @@
         <div class="field"><label>شماره تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
       <div class="field"><label>لینک گوگل مپ</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
+      <div class="grid2">
+        <div class="field"><label>عرض جغرافیایی lat (برای محاسبه‌ی دلیوری)</label><input id="st_lat" dir="ltr" placeholder="34.52"></div>
+        <div class="field"><label>طول جغرافیایی lng</label><input id="st_lng" dir="ltr" placeholder="69.18"></div>
+      </div>
+      <p class="note">مختصات را از گوگل‌مپ کپی کنید (روی محل فروشگاه راست‌کلیک → اعداد را کپی کنید). برای محاسبه‌ی خودکار فاصله‌ی دلیوری لازم است.</p>
       <p class="note" id="storeMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="storeCancelBtn">لغو</button>
@@ -438,6 +456,7 @@
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
       var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
+      var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100);
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
@@ -450,12 +469,31 @@
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
+        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0},
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
       };
     }
     var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink"];
-    function fillContent(){ var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; }); }
-    function collectContent(){ var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} }); if(!state.config) state.config={}; state.config.content=c; }
+    function esc(s){ return String(s||"").replace(/"/g,"&quot;"); }
+    function fillContent(){
+      var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
+      var stats=c.stats||[];
+      var box=$("#statsRows");
+      if(box){
+        box.innerHTML=[0,1,2,3].map(function(i){ var s=stats[i]||{}; return '<div class="grid2" style="border-bottom:1px dashed var(--line);padding-bottom:6px;margin-bottom:6px">'+
+          '<div class="field"><label>عدد '+(i+1)+'</label><input id="stat'+i+'_value" type="number" dir="ltr" value="'+esc(s.value)+'"></div>'+
+          '<div class="field"><label>برچسب (دری)</label><input id="stat'+i+'_label" value="'+esc(s.label)+'"></div>'+
+          '<div class="field"><label>برچسب (English)</label><input id="stat'+i+'_label_en" dir="ltr" value="'+esc(s.label_en)+'"></div></div>'; }).join("");
+        [0,1,2,3].forEach(function(i){ ["value","label","label_en"].forEach(function(k){ var el=$("#stat"+i+"_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); }); });
+      }
+    }
+    function collectContent(){
+      var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} });
+      var stats=[];
+      [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:(val!==""?Number(val):""),label:lab,label_en:laben}; else stats[i]=null; });
+      if(stats.some(function(x){return x;})) c.stats=stats;
+      if(!state.config) state.config={}; state.config.content=c;
+    }
     var barcodeSeqA=0;
     function payLabelFa(p){ return p==="bank"?"انتقال بانکی":p==="card"?"کارت آنلاین":p==="hesab"?"حساب پی":"واتساپ"; }
     function statusMatch(o,filter){
@@ -495,9 +533,15 @@
         var s=o.status||""; var isCancelled=s.indexOf("لغو")>=0; var isConfirmed=s.indexOf("تأیید شده")>=0;
         var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تأیید سفارش</button> ':'';
         var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
+        var custNo=o.customerNo||(c.customerNo)||"";
+        var dl=o.delivery||{};
+        var delLine=(dl.method==="deliver")
+          ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
+          : 'دریافت حضوری';
         return '<div class="adm-order"><div class="row-between"><b dir="ltr">'+(o.id||"")+'</b><span class="tag">'+s+'</span></div>'+
-          '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
-          '<div class="note">آدرس: '+(c.address||"-")+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
+          '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
+          '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
+          '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
           '<ul class="adm-items">'+items+'</ul>'+
           '<div class="row-between"><b>مجموع: '+money(o.total||0)+'</b><span>'+approveBtn+cancelBtn+'</span></div></div>';
       }).join("");
@@ -615,7 +659,7 @@
       $("#st_area").value=s.area||""; $("#st_area_en").value=s.area_en||"";
       $("#st_hours").value=s.hours||""; $("#st_hours_en").value=s.hours_en||"";
       $("#st_phone").value=s.phone||""; $("#st_phone_en").value=s.phone_en||"";
-      $("#st_map").value=s.map||"";
+      $("#st_map").value=s.map||""; $("#st_lat").value=s.lat||""; $("#st_lng").value=s.lng||"";
       $("#storeOverlay").classList.add("show");
     }
     function closeStore(){$("#storeOverlay").classList.remove("show")}
@@ -634,13 +678,13 @@
         area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
         hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
         phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
-        map:$("#st_map").value.trim() };
+        map:$("#st_map").value.trim(), lat:$("#st_lat").value.trim(), lng:$("#st_lng").value.trim() };
       if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
       renderStoreTable(); setDirty(true); closeStore();
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     $("#cfg_logo").addEventListener("change",function(e){

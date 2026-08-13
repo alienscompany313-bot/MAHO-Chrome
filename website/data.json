@@ -33,6 +33,7 @@
     "bank": { "holder": "", "name": "", "number": "" },
     "paymentLink": "",
     "hesab": { "link": "", "number": "" },
+    "delivery": { "enabled": true, "perKm": 10, "freeKm": 0, "urgentFee": 100 },
     "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" }
   }
 }

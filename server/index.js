@@ -202,14 +202,17 @@ app.post("/api/orders", (req, res) => {
   if (!customer.name || !customer.phone || !customer.address) return res.status(400).json({ error: "missing customer" });
   // validate stock
   for (const it of items) { const p = findProduct(it.name); if (p && p.stock != null && p.stock !== "") { if (parseInt(p.stock, 10) < (it.qty || 1)) return res.status(409).json({ error: "insufficient stock", item: it.name }); } }
-  const total = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const s = auth(req);
   const needsPay = (b.payment === "bank" || b.payment === "card" || b.payment === "hesab");
   const autoApprove = ((db.config && db.config.orderApproval) || "manual") === "auto";
+  const deliveryFee = (b.delivery && Number(b.delivery.fee)) || 0;
   const order = {
     id: nextOrderNo(), date: Date.now(),
     items: items.map((it) => ({ name: it.name, name_en: it.name_en || "", code: it.code || "", price: it.price || 0, qty: it.qty || 1, size: it.size || "", color: it.color || "" })),
-    total: total, customer: customer, payment: b.payment || "whatsapp",
+    itemsTotal: itemsTotal, deliveryFee: deliveryFee, total: itemsTotal + deliveryFee,
+    delivery: b.delivery || null, customerNo: (customer && customer.customerNo) || "",
+    customer: customer, payment: b.payment || "whatsapp",
     status: needsPay ? "awaiting_payment" : (autoApprove ? "confirmed" : "pending"),
     userId: s && s.type === "user" ? s.userId : null,
   };

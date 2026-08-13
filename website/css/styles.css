@@ -262,7 +262,7 @@ p { margin: 0 0 1em; }
 
 /* Fix quick-view zoom + make modals scrollable (also fixes account scroll) */
 .qv-modal { overflow-y: auto; }
-.qv-media { aspect-ratio: auto; height: 220px; }
+.qv-media { aspect-ratio: auto; height: 300px; }
 
 /* Stock indicators */
 .product-card.out { opacity: .9; }
@@ -272,6 +272,8 @@ p { margin: 0 0 1em; }
 .stock-note.out { color: var(--red); }
 .icon-btn:disabled { opacity: .4; cursor: not-allowed; }
 #payCardExtra[hidden] { display: none; }
+#co_km { border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; }
+.qv-opt-label { display: block; font-weight: 700; font-size: 13px; margin: 4px 0 6px; color: var(--muted); }
 
 .nav-toggle {
   display: none; width: 44px; height: 44px; border: 0; border-radius: 12px;
@@ -413,6 +415,9 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .product-media .ic { width: 66px; height: 66px; stroke-width: 1.3; position: relative; z-index: 1; color: #fff; transition: transform .35s ease; }
 .product-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
 .product-card:hover .product-media img { transform: scale(1.05); transition: transform .4s ease; }
+/* Quick-view shows the FULL image (no crop) */
+.qv-media.has-img { background: #f4efe6; }
+.qv-media.has-img img { object-fit: contain; }
 .product-card:hover .product-media .ic { transform: scale(1.08) rotate(-3deg); }
 .product-media::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 80% 0%, rgba(255, 255, 255, .16), transparent 60%); }
 /* Per-category tinted tiles */
