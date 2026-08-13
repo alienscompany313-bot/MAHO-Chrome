@@ -769,6 +769,7 @@
   function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
   function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
   const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
+  const ordersBtnAll = $("#ordersBtnAll"); if (ordersBtnAll) ordersBtnAll.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
   if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
   const ordersListEl = $("#ordersList");
