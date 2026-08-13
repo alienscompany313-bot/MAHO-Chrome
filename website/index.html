@@ -19,6 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -372,10 +373,17 @@
             <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
           </div>
           <div id="signupPane" hidden>
-            <div class="field"><label data-i18n="acct.name">نام و تخلص</label><input id="su_name"></div>
-            <div class="field"><label data-i18n="acct.phone">شماره تماس یا ایمیل</label><input id="su_id" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="su_name"></div>
+            <div class="field"><label data-i18n="acct.phoneNum">شماره تماس</label><input id="su_phone" dir="ltr" inputmode="tel"></div>
+            <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="su_email" type="email" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="su_pass" type="password"></div>
-            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.create">ساخت حساب</button>
+            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کد تأیید</button>
+          </div>
+          <div id="verifyPane" hidden>
+            <p class="muted" data-i18n="acct.codeSent">کد تأیید به ایمیل شما فرستاده شد. آن را وارد کنید.</p>
+            <div class="field"><label data-i18n="acct.code">کد تأیید</label><input id="vf_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code"></div>
+            <button class="btn btn-lg" id="verifyBtn" style="width:100%" data-i18n="acct.verify">تأیید و ساخت حساب</button>
+            <button class="btn btn-outline" id="resendBtn" style="width:100%;margin-top:8px" data-i18n="acct.resend">ارسال دوباره</button>
           </div>
           <p class="qv-msg" id="acctMsg"></p>
         </div>

@@ -103,8 +103,15 @@
       "acct.login": "ورود", "acct.signup": "ساخت حساب", "acct.create": "ساخت حساب", "acct.logout": "خروج از حساب",
       "acct.name": "نام و تخلص", "acct.phone": "شماره تماس یا ایمیل", "acct.pass": "رمز عبور",
       "acct.exists": "این حساب قبلاً ساخته شده است.", "acct.bad": "اطلاعات ورود درست نیست.",
-      "acct.created": "حساب شما ساخته شد ✓", "acct.hi": "خوش آمدید",
+      "acct.created": "حساب شما ساخته و تأیید شد ✓", "acct.hi": "خوش آمدید",
       "acct.need": "برای ادامه لطفاً همه‌ی خانه‌ها را پر کنید.",
+      "acct.fullname": "نام مکمل", "acct.phoneNum": "شماره تماس", "acct.email": "ایمیل",
+      "acct.sendCode": "ارسال کد تأیید", "acct.codeSent": "کد تأیید به ایمیل شما فرستاده شد. آن را وارد کنید.",
+      "acct.code": "کد تأیید", "acct.verify": "تأیید و ساخت حساب", "acct.resend": "ارسال دوباره‌ی کد",
+      "acct.badCode": "کد وارد‌شده درست نیست.", "acct.needAll": "نام، شماره تماس، ایمیل و رمز را وارد کنید.",
+      "acct.badEmail": "یک ایمیل معتبر وارد کنید.", "acct.emailExists": "این ایمیل قبلاً ثبت شده است.",
+      "acct.sending": "در حال ارسال کد...", "acct.sendFail": "ارسال ایمیل ناموفق بود. دوباره تلاش کنید.",
+      "acct.demoNote": "حالت آزمایشی: کد تأیید شما {code} است. برای ارسال واقعی ایمیل، تنظیمات EmailJS را در پنل مدیریت کامل کنید.",
       "order.customer": "مشتری", "order.addr": "آدرس", "order.note": "توضیحات",
       "order.header": "سلام، می‌خواهم این کالاها را سفارش بدهم:",
     },
@@ -183,8 +190,15 @@
       "acct.login": "Log in", "acct.signup": "Sign up", "acct.create": "Create account", "acct.logout": "Log out",
       "acct.name": "Full name", "acct.phone": "Phone or email", "acct.pass": "Password",
       "acct.exists": "This account already exists.", "acct.bad": "Incorrect login details.",
-      "acct.created": "Your account was created ✓", "acct.hi": "Welcome",
+      "acct.created": "Your account was created & verified ✓", "acct.hi": "Welcome",
       "acct.need": "Please fill in all fields to continue.",
+      "acct.fullname": "Full name", "acct.phoneNum": "Phone number", "acct.email": "Email",
+      "acct.sendCode": "Send verification code", "acct.codeSent": "A verification code was sent to your email. Enter it below.",
+      "acct.code": "Verification code", "acct.verify": "Verify & create account", "acct.resend": "Resend code",
+      "acct.badCode": "The code is incorrect.", "acct.needAll": "Enter your name, phone, email and password.",
+      "acct.badEmail": "Enter a valid email address.", "acct.emailExists": "This email is already registered.",
+      "acct.sending": "Sending code...", "acct.sendFail": "Sending the email failed. Please try again.",
+      "acct.demoNote": "Demo mode: your verification code is {code}. To send real emails, configure EmailJS in the admin panel.",
       "order.customer": "Customer", "order.addr": "Address", "order.note": "Notes",
       "order.header": "Hello, I'd like to order these items:",
     },
@@ -222,6 +236,7 @@
       phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
       whatsapp: "93791505454",
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
+      emailjs: { serviceId: "", templateId: "", publicKey: "" },
     },
   ];
 
@@ -443,7 +458,7 @@
   if (toCheckoutBtn) toCheckoutBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
     const s = getSession();
-    if (s) { if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || ""; if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.id || ""; }
+    if (s) { if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || ""; if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || s.id || ""; }
     if ($("#coMsg")) $("#coMsg").textContent = "";
     showScreen("checkout");
   });
@@ -570,36 +585,91 @@
   const acctClose = $("#acctClose"); if (acctClose) acctClose.addEventListener("click", closeAcct);
   if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAcct(); });
   const tabLogin = $("#tabLogin"), tabSignup = $("#tabSignup");
+  function showSignupStep(step) { // 'form' | 'verify'
+    if ($("#signupPane")) $("#signupPane").hidden = step !== "form";
+    if ($("#verifyPane")) $("#verifyPane").hidden = step !== "verify";
+  }
   function selectTab(login) {
     if (tabLogin) tabLogin.classList.toggle("active", login);
     if (tabSignup) tabSignup.classList.toggle("active", !login);
     if ($("#loginPane")) $("#loginPane").hidden = !login;
     if ($("#signupPane")) $("#signupPane").hidden = login;
+    if ($("#verifyPane")) $("#verifyPane").hidden = true;
     if ($("#acctMsg")) { $("#acctMsg").textContent = ""; $("#acctMsg").className = "qv-msg"; }
   }
   if (tabLogin) tabLogin.addEventListener("click", () => selectTab(true));
   if (tabSignup) tabSignup.addEventListener("click", () => selectTab(false));
   function acctMsg(text, ok) { const m = $("#acctMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+
+  const emailCfg = () => (STORES[0] && STORES[0].emailjs) || {};
+  const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
+  function sendCode(email, name, code) {
+    const cfg = emailCfg();
+    if (cfg.serviceId && cfg.templateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      return emailjs.send(cfg.serviceId, cfg.templateId,
+        { to_email: email, email: email, to_name: name, passcode: code, code: code },
+        { publicKey: cfg.publicKey }
+      ).then(() => ({ sent: true }));
+    }
+    return Promise.resolve({ sent: false, code: code }); // demo (no email service configured)
+  }
+  let pendingSignup = null;
+  const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
   const signupBtn = $("#signupBtn");
   if (signupBtn) signupBtn.addEventListener("click", () => {
-    const name = ($("#su_name").value || "").trim(), id = ($("#su_id").value || "").trim(), pass = ($("#su_pass").value || "").trim();
-    if (!name || !id || !pass) { acctMsg(t("acct.need")); return; }
+    const name = ($("#su_name").value || "").trim();
+    const phone = ($("#su_phone").value || "").trim();
+    const email = ($("#su_email").value || "").trim();
+    const pass = ($("#su_pass").value || "").trim();
+    if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
+    if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
     const users = getUsers();
-    if (users.some((u) => u.id.toLowerCase() === id.toLowerCase())) { acctMsg(t("acct.exists")); return; }
-    users.push({ name: name, id: id, pass: pass }); saveUsers(users);
-    setSession({ name: name, id: id }); renderAccount(); acctMsg(t("acct.created"), true);
-    showToast(t("acct.hi") + "، " + name);
+    if (users.some((u) => (u.email || u.id || "").toLowerCase() === email.toLowerCase())) { acctMsg(t("acct.emailExists")); return; }
+    const code = genCode();
+    pendingSignup = { name: name, phone: phone, email: email, pass: pass, code: code };
+    acctMsg(t("acct.sending"), true);
+    sendCode(email, name, code).then((res) => {
+      showSignupStep("verify");
+      if (res.sent) acctMsg(t("acct.codeSent"), true);
+      else acctMsg(t("acct.demoNote").replace("{code}", code), true);
+    }).catch(() => { acctMsg(t("acct.sendFail")); });
   });
+
+  const verifyBtn = $("#verifyBtn");
+  if (verifyBtn) verifyBtn.addEventListener("click", () => {
+    if (!pendingSignup) return;
+    const entered = toEnDigits(($("#vf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
+    const users = getUsers();
+    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, id: pendingSignup.email, pass: pendingSignup.pass, verified: true });
+    saveUsers(users);
+    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone });
+    const nm = pendingSignup.name; pendingSignup = null;
+    if ($("#vf_code")) $("#vf_code").value = "";
+    renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
+  });
+  const resendBtn = $("#resendBtn");
+  if (resendBtn) resendBtn.addEventListener("click", () => {
+    if (!pendingSignup) return;
+    pendingSignup.code = genCode();
+    acctMsg(t("acct.sending"), true);
+    sendCode(pendingSignup.email, pendingSignup.name, pendingSignup.code).then((res) => {
+      if (res.sent) acctMsg(t("acct.codeSent"), true);
+      else acctMsg(t("acct.demoNote").replace("{code}", pendingSignup.code), true);
+    }).catch(() => { acctMsg(t("acct.sendFail")); });
+  });
+
   const loginBtn = $("#loginBtn");
   if (loginBtn) loginBtn.addEventListener("click", () => {
     const id = ($("#lg_id").value || "").trim(), pass = ($("#lg_pass").value || "").trim();
-    const u = getUsers().find((x) => x.id.toLowerCase() === id.toLowerCase() && x.pass === pass);
+    const u = getUsers().find((x) => pass === x.pass && [x.email, x.phone, x.id].some((v) => v && v.toLowerCase() === id.toLowerCase()));
     if (!u) { acctMsg(t("acct.bad")); return; }
-    setSession({ name: u.name, id: u.id }); renderAccount(); acctMsg(t("acct.hi") + "، " + u.name, true);
-    showToast(t("acct.hi") + "، " + u.name);
+    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone }); renderAccount();
+    acctMsg(t("acct.hi") + "، " + u.name, true); showToast(t("acct.hi") + "، " + u.name);
   });
   const logoutBtn = $("#logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); renderAccount(); });
+  if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); selectTab(true); renderAccount(); });
 
   /* category cards -> filter + scroll to products */
   const catGrid = document.querySelector(".cat-grid");

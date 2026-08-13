@@ -150,6 +150,19 @@
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnStore">ذخیره تغییرات</button></div>
     </div>
 
+    <!-- EMAIL VERIFICATION SETTINGS -->
+    <div class="card">
+      <h2>تنظیمات ایمیل تأیید حساب (EmailJS)</h2>
+      <div class="sub">برای فرستادن «کد تأیید» به ایمیل مشتری هنگام ساخت حساب. یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید و سه مقدار زیر را وارد کنید. تا وقتی این‌ها خالی باشند، سایت در «حالت آزمایشی» کد را روی صفحه نشان می‌دهد (ایمیل واقعی فرستاده نمی‌شود).</div>
+      <div class="grid2">
+        <div class="field"><label>Service ID</label><input id="s_ejs_service" dir="ltr"></div>
+        <div class="field"><label>Template ID</label><input id="s_ejs_template" dir="ltr"></div>
+        <div class="field"><label>Public Key</label><input id="s_ejs_key" dir="ltr"></div>
+      </div>
+      <p class="note">در قالب (Template) EmailJS این متغیرها را بگذارید: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{passcode}}</code>؛ و گیرنده (To Email) را <code>{{to_email}}</code> تنظیم کنید.</p>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnEjs">ذخیره تغییرات</button></div>
+    </div>
+
     <!-- PUBLISH / SETTINGS -->
     <div class="card">
       <h2>انتشار و پشتیبان</h2>
@@ -291,6 +304,7 @@
       $("#s_hours").value=s.hours||""; $("#s_hours_en").value=s.hours_en||"";
       $("#s_phone").value=s.phone||""; $("#s_phone_en").value=s.phone_en||"";
       $("#s_map").value=s.map||""; $("#s_whatsapp").value=s.whatsapp||"";
+      var ej=s.emailjs||{}; $("#s_ejs_service").value=ej.serviceId||""; $("#s_ejs_template").value=ej.templateId||""; $("#s_ejs_key").value=ej.publicKey||"";
     }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
@@ -371,7 +385,7 @@
     };
 
     /* ---------- store fields ---------- */
-    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp"].forEach(function(id){
+    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp","s_ejs_service","s_ejs_template","s_ejs_key"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     function collectStore(){
@@ -379,7 +393,8 @@
         area:$("#s_area").value.trim(), area_en:$("#s_area_en").value.trim(),
         hours:$("#s_hours").value.trim(), hours_en:$("#s_hours_en").value.trim(),
         phone:$("#s_phone").value.trim(), phone_en:$("#s_phone_en").value.trim(),
-        map:$("#s_map").value.trim(), whatsapp:$("#s_whatsapp").value.trim() };
+        map:$("#s_map").value.trim(), whatsapp:$("#s_whatsapp").value.trim(),
+        emailjs:{ serviceId:$("#s_ejs_service").value.trim(), templateId:$("#s_ejs_template").value.trim(), publicKey:$("#s_ejs_key").value.trim() } };
     }
 
     /* ---------- save / export / import / reset ---------- */
@@ -399,6 +414,7 @@
     $("#saveBtn").onclick=saveAll;
     $("#saveBtnFloat").onclick=saveAll;
     $("#saveBtnStore").onclick=saveAll;
+    $("#saveBtnEjs").onclick=saveAll;
     $("#exportBtn").onclick=function(){
       collectStore();
       var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
