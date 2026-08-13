@@ -126,6 +126,28 @@
       </div>
     </div>
 
+    <!-- ORDERS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه/مرورگر. سفارش‌ها همچنین هنگام ثبت به واتساپ شما فرستاده می‌شوند. (برای دیدن سفارش‌های همه‌ی مشتریان از همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
+        <button class="btn btn-outline btn-sm" id="refreshOrders">بازخوانی</button>
+      </div>
+      <div style="overflow:auto">
+        <table><thead><tr><th>شماره</th><th class="hide-sm">تاریخ</th><th>مشتری</th><th>مجموع</th><th>وضعیت</th></tr></thead><tbody id="ordersBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2 id="custTitle">مشتریان</h2><div class="sub">مشتریانی که روی همین دستگاه/مرورگر ثبت‌نام کرده‌اند. (برای شمارش همه‌ی مشتریان از همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
+        <button class="btn btn-outline btn-sm" id="refreshCust">بازخوانی</button>
+      </div>
+      <div style="overflow:auto">
+        <table><thead><tr><th>شماره مشتری</th><th>نام</th><th class="hide-sm">ایمیل</th><th>شماره تماس</th></tr></thead><tbody id="custBody"></tbody></table>
+      </div>
+    </div>
+
     <!-- STORES -->
     <div class="card">
       <div class="row-between">
@@ -138,6 +160,36 @@
           <tbody id="storeBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- SITE TEXTS -->
+    <div class="card">
+      <h2>متن‌های سایت</h2>
+      <div class="sub">متن‌های دیده‌شده در سایت (سربرگ، صفحه‌ی اصلی و فوتر). هر خانه را خالی بگذارید تا متن پیش‌فرض بماند.</div>
+      <div class="grid2">
+        <div class="field"><label>زیرعنوان برند (دری)</label><input id="c_brandSub"></div>
+        <div class="field"><label>زیرعنوان برند (English)</label><input id="c_brandSub_en" dir="ltr"></div>
+        <div class="field"><label>عنوان بزرگ صفحه (دری)</label><input id="c_heroTitle"></div>
+        <div class="field"><label>عنوان بزرگ صفحه (English)</label><input id="c_heroTitle_en" dir="ltr"></div>
+        <div class="field"><label>توضیح زیر عنوان (دری)</label><input id="c_heroLead"></div>
+        <div class="field"><label>توضیح زیر عنوان (English)</label><input id="c_heroLead_en" dir="ltr"></div>
+      </div>
+      <h3 style="margin:14px 0 6px;font-size:16px">فوتر (پایین سایت)</h3>
+      <div class="grid2">
+        <div class="field"><label>توضیح فوتر (دری)</label><input id="c_footerDesc"></div>
+        <div class="field"><label>توضیح فوتر (English)</label><input id="c_footerDesc_en" dir="ltr"></div>
+        <div class="field"><label>آدرس فوتر (دری)</label><input id="c_footerAddr"></div>
+        <div class="field"><label>آدرس فوتر (English)</label><input id="c_footerAddr_en" dir="ltr"></div>
+        <div class="field"><label>شماره تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
+        <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
+      </div>
+      <h3 style="margin:14px 0 6px;font-size:16px">شبکه‌های اجتماعی (لینک)</h3>
+      <div class="grid2">
+        <div class="field"><label>اینستاگرام</label><input id="c_instagram" dir="ltr" placeholder="https://instagram.com/..."></div>
+        <div class="field"><label>تلگرام</label><input id="c_telegram" dir="ltr" placeholder="https://t.me/..."></div>
+        <div class="field"><label>واتساپ</label><input id="c_whatsappLink" dir="ltr" placeholder="https://wa.me/93..."></div>
+      </div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnContent">ذخیره تغییرات</button></div>
     </div>
 
     <!-- SETTINGS -->
@@ -365,6 +417,20 @@
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
       };
     }
+    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink"];
+    function fillContent(){ var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; }); }
+    function collectContent(){ var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} }); if(!state.config) state.config={}; state.config.content=c; }
+    function renderOrdersAdmin(){
+      var b=$("#ordersBody"); if(!b)return; var orders=[]; try{orders=JSON.parse(localStorage.getItem("maho_orders"))||[];}catch(e){}
+      if(!orders.length){ b.innerHTML='<tr><td colspan="5" class="note">هنوز سفارشی روی این دستگاه ثبت نشده است.</td></tr>'; return; }
+      b.innerHTML=orders.map(function(o){ var d=new Date(o.date); var c=o.customer||{}; return '<tr><td dir="ltr">'+(o.id||"")+'</td><td class="hide-sm">'+d.toLocaleDateString("fa-AF")+'</td><td>'+(c.name||"")+'<br><span class="note" dir="ltr">'+(c.phone||"")+'</span></td><td class="price">'+money(o.total||0)+'</td><td>'+(o.status||"")+'</td></tr>'; }).join("");
+    }
+    function renderCustomers(){
+      var b=$("#custBody"); if(!b)return; var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){}
+      var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
+      if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای روی این دستگاه ثبت‌نام نکرده است.</td></tr>'; return; }
+      b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
+    }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
       state.products.forEach(function(p,i){
@@ -396,7 +462,7 @@
         b.appendChild(tr);
       });
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; renderTable(); renderStoreTable(); fillConfig(); }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; renderTable(); renderStoreTable(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -502,7 +568,7 @@
 
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
-      collectConfig();
+      collectConfig(); collectContent();
       try{
         localStorage.setItem(DATA_KEY, JSON.stringify(state));
         setDirty(false); toast("تغییرات ذخیره شد ✓");
@@ -511,7 +577,10 @@
         alert(quota?"حجم عکس‌ها زیاد است و جا نشد. عکس‌ها را کمتر کنید.":"ذخیره ناموفق بود: "+(e&&e.message?e.message:e));
       }
     }
-    $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll;
+    $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
+    CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); });
+    $("#refreshOrders").onclick=renderOrdersAdmin;
+    $("#refreshCust").onclick=renderCustomers;
     $("#exportBtn").onclick=function(){
       collectConfig();
       var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
@@ -533,13 +602,15 @@
     /* ---------- MAHO import (best effort) ---------- */
     $("#mahoImportBtn").onclick=function(){
       var db=null;
-      try{ db=JSON.parse(localStorage.getItem("mahoDB")||localStorage.getItem("mahobd")||"null"); }catch(e){}
-      var list=db&&(db.products||db.items||db.goods);
-      if(!list||!list.length){ alert("اجناسی از سیستم MAHO در این مرورگر پیدا نشد. لطفاً ابتدا برنامه‌ی MAHO را در همین مرورگر باز کنید."); return; }
+      try{ db=JSON.parse(localStorage.getItem("mahoDB")||"null"); }catch(e){}
+      var list=db&&db.products;
+      if(!list||!list.length){ alert("اجناسی از سیستم MAHO در این مرورگر پیدا نشد.\nلطفاً ابتدا برنامه‌ی MAHO Enterprise (صفحه‌ی اصلی سیستم) را در همین مرورگر باز کنید، یک کالا را ذخیره کنید، سپس به این پنل برگردید و دوباره امتحان کنید."); return; }
       var mapped=list.map(function(x){
-        return { name:x.name||x.title||"کالا", name_en:x.name_en||"", code:x.code||x.barcode||x.permanentId||"", cat:"clothing", icon:"bag",
-          price:Number(x.price||x.sellPrice||x.salePrice||x.sell||0)||0,
-          stock:(x.stock!=null?Number(x.stock):(x.qty!=null?Number(x.qty):(x.quantity!=null?Number(x.quantity):undefined))) };
+        var o={ name:x.name||"کالا", name_en:"", code:x.code||x.barcode||"", cat:"clothing", icon:"bag", price:Number(x.price)||0 };
+        if(x.stock!=null&&!isNaN(Number(x.stock))) o.stock=Number(x.stock);
+        if(x.size) o.sizes=[String(x.size)];
+        if(x.color) o.colors=[String(x.color)];
+        return o;
       });
       if(!confirm("تعداد "+toFa(mapped.length)+" کالا از سیستم MAHO پیدا شد. به لیست محصولات اضافه شود؟")) return;
       state.products=state.products.concat(mapped);

@@ -1111,6 +1111,27 @@
     });
   }
 
+  /* editable site texts (from admin) — override the i18n defaults when set */
+  function applyContent() {
+    const c = CONFIG.content || {};
+    const pick = (k) => (LANG === "en" ? (c[k + "_en"] || c[k] || "") : (c[k] || ""));
+    const setSel = (sel, val) => { if (val) { const el = $(sel); if (el) el.textContent = val; } };
+    const bs = pick("brandSub"); if (bs) $$(".brand-sub").forEach((el) => (el.textContent = bs));
+    setSel(".hero-eyebrow", pick("heroEyebrow"));
+    setSel("#home h1", pick("heroTitle"));
+    setSel("#home .lead", pick("heroLead"));
+    setSel('[data-i18n="footer.desc"]', pick("footerDesc"));
+    setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
+    setSel('[data-i18n="footer.phone"]', c.footerPhone || "");
+    setSel('[data-i18n="footer.email"]', c.footerEmail || "");
+    const socials = $$(".socials a");
+    if (socials.length >= 3) {
+      if (c.instagram) socials[0].href = c.instagram;
+      if (c.telegram) socials[1].href = c.telegram;
+      if (c.whatsappLink) socials[2].href = c.whatsappLink;
+    }
+  }
+
   /* share */
   const shareBtn = $("#shareBtn");
   if (shareBtn) shareBtn.addEventListener("click", () => {
@@ -1261,6 +1282,7 @@
     renderAccount();
     updatePayInfo();
     applyLogo();
+    applyContent();
     formatCounters();
     updateYear();
     const label = $("#langLabel");
