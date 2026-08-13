@@ -139,7 +139,10 @@
         <div class="field"><label>شماره تماس (دری)</label><input id="s_phone"></div>
         <div class="field"><label>شماره تماس (English)</label><input id="s_phone_en" dir="ltr"></div>
       </div>
-      <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
+      <div class="grid2">
+        <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
+        <div class="field"><label>شماره واتساپ برای سفارش (مثلاً 0700123456)</label><input id="s_whatsapp" dir="ltr" placeholder="0700123456"></div>
+      </div>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnStore">ذخیره تغییرات</button></div>
     </div>
 
@@ -280,7 +283,7 @@
       $("#s_area").value=s.area||""; $("#s_area_en").value=s.area_en||"";
       $("#s_hours").value=s.hours||""; $("#s_hours_en").value=s.hours_en||"";
       $("#s_phone").value=s.phone||""; $("#s_phone_en").value=s.phone_en||"";
-      $("#s_map").value=s.map||"";
+      $("#s_map").value=s.map||""; $("#s_whatsapp").value=s.whatsapp||"";
     }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
@@ -355,7 +358,7 @@
     };
 
     /* ---------- store fields ---------- */
-    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map"].forEach(function(id){
+    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     function collectStore(){
@@ -363,7 +366,7 @@
         area:$("#s_area").value.trim(), area_en:$("#s_area_en").value.trim(),
         hours:$("#s_hours").value.trim(), hours_en:$("#s_hours_en").value.trim(),
         phone:$("#s_phone").value.trim(), phone_en:$("#s_phone_en").value.trim(),
-        map:$("#s_map").value.trim() };
+        map:$("#s_map").value.trim(), whatsapp:$("#s_whatsapp").value.trim() };
     }
 
     /* ---------- save / export / import / reset ---------- */
