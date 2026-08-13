@@ -63,6 +63,10 @@
     .savebar span{font-weight:700}
     .savebar .pulse{color:var(--gold)}
     .card-foot{margin-top:14px;display:flex;justify-content:flex-end}
+    .img-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .img-thumb{position:relative;width:74px;height:74px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+    .img-thumb img{width:100%;height:100%;object-fit:cover}
+    .img-thumb button{position:absolute;top:2px;inset-inline-end:2px;width:22px;height:22px;border-radius:50%;border:0;background:#000a;color:#fff;cursor:pointer;font-size:13px;line-height:1}
     .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
     .toast.show{transform:none;opacity:1}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
@@ -216,14 +220,16 @@
         <div class="field" id="badgeTextWrap"><label>متن تخفیف (مثلاً ۲۰٪ تخفیف)</label><input id="f_badgeText" placeholder="۲۰٪ تخفیف"></div>
       </div>
       <div class="field">
-        <label>عکس کالا (اختیاری)</label>
-        <input type="file" id="f_image" accept="image/*">
-        <div id="f_imgPreview" style="display:none;margin-top:10px;align-items:center;gap:12px">
-          <img id="f_imgThumb" alt="" style="width:74px;height:74px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">
-          <button type="button" class="btn btn-danger btn-sm" id="f_imgRemove">حذف عکس</button>
-        </div>
-        <p class="note">اگر عکس بگذارید، به‌جای آیکن روی سایت نشان داده می‌شود. عکس‌ها به‌صورت خودکار کوچک می‌شوند.</p>
+        <label>عکس‌های کالا (می‌توانید چند عکس انتخاب کنید)</label>
+        <input type="file" id="f_image" accept="image/*" multiple>
+        <div id="f_imgPreview" class="img-previews"></div>
+        <p class="note">اولین عکس، عکس اصلی است. اگر عکس بگذارید به‌جای آیکن روی سایت نشان داده می‌شود؛ عکس‌ها خودکار کوچک می‌شوند.</p>
       </div>
+      <div class="grid2">
+        <div class="field"><label>سایزها (با کامه جدا کنید)</label><input id="f_sizes" placeholder="S، M، L، XL"></div>
+        <div class="field"><label>رنگ‌ها (با کامه جدا کنید)</label><input id="f_colors" placeholder="مشکی، سرخ، آبی"></div>
+      </div>
+      <p class="note">اگر سایز یا رنگ بگذارید، مشتری باید قبل از افزودن به سبد آن را انتخاب کند.</p>
       <p class="note" id="modalMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="cancelBtn">لغو</button>
@@ -244,7 +250,8 @@
     var money=function(n){return toFa(Number(n).toLocaleString("en-US"))+" افغانی"};
     var icon=function(id){return '<svg class="ic"><use href="#i-'+id+'"/></svg>'};
 
-    var state={products:[],store:{}}, editIndex=-1, dirty=false, modalImage="";
+    var state={products:[],store:{}}, editIndex=-1, dirty=false, modalImages=[];
+    function parseList(v){ return String(v||"").split(/[,،]/).map(function(x){return x.trim()}).filter(Boolean); }
 
     /* toast */
     var toastTimer;
@@ -289,7 +296,8 @@
       var b=$("#prodBody"); b.innerHTML="";
       state.products.forEach(function(p,i){
         var badge=p.badge?('<span class="tag '+p.badge+'">'+(p.badge==="new"?"جدید":(p.badgeText||"تخفیف"))+'</span>'):'<span class="tag">—</span>';
-        var thumb=p.image?('<div class="p-ico"><img src="'+p.image+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>'):('<div class="p-ico">'+icon(p.icon||"bag")+'</div>');
+        var firstImg=(p.images&&p.images[0])||p.image||"";
+        var thumb=firstImg?('<div class="p-ico"><img src="'+firstImg+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>'):('<div class="p-ico">'+icon(p.icon||"bag")+'</div>');
         var tr=document.createElement("tr");
         tr.innerHTML='<td>'+thumb+'</td>'+
           '<td><b>'+(p.name||"")+'</b></td>'+
@@ -318,7 +326,8 @@
       $("#f_cat").value=p.cat||"clothing"; $("#f_icon").value=p.icon||"dress";
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
-      modalImage=p.image||""; $("#f_image").value=""; updateImgPreview();
+      modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
+      $("#f_sizes").value=(p.sizes||[]).join("، "); $("#f_colors").value=(p.colors||[]).join("، ");
       toggleBadgeText();
       $("#overlay").classList.add("show");
     }
@@ -326,14 +335,16 @@
     function toggleBadgeText(){ $("#badgeTextWrap").style.display=$("#f_badge").value==="sale"?"block":"none"; }
     function updateImgPreview(){
       var box=$("#f_imgPreview");
-      if(modalImage){ $("#f_imgThumb").src=modalImage; box.style.display="flex"; }
-      else { box.style.display="none"; $("#f_imgThumb").removeAttribute("src"); }
+      box.innerHTML=modalImages.map(function(src,i){ return '<div class="img-thumb"><img src="'+src+'"><button type="button" data-rm="'+i+'" aria-label="حذف">✕</button></div>'; }).join("");
     }
-    $("#f_image").addEventListener("change",function(e){
-      var f=e.target.files[0]; if(!f)return;
-      resizeImage(f,800,0.72,function(dataUrl){ if(dataUrl){ modalImage=dataUrl; updateImgPreview(); } else alert("خواندن عکس ناموفق بود."); });
+    $("#f_imgPreview").addEventListener("click",function(e){
+      var b=e.target.closest("[data-rm]"); if(!b)return; modalImages.splice(parseInt(b.getAttribute("data-rm"),10),1); updateImgPreview();
     });
-    $("#f_imgRemove").onclick=function(){ modalImage=""; $("#f_image").value=""; updateImgPreview(); };
+    $("#f_image").addEventListener("change",function(e){
+      var files=Array.prototype.slice.call(e.target.files||[]); if(!files.length)return;
+      var pending=files.length;
+      files.forEach(function(f){ resizeImage(f,800,0.72,function(dataUrl){ if(dataUrl) modalImages.push(dataUrl); pending--; if(pending===0){ updateImgPreview(); e.target.value=""; } }); });
+    });
     $("#f_badge").onchange=toggleBadgeText;
     $("#addBtn").onclick=function(){openModal()};
     $("#cancelBtn").onclick=closeModal;
@@ -352,7 +363,9 @@
       var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
-      if(modalImage) p.image=modalImage;
+      if(modalImages.length) p.images=modalImages.slice();
+      var sizes=parseList($("#f_sizes").value); if(sizes.length) p.sizes=sizes;
+      var colors=parseList($("#f_colors").value); if(colors.length) p.colors=colors;
       if(editIndex>=0) state.products[editIndex]=p; else state.products.push(p);
       renderTable(); setDirty(true); closeModal();
     };

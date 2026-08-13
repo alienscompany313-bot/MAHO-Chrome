@@ -46,6 +46,7 @@
     <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L3 21l2.3-6.5A8 8 0 1 1 21 11.5z"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
     <symbol id="i-dress" viewBox="0 0 24 24"><path d="M9 3 12 5 15 3 16 6 14 7.5V9.5L17.5 20a1 1 0 0 1-1 1.3H7.5a1 1 0 0 1-1-1.3L10 9.5V7.5L8 6z"/><path d="M10 9.5h4"/></symbol>
     <symbol id="i-coat" viewBox="0 0 24 24"><path d="M7 4 5 8l2 1v11h10V9l2-1-2-4-5 2z"/><path d="M12 6v14"/><path d="M12 11h.01M12 14h.01M12 17h.01"/></symbol>
     <symbol id="i-scarf" viewBox="0 0 24 24"><path d="M5 6c3 3.5 11 3.5 14 0"/><path d="M6.5 7.5 8.5 19l3.5-2.2 3.5 2.2 2-11.5"/></symbol>
@@ -75,6 +76,7 @@
       </nav>
 
       <div class="header-actions">
+        <button class="cart-btn" id="accountBtn" type="button" aria-label="حساب کاربری"><svg class="ic"><use href="#i-user"/></svg></button>
         <button class="cart-btn" id="cartBtn" type="button" aria-label="سبد خرید"><svg class="ic"><use href="#i-bag"/></svg><span class="cart-count empty" id="cartCount">0</span></button>
         <button class="lang-btn" id="langToggle" type="button"><svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span></button>
         <a class="btn btn-ghost" href="../index.html" data-i18n="header.portal">ورود به پرتال</a>
@@ -297,10 +299,13 @@
     <div class="qv-modal" role="dialog" aria-modal="true" aria-label="جزئیات محصول">
       <button class="modal-x" id="qvClose" aria-label="بستن">✕</button>
       <div class="qv-media" id="qvMedia"></div>
+      <div class="qv-thumbs" id="qvThumbs"></div>
       <div class="qv-body">
         <span class="qv-cat" id="qvCat"></span>
         <h3 class="qv-name" id="qvName"></h3>
         <div class="qv-price" id="qvPrice"></div>
+        <div class="qv-opt" id="qvSizesWrap" hidden><span class="qv-opt-label" data-i18n="qv.size">سایز</span><div class="opt-chips" id="qvSizes"></div></div>
+        <div class="qv-opt" id="qvColorsWrap" hidden><span class="qv-opt-label" data-i18n="qv.color">رنگ</span><div class="opt-chips" id="qvColors"></div></div>
         <div class="qv-row">
           <div class="qty">
             <button type="button" id="qvMinus" aria-label="کمتر">−</button>
@@ -309,24 +314,79 @@
           </div>
           <button class="btn btn-lg" id="qvAdd" data-i18n="qv.add">افزودن به سبد</button>
         </div>
+        <p class="qv-msg" id="qvMsg"></p>
       </div>
     </div>
   </div>
 
-  <!-- Cart drawer -->
+  <!-- Cart drawer (with checkout steps) -->
   <div class="ov" id="cartOverlay" aria-hidden="true">
     <aside class="cart-drawer" role="dialog" aria-modal="true" aria-label="سبد خرید">
       <div class="cart-head">
-        <h3 data-i18n="cart.title">سبد خرید</h3>
+        <h3 id="cartTitle" data-i18n="cart.title">سبد خرید</h3>
         <button class="cart-close" id="cartClose" aria-label="بستن">✕</button>
       </div>
-      <div class="cart-items" id="cartItems"></div>
-      <div class="cart-foot" id="cartFoot">
-        <div class="cart-total"><span data-i18n="cart.total">مجموع</span><span id="cartTotal"></span></div>
-        <button class="btn btn-lg" id="cartCheckout" data-i18n="cart.checkout">ثبت سفارش از طریق واتساپ</button>
-        <button class="btn btn-outline" id="cartClear" data-i18n="cart.clear">خالی‌کردن سبد</button>
+
+      <!-- Step 1: items -->
+      <div class="cart-screen" id="screenItems">
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-foot" id="cartFoot">
+          <div class="cart-total"><span data-i18n="cart.total">مجموع</span><span id="cartTotal"></span></div>
+          <button class="btn btn-lg" id="toCheckout" data-i18n="cart.continue">تکمیل سفارش ←</button>
+          <button class="btn btn-outline" id="cartClear" data-i18n="cart.clear">خالی‌کردن سبد</button>
+        </div>
+      </div>
+
+      <!-- Step 2: delivery details -->
+      <div class="cart-screen" id="screenCheckout" hidden>
+        <div class="cart-items">
+          <button type="button" class="link-back" id="backToCart" data-i18n="co.back">→ بازگشت به سبد</button>
+          <h4 data-i18n="co.title">مشخصات سفارش</h4>
+          <div class="field"><label data-i18n="co.name">نام و تخلص *</label><input id="co_name"></div>
+          <div class="field"><label data-i18n="co.phone">شماره تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
+          <div class="field"><label data-i18n="co.address">آدرس تحویل *</label><input id="co_address"></div>
+          <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
+          <p class="qv-msg" id="coMsg"></p>
+        </div>
+        <div class="cart-foot">
+          <div class="cart-total"><span data-i18n="cart.total">مجموع</span><span id="cartTotal2"></span></div>
+          <button class="btn btn-lg" id="placeOrder" data-i18n="cart.checkout">ثبت سفارش از طریق واتساپ</button>
+        </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Account modal -->
+  <div class="ov" id="acctOverlay" aria-hidden="true">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-label="حساب کاربری" style="max-width:440px">
+      <button class="modal-x" id="acctClose" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <div class="acct-tabs" id="acctLoggedOut">
+          <div class="tabs">
+            <button class="tab active" id="tabLogin" data-i18n="acct.login">ورود</button>
+            <button class="tab" id="tabSignup" data-i18n="acct.signup">ساخت حساب</button>
+          </div>
+          <div id="loginPane">
+            <div class="field"><label data-i18n="acct.phone">شماره تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="lg_pass" type="password"></div>
+            <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
+          </div>
+          <div id="signupPane" hidden>
+            <div class="field"><label data-i18n="acct.name">نام و تخلص</label><input id="su_name"></div>
+            <div class="field"><label data-i18n="acct.phone">شماره تماس یا ایمیل</label><input id="su_id" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="su_pass" type="password"></div>
+            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.create">ساخت حساب</button>
+          </div>
+          <p class="qv-msg" id="acctMsg"></p>
+        </div>
+        <div class="acct-loggedin" id="acctLoggedIn" hidden>
+          <div class="acct-avatar" id="acctAvatar">M</div>
+          <h3 id="acctName" style="text-align:center;margin:6px 0"></h3>
+          <p class="muted" id="acctId" style="text-align:center"></p>
+          <button class="btn btn-outline" id="logoutBtn" style="width:100%" data-i18n="acct.logout">خروج از حساب</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <button class="to-top" id="toTop" aria-label="بازگشت به بالا"><svg class="ic"><use href="#i-up"/></svg></button>

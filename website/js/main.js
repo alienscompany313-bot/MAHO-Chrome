@@ -82,7 +82,7 @@
       "footer.link.terms": "قوانین و شرایط", "footer.link.track": "پیگیری سفارش",
       "footer.contact": "تماس",
       "footer.addr": "کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵",
-      "footer.phone": "۰۷۰۰ ۱۲۳ ۴۵۶", "footer.email": "info@maho.example",
+      "footer.phone": "‪+93 791 505 454‬", "footer.email": "info@maho.example",
       "footer.map": "مشاهده روی نقشه ←",
       "footer.copyPre": "©", "footer.copy": "MAHO — همه‌ی حقوق محفوظ است.",
       "footer.made": "ساخته‌شده با ❤ برای مشتریان MAHO",
@@ -95,6 +95,17 @@
       "cart.total": "مجموع", "cart.checkout": "ثبت سفارش از طریق واتساپ",
       "cart.clear": "خالی‌کردن سبد", "cart.remove": "حذف", "cart.emptyToast": "سبد خرید خالی است.",
       "qv.add": "افزودن به سبد",
+      "qv.size": "سایز", "qv.color": "رنگ", "qv.pick": "لطفاً سایز و رنگ را انتخاب کنید.",
+      "cart.continue": "تکمیل سفارش ←",
+      "co.back": "→ بازگشت به سبد", "co.title": "مشخصات سفارش",
+      "co.name": "نام و تخلص *", "co.phone": "شماره تماس *", "co.address": "آدرس تحویل *", "co.note": "توضیحات (اختیاری)",
+      "co.err": "لطفاً نام، شماره تماس و آدرس را وارد کنید.",
+      "acct.login": "ورود", "acct.signup": "ساخت حساب", "acct.create": "ساخت حساب", "acct.logout": "خروج از حساب",
+      "acct.name": "نام و تخلص", "acct.phone": "شماره تماس یا ایمیل", "acct.pass": "رمز عبور",
+      "acct.exists": "این حساب قبلاً ساخته شده است.", "acct.bad": "اطلاعات ورود درست نیست.",
+      "acct.created": "حساب شما ساخته شد ✓", "acct.hi": "خوش آمدید",
+      "acct.need": "برای ادامه لطفاً همه‌ی خانه‌ها را پر کنید.",
+      "order.customer": "مشتری", "order.addr": "آدرس", "order.note": "توضیحات",
       "order.header": "سلام، می‌خواهم این کالاها را سفارش بدهم:",
     },
     en: {
@@ -151,7 +162,7 @@
       "footer.link.terms": "Terms & conditions", "footer.link.track": "Track order",
       "footer.contact": "Contact",
       "footer.addr": "Kote Sangi, Kabul — Mubarak Center, 4th floor, shop 74 & 75",
-      "footer.phone": "0700 123 456", "footer.email": "info@maho.example",
+      "footer.phone": "+93 791 505 454", "footer.email": "info@maho.example",
       "footer.map": "View on map →",
       "footer.copyPre": "©", "footer.copy": "MAHO — All rights reserved.",
       "footer.made": "Made with ❤ for MAHO customers",
@@ -164,6 +175,17 @@
       "cart.total": "Total", "cart.checkout": "Order via WhatsApp",
       "cart.clear": "Clear cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",
       "qv.add": "Add to cart",
+      "qv.size": "Size", "qv.color": "Color", "qv.pick": "Please select size and color.",
+      "cart.continue": "Checkout →",
+      "co.back": "← Back to cart", "co.title": "Order details",
+      "co.name": "Full name *", "co.phone": "Phone *", "co.address": "Delivery address *", "co.note": "Notes (optional)",
+      "co.err": "Please enter your name, phone and address.",
+      "acct.login": "Log in", "acct.signup": "Sign up", "acct.create": "Create account", "acct.logout": "Log out",
+      "acct.name": "Full name", "acct.phone": "Phone or email", "acct.pass": "Password",
+      "acct.exists": "This account already exists.", "acct.bad": "Incorrect login details.",
+      "acct.created": "Your account was created ✓", "acct.hi": "Welcome",
+      "acct.need": "Please fill in all fields to continue.",
+      "order.customer": "Customer", "order.addr": "Address", "order.note": "Notes",
       "order.header": "Hello, I'd like to order these items:",
     },
   };
@@ -197,8 +219,8 @@
       area: "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
       area_en: "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
       hours: "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب", hours_en: "Sat–Thu, 9:00 AM – 8:00 PM",
-      phone: "۰۷۰۰ ۱۲۳ ۴۵۶", phone_en: "0700 123 456",
-      whatsapp: "",
+      phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
+      whatsapp: "93791505454",
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
     },
   ];
@@ -229,8 +251,9 @@
         : "";
       const old = p.old ? `<del>${money(p.old)}</del>` : "";
       const name = LANG === "en" ? (p.name_en || p.name) : p.name;
-      const media = p.image
-        ? `<img src="${p.image}" alt="${name}" loading="lazy">`
+      const imgs = productImages(p);
+      const media = imgs.length
+        ? `<img src="${imgs[0]}" alt="${name}" loading="lazy">`
         : icon(p.icon || CAT_ICON[p.cat] || "bag");
       return `
         <article class="product-card" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
@@ -290,6 +313,12 @@
     });
   }
 
+  /* -------------------- Product helpers (images / variants) -------------------- */
+  function productImages(p) { return Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []); }
+  function productSizes(p) { return Array.isArray(p.sizes) ? p.sizes.filter(Boolean) : []; }
+  function productColors(p) { return Array.isArray(p.colors) ? p.colors.filter(Boolean) : []; }
+  function colorName(v) { return String(v).split("|")[0].trim(); }
+
   /* -------------------- Cart -------------------- */
   const CART_KEY = "maho_cart";
   let CART = [];
@@ -298,11 +327,13 @@
   const cartQtyTotal = () => CART.reduce((s, it) => s + it.qty, 0);
   const cartPriceTotal = () => CART.reduce((s, it) => s + it.price * it.qty, 0);
 
-  function addToCart(p, qty) {
+  function addToCart(p, qty, size, color) {
     qty = Math.max(1, qty || 1);
-    const found = CART.find((it) => it.key === p.name);
+    size = size || ""; color = color || "";
+    const key = p.name + "|" + size + "|" + color;
+    const found = CART.find((it) => it.key === key);
     if (found) found.qty += qty;
-    else CART.push({ key: p.name, name: p.name, name_en: p.name_en, price: p.price, cat: p.cat, image: p.image || "", icon: p.icon || "", qty: qty });
+    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: p.price, cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
     saveCart(); updateCartBadge(); renderCart();
     const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
     showToast(t("toast.cart").replace("{name}", nm).replace("{n}", toDigits(cartQtyTotal())));
@@ -322,11 +353,21 @@
     cartCountEl.textContent = toDigits(n);
     cartCountEl.classList.toggle("empty", n === 0);
   }
+  function variantLabel(it) {
+    const parts = [];
+    if (it.size) parts.push(t("qv.size") + ": " + it.size);
+    if (it.color) parts.push(t("qv.color") + ": " + colorName(it.color));
+    return parts.join(" · ");
+  }
   const cartItemsEl = $("#cartItems");
   const cartTotalEl = $("#cartTotal");
+  const cartTotal2El = $("#cartTotal2");
   const cartFootEl = $("#cartFoot");
   function renderCart() {
     if (!cartItemsEl) return;
+    const total = money(cartPriceTotal());
+    if (cartTotalEl) cartTotalEl.textContent = total;
+    if (cartTotal2El) cartTotal2El.textContent = total;
     if (!CART.length) {
       cartItemsEl.innerHTML = `<p class="cart-empty">${t("cart.empty")}</p>`;
       if (cartFootEl) cartFootEl.style.display = "none";
@@ -336,11 +377,13 @@
     cartItemsEl.innerHTML = CART.map((it) => {
       const nm = LANG === "en" ? (it.name_en || it.name) : it.name;
       const media = it.image ? `<img src="${it.image}" alt="">` : icon(it.icon || CAT_ICON[it.cat] || "bag");
+      const variant = variantLabel(it) ? `<span class="ci-variant">${variantLabel(it)}</span>` : "";
       return `
         <div class="cart-item">
           <div class="ci-media">${media}</div>
           <div class="ci-info">
             <b>${nm}</b>
+            ${variant}
             <span class="ci-price">${money(it.price)} × ${toDigits(it.qty)} = <b>${money(it.price * it.qty)}</b></span>
             <button class="ci-remove" data-remove="${it.key}">${t("cart.remove")}</button>
           </div>
@@ -351,17 +394,20 @@
           </div>
         </div>`;
     }).join("");
-    if (cartTotalEl) cartTotalEl.textContent = money(cartPriceTotal());
   }
 
-  /* product grid: click card = quick view, click bag = add to cart */
+  /* product grid: click card = quick view, click bag = add (open quick view if it has options) */
   if (productGrid) {
     productGrid.addEventListener("click", (e) => {
       const card = e.target.closest(".product-card");
       if (!card) return;
       const p = PRODUCTS[parseInt(card.dataset.idx, 10)];
       if (!p) return;
-      if (e.target.closest("[data-addcart]")) { addToCart(p, 1); return; }
+      if (e.target.closest("[data-addcart]")) {
+        if (productSizes(p).length || productColors(p).length) openQuickView(p);
+        else addToCart(p, 1, "", "");
+        return;
+      }
       openQuickView(p);
     });
     productGrid.addEventListener("keydown", (e) => {
@@ -372,9 +418,15 @@
     });
   }
 
-  /* cart drawer open/close */
+  /* cart drawer + checkout steps */
   const cartOverlay = $("#cartOverlay");
-  function openCart() { renderCart(); if (cartOverlay) cartOverlay.classList.add("show"); }
+  const screenItems = $("#screenItems");
+  const screenCheckout = $("#screenCheckout");
+  function showScreen(which) {
+    if (screenItems) screenItems.hidden = which !== "items";
+    if (screenCheckout) screenCheckout.hidden = which !== "checkout";
+  }
+  function openCart() { renderCart(); showScreen("items"); if (cartOverlay) cartOverlay.classList.add("show"); }
   function closeCart() { if (cartOverlay) cartOverlay.classList.remove("show"); }
   const cartBtn = $("#cartBtn"); if (cartBtn) cartBtn.addEventListener("click", openCart);
   const cartClose = $("#cartClose"); if (cartClose) cartClose.addEventListener("click", closeCart);
@@ -386,7 +438,17 @@
     else if (rm) removeItem(rm.getAttribute("data-remove"));
   });
   const cartClear = $("#cartClear"); if (cartClear) cartClear.addEventListener("click", () => { CART = []; saveCart(); updateCartBadge(); renderCart(); });
-  const cartCheckout = $("#cartCheckout"); if (cartCheckout) cartCheckout.addEventListener("click", checkout);
+
+  const toCheckoutBtn = $("#toCheckout");
+  if (toCheckoutBtn) toCheckoutBtn.addEventListener("click", () => {
+    if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    const s = getSession();
+    if (s) { if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || ""; if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.id || ""; }
+    if ($("#coMsg")) $("#coMsg").textContent = "";
+    showScreen("checkout");
+  });
+  const backToCartBtn = $("#backToCart");
+  if (backToCartBtn) backToCartBtn.addEventListener("click", () => showScreen("items"));
 
   function waNumber() {
     let s = (STORES[0] && (STORES[0].whatsapp || STORES[0].phone)) || "";
@@ -395,41 +457,149 @@
     if (s.charAt(0) === "0") s = "93" + s.slice(1);
     return s;
   }
-  function checkout() {
+  const placeOrderBtn = $("#placeOrder");
+  if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    const nm = ($("#co_name") && $("#co_name").value.trim()) || "";
+    const ph = ($("#co_phone") && $("#co_phone").value.trim()) || "";
+    const ad = ($("#co_address") && $("#co_address").value.trim()) || "";
+    const note = ($("#co_note") && $("#co_note").value.trim()) || "";
+    if (!nm || !ph || !ad) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
     const lines = CART.map((it) => {
-      const nm = LANG === "en" ? (it.name_en || it.name) : it.name;
-      return "• " + nm + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const v = variantLabel(it) ? " (" + variantLabel(it) + ")" : "";
+      return "• " + inm + v + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
     });
-    const msg = t("order.header") + "\n\n" + lines.join("\n") + "\n\n" + t("cart.total") + ": " + money(cartPriceTotal());
-    const num = waNumber();
-    window.open("https://wa.me/" + num + "?text=" + encodeURIComponent(msg), "_blank");
-  }
+    const msg = t("order.header") + "\n\n" + lines.join("\n") +
+      "\n\n" + t("cart.total") + ": " + money(cartPriceTotal()) +
+      "\n\n" + t("order.customer") + ": " + nm + "\n" + t("acct.phone") + ": " + ph +
+      "\n" + t("order.addr") + ": " + ad + (note ? "\n" + t("order.note") + ": " + note : "");
+    window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(msg), "_blank");
+  });
 
-  /* -------------------- Quick view -------------------- */
+  /* -------------------- Quick view (gallery + size/color) -------------------- */
   const qvOverlay = $("#qvOverlay");
-  let qvProduct = null, qvQty = 1;
+  let qvProduct = null, qvQty = 1, qvSize = "", qvColor = "";
   const qvQtyEl = $("#qvQty");
   function setQvQty(n) { qvQty = Math.max(1, n); if (qvQtyEl) qvQtyEl.value = toDigits(qvQty); }
+  function qvShowImage(src, alt, cat) {
+    const media = $("#qvMedia");
+    media.className = "qv-media m-" + cat;
+    media.innerHTML = src ? `<img src="${src}" alt="${alt}">` : icon((qvProduct && qvProduct.icon) || CAT_ICON[cat] || "bag");
+  }
   function openQuickView(p) {
-    qvProduct = p; setQvQty(1);
+    qvProduct = p; qvSize = ""; qvColor = ""; setQvQty(1);
     const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
-    $("#qvMedia").className = "qv-media m-" + p.cat;
-    $("#qvMedia").innerHTML = p.image ? `<img src="${p.image}" alt="${nm}">` : icon(p.icon || CAT_ICON[p.cat] || "bag");
+    const imgs = productImages(p);
+    qvShowImage(imgs[0] || "", nm, p.cat);
+    const thumbs = $("#qvThumbs");
+    if (imgs.length > 1) {
+      thumbs.hidden = false;
+      thumbs.innerHTML = imgs.map((src, i) => `<img src="${src}" alt="" data-i="${i}" class="${i === 0 ? "active" : ""}">`).join("");
+    } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
     $("#qvCat").textContent = CAT_LABEL[LANG][p.cat] || "";
     $("#qvName").textContent = nm;
     $("#qvPrice").innerHTML = money(p.price) + (p.old ? ` <del>${money(p.old)}</del>` : "");
+    // sizes
+    const sizes = productSizes(p), colors = productColors(p);
+    const sizesWrap = $("#qvSizesWrap"), colorsWrap = $("#qvColorsWrap");
+    if (sizes.length) { sizesWrap.hidden = false; $("#qvSizes").innerHTML = sizes.map((s) => `<button type="button" class="opt-chip" data-size="${s}">${s}</button>`).join(""); }
+    else { sizesWrap.hidden = true; $("#qvSizes").innerHTML = ""; }
+    if (colors.length) {
+      colorsWrap.hidden = false;
+      $("#qvColors").innerHTML = colors.map((c) => {
+        const nmc = colorName(c), hex = (String(c).split("|")[1] || "").trim();
+        const sw = hex ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hex};margin-inline-end:6px;border:1px solid #0002;vertical-align:-1px"></span>` : "";
+        return `<button type="button" class="opt-chip" data-color="${nmc}">${sw}${nmc}</button>`;
+      }).join("");
+    } else { colorsWrap.hidden = true; $("#qvColors").innerHTML = ""; }
+    if ($("#qvMsg")) { $("#qvMsg").textContent = ""; $("#qvMsg").className = "qv-msg"; }
     if (qvOverlay) qvOverlay.classList.add("show");
   }
   function closeQuickView() { if (qvOverlay) qvOverlay.classList.remove("show"); }
+  const qvThumbsEl = $("#qvThumbs");
+  if (qvThumbsEl) qvThumbsEl.addEventListener("click", (e) => {
+    const img = e.target.closest("img[data-i]"); if (!img || !qvProduct) return;
+    const imgs = productImages(qvProduct);
+    qvShowImage(imgs[parseInt(img.dataset.i, 10)], "", qvProduct.cat);
+    $$("img", qvThumbsEl).forEach((x) => x.classList.remove("active"));
+    img.classList.add("active");
+  });
+  const qvSizesEl = $("#qvSizes");
+  if (qvSizesEl) qvSizesEl.addEventListener("click", (e) => { const c = e.target.closest("[data-size]"); if (!c) return; $$(".opt-chip", qvSizesEl).forEach((x) => x.classList.remove("active")); c.classList.add("active"); qvSize = c.dataset.size; });
+  const qvColorsEl = $("#qvColors");
+  if (qvColorsEl) qvColorsEl.addEventListener("click", (e) => { const c = e.target.closest("[data-color]"); if (!c) return; $$(".opt-chip", qvColorsEl).forEach((x) => x.classList.remove("active")); c.classList.add("active"); qvColor = c.dataset.color; });
   const qvClose = $("#qvClose"); if (qvClose) qvClose.addEventListener("click", closeQuickView);
   if (qvOverlay) qvOverlay.addEventListener("click", (e) => { if (e.target === qvOverlay) closeQuickView(); });
   const qvPlus = $("#qvPlus"); if (qvPlus) qvPlus.addEventListener("click", () => setQvQty(qvQty + 1));
   const qvMinus = $("#qvMinus"); if (qvMinus) qvMinus.addEventListener("click", () => setQvQty(qvQty - 1));
   if (qvQtyEl) qvQtyEl.addEventListener("input", () => { const n = parseInt(toEnDigits(qvQtyEl.value).replace(/[^0-9]/g, ""), 10); qvQty = isNaN(n) ? 1 : Math.max(1, n); });
-  const qvAdd = $("#qvAdd"); if (qvAdd) qvAdd.addEventListener("click", () => { if (qvProduct) { addToCart(qvProduct, qvQty); closeQuickView(); } });
+  const qvAdd = $("#qvAdd");
+  if (qvAdd) qvAdd.addEventListener("click", () => {
+    if (!qvProduct) return;
+    const needSize = productSizes(qvProduct).length && !qvSize;
+    const needColor = productColors(qvProduct).length && !qvColor;
+    if (needSize || needColor) { if ($("#qvMsg")) { $("#qvMsg").textContent = t("qv.pick"); $("#qvMsg").className = "qv-msg"; } return; }
+    addToCart(qvProduct, qvQty, qvSize, qvColor);
+    closeQuickView();
+  });
 
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); closeAcct(); } });
+
+  /* -------------------- Accounts (client-side) -------------------- */
+  const USERS_KEY = "maho_users", SESS_KEY = "maho_session";
+  const getUsers = () => { try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch (_) { return []; } };
+  const saveUsers = (u) => { try { localStorage.setItem(USERS_KEY, JSON.stringify(u)); } catch (_) {} };
+  const getSession = () => { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch (_) { return null; } };
+  const setSession = (s) => { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {} };
+  const acctOverlay = $("#acctOverlay");
+  function renderAccount() {
+    const s = getSession();
+    const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
+    if (!out || !inn) return;
+    if (s) {
+      out.hidden = true; inn.hidden = false;
+      $("#acctName").textContent = s.name || "";
+      $("#acctId").textContent = s.id || "";
+      $("#acctAvatar").textContent = (s.name || "M").trim().charAt(0).toUpperCase();
+    } else { out.hidden = false; inn.hidden = true; }
+  }
+  function openAcct() { renderAccount(); if (acctOverlay) acctOverlay.classList.add("show"); }
+  function closeAcct() { if (acctOverlay) acctOverlay.classList.remove("show"); }
+  const accountBtn = $("#accountBtn"); if (accountBtn) accountBtn.addEventListener("click", openAcct);
+  const acctClose = $("#acctClose"); if (acctClose) acctClose.addEventListener("click", closeAcct);
+  if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAcct(); });
+  const tabLogin = $("#tabLogin"), tabSignup = $("#tabSignup");
+  function selectTab(login) {
+    if (tabLogin) tabLogin.classList.toggle("active", login);
+    if (tabSignup) tabSignup.classList.toggle("active", !login);
+    if ($("#loginPane")) $("#loginPane").hidden = !login;
+    if ($("#signupPane")) $("#signupPane").hidden = login;
+    if ($("#acctMsg")) { $("#acctMsg").textContent = ""; $("#acctMsg").className = "qv-msg"; }
+  }
+  if (tabLogin) tabLogin.addEventListener("click", () => selectTab(true));
+  if (tabSignup) tabSignup.addEventListener("click", () => selectTab(false));
+  function acctMsg(text, ok) { const m = $("#acctMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+  const signupBtn = $("#signupBtn");
+  if (signupBtn) signupBtn.addEventListener("click", () => {
+    const name = ($("#su_name").value || "").trim(), id = ($("#su_id").value || "").trim(), pass = ($("#su_pass").value || "").trim();
+    if (!name || !id || !pass) { acctMsg(t("acct.need")); return; }
+    const users = getUsers();
+    if (users.some((u) => u.id.toLowerCase() === id.toLowerCase())) { acctMsg(t("acct.exists")); return; }
+    users.push({ name: name, id: id, pass: pass }); saveUsers(users);
+    setSession({ name: name, id: id }); renderAccount(); acctMsg(t("acct.created"), true);
+    showToast(t("acct.hi") + "، " + name);
+  });
+  const loginBtn = $("#loginBtn");
+  if (loginBtn) loginBtn.addEventListener("click", () => {
+    const id = ($("#lg_id").value || "").trim(), pass = ($("#lg_pass").value || "").trim();
+    const u = getUsers().find((x) => x.id.toLowerCase() === id.toLowerCase() && x.pass === pass);
+    if (!u) { acctMsg(t("acct.bad")); return; }
+    setSession({ name: u.name, id: u.id }); renderAccount(); acctMsg(t("acct.hi") + "، " + u.name, true);
+    showToast(t("acct.hi") + "، " + u.name);
+  });
+  const logoutBtn = $("#logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); renderAccount(); });
 
   /* category cards -> filter + scroll to products */
   const catGrid = document.querySelector(".cat-grid");
@@ -582,6 +752,7 @@
     renderStores();
     renderCart();
     updateCartBadge();
+    renderAccount();
     formatCounters();
     updateYear();
     const label = $("#langLabel");
