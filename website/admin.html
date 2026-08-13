@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <style>
     :root{--black:#141414;--gold:#c8a35f;--gold-deep:#a9843f;--cream:#fbf8f1;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--radius:14px}
     *{box-sizing:border-box}
@@ -68,6 +69,12 @@
     .logo-preview{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);object-fit:cover;background:#111}
     .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
     .toast.show{transform:none;opacity:1}
+    .ctrl{padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
+    .adm-order{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+    .adm-items{margin:8px 0;padding-inline-start:18px;font-size:14px}
+    .adm-items li{margin-bottom:8px}
+    .adm-bc{max-width:150px;height:auto;background:#fff;border-radius:5px}
+    .bc-code{font-size:11px;color:var(--muted)}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
   </style>
 </head>
@@ -129,12 +136,31 @@
     <!-- ORDERS -->
     <div class="card">
       <div class="row-between">
-        <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه/مرورگر. سفارش‌ها همچنین هنگام ثبت به واتساپ شما فرستاده می‌شوند. (برای دیدن سفارش‌های همه‌ی مشتریان از همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
-        <button class="btn btn-outline btn-sm" id="refreshOrders">بازخوانی</button>
+        <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه. هر سفارش هنگام ثبت به واتساپ شما هم می‌رود. (برای دیدن سفارش‌های همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:13px;font-weight:700">حالت تأیید:</label>
+          <select id="orderApprovalMode" class="ctrl"><option value="manual">دستی</option><option value="auto">خودکار</option></select>
+          <button class="btn btn-outline btn-sm" id="refreshOrders">بازخوانی</button>
+        </div>
       </div>
-      <div style="overflow:auto">
-        <table><thead><tr><th>شماره</th><th class="hide-sm">تاریخ</th><th>مشتری</th><th>مجموع</th><th>وضعیت</th></tr></thead><tbody id="ordersBody"></tbody></table>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input id="ordersSearch" class="ctrl" style="flex:1;min-width:200px" placeholder="جستجو: شماره سفارش، نام مشتری، شماره تماس، نام/کد کالا">
+        <select id="ordersFilter" class="ctrl">
+          <option value="all">همه وضعیت‌ها</option>
+          <option value="pending">در انتظار تأیید</option>
+          <option value="confirmed">تأیید شده</option>
+          <option value="await">در انتظار پرداخت</option>
+          <option value="cancelled">لغو شده</option>
+          <option value="return">درخواست برگشت</option>
+        </select>
+        <select id="ordersSort" class="ctrl">
+          <option value="newest">جدیدترین</option>
+          <option value="oldest">قدیمی‌ترین</option>
+          <option value="total_desc">مبلغ: زیاد به کم</option>
+          <option value="total_asc">مبلغ: کم به زیاد</option>
+        </select>
       </div>
+      <div id="ordersBody"></div>
     </div>
 
     <!-- CUSTOMERS -->
@@ -407,6 +433,7 @@
     }
     function fillConfig(){
       var c=state.config||{};
+      $("#orderApprovalMode").value=c.orderApproval||"manual";
       $("#cfg_whatsapp").value=c.whatsapp||"";
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
@@ -419,6 +446,7 @@
       state.config={
         whatsapp:$("#cfg_whatsapp").value.trim(),
         logo:(state.config&&state.config.logo)||"",
+        orderApproval:$("#orderApprovalMode").value,
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
@@ -428,10 +456,57 @@
     var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink"];
     function fillContent(){ var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; }); }
     function collectContent(){ var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} }); if(!state.config) state.config={}; state.config.content=c; }
+    var barcodeSeqA=0;
+    function payLabelFa(p){ return p==="bank"?"انتقال بانکی":p==="card"?"کارت آنلاین":p==="hesab"?"حساب پی":"واتساپ"; }
+    function statusMatch(o,filter){
+      var s=o.status||"";
+      if(filter==="all") return true;
+      if(filter==="pending") return s.indexOf("انتظار تأیید")>=0||s==="pending";
+      if(filter==="confirmed") return s.indexOf("تأیید شده")>=0||s==="confirmed";
+      if(filter==="await") return s.indexOf("انتظار پرداخت")>=0||s==="awaiting_payment";
+      if(filter==="cancelled") return s.indexOf("لغو")>=0||s==="cancelled";
+      if(filter==="return") return s.indexOf("برگشت")>=0||s==="return_requested";
+      return true;
+    }
+    function readOrders(){ try{return JSON.parse(localStorage.getItem("maho_orders"))||[];}catch(e){return[];} }
     function renderOrdersAdmin(){
-      var b=$("#ordersBody"); if(!b)return; var orders=[]; try{orders=JSON.parse(localStorage.getItem("maho_orders"))||[];}catch(e){}
-      if(!orders.length){ b.innerHTML='<tr><td colspan="5" class="note">هنوز سفارشی روی این دستگاه ثبت نشده است.</td></tr>'; return; }
-      b.innerHTML=orders.map(function(o){ var d=new Date(o.date); var c=o.customer||{}; return '<tr><td dir="ltr">'+(o.id||"")+'</td><td class="hide-sm">'+d.toLocaleDateString("fa-AF")+'</td><td>'+(c.name||"")+'<br><span class="note" dir="ltr">'+(c.phone||"")+'</span></td><td class="price">'+money(o.total||0)+'</td><td>'+(o.status||"")+'</td></tr>'; }).join("");
+      var box=$("#ordersBody"); if(!box)return;
+      var orders=readOrders();
+      var q=($("#ordersSearch")&&$("#ordersSearch").value.trim().toLowerCase())||"";
+      var filter=($("#ordersFilter")&&$("#ordersFilter").value)||"all";
+      var sort=($("#ordersSort")&&$("#ordersSort").value)||"newest";
+      var list=orders.filter(function(o){
+        if(!statusMatch(o,filter)) return false;
+        if(!q) return true;
+        var hay=(o.id||"")+" "+((o.customer&&o.customer.name)||"")+" "+((o.customer&&o.customer.phone)||"")+" "+(o.items||[]).map(function(it){return (it.name||"")+" "+(it.code||"")}).join(" ");
+        return hay.toLowerCase().indexOf(q)>=0;
+      });
+      list.sort(function(a,b){ if(sort==="oldest")return a.date-b.date; if(sort==="total_desc")return (b.total||0)-(a.total||0); if(sort==="total_asc")return (a.total||0)-(b.total||0); return b.date-a.date; });
+      if(!orders.length){ box.innerHTML='<p class="note">هنوز سفارشی روی این دستگاه ثبت نشده است.</p>'; return; }
+      if(!list.length){ box.innerHTML='<p class="note">سفارشی مطابق جستجو/فیلتر پیدا نشد.</p>'; return; }
+      var pending=[];
+      box.innerHTML=list.map(function(o){
+        var d=new Date(o.date); var c=o.customer||{};
+        var items=(o.items||[]).map(function(it){
+          var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کد کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
+          var v=[]; if(it.size)v.push(it.size); if(it.color)v.push(it.color); var vs=v.length?' — '+v.join('، '):'';
+          return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
+        }).join("");
+        var s=o.status||""; var isCancelled=s.indexOf("لغو")>=0; var isConfirmed=s.indexOf("تأیید شده")>=0;
+        var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تأیید سفارش</button> ':'';
+        var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
+        return '<div class="adm-order"><div class="row-between"><b dir="ltr">'+(o.id||"")+'</b><span class="tag">'+s+'</span></div>'+
+          '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
+          '<div class="note">آدرس: '+(c.address||"-")+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
+          '<ul class="adm-items">'+items+'</ul>'+
+          '<div class="row-between"><b>مجموع: '+money(o.total||0)+'</b><span>'+approveBtn+cancelBtn+'</span></div></div>';
+      }).join("");
+      if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
+    }
+    function updateOrderStatus(id,status){
+      var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=status;
+      try{ localStorage.setItem("maho_orders",JSON.stringify(orders)); }catch(e){}
+      renderOrdersAdmin(); toast("وضعیت سفارش به‌روزرسانی شد ✓");
     }
     function renderCustomers(){
       var b=$("#custBody"); if(!b)return; var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){}
@@ -589,6 +664,13 @@
     CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); });
     $("#refreshOrders").onclick=renderOrdersAdmin;
     $("#refreshCust").onclick=renderCustomers;
+    ["ordersSearch","ordersFilter","ordersSort"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",renderOrdersAdmin); el.addEventListener("change",renderOrdersAdmin); } });
+    $("#ordersBody").addEventListener("click",function(e){
+      var ap=e.target.getAttribute("data-approve"), cn=e.target.getAttribute("data-cancelo");
+      if(ap){ updateOrderStatus(ap,"تأیید شده"); }
+      else if(cn){ if(confirm("این سفارش لغو شود؟")) updateOrderStatus(cn,"لغو شده"); }
+    });
+    $("#orderApprovalMode").addEventListener("change",function(){ if(!state.config)state.config={}; state.config.orderApproval=this.value; setDirty(true); });
     $("#exportBtn").onclick=function(){
       collectConfig();
       var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});

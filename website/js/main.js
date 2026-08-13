@@ -131,6 +131,7 @@
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
       "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
       "status.pending": "در انتظار تأیید", "status.awaitPay": "در انتظار پرداخت",
+      "status.confirmed": "تأیید شده",
       "status.cancelled": "لغو شده", "status.returnReq": "درخواست برگشت",
       "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کد کالا",
       "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
@@ -252,6 +253,7 @@
       "orders.title": "My orders", "orders.empty": "You have no orders yet.",
       "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
       "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
+      "status.confirmed": "Confirmed",
       "status.cancelled": "Cancelled", "status.returnReq": "Return requested",
       "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
       "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
@@ -306,7 +308,7 @@
     },
   ];
   let CONFIG = {
-    whatsapp: "93791505454", logo: "",
+    whatsapp: "93791505454", logo: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
     emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
@@ -734,7 +736,8 @@
       order = recordOrder(customer, "bank", t("status.awaitPay"));
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else {
-      order = recordOrder(customer, "whatsapp", t("status.pending"));
+      const st = CONFIG.orderApproval === "auto" ? t("status.confirmed") : t("status.pending");
+      order = recordOrder(customer, "whatsapp", st);
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     }
     adjustStock(order.items, -1);

@@ -29,6 +29,7 @@
   "config": {
     "whatsapp": "93791505454",
     "logo": "",
+    "orderApproval": "manual",
     "bank": { "holder": "", "name": "", "number": "" },
     "paymentLink": "",
     "hesab": { "link": "", "number": "" },
