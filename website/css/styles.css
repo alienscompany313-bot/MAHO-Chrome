@@ -252,6 +252,26 @@ p { margin: 0 0 1em; }
 .order-card ul { margin: 8px 0; padding-inline-start: 18px; font-size: 14px; }
 .order-card .order-total { font-weight: 800; }
 .orders-empty { color: var(--muted); text-align: center; margin: 30px 0; }
+.order-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.btn-sm { padding: 7px 13px; font-size: 13px; }
+.btn-danger-sm { border: 1.5px solid #f4c9c9; background: #fdecec; color: var(--red); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.btn-danger-sm:hover { background: #f9dada; }
+.bc-wrap { margin-top: 6px; }
+.bc-code { display: block; font-size: 11px; color: var(--muted); }
+.barcode { max-width: 180px; height: auto; background: #fff; border-radius: 6px; }
+
+/* Fix quick-view zoom + make modals scrollable (also fixes account scroll) */
+.qv-modal { overflow-y: auto; }
+.qv-media { aspect-ratio: auto; height: 220px; }
+
+/* Stock indicators */
+.product-card.out { opacity: .9; }
+.product-media .out-overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #0007; color: #fff; font-weight: 800; font-size: 16px; letter-spacing: .5px; }
+.stock-note { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+.stock-note.low { color: var(--gold-deep); }
+.stock-note.out { color: var(--red); }
+.icon-btn:disabled { opacity: .4; cursor: not-allowed; }
+#payCardExtra[hidden] { display: none; }
 
 .nav-toggle {
   display: none; width: 44px; height: 44px; border: 0; border-radius: 12px;

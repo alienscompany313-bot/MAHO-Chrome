@@ -1,31 +1,36 @@
 {
   "products": [
-    { "name": "پیراهن مجلسی بلند", "name_en": "Long Evening Dress", "cat": "clothing", "icon": "dress", "price": 4200, "old": 5000, "badge": "sale", "badgeText": "۱۶٪ تخفیف", "badgeText_en": "16% off" },
-    { "name": "مانتو کژوال روزمره", "name_en": "Casual Manteau", "cat": "clothing", "icon": "coat", "price": 3200, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
-    { "name": "بلوز و شومیز آستین‌بلند", "name_en": "Long-sleeve Blouse", "cat": "clothing", "icon": "shirt", "price": 1450 },
-    { "name": "شال نخی طرح‌دار", "name_en": "Patterned Cotton Shawl", "cat": "scarf", "icon": "scarf", "price": 650, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
-    { "name": "روسری ابریشمی", "name_en": "Silk Headscarf", "cat": "scarf", "icon": "scarf", "price": 1200, "old": 1350, "badge": "sale", "badgeText": "۱۰٪ تخفیف", "badgeText_en": "10% off" },
-    { "name": "کیف دستی چرم", "name_en": "Leather Handbag", "cat": "bagshoes", "icon": "bag", "price": 2800 },
-    { "name": "کفش پاشنه‌بلند مجلسی", "name_en": "Evening High Heels", "cat": "bagshoes", "icon": "heel", "price": 3100, "old": 3900, "badge": "sale", "badgeText": "۲۰٪ تخفیف", "badgeText_en": "20% off" },
-    { "name": "کفش تخت راحتی", "name_en": "Comfort Flats", "cat": "bagshoes", "icon": "heel", "price": 1900 },
-    { "name": "ست لوازم آرایش", "name_en": "Makeup Set", "cat": "beauty", "icon": "sparkles", "price": 2500, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
-    { "name": "عطر زنانه لوکس", "name_en": "Luxury Women's Perfume", "cat": "beauty", "icon": "perfume", "price": 3900, "old": 4400, "badge": "sale", "badgeText": "۱۲٪ تخفیف", "badgeText_en": "12% off" },
-    { "name": "ست گردنبند و دستبند", "name_en": "Necklace & Bracelet Set", "cat": "accessory", "icon": "ring", "price": 1650 },
-    { "name": "ساعت مچی زنانه", "name_en": "Women's Wristwatch", "cat": "accessory", "icon": "watch", "price": 3600, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" }
+    { "name": "پیراهن مجلسی بلند", "name_en": "Long Evening Dress", "cat": "clothing", "icon": "dress", "code": "DRS-001", "stock": 10, "price": 4200, "old": 5000, "badge": "sale", "badgeText": "۱۶٪ تخفیف", "badgeText_en": "16% off" },
+    { "name": "مانتو کژوال روزمره", "name_en": "Casual Manteau", "cat": "clothing", "icon": "coat", "code": "MNT-002", "stock": 8, "price": 3200, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
+    { "name": "بلوز و شومیز آستین‌بلند", "name_en": "Long-sleeve Blouse", "cat": "clothing", "icon": "shirt", "code": "BLZ-003", "stock": 20, "price": 1450 },
+    { "name": "شال نخی طرح‌دار", "name_en": "Patterned Cotton Shawl", "cat": "scarf", "icon": "scarf", "code": "SHL-004", "stock": 5, "price": 650, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
+    { "name": "روسری ابریشمی", "name_en": "Silk Headscarf", "cat": "scarf", "icon": "scarf", "code": "RSR-005", "stock": 12, "price": 1200, "old": 1350, "badge": "sale", "badgeText": "۱۰٪ تخفیف", "badgeText_en": "10% off" },
+    { "name": "کیف دستی چرم", "name_en": "Leather Handbag", "cat": "bagshoes", "icon": "bag", "code": "KIF-006", "stock": 6, "price": 2800 },
+    { "name": "کفش پاشنه‌بلند مجلسی", "name_en": "Evening High Heels", "cat": "bagshoes", "icon": "heel", "code": "KFS-007", "stock": 5, "price": 3100, "old": 3900, "badge": "sale", "badgeText": "۲۰٪ تخفیف", "badgeText_en": "20% off" },
+    { "name": "کفش تخت راحتی", "name_en": "Comfort Flats", "cat": "bagshoes", "icon": "heel", "code": "KFS-008", "stock": 15, "price": 1900 },
+    { "name": "ست لوازم آرایش", "name_en": "Makeup Set", "cat": "beauty", "icon": "sparkles", "code": "ARZ-009", "stock": 9, "price": 2500, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" },
+    { "name": "عطر زنانه لوکس", "name_en": "Luxury Women's Perfume", "cat": "beauty", "icon": "perfume", "code": "ATR-010", "stock": 7, "price": 3900, "old": 4400, "badge": "sale", "badgeText": "۱۲٪ تخفیف", "badgeText_en": "12% off" },
+    { "name": "ست گردنبند و دستبند", "name_en": "Necklace & Bracelet Set", "cat": "accessory", "icon": "ring", "code": "AKS-011", "stock": 11, "price": 1650 },
+    { "name": "ساعت مچی زنانه", "name_en": "Women's Wristwatch", "cat": "accessory", "icon": "watch", "code": "AKS-012", "stock": 4, "price": 3600, "badge": "new", "badgeText": "جدید", "badgeText_en": "New" }
   ],
-  "store": {
-    "name": "لباس و لوازم بانوان MAHO",
-    "name_en": "MAHO Women's Clothing & Essentials",
-    "area": "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
-    "area_en": "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
-    "hours": "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب",
-    "hours_en": "Sat–Thu, 9:00 AM – 8:00 PM",
-    "phone": "‪+93 791 505 454‬",
-    "phone_en": "+93 791 505 454",
+  "stores": [
+    {
+      "name": "لباس و لوازم بانوان MAHO",
+      "name_en": "MAHO Women's Clothing & Essentials",
+      "area": "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
+      "area_en": "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
+      "hours": "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب",
+      "hours_en": "Sat–Thu, 9:00 AM – 8:00 PM",
+      "phone": "‪+93 791 505 454‬",
+      "phone_en": "+93 791 505 454",
+      "map": "https://maps.app.goo.gl/U6miPMFLBSY6woFo6"
+    }
+  ],
+  "config": {
     "whatsapp": "93791505454",
-    "map": "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
-    "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" },
+    "logo": "",
     "bank": { "holder": "", "name": "", "number": "" },
-    "paymentLink": ""
+    "paymentLink": "",
+    "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" }
   }
 }

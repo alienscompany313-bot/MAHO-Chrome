@@ -94,6 +94,7 @@
       "cart.title": "سبد خرید", "cart.empty": "سبد خرید شما خالی است.",
       "cart.total": "مجموع", "cart.checkout": "ثبت سفارش از طریق واتساپ",
       "cart.clear": "خالی‌کردن سبد", "cart.remove": "حذف", "cart.emptyToast": "سبد خرید خالی است.",
+      "stock.out": "ناموجود", "stock.left": "{n} دانه باقی مانده", "stock.max": "بیشتر از موجودی نمی‌توانید سفارش دهید.",
       "qv.add": "افزودن به سبد",
       "qv.size": "سایز", "qv.color": "رنگ", "qv.pick": "لطفاً سایز و رنگ را انتخاب کنید.",
       "cart.continue": "تکمیل سفارش ←",
@@ -126,6 +127,10 @@
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
       "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
       "status.pending": "در انتظار تأیید", "status.awaitPay": "در انتظار پرداخت",
+      "status.cancelled": "لغو شده", "status.returnReq": "درخواست برگشت",
+      "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کد کالا",
+      "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
+      "orders.cancelMsg": "سفارش لغو شد", "orders.returnMsg": "درخواست برگشت کالا",
       "acct.custNo": "شماره مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
       "acct.newPass": "رمز عبور جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
       "acct.saved": "تغییرات ذخیره شد ✓",
@@ -137,6 +142,8 @@
       "co.email": "ایمیل (برای تأیید سفارش)",
       "order.number": "شماره سفارش", "order.emailSent": "ایمیل تأیید سفارش برای شما فرستاده شد.",
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
+      "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
+      "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت",
     },
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
@@ -204,6 +211,7 @@
       "cart.title": "Your cart", "cart.empty": "Your cart is empty.",
       "cart.total": "Total", "cart.checkout": "Order via WhatsApp",
       "cart.clear": "Clear cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",
+      "stock.out": "Out of stock", "stock.left": "{n} left in stock", "stock.max": "You can't order more than the available stock.",
       "qv.add": "Add to cart",
       "qv.size": "Size", "qv.color": "Color", "qv.pick": "Please select size and color.",
       "cart.continue": "Checkout →",
@@ -236,6 +244,10 @@
       "orders.title": "My orders", "orders.empty": "You have no orders yet.",
       "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
       "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
+      "status.cancelled": "Cancelled", "status.returnReq": "Return requested",
+      "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
+      "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
+      "orders.cancelMsg": "Order cancelled", "orders.returnMsg": "Return request",
       "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
       "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
       "acct.saved": "Changes saved ✓",
@@ -247,6 +259,8 @@
       "co.email": "Email (for order confirmation)",
       "order.number": "Order number", "order.emailSent": "An order confirmation email was sent to you.",
       "order.emailIntro": "Your order at MAHO is confirmed. Details:",
+      "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
+      "share.copied": "Site link copied ✓", "share.title": "Check out this store",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -255,18 +269,18 @@
   const CAT_ICON = { clothing: "dress", scarf: "scarf", bagshoes: "bag", beauty: "sparkles", accessory: "ring" };
 
   let PRODUCTS = [
-    { name: "پیراهن مجلسی بلند", name_en: "Long Evening Dress", cat: "clothing", icon: "dress", price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف", badgeText_en: "16% off" },
-    { name: "مانتو کژوال روزمره", name_en: "Casual Manteau", cat: "clothing", icon: "coat", price: 3200, badge: "new", badgeText: "جدید", badgeText_en: "New" },
-    { name: "بلوز و شومیز آستین‌بلند", name_en: "Long-sleeve Blouse", cat: "clothing", icon: "shirt", price: 1450 },
-    { name: "شال نخی طرح‌دار", name_en: "Patterned Cotton Shawl", cat: "scarf", icon: "scarf", price: 650, badge: "new", badgeText: "جدید", badgeText_en: "New" },
-    { name: "روسری ابریشمی", name_en: "Silk Headscarf", cat: "scarf", icon: "scarf", price: 1200, old: 1350, badge: "sale", badgeText: "۱۰٪ تخفیف", badgeText_en: "10% off" },
-    { name: "کیف دستی چرم", name_en: "Leather Handbag", cat: "bagshoes", icon: "bag", price: 2800 },
-    { name: "کفش پاشنه‌بلند مجلسی", name_en: "Evening High Heels", cat: "bagshoes", icon: "heel", price: 3100, old: 3900, badge: "sale", badgeText: "۲۰٪ تخفیف", badgeText_en: "20% off" },
-    { name: "کفش تخت راحتی", name_en: "Comfort Flats", cat: "bagshoes", icon: "heel", price: 1900 },
-    { name: "ست لوازم آرایش", name_en: "Makeup Set", cat: "beauty", icon: "sparkles", price: 2500, badge: "new", badgeText: "جدید", badgeText_en: "New" },
-    { name: "عطر زنانه لوکس", name_en: "Luxury Women's Perfume", cat: "beauty", icon: "perfume", price: 3900, old: 4400, badge: "sale", badgeText: "۱۲٪ تخفیف", badgeText_en: "12% off" },
-    { name: "ست گردنبند و دستبند", name_en: "Necklace & Bracelet Set", cat: "accessory", icon: "ring", price: 1650 },
-    { name: "ساعت مچی زنانه", name_en: "Women's Wristwatch", cat: "accessory", icon: "watch", price: 3600, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "پیراهن مجلسی بلند", name_en: "Long Evening Dress", cat: "clothing", icon: "dress", code: "DRS-001", stock: 10, price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف", badgeText_en: "16% off" },
+    { name: "مانتو کژوال روزمره", name_en: "Casual Manteau", cat: "clothing", icon: "coat", code: "MNT-002", stock: 8, price: 3200, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "بلوز و شومیز آستین‌بلند", name_en: "Long-sleeve Blouse", cat: "clothing", icon: "shirt", code: "BLZ-003", stock: 20, price: 1450 },
+    { name: "شال نخی طرح‌دار", name_en: "Patterned Cotton Shawl", cat: "scarf", icon: "scarf", code: "SHL-004", stock: 5, price: 650, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "روسری ابریشمی", name_en: "Silk Headscarf", cat: "scarf", icon: "scarf", code: "RSR-005", stock: 12, price: 1200, old: 1350, badge: "sale", badgeText: "۱۰٪ تخفیف", badgeText_en: "10% off" },
+    { name: "کیف دستی چرم", name_en: "Leather Handbag", cat: "bagshoes", icon: "bag", code: "KIF-006", stock: 6, price: 2800 },
+    { name: "کفش پاشنه‌بلند مجلسی", name_en: "Evening High Heels", cat: "bagshoes", icon: "heel", code: "KFS-007", stock: 5, price: 3100, old: 3900, badge: "sale", badgeText: "۲۰٪ تخفیف", badgeText_en: "20% off" },
+    { name: "کفش تخت راحتی", name_en: "Comfort Flats", cat: "bagshoes", icon: "heel", code: "KFS-008", stock: 15, price: 1900 },
+    { name: "ست لوازم آرایش", name_en: "Makeup Set", cat: "beauty", icon: "sparkles", code: "ARZ-009", stock: 9, price: 2500, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "عطر زنانه لوکس", name_en: "Luxury Women's Perfume", cat: "beauty", icon: "perfume", code: "ATR-010", stock: 7, price: 3900, old: 4400, badge: "sale", badgeText: "۱۲٪ تخفیف", badgeText_en: "12% off" },
+    { name: "ست گردنبند و دستبند", name_en: "Necklace & Bracelet Set", cat: "accessory", icon: "ring", code: "AKS-011", stock: 11, price: 1650 },
+    { name: "ساعت مچی زنانه", name_en: "Women's Wristwatch", cat: "accessory", icon: "watch", code: "AKS-012", stock: 4, price: 3600, badge: "new", badgeText: "جدید", badgeText_en: "New" },
   ];
   const CAT_LABEL = {
     fa: { clothing: "پوشاک", scarf: "شال و روسری", bagshoes: "کیف و کفش", beauty: "آرایشی و بهداشتی", accessory: "اکسسوری" },
@@ -280,27 +294,50 @@
       area_en: "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
       hours: "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب", hours_en: "Sat–Thu, 9:00 AM – 8:00 PM",
       phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
-      whatsapp: "93791505454",
       map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
-      emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
-      bank: { holder: "", name: "", number: "" },
-      paymentLink: "",
     },
   ];
+  let CONFIG = {
+    whatsapp: "93791505454", logo: "",
+    bank: { holder: "", name: "", number: "" }, paymentLink: "",
+    emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
+  };
 
   /* -------------------- Catalog data source --------------------
-     Priority: owner's local draft (admin panel) > published data.json > built-in defaults.
-     This lets the owner manage the catalog with no code changes. */
+     Priority: owner's local draft (admin panel) > published data.json > built-in defaults. */
   const DATA_KEY = "maho_admin_data";
+  function normalizeData(d) {
+    d = d || {};
+    const products = Array.isArray(d.products) ? d.products : null;
+    let stores = Array.isArray(d.stores) ? d.stores : (d.store ? [d.store] : null);
+    let config = Object.assign({}, d.config || {});
+    if (d.store) { // migrate legacy single-store config
+      if (config.whatsapp == null) config.whatsapp = d.store.whatsapp;
+      if (config.bank == null) config.bank = d.store.bank;
+      if (config.paymentLink == null) config.paymentLink = d.store.paymentLink;
+      if (config.emailjs == null) config.emailjs = d.store.emailjs;
+    }
+    return { products: products, stores: stores, config: config };
+  }
   function applyData(d) {
-    if (d && Array.isArray(d.products) && d.products.length) PRODUCTS = d.products;
-    if (d && d.store) STORES = [d.store];
+    const n = normalizeData(d);
+    if (n.products && n.products.length) PRODUCTS = n.products;
+    if (n.stores && n.stores.length) STORES = n.stores;
+    if (n.config) {
+      CONFIG = Object.assign({}, CONFIG, n.config);
+      CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
+      CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
+    }
   }
   let hasLocalDraft = false;
   try {
     const raw = localStorage.getItem(DATA_KEY);
     if (raw) { applyData(JSON.parse(raw)); hasLocalDraft = true; }
   } catch (_) {}
+
+  /* -------------------- Inventory helpers -------------------- */
+  const LOW_STOCK = 5;
+  function productStock(p) { if (p.stock == null || p.stock === "") return Infinity; const n = parseInt(p.stock, 10); return isNaN(n) ? Infinity : n; }
 
   /* -------------------- Render products -------------------- */
   let activeFilter = "all";
@@ -318,15 +355,22 @@
       const media = imgs.length
         ? `<img src="${imgs[0]}" alt="${name}" loading="lazy">`
         : icon(p.icon || CAT_ICON[p.cat] || "bag");
+      const stock = productStock(p);
+      const out = stock <= 0;
+      const low = stock > 0 && stock <= LOW_STOCK;
+      const outOverlay = out ? `<span class="out-overlay">${t("stock.out")}</span>` : "";
+      const stockNote = low ? `<span class="stock-note low">${t("stock.left").replace("{n}", toDigits(stock))}</span>`
+        : (out ? `<span class="stock-note out">${t("stock.out")}</span>` : "");
       return `
-        <article class="product-card" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
-          <div class="product-media m-${p.cat}">${badge}${media}</div>
+        <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
+          <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}</div>
           <div class="product-body">
             <span class="cat">${CAT_LABEL[LANG][p.cat]}</span>
             <h3>${name}</h3>
+            ${stockNote}
             <div class="product-foot">
               <span class="price">${money(p.price)} ${old}</span>
-              <button class="icon-btn" type="button" data-addcart aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
+              <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
             </div>
           </div>
         </article>`;
@@ -338,6 +382,7 @@
   const storeGrid = $("#storeGrid");
   function renderStores() {
     if (!storeGrid) return;
+    storeGrid.className = "store-grid" + (STORES.length <= 1 ? " single" : "");
     storeGrid.innerHTML = STORES.map((s) => {
       const name = LANG === "en" ? (s.name_en || s.name) : s.name;
       const area = LANG === "en" ? (s.area_en || s.area) : s.area;
@@ -390,19 +435,28 @@
   const cartQtyTotal = () => CART.reduce((s, it) => s + it.qty, 0);
   const cartPriceTotal = () => CART.reduce((s, it) => s + it.price * it.qty, 0);
 
+  function cartQtyForName(name) { return CART.filter((it) => it.name === name).reduce((s, it) => s + it.qty, 0); }
   function addToCart(p, qty, size, color) {
     qty = Math.max(1, qty || 1);
+    const stock = productStock(p);
+    if (stock <= 0) { showToast(t("stock.out")); return; }
+    if (cartQtyForName(p.name) + qty > stock) { showToast(t("stock.max")); return; }
     size = size || ""; color = color || "";
     const key = p.name + "|" + size + "|" + color;
     const found = CART.find((it) => it.key === key);
     if (found) found.qty += qty;
-    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: p.price, cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
+    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: p.price, code: p.code || "", cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
     saveCart(); updateCartBadge(); renderCart();
     const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
     showToast(t("toast.cart").replace("{name}", nm).replace("{n}", toDigits(cartQtyTotal())));
   }
   function changeQty(key, delta) {
     const it = CART.find((x) => x.key === key); if (!it) return;
+    if (delta > 0) {
+      const p = PRODUCTS.find((x) => x.name === it.name);
+      const stock = p ? productStock(p) : Infinity;
+      if (cartQtyForName(it.name) + 1 > stock) { showToast(t("stock.max")); return; }
+    }
     it.qty += delta;
     if (it.qty <= 0) CART = CART.filter((x) => x.key !== key);
     saveCart(); updateCartBadge(); renderCart();
@@ -510,6 +564,7 @@
       if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || "";
       if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || "";
       if ($("#co_email")) $("#co_email").value = $("#co_email").value || s.email || "";
+      if ($("#co_address")) $("#co_address").value = $("#co_address").value || s.address || "";
     }
     if ($("#coMsg")) $("#coMsg").textContent = "";
     payMethod = "whatsapp";
@@ -521,7 +576,7 @@
   if (backToCartBtn) backToCartBtn.addEventListener("click", () => showScreen("items"));
 
   function waNumber() {
-    let s = (STORES[0] && (STORES[0].whatsapp || STORES[0].phone)) || "";
+    let s = CONFIG.whatsapp || (STORES[0] && STORES[0].phone) || "";
     s = toEnDigits(s).replace(/[^0-9]/g, "");
     if (!s) return "";
     if (s.charAt(0) === "0") s = "93" + s.slice(1);
@@ -531,8 +586,8 @@
   let payMethod = "whatsapp";
   const payMethodsEl = $("#payMethods");
   const payInfoEl = $("#payInfo");
-  function bankInfo() { return (STORES[0] && STORES[0].bank) || {}; }
-  function paymentLink() { return (STORES[0] && STORES[0].paymentLink) || ""; }
+  function bankInfo() { return CONFIG.bank || {}; }
+  function paymentLink() { return CONFIG.paymentLink || ""; }
   function updatePayInfo() {
     if (!payInfoEl) return;
     const placeBtn = $("#placeOrder");
@@ -572,13 +627,24 @@
     const order = {
       id: "MAHO-" + Date.now().toString().slice(-6),
       date: Date.now(),
-      items: CART.map((it) => ({ name: it.name, name_en: it.name_en, price: it.price, qty: it.qty, size: it.size, color: it.color })),
+      items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", price: it.price, qty: it.qty, size: it.size, color: it.color })),
       total: cartPriceTotal(),
       customer: customer, payment: method, status: status,
     };
     orders.unshift(order);
     saveOrders(orders);
     return order;
+  }
+  function persistCatalog() { try { localStorage.setItem(DATA_KEY, JSON.stringify({ products: PRODUCTS, stores: STORES, config: CONFIG })); } catch (_) {} }
+  function adjustStock(items, sign) {
+    let changed = false;
+    (items || []).forEach((it) => {
+      const p = PRODUCTS.find((x) => x.name === it.name);
+      if (!p) return;
+      const cur = productStock(p);
+      if (isFinite(cur)) { p.stock = Math.max(0, cur + sign * it.qty); changed = true; }
+    });
+    if (changed) { persistCatalog(); renderProducts(); }
   }
   function orderSummaryText(order) {
     const lines = order.items.map((it) => {
@@ -592,7 +658,7 @@
     return lines.join("\n") + "\n" + t("cart.total") + ": " + money(order.total);
   }
   function sendOrderEmail(order, email, name) {
-    const cfg = (STORES[0] && STORES[0].emailjs) || {};
+    const cfg = CONFIG.emailjs || {};
     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && cfg.serviceId && cfg.orderTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
       emailjs.send(cfg.serviceId, cfg.orderTemplateId,
         { to_email: email, email: email, to_name: name || "", order_no: order.id, order_summary: orderSummaryText(order), order_total: money(order.total) },
@@ -602,17 +668,22 @@
     }
     return false;
   }
-  function orderMessage(nm, ph, ad, note, method) {
-    const lines = CART.map((it) => {
+  function orderMessage(order) {
+    const lines = order.items.map((it) => {
       const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
-      const v = variantLabel(it) ? " (" + variantLabel(it) + ")" : "";
-      return "• " + inm + v + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+      const v = [];
+      if (it.size) v.push(t("qv.size") + " " + it.size);
+      if (it.color) v.push(t("qv.color") + " " + colorName(it.color));
+      const vs = v.length ? " (" + v.join("، ") + ")" : "";
+      const code = it.code ? " [" + it.code + "]" : "";
+      return "• " + inm + vs + code + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
     });
-    const payLabel = method === "bank" ? t("pay.bank") : t("pay.whatsapp");
-    return t("order.header") + "\n\n" + lines.join("\n") +
-      "\n\n" + t("cart.total") + ": " + money(cartPriceTotal()) +
-      "\n\n" + t("order.customer") + ": " + nm + "\n" + t("acct.phone") + ": " + ph +
-      "\n" + t("order.addr") + ": " + ad + (note ? "\n" + t("order.note") + ": " + note : "") +
+    const c = order.customer || {};
+    const payLabel = order.payment === "bank" ? t("pay.bank") : (order.payment === "card" ? t("pay.card") : t("pay.whatsapp"));
+    return t("order.header") + "\n" + t("order.number") + ": " + order.id + "\n\n" + lines.join("\n") +
+      "\n\n" + t("cart.total") + ": " + money(order.total) +
+      "\n\n" + t("order.customer") + ": " + (c.name || "") + "\n" + t("acct.phone") + ": " + (c.phone || "") +
+      "\n" + t("order.addr") + ": " + (c.address || "") + (c.note ? "\n" + t("order.note") + ": " + c.note : "") +
       "\n" + t("co.payment") + ": " + payLabel;
   }
   const placeOrderBtn = $("#placeOrder");
@@ -633,13 +704,15 @@
       if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return; }
       order = recordOrder(customer, "card", t("status.awaitPay"));
       window.open(link, "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else if (payMethod === "bank") {
       order = recordOrder(customer, "bank", t("status.awaitPay"));
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "bank")), "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else {
       order = recordOrder(customer, "whatsapp", t("status.pending"));
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(nm, ph, ad, note, "whatsapp")), "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     }
+    adjustStock(order.items, -1);
     const emailed = sendOrderEmail(order, email, nm);
     CART = []; saveCart(); updateCartBadge(); renderCart();
     showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
@@ -649,10 +722,12 @@
 
   /* My Orders */
   const ordersOverlay = $("#ordersOverlay");
+  let barcodeSeq = 0;
   function renderOrders() {
     const list = $("#ordersList"); if (!list) return;
     const orders = getOrders();
     if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+    const pending = [];
     list.innerHTML = orders.map((o) => {
       const items = o.items.map((it) => {
         const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
@@ -660,11 +735,19 @@
         if (it.size) variant.push(t("qv.size") + " " + it.size);
         if (it.color) variant.push(t("qv.color") + " " + colorName(it.color));
         const vs = variant.length ? " — " + variant.join("، ") : "";
-        return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}</li>`;
+        let bc = "";
+        if (it.code) {
+          const bid = "bc" + (++barcodeSeq);
+          pending.push({ id: bid, code: it.code });
+          bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
+        }
+        return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
       }).join("");
       const d = new Date(o.date);
       const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
       const payLabel = o.payment === "bank" ? t("pay.bank") : (o.payment === "card" ? t("pay.card") : t("pay.whatsapp"));
+      const closed = o.status === t("status.cancelled") || o.status === t("status.returnReq");
+      const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
       return `
         <div class="order-card">
           <div class="order-top">
@@ -676,20 +759,44 @@
             <span>${t("orders.pay")}: ${payLabel}</span>
             <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
           </div>
+          ${actions}
         </div>`;
     }).join("");
+    if (typeof JsBarcode !== "undefined") {
+      pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
+    }
   }
   function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
   function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
   const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
   if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
+  const ordersListEl = $("#ordersList");
+  if (ordersListEl) ordersListEl.addEventListener("click", (e) => {
+    const cancelBtn = e.target.closest("[data-cancel]"), returnBtn = e.target.closest("[data-return]");
+    if (cancelBtn) {
+      const id = cancelBtn.getAttribute("data-cancel");
+      if (!confirm(t("orders.confirmCancel"))) return;
+      const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
+      o.status = t("status.cancelled"); saveOrders(orders);
+      adjustStock(o.items, 1);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.cancelMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
+      renderOrders();
+    } else if (returnBtn) {
+      const id = returnBtn.getAttribute("data-return");
+      if (!confirm(t("orders.confirmReturn"))) return;
+      const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
+      o.status = t("status.returnReq"); saveOrders(orders);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.returnMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
+      renderOrders();
+    }
+  });
 
   /* -------------------- Quick view (gallery + size/color) -------------------- */
   const qvOverlay = $("#qvOverlay");
-  let qvProduct = null, qvQty = 1, qvSize = "", qvColor = "";
+  let qvProduct = null, qvQty = 1, qvSize = "", qvColor = "", qvStock = Infinity;
   const qvQtyEl = $("#qvQty");
-  function setQvQty(n) { qvQty = Math.max(1, n); if (qvQtyEl) qvQtyEl.value = toDigits(qvQty); }
+  function setQvQty(n) { n = Math.max(1, n); if (n > qvStock) n = Math.max(1, qvStock); qvQty = n; if (qvQtyEl) qvQtyEl.value = toDigits(qvQty); }
   function qvShowImage(src, alt, cat) {
     const media = $("#qvMedia");
     media.className = "qv-media m-" + cat;
@@ -721,7 +828,14 @@
         return `<button type="button" class="opt-chip" data-color="${nmc}">${sw}${nmc}</button>`;
       }).join("");
     } else { colorsWrap.hidden = true; $("#qvColors").innerHTML = ""; }
-    if ($("#qvMsg")) { $("#qvMsg").textContent = ""; $("#qvMsg").className = "qv-msg"; }
+    qvStock = productStock(p); setQvQty(1);
+    const out = qvStock <= 0;
+    const addBtn = $("#qvAdd"); if (addBtn) addBtn.disabled = out;
+    if ($("#qvMsg")) {
+      if (out) { $("#qvMsg").textContent = t("stock.out"); $("#qvMsg").className = "qv-msg"; }
+      else if (qvStock <= LOW_STOCK) { $("#qvMsg").textContent = t("stock.left").replace("{n}", toDigits(qvStock)); $("#qvMsg").className = "qv-msg ok"; }
+      else { $("#qvMsg").textContent = ""; $("#qvMsg").className = "qv-msg"; }
+    }
     if (qvOverlay) qvOverlay.classList.add("show");
   }
   function closeQuickView() { if (qvOverlay) qvOverlay.classList.remove("show"); }
@@ -805,6 +919,7 @@
       if ($("#pf_name")) $("#pf_name").value = u.name || "";
       if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
       if ($("#pf_email")) $("#pf_email").value = u.email || "";
+      if ($("#pf_address")) $("#pf_address").value = u.address || "";
       if ($("#pf_pass")) $("#pf_pass").value = "";
       if ($("#pfVerify")) $("#pfVerify").hidden = true;
       if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
@@ -833,7 +948,7 @@
   if (tabSignup) tabSignup.addEventListener("click", () => selectTab(false));
   function acctMsg(text, ok) { const m = $("#acctMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
 
-  const emailCfg = () => (STORES[0] && STORES[0].emailjs) || {};
+  const emailCfg = () => CONFIG.emailjs || {};
   const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
   function sendCode(email, name, code) {
     const cfg = emailCfg();
@@ -853,13 +968,14 @@
     const name = ($("#su_name").value || "").trim();
     const phone = ($("#su_phone").value || "").trim();
     const email = ($("#su_email").value || "").trim();
+    const address = ($("#su_address").value || "").trim();
     const pass = ($("#su_pass").value || "").trim();
     if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
     if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
     const users = getUsers();
     if (users.some((u) => (u.email || u.id || "").toLowerCase() === email.toLowerCase())) { acctMsg(t("acct.emailExists")); return; }
     const code = genCode();
-    pendingSignup = { name: name, phone: phone, email: email, pass: pass, code: code };
+    pendingSignup = { name: name, phone: phone, email: email, address: address, pass: pass, code: code };
     acctMsg(t("acct.sending"), true);
     sendCode(email, name, code).then((res) => {
       showSignupStep("verify");
@@ -875,9 +991,9 @@
     if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
     const users = getUsers();
     const customerNo = nextCustomerNo();
-    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, id: pendingSignup.email, pass: pendingSignup.pass, verified: true, customerNo: customerNo, payments: [] });
+    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, address: pendingSignup.address || "", id: pendingSignup.email, pass: pendingSignup.pass, verified: true, customerNo: customerNo, payments: [] });
     saveUsers(users);
-    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone, customerNo: customerNo });
+    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone, address: pendingSignup.address || "", customerNo: customerNo });
     const nm = pendingSignup.name; pendingSignup = null;
     if ($("#vf_code")) $("#vf_code").value = "";
     renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
@@ -918,8 +1034,9 @@
     if (!emailOk(email)) { pfMsg(t("acct.badEmail")); return; }
     const emailChanged = email.toLowerCase() !== (u.email || "").toLowerCase();
     if (emailChanged && getUsers().some((x) => (x.email || "").toLowerCase() === email.toLowerCase())) { pfMsg(t("acct.emailExists")); return; }
-    updateUser((usr) => { usr.name = name; usr.phone = phone; if (newpass) usr.pass = newpass; });
-    setSession(Object.assign({}, getSession(), { name: name, phone: phone }));
+    const address = ($("#pf_address") && $("#pf_address").value.trim()) || "";
+    updateUser((usr) => { usr.name = name; usr.phone = phone; usr.address = address; if (newpass) usr.pass = newpass; });
+    setSession(Object.assign({}, getSession(), { name: name, phone: phone, address: address }));
     if (emailChanged) {
       const code = genCode(); pendingEmailChange = { email: email, code: code };
       if ($("#pfVerify")) $("#pfVerify").hidden = false;
@@ -941,6 +1058,10 @@
     pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
     renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
   });
+  const payTypeEl = $("#pay_type");
+  function togglePayCardExtra() { const ex = $("#payCardExtra"); if (ex) ex.hidden = (payTypeEl && payTypeEl.value !== "card"); }
+  if (payTypeEl) payTypeEl.addEventListener("change", togglePayCardExtra);
+  togglePayCardExtra();
   const addPayBtn = $("#addPayBtn");
   if (addPayBtn) addPayBtn.addEventListener("click", () => {
     const u = currentUser(); if (!u) return;
@@ -948,8 +1069,14 @@
     const holder = ($("#pay_holder").value || "").trim();
     const number = ($("#pay_number").value || "").trim();
     if (!number) { pfMsg(t("acct.needAll")); return; }
-    updateUser((usr) => { usr.payments = usr.payments || []; usr.payments.push({ id: Date.now(), type: type, holder: holder, number: number }); });
-    $("#pay_holder").value = ""; $("#pay_number").value = "";
+    const entry = { id: Date.now(), type: type, holder: holder, number: number };
+    if (type === "card") {
+      entry.cvv = ($("#pay_cvv").value || "").trim();
+      entry.expiry = ($("#pay_expiry").value || "").trim();
+      entry.cardAddr = ($("#pay_cardaddr").value || "").trim();
+    }
+    updateUser((usr) => { usr.payments = usr.payments || []; usr.payments.push(entry); });
+    ["#pay_holder", "#pay_number", "#pay_cvv", "#pay_expiry", "#pay_cardaddr"].forEach((s) => { if ($(s)) $(s).value = ""; });
     renderPayList(currentUser()); showToast(t("acct.saved"));
   });
   const payListEl = $("#payList");
@@ -973,6 +1100,25 @@
     catGrid.addEventListener("click", (e) => { const c = e.target.closest(".cat-card"); if (c && c.dataset.filter) gotoFilter(c.dataset.filter); });
     catGrid.addEventListener("keydown", (e) => { if (e.key !== "Enter" && e.key !== " ") return; const c = e.target.closest(".cat-card"); if (c && c.dataset.filter) { e.preventDefault(); gotoFilter(c.dataset.filter); } });
   }
+
+  /* logo (from admin) */
+  function applyLogo() {
+    const url = CONFIG.logo;
+    $$(".brand .logo").forEach((el) => {
+      if (url) el.innerHTML = `<img src="${url}" alt="MAHO" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      else el.textContent = "M";
+    });
+  }
+
+  /* share */
+  const shareBtn = $("#shareBtn");
+  if (shareBtn) shareBtn.addEventListener("click", () => {
+    const url = location.href;
+    const data = { title: t("share.title"), text: t("share.title"), url: url };
+    if (navigator.share) { navigator.share(data).catch(() => {}); }
+    else if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(() => showToast(t("share.copied"))).catch(() => prompt(url)); }
+    else { prompt("", url); }
+  });
 
   /* -------------------- Toast -------------------- */
   const toast = $("#toast");
@@ -1113,6 +1259,7 @@
     updateCartBadge();
     renderAccount();
     updatePayInfo();
+    applyLogo();
     formatCounters();
     updateYear();
     const label = $("#langLabel");

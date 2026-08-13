@@ -20,6 +20,7 @@
 
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
@@ -48,6 +49,7 @@
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9z"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5 15.4 17.5"/></symbol>
     <symbol id="i-dress" viewBox="0 0 24 24"><path d="M9 3 12 5 15 3 16 6 14 7.5V9.5L17.5 20a1 1 0 0 1-1 1.3H7.5a1 1 0 0 1-1-1.3L10 9.5V7.5L8 6z"/><path d="M10 9.5h4"/></symbol>
     <symbol id="i-coat" viewBox="0 0 24 24"><path d="M7 4 5 8l2 1v11h10V9l2-1-2-4-5 2z"/><path d="M12 6v14"/><path d="M12 11h.01M12 14h.01M12 17h.01"/></symbol>
     <symbol id="i-scarf" viewBox="0 0 24 24"><path d="M5 6c3 3.5 11 3.5 14 0"/><path d="M6.5 7.5 8.5 19l3.5-2.2 3.5 2.2 2-11.5"/></symbol>
@@ -77,6 +79,7 @@
       </nav>
 
       <div class="header-actions">
+        <button class="cart-btn" id="shareBtn" type="button" aria-label="اشتراک‌گذاری"><svg class="ic"><use href="#i-share"/></svg></button>
         <button class="cart-btn" id="accountBtn" type="button" aria-label="حساب کاربری"><svg class="ic"><use href="#i-user"/></svg></button>
         <button class="cart-btn" id="cartBtn" type="button" aria-label="سبد خرید"><svg class="ic"><use href="#i-bag"/></svg><span class="cart-count empty" id="cartCount">0</span></button>
         <button class="lang-btn" id="langToggle" type="button"><svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span></button>
@@ -386,6 +389,7 @@
             <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="su_name"></div>
             <div class="field"><label data-i18n="acct.phoneNum">شماره تماس</label><input id="su_phone" dir="ltr" inputmode="tel"></div>
             <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="su_email" type="email" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.address">آدرس</label><input id="su_address"></div>
             <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="su_pass" type="password"></div>
             <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کد تأیید</button>
           </div>
@@ -409,6 +413,7 @@
           <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="pf_name"></div>
           <div class="field"><label data-i18n="acct.phoneNum">شماره تماس</label><input id="pf_phone" dir="ltr"></div>
           <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="pf_email" type="email" dir="ltr"></div>
+          <div class="field"><label data-i18n="acct.address">آدرس</label><input id="pf_address"></div>
           <div class="field"><label data-i18n="acct.newPass">رمز عبور جدید</label><input id="pf_pass" type="password"></div>
           <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>
           <div id="pfVerify" hidden style="margin-top:10px">
@@ -423,6 +428,11 @@
           <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="card" data-i18n="pay.tCard">کارت بانکی</option><option value="bank" data-i18n="pay.tBank">حساب بانکی</option></select></div>
           <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder"></div>
           <div class="field"><label data-i18n="pay.accountNo">شماره حساب / کارت</label><input id="pay_number" dir="ltr" inputmode="numeric"></div>
+          <div id="payCardExtra">
+            <div class="field"><label data-i18n="pay.cvv">کود امنیتی (CVV)</label><input id="pay_cvv" dir="ltr" inputmode="numeric" maxlength="4"></div>
+            <div class="field"><label data-i18n="pay.expiry">تاریخ انقضا (MM/YY)</label><input id="pay_expiry" dir="ltr" placeholder="MM/YY"></div>
+            <div class="field"><label data-i18n="pay.cardAddr">آدرس کارت</label><input id="pay_cardaddr"></div>
+          </div>
           <button class="btn btn-outline" id="addPayBtn" style="width:100%" data-i18n="pay.add">افزودن معلومات پرداخت</button>
           <p class="note" data-i18n="pay.localNote" style="font-size:12px;color:var(--muted);margin-top:6px">این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.</p>
 

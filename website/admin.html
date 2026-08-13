@@ -16,7 +16,7 @@
     a{color:inherit}
     .topbar{position:sticky;top:0;z-index:20;background:var(--black);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800}
-    .brand .logo{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;font-family:Georgia,serif;font-size:19px}
+    .brand .logo{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;font-family:Georgia,serif;font-size:19px;overflow:hidden}
     .brand small{display:block;font-weight:600;font-size:11px;color:var(--gold);letter-spacing:1px}
     .tb-actions{display:flex;gap:8px;flex-wrap:wrap}
     .btn{font-family:inherit;font-weight:700;font-size:14px;border-radius:999px;border:1.5px solid transparent;padding:9px 16px;cursor:pointer;transition:.15s;white-space:nowrap}
@@ -38,6 +38,7 @@
     .price{font-weight:800;white-space:nowrap}
     .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:#f3efe7;color:var(--muted)}
     .tag.sale{background:#fff3d9;color:var(--gold-deep)}.tag.new{background:#e7f5ea;color:var(--green)}
+    .stockcell{font-weight:700}.stockcell.low{color:var(--gold-deep)}.stockcell.out{color:var(--red)}
     .field{margin-bottom:12px}
     .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
     .field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
@@ -47,33 +48,30 @@
     .ok{color:var(--green);font-weight:700}
     .dirty-badge{font-size:12px;font-weight:700;color:var(--red);display:none}
     .dirty .dirty-badge{display:inline}
-    /* modal */
     .overlay{position:fixed;inset:0;background:#00000088;display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
     .overlay.show{display:flex}
     .modal{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:20px}
     .modal h3{margin:0 0 14px}
     .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
-    /* gate */
     .gate{position:fixed;inset:0;background:var(--black);display:flex;align-items:center;justify-content:center;z-index:60;color:#fff;text-align:center;padding:20px}
     .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:18px;padding:30px;max-width:360px;width:100%}
     .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;font-family:inherit;text-align:center;font-size:16px;margin:12px 0}
     .help li{margin-bottom:6px}
     .savebar{position:fixed;inset-inline:0;bottom:0;z-index:50;background:var(--black);color:#fff;display:none;align-items:center;justify-content:center;gap:16px;padding:12px 16px;box-shadow:0 -8px 26px #00000030;flex-wrap:wrap}
     .savebar.show{display:flex}
-    .savebar span{font-weight:700}
-    .savebar .pulse{color:var(--gold)}
+    .savebar span{font-weight:700}.savebar .pulse{color:var(--gold)}
     .card-foot{margin-top:14px;display:flex;justify-content:flex-end}
     .img-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
     .img-thumb{position:relative;width:74px;height:74px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
     .img-thumb img{width:100%;height:100%;object-fit:cover}
     .img-thumb button{position:absolute;top:2px;inset-inline-end:2px;width:22px;height:22px;border-radius:50%;border:0;background:#000a;color:#fff;cursor:pointer;font-size:13px;line-height:1}
+    .logo-preview{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);object-fit:cover;background:#111}
     .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
     .toast.show{transform:none;opacity:1}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
   </style>
 </head>
 <body>
-  <!-- product-icon sprite (for previews) -->
   <svg style="position:absolute;width:0;height:0" aria-hidden="true">
     <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M6.5 3.5 3 6l2 3.5 2-1V21h10V8.5l2 1L21 6l-3.5-2.5-2 .8a4 4 0 0 1-7 0z"/></symbol>
     <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
@@ -90,7 +88,6 @@
     <symbol id="i-perfume" viewBox="0 0 24 24"><path d="M10 3h4v2h-4z"/><path d="M9.5 5h5v1.6l1 1V19a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 8.5 19V7.6l1-1z"/><path d="M15 6.5 17 5M17 5V3"/></symbol>
   </svg>
 
-  <!-- passcode gate -->
   <div class="gate" id="gate">
     <div class="box">
       <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
@@ -104,7 +101,7 @@
   </div>
 
   <div class="topbar">
-    <div class="brand"><span class="logo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
+    <div class="brand"><span class="logo" id="brandLogo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
     <div class="tb-actions">
       <span class="dirty-badge" id="dirtyBadge">● تغییرات ذخیره‌نشده</span>
       <a class="btn btn-ghost btn-sm" href="index.html" target="_blank">مشاهده سایت ↗</a>
@@ -118,74 +115,84 @@
     <!-- PRODUCTS -->
     <div class="card">
       <div class="row-between">
-        <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها. تغییرات پس از «ذخیره تغییرات» روی سایت شما (در همین مرورگر) دیده می‌شود.</div></div>
+        <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها؛ همراه با کد کالا و تعداد موجودی. تغییرات پس از «ذخیره تغییرات» روی سایت شما دیده می‌شود.</div></div>
         <button class="btn btn-gold" id="addBtn">+ افزودن محصول</button>
       </div>
       <div style="overflow:auto">
         <table>
-          <thead><tr><th>تصویر</th><th>نام کالا</th><th>دسته</th><th class="hide-sm">برچسب</th><th>قیمت</th><th>عملیات</th></tr></thead>
+          <thead><tr><th>تصویر</th><th>نام</th><th class="hide-sm">کد</th><th>موجودی</th><th class="hide-sm">قیمت</th><th>عملیات</th></tr></thead>
           <tbody id="prodBody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- STORE -->
+    <!-- STORES -->
     <div class="card">
-      <h2>اطلاعات فروشگاه</h2>
-      <div class="sub">آدرس، ساعت کاری، شماره تماس و لینک نقشه.</div>
-      <div class="grid2">
-        <div class="field"><label>نام فروشگاه (دری)</label><input id="s_name"></div>
-        <div class="field"><label>نام فروشگاه (English)</label><input id="s_name_en" dir="ltr"></div>
-        <div class="field"><label>آدرس (دری)</label><input id="s_area"></div>
-        <div class="field"><label>آدرس (English)</label><input id="s_area_en" dir="ltr"></div>
-        <div class="field"><label>ساعت کاری (دری)</label><input id="s_hours"></div>
-        <div class="field"><label>ساعت کاری (English)</label><input id="s_hours_en" dir="ltr"></div>
-        <div class="field"><label>شماره تماس (دری)</label><input id="s_phone"></div>
-        <div class="field"><label>شماره تماس (English)</label><input id="s_phone_en" dir="ltr"></div>
+      <div class="row-between">
+        <div><h2>فروشگاه‌ها / شعبه‌ها</h2><div class="sub">فروشگاه‌ها و آدرس‌هایی که مشتری‌ها در سایت می‌بینند.</div></div>
+        <button class="btn btn-gold" id="addStoreBtn">+ افزودن فروشگاه</button>
       </div>
-      <div class="grid2">
-        <div class="field"><label>لینک گوگل مپ</label><input id="s_map" dir="ltr"></div>
-        <div class="field"><label>شماره واتساپ برای سفارش (مثلاً 0700123456)</label><input id="s_whatsapp" dir="ltr" placeholder="0700123456"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>نام</th><th class="hide-sm">آدرس</th><th>شماره</th><th>عملیات</th></tr></thead>
+          <tbody id="storeBody"></tbody>
+        </table>
       </div>
-      <h3 style="margin:18px 0 6px;font-size:16px">اطلاعات پرداخت (اختیاری)</h3>
-      <div class="sub">برای گزینه‌ی «انتقال/پرداخت بانکی» در سبد خرید. اگر لینک درگاه پرداخت آنلاین دارید، در خانه‌ی آخر بگذارید.</div>
-      <div class="grid2">
-        <div class="field"><label>نام صاحب حساب</label><input id="s_bank_holder"></div>
-        <div class="field"><label>نام بانک</label><input id="s_bank_name"></div>
-        <div class="field"><label>شماره حساب / کارت</label><input id="s_bank_number" dir="ltr"></div>
-        <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="s_paylink" dir="ltr" placeholder="https://..."></div>
-      </div>
-      <div class="card-foot"><button class="btn btn-gold" id="saveBtnStore">ذخیره تغییرات</button></div>
     </div>
 
-    <!-- EMAIL VERIFICATION SETTINGS -->
+    <!-- SETTINGS -->
     <div class="card">
-      <h2>تنظیمات ایمیل تأیید حساب (EmailJS)</h2>
-      <div class="sub">برای فرستادن «کد تأیید» به ایمیل مشتری هنگام ساخت حساب. یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید و سه مقدار زیر را وارد کنید. تا وقتی این‌ها خالی باشند، سایت در «حالت آزمایشی» کد را روی صفحه نشان می‌دهد (ایمیل واقعی فرستاده نمی‌شود).</div>
-      <div class="grid2">
-        <div class="field"><label>Service ID</label><input id="s_ejs_service" dir="ltr"></div>
-        <div class="field"><label>Public Key</label><input id="s_ejs_key" dir="ltr"></div>
-        <div class="field"><label>Template ID (کد تأیید حساب)</label><input id="s_ejs_template" dir="ltr"></div>
-        <div class="field"><label>Template ID (تأیید سفارش)</label><input id="s_ejs_order" dir="ltr"></div>
+      <h2>تنظیمات سایت</h2>
+      <div class="sub">لوگو، شماره واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
+
+      <div class="field">
+        <label>لوگوی سایت (اختیاری)</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <img id="logoPreview" class="logo-preview" alt="">
+          <input type="file" id="cfg_logo" accept="image/*" style="flex:1;min-width:180px">
+          <button class="btn btn-outline btn-sm" id="logoRemove" type="button">حذف لوگو</button>
+        </div>
+        <p class="note">اگر لوگو بگذارید، به‌جای حرف M در سربرگ سایت نشان داده می‌شود.</p>
       </div>
-      <p class="note">قالب «کد تأیید حساب» با متغیرهای <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{passcode}}</code>. قالب «تأیید سفارش» با متغیرهای <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>. در هر دو، گیرنده (To Email) را <code>{{to_email}}</code> بگذارید.</p>
-      <div class="card-foot"><button class="btn btn-gold" id="saveBtnEjs">ذخیره تغییرات</button></div>
+
+      <div class="field"><label>شماره واتساپ برای سفارش (مثلاً 0700123456)</label><input id="cfg_whatsapp" dir="ltr" placeholder="0700123456"></div>
+
+      <h3 style="margin:16px 0 6px;font-size:16px">اطلاعات پرداخت</h3>
+      <div class="grid2">
+        <div class="field"><label>نام صاحب حساب</label><input id="cfg_bank_holder"></div>
+        <div class="field"><label>نام بانک</label><input id="cfg_bank_name"></div>
+        <div class="field"><label>شماره حساب / کارت</label><input id="cfg_bank_number" dir="ltr"></div>
+        <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="cfg_paylink" dir="ltr" placeholder="https://..."></div>
+      </div>
+
+      <h3 style="margin:16px 0 6px;font-size:16px">ایمیل (EmailJS)</h3>
+      <div class="sub">برای ارسال «کد تأیید حساب» و «تأیید سفارش». یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید. تا خالی است، حالت آزمایشی فعال می‌ماند.</div>
+      <div class="grid2">
+        <div class="field"><label>Service ID</label><input id="cfg_ejs_service" dir="ltr"></div>
+        <div class="field"><label>Public Key</label><input id="cfg_ejs_key" dir="ltr"></div>
+        <div class="field"><label>Template ID (کد تأیید حساب)</label><input id="cfg_ejs_template" dir="ltr"></div>
+        <div class="field"><label>Template ID (تأیید سفارش)</label><input id="cfg_ejs_order" dir="ltr"></div>
+      </div>
+      <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>.</p>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات</button></div>
     </div>
 
-    <!-- PUBLISH / SETTINGS -->
+    <!-- PUBLISH / MAHO / BACKUP -->
     <div class="card">
-      <h2>انتشار و پشتیبان</h2>
-      <div class="sub">تغییرات شما فعلاً فقط در همین دستگاه ذخیره می‌شود. برای این‌که همه‌ی مشتری‌ها آن را ببینند، فایل را «دانلود» کنید و برای ما بفرستید تا روی سایت اصلی بگذاریم (یا اگر با GitHub کار می‌کنید، فایل <code>website/data.json</code> را با آن جایگزین کنید).</div>
+      <h2>انتشار، اتصال و پشتیبان</h2>
+      <div class="sub">فایل <code>data.json</code> را دانلود کنید و روی هر هاستی (GitHub Pages، Netlify، هاست شخصی و…) کنار فایل‌های سایت بگذارید تا برای همه‌ی مشتری‌ها منتشر شود.</div>
       <div class="tb-actions" style="gap:10px">
-        <button class="btn btn-gold btn-sm" id="exportBtn">⬇ دانلود فایل data.json</button>
+        <button class="btn btn-gold btn-sm" id="exportBtn">⬇ دانلود data.json</button>
         <label class="btn btn-outline btn-sm" style="display:inline-block">⬆ وارد کردن فایل<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+        <button class="btn btn-outline btn-sm" id="mahoImportBtn">وارد کردن اجناس از سیستم MAHO</button>
         <button class="btn btn-outline btn-sm" id="resetBtn">بازگردانی به نسخه‌ی منتشرشده</button>
       </div>
+      <p class="note" style="margin-top:10px">اتصال با سیستم MAHO: اگر برنامه‌ی MAHO Enterprise را در همین مرورگر باز کرده باشید، دکمه‌ی «وارد کردن اجناس از سیستم MAHO» اجناس آن را (نام، کد، قیمت، موجودی) به سایت می‌آورد.</p>
       <div style="margin-top:16px" class="grid2">
         <div class="field"><label>تغییر رمز عبور پنل</label><input id="newPass" placeholder="رمز جدید"></div>
         <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره رمز جدید</button></div>
       </div>
-      <p class="note">توجه: این محافظت ساده است و جای امنیت واقعی را نمی‌گیرد؛ لینک این صفحه را خصوصی نگه دارید.</p>
+      <p class="note">توجه: این محافظت ساده است؛ لینک این صفحه را خصوصی نگه دارید.</p>
     </div>
 
     <p class="note" style="text-align:center">MAHO — پنل مدیریت ساده و بدون کدنویسی</p>
@@ -193,7 +200,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- floating save bar (appears when there are unsaved changes) -->
   <div class="savebar" id="saveBar">
     <span><span class="pulse">●</span> تغییرات ذخیره‌نشده دارید</span>
     <button class="btn btn-gold" id="saveBtnFloat">ذخیره تغییرات</button>
@@ -206,6 +212,8 @@
       <div class="grid2">
         <div class="field"><label>نام کالا (دری) *</label><input id="f_name"></div>
         <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
+        <div class="field"><label>کد کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
+        <div class="field"><label>تعداد موجودی</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"></div>
         <div class="field"><label>دسته</label>
           <select id="f_cat">
             <option value="clothing">پوشاک</option>
@@ -231,7 +239,7 @@
           </select>
         </div>
         <div class="field"><label>قیمت (افغانی) *</label><input id="f_price" type="number" min="0" inputmode="numeric"></div>
-        <div class="field"><label>قیمت قبلی (اختیاری - برای تخفیف)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>قیمت قبلی (برای تخفیف)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>برچسب</label>
           <select id="f_badge">
             <option value="">بدون برچسب</option>
@@ -239,23 +247,45 @@
             <option value="sale">تخفیف</option>
           </select>
         </div>
-        <div class="field" id="badgeTextWrap"><label>متن تخفیف (مثلاً ۲۰٪ تخفیف)</label><input id="f_badgeText" placeholder="۲۰٪ تخفیف"></div>
+        <div class="field" id="badgeTextWrap"><label>متن تخفیف</label><input id="f_badgeText" placeholder="۲۰٪ تخفیف"></div>
       </div>
       <div class="field">
-        <label>عکس‌های کالا (می‌توانید چند عکس انتخاب کنید)</label>
+        <label>عکس‌های کالا (چند عکس مجاز است)</label>
         <input type="file" id="f_image" accept="image/*" multiple>
         <div id="f_imgPreview" class="img-previews"></div>
-        <p class="note">اولین عکس، عکس اصلی است. اگر عکس بگذارید به‌جای آیکن روی سایت نشان داده می‌شود؛ عکس‌ها خودکار کوچک می‌شوند.</p>
+        <p class="note">اولین عکس، عکس اصلی است؛ عکس‌ها خودکار کوچک می‌شوند.</p>
       </div>
       <div class="grid2">
         <div class="field"><label>سایزها (با کامه جدا کنید)</label><input id="f_sizes" placeholder="S، M، L، XL"></div>
         <div class="field"><label>رنگ‌ها (با کامه جدا کنید)</label><input id="f_colors" placeholder="مشکی، سرخ، آبی"></div>
       </div>
-      <p class="note">اگر سایز یا رنگ بگذارید، مشتری باید قبل از افزودن به سبد آن را انتخاب کند.</p>
       <p class="note" id="modalMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="cancelBtn">لغو</button>
         <button class="btn btn-gold" id="okBtn">ذخیره محصول</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- store editor modal -->
+  <div class="overlay" id="storeOverlay">
+    <div class="modal">
+      <h3 id="storeModalTitle">افزودن فروشگاه</h3>
+      <div class="grid2">
+        <div class="field"><label>نام (دری) *</label><input id="st_name"></div>
+        <div class="field"><label>نام (English)</label><input id="st_name_en" dir="ltr"></div>
+        <div class="field"><label>آدرس (دری)</label><input id="st_area"></div>
+        <div class="field"><label>آدرس (English)</label><input id="st_area_en" dir="ltr"></div>
+        <div class="field"><label>ساعت کاری (دری)</label><input id="st_hours"></div>
+        <div class="field"><label>ساعت کاری (English)</label><input id="st_hours_en" dir="ltr"></div>
+        <div class="field"><label>شماره تماس (دری)</label><input id="st_phone" dir="ltr"></div>
+        <div class="field"><label>شماره تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
+      </div>
+      <div class="field"><label>لینک گوگل مپ</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
+      <p class="note" id="storeMsg" style="color:var(--red);min-height:18px"></p>
+      <div class="modal-foot">
+        <button class="btn btn-outline" id="storeCancelBtn">لغو</button>
+        <button class="btn btn-gold" id="storeOkBtn">ذخیره فروشگاه</button>
       </div>
     </div>
   </div>
@@ -271,15 +301,13 @@
     var toEn=function(v){return String(v==null?"":v).replace(/[۰-۹]/g,function(d){return faMap.indexOf(d)})};
     var money=function(n){return toFa(Number(n).toLocaleString("en-US"))+" افغانی"};
     var icon=function(id){return '<svg class="ic"><use href="#i-'+id+'"/></svg>'};
-
-    var state={products:[],store:{}}, editIndex=-1, dirty=false, modalImages=[];
     function parseList(v){ return String(v||"").split(/[,،]/).map(function(x){return x.trim()}).filter(Boolean); }
 
-    /* toast */
+    var state={products:[],stores:[],config:{}}, editIndex=-1, storeEditIndex=-1, dirty=false, modalImages=[];
+
     var toastTimer;
     function toast(msg){ var el=$("#toast"); if(!el)return; el.textContent=msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.classList.remove("show")},2600); }
 
-    /* downscale an uploaded image to keep it small enough for storage */
     function resizeImage(file,maxDim,quality,cb){
       var url=URL.createObjectURL(file), img=new Image();
       img.onload=function(){
@@ -304,39 +332,75 @@
     $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
     if(sessionStorage.getItem("maho_admin_ok")==="1") openApp();
 
-    /* ---------- load ---------- */
+    /* ---------- state / render ---------- */
     function setDirty(v){dirty=v; document.body.classList.toggle("dirty",v); var sb=$("#saveBar"); if(sb) sb.classList.toggle("show",v);}
-    function fillStore(){
-      var s=state.store||{};
-      $("#s_name").value=s.name||""; $("#s_name_en").value=s.name_en||"";
-      $("#s_area").value=s.area||""; $("#s_area_en").value=s.area_en||"";
-      $("#s_hours").value=s.hours||""; $("#s_hours_en").value=s.hours_en||"";
-      $("#s_phone").value=s.phone||""; $("#s_phone_en").value=s.phone_en||"";
-      $("#s_map").value=s.map||""; $("#s_whatsapp").value=s.whatsapp||"";
-      var ej=s.emailjs||{}; $("#s_ejs_service").value=ej.serviceId||""; $("#s_ejs_template").value=ej.templateId||""; $("#s_ejs_order").value=ej.orderTemplateId||""; $("#s_ejs_key").value=ej.publicKey||"";
-      var bk=s.bank||{}; $("#s_bank_holder").value=bk.holder||""; $("#s_bank_name").value=bk.name||""; $("#s_bank_number").value=bk.number||""; $("#s_paylink").value=s.paymentLink||"";
+    function normalize(d){
+      d=d||{};
+      var products=Array.isArray(d.products)?d.products:[];
+      var stores=Array.isArray(d.stores)?d.stores:(d.store?[d.store]:[]);
+      var config=d.config||{};
+      if(d.store){
+        if(config.whatsapp==null) config.whatsapp=d.store.whatsapp;
+        if(config.bank==null) config.bank=d.store.bank;
+        if(config.paymentLink==null) config.paymentLink=d.store.paymentLink;
+        if(config.emailjs==null) config.emailjs=d.store.emailjs;
+      }
+      config.bank=config.bank||{}; config.emailjs=config.emailjs||{};
+      return {products:products,stores:stores,config:config};
+    }
+    function fillConfig(){
+      var c=state.config||{};
+      $("#cfg_whatsapp").value=c.whatsapp||"";
+      var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
+      $("#cfg_paylink").value=c.paymentLink||"";
+      var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
+      var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
+      var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
+    }
+    function collectConfig(){
+      state.config={
+        whatsapp:$("#cfg_whatsapp").value.trim(),
+        logo:(state.config&&state.config.logo)||"",
+        bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
+        paymentLink:$("#cfg_paylink").value.trim(),
+        emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
+      };
     }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
       state.products.forEach(function(p,i){
-        var badge=p.badge?('<span class="tag '+p.badge+'">'+(p.badge==="new"?"جدید":(p.badgeText||"تخفیف"))+'</span>'):'<span class="tag">—</span>';
         var firstImg=(p.images&&p.images[0])||p.image||"";
         var thumb=firstImg?('<div class="p-ico"><img src="'+firstImg+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>'):('<div class="p-ico">'+icon(p.icon||"bag")+'</div>');
+        var st=(p.stock==null||p.stock==="")?"∞":parseInt(p.stock,10);
+        var cls=(st==="∞")?"":(st<=0?"out":(st<=5?"low":""));
+        var stTxt=(st==="∞")?"∞":toFa(st);
         var tr=document.createElement("tr");
         tr.innerHTML='<td>'+thumb+'</td>'+
-          '<td><b>'+(p.name||"")+'</b></td>'+
-          '<td>'+(CAT_LABEL[p.cat]||p.cat||"")+'</td>'+
-          '<td class="hide-sm">'+badge+'</td>'+
-          '<td class="price">'+money(p.price)+'</td>'+
+          '<td><b>'+(p.name||"")+'</b><br><span class="note hide-sm">'+(CAT_LABEL[p.cat]||p.cat||"")+'</span></td>'+
+          '<td class="hide-sm" dir="ltr">'+(p.code||"—")+'</td>'+
+          '<td class="stockcell '+cls+'">'+stTxt+'</td>'+
+          '<td class="price hide-sm">'+money(p.price)+'</td>'+
           '<td><button class="btn btn-outline btn-sm" data-edit="'+i+'">ویرایش</button> '+
           '<button class="btn btn-danger btn-sm" data-del="'+i+'">حذف</button></td>';
         b.appendChild(tr);
       });
     }
-    function loadInto(d){ state.products=(d&&d.products)||[]; state.store=(d&&d.store)||{}; renderTable(); fillStore(); }
+    function renderStoreTable(){
+      var b=$("#storeBody"); b.innerHTML="";
+      state.stores.forEach(function(s,i){
+        var tr=document.createElement("tr");
+        tr.innerHTML='<td><b>'+(s.name||"")+'</b></td>'+
+          '<td class="hide-sm">'+(s.area||"")+'</td>'+
+          '<td dir="ltr">'+(s.phone||"")+'</td>'+
+          '<td><button class="btn btn-outline btn-sm" data-sedit="'+i+'">ویرایش</button> '+
+          '<button class="btn btn-danger btn-sm" data-sdel="'+i+'">حذف</button></td>';
+        b.appendChild(tr);
+      });
+    }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; renderTable(); renderStoreTable(); fillConfig(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
-      fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{products:[],store:{}}); }).catch(function(){ loadInto({products:[],store:{}}); });
+      fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
     }
     loadInitial();
 
@@ -347,6 +411,7 @@
       $("#modalMsg").textContent="";
       var p=editIndex>=0?state.products[editIndex]:{cat:"clothing",icon:"dress",badge:""};
       $("#f_name").value=p.name||""; $("#f_name_en").value=p.name_en||"";
+      $("#f_code").value=p.code||""; $("#f_stock").value=(p.stock==null?"":p.stock);
       $("#f_cat").value=p.cat||"clothing"; $("#f_icon").value=p.icon||"dress";
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
@@ -358,12 +423,9 @@
     function closeModal(){$("#overlay").classList.remove("show")}
     function toggleBadgeText(){ $("#badgeTextWrap").style.display=$("#f_badge").value==="sale"?"block":"none"; }
     function updateImgPreview(){
-      var box=$("#f_imgPreview");
-      box.innerHTML=modalImages.map(function(src,i){ return '<div class="img-thumb"><img src="'+src+'"><button type="button" data-rm="'+i+'" aria-label="حذف">✕</button></div>'; }).join("");
+      $("#f_imgPreview").innerHTML=modalImages.map(function(src,i){ return '<div class="img-thumb"><img src="'+src+'"><button type="button" data-rm="'+i+'" aria-label="حذف">✕</button></div>'; }).join("");
     }
-    $("#f_imgPreview").addEventListener("click",function(e){
-      var b=e.target.closest("[data-rm]"); if(!b)return; modalImages.splice(parseInt(b.getAttribute("data-rm"),10),1); updateImgPreview();
-    });
+    $("#f_imgPreview").addEventListener("click",function(e){ var b=e.target.closest("[data-rm]"); if(!b)return; modalImages.splice(parseInt(b.getAttribute("data-rm"),10),1); updateImgPreview(); });
     $("#f_image").addEventListener("change",function(e){
       var files=Array.prototype.slice.call(e.target.files||[]); if(!files.length)return;
       var pending=files.length;
@@ -383,7 +445,8 @@
       if(!name){ $("#modalMsg").textContent="نام کالا الزامی است."; return; }
       if(price===""||isNaN(Number(price))){ $("#modalMsg").textContent="قیمت معتبر وارد کنید."; return; }
       var badge=$("#f_badge").value;
-      var p={ name:name, name_en:$("#f_name_en").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price) };
+      var p={ name:name, name_en:$("#f_name_en").value.trim(), code:$("#f_code").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price) };
+      var stock=toEn($("#f_stock").value).trim(); if(stock!==""&&!isNaN(Number(stock))) p.stock=Number(stock);
       var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
@@ -394,41 +457,64 @@
       renderTable(); setDirty(true); closeModal();
     };
 
-    /* ---------- store fields ---------- */
-    ["s_name","s_name_en","s_area","s_area_en","s_hours","s_hours_en","s_phone","s_phone_en","s_map","s_whatsapp","s_ejs_service","s_ejs_template","s_ejs_order","s_ejs_key","s_bank_holder","s_bank_name","s_bank_number","s_paylink"].forEach(function(id){
+    /* ---------- store modal ---------- */
+    function openStore(i){
+      storeEditIndex=(typeof i==="number")?i:-1;
+      $("#storeModalTitle").textContent=storeEditIndex>=0?"ویرایش فروشگاه":"افزودن فروشگاه";
+      $("#storeMsg").textContent="";
+      var s=storeEditIndex>=0?state.stores[storeEditIndex]:{};
+      $("#st_name").value=s.name||""; $("#st_name_en").value=s.name_en||"";
+      $("#st_area").value=s.area||""; $("#st_area_en").value=s.area_en||"";
+      $("#st_hours").value=s.hours||""; $("#st_hours_en").value=s.hours_en||"";
+      $("#st_phone").value=s.phone||""; $("#st_phone_en").value=s.phone_en||"";
+      $("#st_map").value=s.map||"";
+      $("#storeOverlay").classList.add("show");
+    }
+    function closeStore(){$("#storeOverlay").classList.remove("show")}
+    $("#addStoreBtn").onclick=function(){openStore()};
+    $("#storeCancelBtn").onclick=closeStore;
+    $("#storeOverlay").addEventListener("click",function(e){if(e.target===$("#storeOverlay"))closeStore()});
+    $("#storeBody").addEventListener("click",function(e){
+      var ed=e.target.getAttribute("data-sedit"), dl=e.target.getAttribute("data-sdel");
+      if(ed!==null) openStore(parseInt(ed,10));
+      if(dl!==null){ var idx=parseInt(dl,10); if(confirm("این فروشگاه حذف شود؟\n«"+(state.stores[idx].name||"")+"»")){ state.stores.splice(idx,1); renderStoreTable(); setDirty(true); } }
+    });
+    $("#storeOkBtn").onclick=function(){
+      var name=$("#st_name").value.trim();
+      if(!name){ $("#storeMsg").textContent="نام فروشگاه الزامی است."; return; }
+      var s={ name:name, name_en:$("#st_name_en").value.trim(),
+        area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
+        hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
+        phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
+        map:$("#st_map").value.trim() };
+      if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
+      renderStoreTable(); setDirty(true); closeStore();
+    };
+
+    /* ---------- config field listeners + logo ---------- */
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
-    function collectStore(){
-      state.store={ name:$("#s_name").value.trim(), name_en:$("#s_name_en").value.trim(),
-        area:$("#s_area").value.trim(), area_en:$("#s_area_en").value.trim(),
-        hours:$("#s_hours").value.trim(), hours_en:$("#s_hours_en").value.trim(),
-        phone:$("#s_phone").value.trim(), phone_en:$("#s_phone_en").value.trim(),
-        map:$("#s_map").value.trim(), whatsapp:$("#s_whatsapp").value.trim(),
-        emailjs:{ serviceId:$("#s_ejs_service").value.trim(), templateId:$("#s_ejs_template").value.trim(), orderTemplateId:$("#s_ejs_order").value.trim(), publicKey:$("#s_ejs_key").value.trim() },
-        bank:{ holder:$("#s_bank_holder").value.trim(), name:$("#s_bank_name").value.trim(), number:$("#s_bank_number").value.trim() },
-        paymentLink:$("#s_paylink").value.trim() };
-    }
+    $("#cfg_logo").addEventListener("change",function(e){
+      var f=e.target.files[0]; if(!f)return;
+      resizeImage(f,240,0.85,function(dataUrl){ if(dataUrl){ state.config.logo=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+    });
+    $("#logoRemove").onclick=function(){ state.config.logo=""; fillConfig(); setDirty(true); };
 
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
-      collectStore();
+      collectConfig();
       try{
         localStorage.setItem(DATA_KEY, JSON.stringify(state));
-        setDirty(false);
-        toast("تغییرات ذخیره شد ✓");
+        setDirty(false); toast("تغییرات ذخیره شد ✓");
       }catch(e){
-        var quota = (e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014));
-        alert(quota
-          ? "حجم عکس‌ها زیاد است و جا نشد. لطفاً تعداد یا حجم عکس‌ها را کمتر کنید و دوباره ذخیره کنید."
-          : "ذخیره ناموفق بود: "+(e&&e.message?e.message:e));
+        var quota=(e&&(e.name==="QuotaExceededError"||e.code===22||e.code===1014));
+        alert(quota?"حجم عکس‌ها زیاد است و جا نشد. عکس‌ها را کمتر کنید.":"ذخیره ناموفق بود: "+(e&&e.message?e.message:e));
       }
     }
-    $("#saveBtn").onclick=saveAll;
-    $("#saveBtnFloat").onclick=saveAll;
-    $("#saveBtnStore").onclick=saveAll;
-    $("#saveBtnEjs").onclick=saveAll;
+    $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll;
     $("#exportBtn").onclick=function(){
-      collectStore();
+      collectConfig();
       var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
       var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="data.json";
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
@@ -436,7 +522,7 @@
     $("#importFile").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
       var rd=new FileReader();
-      rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d||!Array.isArray(d.products)) throw new Error("ساختار فایل نادرست است"); loadInto(d); setDirty(true); alert("فایل بارگذاری شد. برای اعمال، «ذخیره تغییرات» را بزنید."); }catch(err){ alert("خطا در خواندن فایل: "+err.message); } };
+      rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d||!Array.isArray(d.products)) throw new Error("ساختار فایل نادرست است"); loadInto(d); setDirty(true); alert("فایل بارگذاری شد. برای اعمال «ذخیره تغییرات» را بزنید."); }catch(err){ alert("خطا در خواندن فایل: "+err.message); } };
       rd.readAsText(f); e.target.value="";
     });
     $("#resetBtn").onclick=function(){
@@ -445,7 +531,23 @@
       setDirty(false); loadInitial();
     };
 
-    /* ---------- password change ---------- */
+    /* ---------- MAHO import (best effort) ---------- */
+    $("#mahoImportBtn").onclick=function(){
+      var db=null;
+      try{ db=JSON.parse(localStorage.getItem("mahoDB")||localStorage.getItem("mahobd")||"null"); }catch(e){}
+      var list=db&&(db.products||db.items||db.goods);
+      if(!list||!list.length){ alert("اجناسی از سیستم MAHO در این مرورگر پیدا نشد. لطفاً ابتدا برنامه‌ی MAHO را در همین مرورگر باز کنید."); return; }
+      var mapped=list.map(function(x){
+        return { name:x.name||x.title||"کالا", name_en:x.name_en||"", code:x.code||x.barcode||x.permanentId||"", cat:"clothing", icon:"bag",
+          price:Number(x.price||x.sellPrice||x.salePrice||x.sell||0)||0,
+          stock:(x.stock!=null?Number(x.stock):(x.qty!=null?Number(x.qty):(x.quantity!=null?Number(x.quantity):undefined))) };
+      });
+      if(!confirm("تعداد "+toFa(mapped.length)+" کالا از سیستم MAHO پیدا شد. به لیست محصولات اضافه شود؟")) return;
+      state.products=state.products.concat(mapped);
+      renderTable(); setDirty(true); toast("اجناس MAHO اضافه شد ✓");
+    };
+
+    /* ---------- password ---------- */
     $("#passBtn").onclick=function(){
       var np=$("#newPass").value.trim(); if(np.length<4){ alert("رمز باید حداقل ۴ نویسه باشد."); return; }
       try{ localStorage.setItem(PASS_KEY,np); $("#newPass").value=""; alert("رمز جدید ذخیره شد ✓"); }catch(e){ alert("ذخیره نشد"); }
