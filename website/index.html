@@ -375,8 +375,20 @@
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="co_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="co_district"></div>
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="co_street"></div>
+          <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="co_area"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="co_house" dir="ltr"></div>
           <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
+
+          <div class="field">
+            <label data-i18n="co.timeslot">زمان دریافت / تحویل</label>
+            <select id="co_timeslot" class="ctrl" style="width:100%">
+              <option value="0" data-i18n="co.ts0">در اسرع وقت</option>
+              <option value="1" data-i18n="co.ts1">امروز صبح (۹ تا ۱۲)</option>
+              <option value="2" data-i18n="co.ts2">امروز بعد از ظهر (۱۲ تا ۴)</option>
+              <option value="3" data-i18n="co.ts3">امروز عصر (۴ تا ۸)</option>
+              <option value="4" data-i18n="co.ts4">فردا</option>
+            </select>
+          </div>
 
           <div class="field" id="recvWrap">
             <label data-i18n="co.delivery">روش دریافت</label>
@@ -408,6 +420,19 @@
             </div>
             <div class="pay-info" id="payInfo" hidden></div>
           </div>
+
+          <div class="field" id="guestAcctWrap">
+            <label data-i18n="co.makeAccount">ساخت حساب (اختیاری)</label>
+            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="پسورد برای حساب جدید">
+            <p class="note" data-i18n="co.makeAccountHint">اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.</p>
+          </div>
+          <div class="field" id="coVerifyBox" hidden>
+            <label data-i18n="co.enterCode">کود تایید (به ایمیل شما فرستاده شد)</label>
+            <input id="co_acct_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code">
+            <p class="qv-msg" id="coVerifyMsg"></p>
+            <button type="button" class="btn btn-gold" id="coVerifyBtn" data-i18n="co.verifyPlace">تایید کود و ثبت سفارش</button>
+          </div>
+
           <p class="qv-msg" id="coMsg"></p>
         </div>
         <div class="cart-foot">
@@ -455,6 +480,7 @@
             <div class="field"><label data-i18n="addr.province">ولایت</label><input id="su_province"></div>
             <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="su_district"></div>
             <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="su_street"></div>
+            <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="su_area"></div>
             <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password"></div>
             <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کود تایید</button>
@@ -483,6 +509,7 @@
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="pf_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="pf_district"></div>
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="pf_street"></div>
+          <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="pf_area"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="pf_house" dir="ltr"></div>
           <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password"></div>
           <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>

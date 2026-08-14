@@ -365,13 +365,14 @@
         <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="cfg_paylink" dir="ltr" placeholder="https://..."></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">دلیوری (ارسال)</h3>
-      <div class="sub">هزینه‌ی دلیوری بر اساس فاصله محاسبه می‌شود. برای محاسبه‌ی خودکار فاصله، مختصات فروشگاه‌ها را (در بخش فروشگاه‌ها) وارد کنید.</div>
+      <div class="sub">هزینه‌ی دلیوری بر اساس فاصله محاسبه می‌شود. برای محاسبه‌ی خودکار فاصله، در بخش «فروشگاه‌ها» لینک گوگل‌مپ هر فروشگاه را وارد کنید (نیازی به اعداد مختصات نیست).</div>
       <div class="grid2">
         <div class="field"><label>دلیوری فعال باشد؟</label><select id="cfg_delivery_enabled" class="ctrl"><option value="yes">بله</option><option value="no">خیر</option></select></div>
         <div class="field"><label>قیمت هر کیلومتر (افغانی)</label><input id="cfg_delivery_perkm" type="number" min="0" inputmode="numeric"></div>
-        <div class="field"><label>تا این فاصله رایگان (کیلومتر)</label><input id="cfg_delivery_freekm" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>تا این فاصله رایگان است (کیلومتر)</label><input id="cfg_delivery_freekm" type="number" min="0" inputmode="numeric" placeholder="مثلاً 3"></div>
         <div class="field"><label>هزینه‌ی اضافه‌ی دلیوری عاجل (همان روز)</label><input id="cfg_delivery_urgent" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>حداقل مبلغ سفارش برای دلیوری (افغانی)</label><input id="cfg_delivery_min" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
+        <div class="field"><label>حداکثر فاصله‌ی دلیوری (کیلومتر) — خارج از شهر</label><input id="cfg_delivery_max" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
       </div>
 
       <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
@@ -388,8 +389,9 @@
         <div class="field"><label>Public Key</label><input id="cfg_ejs_key" dir="ltr"></div>
         <div class="field"><label>Template ID (کود تایید حساب)</label><input id="cfg_ejs_template" dir="ltr"></div>
         <div class="field"><label>Template ID (تایید سفارش)</label><input id="cfg_ejs_order" dir="ltr"></div>
+        <div class="field"><label>Template ID (خوش‌آمد / مشخصات حساب)</label><input id="cfg_ejs_welcome" dir="ltr"></div>
       </div>
-      <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>.</p>
+      <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>. متغیرهای قالب خوش‌آمد: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{customer_no}}</code>، <code>{{message}}</code>.</p>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات</button></div>
     </div>
 
@@ -499,12 +501,8 @@
         <div class="field"><label>نمبر تماس (فارسی)</label><input id="st_phone" dir="ltr"></div>
         <div class="field"><label>نمبر تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
-      <div class="field"><label>لینک گوگل مپ</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
-      <div class="grid2">
-        <div class="field"><label>عرض جغرافیایی lat (برای محاسبه‌ی دلیوری)</label><input id="st_lat" dir="ltr" placeholder="34.52"></div>
-        <div class="field"><label>طول جغرافیایی lng</label><input id="st_lng" dir="ltr" placeholder="69.18"></div>
-      </div>
-      <p class="note">مختصات را از گوگل‌مپ کپی کنید (روی محل فروشگاه راست‌کلیک → اعداد را کپی کنید). برای محاسبه‌ی خودکار فاصله‌ی دلیوری لازم است.</p>
+      <div class="field"><label>لینک / آدرس گوگل مپ فروشگاه</label><input id="st_map" dir="ltr" placeholder="https://maps.google.com/...@34.52,69.18..."></div>
+      <p class="note" id="st_coordNote">برای محاسبه‌ی خودکار فاصله‌ی دلیوری، لینک گوگل‌مپ فروشگاه را اینجا بگذارید (نیازی به وارد کردن اعداد مختصات نیست). بهترین کار: در گوگل‌مپ محل فروشگاه را باز کنید و لینک نوار آدرس مرورگر را کپی کنید (این لینک شامل مختصات @lat,lng است).</p>
       <p class="note" id="storeMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="storeCancelBtn">لغو</button>
@@ -643,8 +641,8 @@
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
       var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
-      var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0);
-      var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
+      var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0); $("#cfg_delivery_max").value=(dl.maxKm!=null?dl.maxKm:0);
+      var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||""; $("#cfg_ejs_welcome").value=ej.welcomeTemplateId||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
       var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
@@ -662,8 +660,8 @@
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
-        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0},
-        emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
+        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0},
+        emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()}
       };
     }
     var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
@@ -976,10 +974,28 @@
       $("#st_area").value=s.area||""; $("#st_area_en").value=s.area_en||"";
       $("#st_hours").value=s.hours||""; $("#st_hours_en").value=s.hours_en||"";
       $("#st_phone").value=s.phone||""; $("#st_phone_en").value=s.phone_en||"";
-      $("#st_map").value=s.map||""; $("#st_lat").value=s.lat||""; $("#st_lng").value=s.lng||"";
+      $("#st_map").value=s.map||"";
       $("#storeOverlay").classList.add("show");
+      updateStoreCoordNote();
     }
     function closeStore(){$("#storeOverlay").classList.remove("show")}
+    function parseLatLngA(url){
+      var s=String(url||"");
+      var m=s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
+        ||s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+        ||s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
+        ||s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
+      if(m){ var la=parseFloat(m[1]),lo=parseFloat(m[2]); if(isFinite(la)&&isFinite(lo)) return [la,lo]; }
+      return null;
+    }
+    function updateStoreCoordNote(){
+      var note=$("#st_coordNote"); if(!note)return;
+      var c=parseLatLngA($("#st_map").value||"");
+      if(($("#st_map").value||"").trim()===""){ note.style.color=""; note.textContent="برای محاسبه‌ی خودکار فاصله‌ی دلیوری، لینک گوگل‌مپ فروشگاه را اینجا بگذارید (لینکی که شامل مختصات @lat,lng است)."; }
+      else if(c){ note.style.color="#2e7d32"; note.textContent="✔ مختصات از لینک شناسایی شد ("+c[0].toFixed(4)+", "+c[1].toFixed(4)+") — محاسبه‌ی فاصله فعال است."; }
+      else { note.style.color="#b26a00"; note.textContent="⚠ از این لینک مختصات پیدا نشد. لطفاً لینکی از نوار آدرس گوگل‌مپ (شامل @lat,lng) کپی کنید تا محاسبه‌ی فاصله کار کند."; }
+    }
+    $("#st_map").addEventListener("input",updateStoreCoordNote);
     $("#addStoreBtn").onclick=function(){openStore()};
     $("#storeCancelBtn").onclick=closeStore;
     $("#storeOverlay").addEventListener("click",function(e){if(e.target===$("#storeOverlay"))closeStore()});
@@ -995,13 +1011,14 @@
         area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
         hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
         phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
-        map:$("#st_map").value.trim(), lat:$("#st_lat").value.trim(), lng:$("#st_lng").value.trim() };
-      if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
+        map:$("#st_map").value.trim() };
+      var c=parseLatLngA(s.map); if(c){ s.lat=String(c[0]); s.lng=String(c[1]); }
+      if(storeEditIndex>=0){ var prev=state.stores[storeEditIndex]||{}; if(!c&&prev.lat&&prev.lng){ s.lat=prev.lat; s.lng=prev.lng; } state.stores[storeEditIndex]=s; } else state.stores.push(s);
       renderStoreTable(); setDirty(true); closeStore();
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_delivery_max","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order","cfg_ejs_welcome"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     function readImageFile(file,maxDim,quality,cb){

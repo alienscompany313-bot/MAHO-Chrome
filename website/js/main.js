@@ -156,7 +156,7 @@
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
       "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
       "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت", "copied": "کپی شد ✓",
-      "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
+      "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.area": "منطقه / ساحه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
       "acct.forgot": "پسورد را فراموش کرده‌اید؟", "acct.reset": "بازیابی پسورد",
       "acct.resetSent": "کود بازیابی به ایمیل شما فرستاده شد. کود و پسورد جدید را وارد کنید.",
       "acct.newPassPh": "پسورد جدید", "acct.resetDone": "پسورد شما تغییر کرد ✓", "acct.noEmail": "این ایمیل ثبت نشده است.",
@@ -166,6 +166,15 @@
       "co.calcDist": "محاسبه‌ی فاصله (موقعیت من)", "co.distKm": "فاصله تا نزدیک‌ترین فروشگاه", "co.km": "کیلومتر",
       "co.manualKm": "یا فاصله (کیلومتر) را دستی وارد کنید", "co.deliveryFee": "هزینه دلیوری", "co.grand": "مبلغ قابل پرداخت",
       "co.belowMin": "برای دلیوری، حداقل مبلغ سفارش {n} است. لطفاً بیشتر خرید کنید یا «دریافت حضوری» را انتخاب کنید.",
+      "co.beyondMax": "دلیوری فقط تا {n} کیلومتری فروشگاه انجام می‌شود؛ آدرس شما دورتر است.",
+      "co.timeslot": "زمان دریافت / تحویل",
+      "co.ts0": "در اسرع وقت", "co.ts1": "امروز صبح (۹ تا ۱۲)", "co.ts2": "امروز بعد از ظهر (۱۲ تا ۴)", "co.ts3": "امروز عصر (۴ تا ۸)", "co.ts4": "فردا",
+      "co.makeAccount": "ساخت حساب (اختیاری)", "co.passPh": "پسورد برای حساب جدید",
+      "co.makeAccountHint": "اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.",
+      "co.enterCode": "کود تایید (به ایمیل شما فرستاده شد)", "co.verifyPlace": "تایید کود و ثبت سفارش",
+      "co.acctNeedEmail": "برای ساخت حساب، یک ایمیل معتبر وارد کنید.", "co.acctExists": "این ایمیل قبلاً حساب دارد؛ لطفاً وارد شوید.",
+      "co.codeSentEmail": "کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.", "co.acctCreated": "حساب شما ساخته شد ✓ نمبر مشتری: {no}",
+      "acct.welcomeMsg": "حساب شما در MAHO ساخته شد. نمبر مشتری شما: {no}. با همین ایمیل و پسورد می‌توانید وارد شوید.",
       "co.free": "رایگان", "co.geoFail": "دسترسی به موقعیت ممکن نشد؛ لطفاً فاصله را دستی وارد کنید.",
       "co.noStoreCoords": "مختصات فروشگاه ثبت نشده؛ فاصله دستی وارد شود.",
       "order.deliveryTo": "ارسال به آدرس", "order.pickupAt": "دریافت حضوری",
@@ -298,7 +307,7 @@
       "order.emailIntro": "Your order at MAHO is confirmed. Details:",
       "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
       "share.copied": "Site link copied ✓", "share.title": "Check out this store", "copied": "Copied ✓",
-      "addr.country": "Country", "addr.province": "Province", "addr.district": "District", "addr.street": "Street", "addr.house": "House no.",
+      "addr.country": "Country", "addr.province": "Province", "addr.district": "District", "addr.area": "Area / Zone", "addr.street": "Street", "addr.house": "House no.",
       "acct.forgot": "Forgot password?", "acct.reset": "Reset password",
       "acct.resetSent": "A reset code was sent to your email. Enter the code and a new password.",
       "acct.newPassPh": "New password", "acct.resetDone": "Your password was changed ✓", "acct.noEmail": "This email is not registered.",
@@ -308,6 +317,15 @@
       "co.calcDist": "Calculate distance (my location)", "co.distKm": "Distance to nearest store", "co.km": "km",
       "co.manualKm": "Or enter distance (km) manually", "co.deliveryFee": "Delivery fee", "co.grand": "Amount payable",
       "co.belowMin": "For delivery, the minimum order is {n}. Please add more items or choose in-store pickup.",
+      "co.beyondMax": "Delivery is only available within {n} km of the store; your address is farther.",
+      "co.timeslot": "Pickup / delivery time",
+      "co.ts0": "As soon as possible", "co.ts1": "Today morning (9–12)", "co.ts2": "Today afternoon (12–4)", "co.ts3": "Today evening (4–8)", "co.ts4": "Tomorrow",
+      "co.makeAccount": "Create an account (optional)", "co.passPh": "Password for your new account",
+      "co.makeAccountHint": "If you set a password, a verification code is emailed to you when you place the order; after verifying, your account is created and its details are emailed to you.",
+      "co.enterCode": "Verification code (sent to your email)", "co.verifyPlace": "Verify code & place order",
+      "co.acctNeedEmail": "Enter a valid email to create an account.", "co.acctExists": "This email already has an account; please sign in.",
+      "co.codeSentEmail": "A verification code was sent to your email. Enter it below.", "co.acctCreated": "Your account was created ✓ Customer no: {no}",
+      "acct.welcomeMsg": "Your MAHO account has been created. Your customer number: {no}. You can sign in with this email and password.",
       "co.free": "Free", "co.geoFail": "Couldn't get your location; please enter the distance manually.",
       "co.noStoreCoords": "Store coordinates not set; enter distance manually.",
       "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
@@ -369,8 +387,8 @@
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
-    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0 },
-    emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
+    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0 },
+    emailjs: { serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" },
   };
 
   /* -------------------- Catalog data source --------------------
@@ -397,8 +415,8 @@
       CONFIG = Object.assign({}, CONFIG, n.config);
       CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
       CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
-      CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0 }, n.config.delivery || CONFIG.delivery);
-      CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
+      CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0 }, n.config.delivery || CONFIG.delivery);
+      CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
       const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
       CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
       const sc = (n.config.showcase || []).filter((x) => x && (x.title || x.title_en));
@@ -662,20 +680,44 @@
   function composeAddress(a) {
     a = a || {}; const parts = [];
     const line1 = [a.house, a.street].filter(Boolean).join(" "); if (line1) parts.push(line1);
+    if (a.area) parts.push(a.area);
     if (a.district) parts.push(a.district); if (a.province) parts.push(a.province); if (a.country) parts.push(a.country);
     return parts.join("، ");
   }
-  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), street: g("street"), house: g("house") }; }
-  function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("street", a.street); s("house", a.house); }
+  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), area: g("area"), street: g("street"), house: g("house") }; }
+  function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("area", a.area); s("street", a.street); s("house", a.house); }
 
   /* -------------------- delivery -------------------- */
   let recvMethod = "pickup", deliverTime = "normal", distanceKm = null;
   function haversine(la1, lo1, la2, lo2) { const R = 6371, r = Math.PI / 180; const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r; const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
-  function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const la = parseFloat(s.lat), lo = parseFloat(s.lng); if (isFinite(la) && isFinite(lo)) { const d = haversine(lat, lng, la, lo); if (best === null || d < best) best = d; } }); return best; }
+  // Extract lat/lng from a Google Maps link/address (supports @lat,lng / !3d!4d / q=/ll= / bare pair)
+  function parseLatLng(url) {
+    const s = String(url || "");
+    let m = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
+      || s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+      || s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
+      || s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
+    if (m) { const la = parseFloat(m[1]), lo = parseFloat(m[2]); if (isFinite(la) && isFinite(lo)) return [la, lo]; }
+    return null;
+  }
+  function storeCoords(s) {
+    const la = parseFloat(s.lat), lo = parseFloat(s.lng);
+    if (isFinite(la) && isFinite(lo)) return [la, lo];
+    return parseLatLng(s.map || s.mapLink || "");
+  }
+  function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const c = storeCoords(s); if (c) { const d = haversine(lat, lng, c[0], c[1]); if (best === null || d < best) best = d; } }); return best; }
   function currentKm() { let km = parseFloat(toEnDigits(($("#co_km") && $("#co_km").value) || "")); if (!isFinite(km) || km < 0) km = (distanceKm != null ? distanceKm : 0); return km; }
   function deliveryFee() { const cfg = CONFIG.delivery || {}; if (recvMethod !== "deliver" || !cfg.enabled) return 0; const km = currentKm(); let fee = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0); if (deliverTime === "urgent") fee += (cfg.urgentFee || 0); return fee; }
   function deliveryMinOrder() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.minOrder) ? cfg.minOrder : 0; }
+  function deliveryMaxKm() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.maxKm) ? cfg.maxKm : 0; }
   function belowDeliveryMin() { return recvMethod === "deliver" && deliveryMinOrder() > 0 && cartPriceTotal() < deliveryMinOrder(); }
+  function beyondDeliveryMax() { const mx = deliveryMaxKm(); return recvMethod === "deliver" && mx > 0 && currentKm() > mx; }
+  function deliveryBlockMsg() {
+    if (recvMethod !== "deliver") return "";
+    if (belowDeliveryMin()) return t("co.belowMin").replace("{n}", money(deliveryMinOrder()));
+    if (beyondDeliveryMax()) return t("co.beyondMax").replace("{n}", toDigits(deliveryMaxKm()));
+    return "";
+  }
   function updateCheckoutTotals() {
     const items = cartPriceTotal(), fee = deliveryFee(), grand = items + fee;
     if ($("#coItemsTotal")) $("#coItemsTotal").textContent = money(items);
@@ -683,10 +725,7 @@
     if ($("#coDeliveryFee")) $("#coDeliveryFee").textContent = fee ? money(fee) : t("co.free");
     if ($("#cartTotal2")) $("#cartTotal2").textContent = money(grand);
     const warn = $("#coMinWarn");
-    if (warn) {
-      if (belowDeliveryMin()) { warn.hidden = false; warn.textContent = t("co.belowMin").replace("{n}", money(deliveryMinOrder())); }
-      else { warn.hidden = true; warn.textContent = ""; }
-    }
+    if (warn) { const msg = deliveryBlockMsg(); if (msg) { warn.hidden = false; warn.textContent = msg; } else { warn.hidden = true; warn.textContent = ""; } }
   }
   const recvMethodsEl = $("#recvMethods");
   if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; recvMethod = b.dataset.recv; $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver"); updateCheckoutTotals(); });
@@ -719,6 +758,11 @@
       if ($("#co_email")) $("#co_email").value = $("#co_email").value || s.email || "";
     }
     fillAddr("co", (s && s.addr) || null);
+    // Guest account block only for not-logged-in customers
+    const gaw = $("#guestAcctWrap"); if (gaw) gaw.hidden = !!s;
+    const cvb = $("#coVerifyBox"); if (cvb) cvb.hidden = true;
+    pendingCheckoutAccount = null;
+    if ($("#co_pass")) $("#co_pass").value = "";
     if ($("#coMsg")) $("#coMsg").textContent = "";
     payMethod = "whatsapp";
     if (payMethodsEl) $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
@@ -863,39 +907,51 @@
     const recvLine = d.method === "deliver"
       ? "\n" + t("co.delivery") + ": " + t("order.deliveryTo") + (d.time === "urgent" ? " (" + t("co.urgent") + ")" : "") + " — " + t("co.deliveryFee") + ": " + (order.deliveryFee ? money(order.deliveryFee) : t("co.free"))
       : "\n" + t("co.delivery") + ": " + t("order.pickupAt");
+    const timeLine = d.timeslot ? "\n" + t("co.timeslot") + ": " + d.timeslot : "";
     return t("order.header") + "\n" + t("order.number") + ": " + order.id + "\n\n" + lines.join("\n") +
       "\n\n" + t("cart.total") + ": " + money(order.total) +
       "\n\n" + t("order.customer") + ": " + (c.name || "") + (c.customerNo ? " (" + c.customerNo + ")" : "") +
       "\n" + t("acct.phone") + ": " + (c.phone || "") +
-      "\n" + t("order.addr") + ": " + (c.address || "") + recvLine + (c.note ? "\n" + t("order.note") + ": " + c.note : "") +
+      "\n" + t("order.addr") + ": " + (c.address || "") + recvLine + timeLine + (c.note ? "\n" + t("order.note") + ": " + c.note : "") +
       "\n" + t("co.payment") + ": " + payLabel;
   }
-  const placeOrderBtn = $("#placeOrder");
-  if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
-    if (!CART.length) { showToast(t("cart.emptyToast")); return; }
-    const nm = ($("#co_name") && $("#co_name").value.trim()) || "";
-    const ph = ($("#co_phone") && $("#co_phone").value.trim()) || "";
-    const addrParts = readAddr("co");
-    const ad = composeAddress(addrParts);
-    const note = ($("#co_note") && $("#co_note").value.trim()) || "";
-    const email = ($("#co_email") && $("#co_email").value.trim()) || "";
-    if (!nm || !ph || (recvMethod === "deliver" && !ad)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
-    if (belowDeliveryMin()) { if ($("#coMsg")) $("#coMsg").textContent = t("co.belowMin").replace("{n}", money(deliveryMinOrder())); return; }
-    if ($("#coMsg")) $("#coMsg").textContent = "";
-    const s = getSession();
-    const customer = { name: nm, phone: ph, address: ad, addr: addrParts, note: note, email: email, customerNo: (s && s.customerNo) || "" };
-    const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee() };
-
+  function selectedTimeslot() {
+    const sel = $("#co_timeslot"); if (!sel) return { key: "", label: "" };
+    const opt = sel.options[sel.selectedIndex];
+    return { key: sel.value, label: opt ? opt.textContent : "" };
+  }
+  function sendAccountInfo(email, name, customerNo) {
+    const cfg = CONFIG.emailjs || {};
+    if (email && cfg.serviceId && cfg.welcomeTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      emailjs.send(cfg.serviceId, cfg.welcomeTemplateId,
+        { to_email: email, email: email, to_name: name || "", customer_no: customerNo, message: t("acct.welcomeMsg").replace("{no}", customerNo) },
+        { publicKey: cfg.publicKey }
+      ).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+  function createGuestAccount(p) {
+    const users = getUsers();
+    const customerNo = nextCustomerNo();
+    users.push({ name: p.name, phone: p.phone, email: p.email, address: p.address || "", addr: p.addr || {}, id: p.email, pass: p.pass, verified: true, customerNo: customerNo, payments: [] });
+    saveUsers(users);
+    setSession({ name: p.name, id: p.email, email: p.email, phone: p.phone, address: p.address || "", addr: p.addr || {}, customerNo: customerNo });
+    sendAccountInfo(p.email, p.name, customerNo);
+    return customerNo;
+  }
+  // Actually place the order using the currently selected payment method.
+  function finalizeOrder(customer, delivery) {
     let order;
     if (payMethod === "hesab") {
       const h = hesabInfo();
-      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return; }
+      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
       order = recordOrder(customer, "hesab", t("status.awaitPay"), delivery);
       if (h.link) window.open(h.link, "_blank");
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else if (payMethod === "card") {
       const link = paymentLink();
-      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return; }
+      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return null; }
       order = recordOrder(customer, "card", t("status.awaitPay"), delivery);
       window.open(link, "_blank");
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
@@ -908,11 +964,67 @@
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     }
     adjustStock(order.items, -1);
-    const emailed = sendOrderEmail(order, email, nm);
+    const emailed = sendOrderEmail(order, customer.email, customer.name);
     CART = []; saveCart(); updateCartBadge(); renderCart();
     showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
-    closeCart();
-    openOrders();
+    closeCart(); openOrders();
+    return order;
+  }
+  let pendingCheckoutAccount = null;
+  function readCheckout() {
+    const nm = ($("#co_name") && $("#co_name").value.trim()) || "";
+    const ph = ($("#co_phone") && $("#co_phone").value.trim()) || "";
+    const addrParts = readAddr("co");
+    const ad = composeAddress(addrParts);
+    const note = ($("#co_note") && $("#co_note").value.trim()) || "";
+    const email = ($("#co_email") && $("#co_email").value.trim()) || "";
+    const ts = selectedTimeslot();
+    return { nm, ph, addrParts, ad, note, email, ts };
+  }
+  const placeOrderBtn = $("#placeOrder");
+  if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
+    if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    const f = readCheckout();
+    if (!f.nm || !f.ph || (recvMethod === "deliver" && !f.ad)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
+    const delBlock = deliveryBlockMsg(); if (delBlock) { if ($("#coMsg")) $("#coMsg").textContent = delBlock; return; }
+    if ($("#coMsg")) $("#coMsg").textContent = "";
+    const s = getSession();
+    const customer = { name: f.nm, phone: f.ph, address: f.ad, addr: f.addrParts, note: f.note, email: f.email, customerNo: (s && s.customerNo) || "" };
+    const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee(), timeslot: f.ts.label, timeslotKey: f.ts.key };
+
+    // Guest wants to create an account (password provided, not logged in) -> verify by email code first.
+    const pass = ($("#co_pass") && $("#co_pass").value.trim()) || "";
+    if (!s && pass) {
+      if (!emailOk(f.email)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctNeedEmail"); return; }
+      if (getUsers().some((u) => (u.email || u.id || "").toLowerCase() === f.email.toLowerCase())) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctExists"); return; }
+      const code = genCode();
+      pendingCheckoutAccount = { code: code, name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery };
+      const box = $("#coVerifyBox"); if (box) box.hidden = false;
+      const vm = $("#coVerifyMsg");
+      sendCode(f.email, f.nm, code).then((res) => {
+        if (vm) { vm.className = "qv-msg ok"; vm.textContent = res.sent ? t("co.codeSentEmail") : t("acct.demoNote").replace("{code}", code); }
+        const ce = $("#co_acct_code"); if (ce) ce.focus();
+      }).catch(() => { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.sendFail"); } });
+      return;
+    }
+    finalizeOrder(customer, delivery);
+  });
+  const coVerifyBtn = $("#coVerifyBtn");
+  if (coVerifyBtn) coVerifyBtn.addEventListener("click", () => {
+    if (!pendingCheckoutAccount) return;
+    const entered = toEnDigits(($("#co_acct_code") && $("#co_acct_code").value || "").trim()).replace(/[^0-9]/g, "");
+    const vm = $("#coVerifyMsg");
+    if (entered !== pendingCheckoutAccount.code) { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } return; }
+    const p = pendingCheckoutAccount;
+    const customerNo = createGuestAccount(p);
+    const customer = Object.assign({}, p.customer, { customerNo: customerNo });
+    pendingCheckoutAccount = null;
+    if ($("#co_acct_code")) $("#co_acct_code").value = "";
+    if ($("#co_pass")) $("#co_pass").value = "";
+    const box = $("#coVerifyBox"); if (box) box.hidden = true;
+    renderAccount();
+    showToast(t("co.acctCreated").replace("{no}", customerNo));
+    finalizeOrder(customer, p.delivery);
   });
 
   /* My Orders */
