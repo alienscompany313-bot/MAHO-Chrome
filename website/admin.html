@@ -215,6 +215,15 @@
       </div>
     </div>
 
+    <!-- REVIEWS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>نظرات مشتریان</h2><div class="sub">نظرهایی که مشتریانِ دارای حساب نوشته‌اند. نظر را «نمایش» بدهید تا در سایت دیده شود، «بهترین» را برای نمایش در ابتدا علامت بزنید، یا حذف کنید.</div></div>
+        <button class="btn btn-outline btn-sm" id="refreshReviews">بازخوانی</button>
+      </div>
+      <div id="reviewsAdminBody"></div>
+    </div>
+
     <!-- STORES -->
     <div class="card">
       <div class="row-between">
@@ -348,6 +357,7 @@
         <div class="field"><label>قیمت هر کیلومتر (افغانی)</label><input id="cfg_delivery_perkm" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>تا این فاصله رایگان (کیلومتر)</label><input id="cfg_delivery_freekm" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>هزینه‌ی اضافه‌ی دلیوری عاجل (همان روز)</label><input id="cfg_delivery_urgent" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>حداقل مبلغ سفارش برای دلیوری (افغانی)</label><input id="cfg_delivery_min" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
       </div>
 
       <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
@@ -618,7 +628,7 @@
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
       var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
-      var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100);
+      var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0);
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
@@ -637,7 +647,7 @@
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
-        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0},
+        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0},
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
       };
     }
@@ -731,6 +741,33 @@
       var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
       if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای روی این دستگاه ثبت‌نام نکرده است.</td></tr>'; return; }
       b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
+    }
+    function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
+    function saveReviews(r){ try{localStorage.setItem("maho_reviews",JSON.stringify(r));}catch(e){} }
+    function starStrA(n){ n=Math.max(0,Math.min(5,parseInt(n,10)||0)); return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n); }
+    function renderReviewsAdmin(){
+      var box=$("#reviewsAdminBody"); if(!box)return;
+      var reviews=readReviews();
+      if(!reviews.length){ box.innerHTML='<p class="note">هنوز نظری ثبت نشده است.</p>'; return; }
+      reviews.sort(function(a,b){ return (b.date||0)-(a.date||0); });
+      box.innerHTML=reviews.map(function(r){
+        var approved=r.status==="approved";
+        var d=r.date?new Date(r.date).toLocaleDateString("fa-AF"):"";
+        return '<div class="order-card" data-rid="'+esc(r.id)+'" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'
+          +'<div class="row-between" style="align-items:flex-start">'
+          +'<div><b>'+esc(r.name||"مشتری")+'</b> <span class="note" dir="ltr">'+esc(r.customerNo||"")+'</span><div style="color:var(--gold-deep);font-size:16px">'+starStrA(r.rating)+'</div></div>'
+          +'<div class="note">'+d+'</div>'
+          +'</div>'
+          +'<p style="margin:6px 0">'+esc(r.text||"")+'</p>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+          +'<span class="note" style="'+(approved?'color:#2e7d32':'color:#b26a00')+'">'+(approved?'✔ نمایش داده می‌شود':'در انتظار تایید')+'</span>'
+          +(r.featured?'<span class="note" style="color:var(--gold-deep)">★ بهترین</span>':'')
+          +'<span style="flex:1"></span>'
+          +'<button class="btn btn-outline btn-sm" data-rev-approve="'+esc(r.id)+'">'+(approved?'عدم نمایش':'نمایش (تایید)')+'</button> '
+          +'<button class="btn btn-outline btn-sm" data-rev-feature="'+esc(r.id)+'">'+(r.featured?'حذف از بهترین':'علامت بهترین')+'</button> '
+          +'<button class="btn btn-danger btn-sm" data-rev-del="'+esc(r.id)+'">حذف</button>'
+          +'</div></div>';
+      }).join("");
     }
     function renderTable(){
       var b=$("#prodBody"); b.innerHTML="";
@@ -836,7 +873,7 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -933,7 +970,7 @@
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
     function readImageFile(file,maxDim,quality,cb){
@@ -995,6 +1032,16 @@
     (function(){ var hs=$("#c_heroScale"); if(hs) hs.addEventListener("input",function(){ var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); setDirty(true); }); })();
     $("#refreshOrders").onclick=renderOrdersAdmin;
     $("#refreshCust").onclick=renderCustomers;
+    $("#refreshReviews").onclick=renderReviewsAdmin;
+    $("#reviewsAdminBody").addEventListener("click",function(e){
+      var ap=e.target.getAttribute("data-rev-approve"), ft=e.target.getAttribute("data-rev-feature"), dl=e.target.getAttribute("data-rev-del");
+      var id=ap||ft||dl; if(!id)return;
+      var reviews=readReviews(); var i=reviews.map(function(r){return r.id;}).indexOf(id); if(i<0)return;
+      if(ap){ reviews[i].status=(reviews[i].status==="approved")?"pending":"approved"; }
+      else if(ft){ reviews[i].featured=!reviews[i].featured; if(reviews[i].featured && reviews[i].status!=="approved") reviews[i].status="approved"; }
+      else if(dl){ if(!confirm("این نظر حذف شود؟")) return; reviews.splice(i,1); }
+      saveReviews(reviews); renderReviewsAdmin();
+    });
     ["ordersSearch","ordersFilter","ordersSort"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",renderOrdersAdmin); el.addEventListener("change",renderOrdersAdmin); } });
     $("#ordersBody").addEventListener("click",function(e){
       var ap=e.target.getAttribute("data-approve"), cn=e.target.getAttribute("data-cancelo");

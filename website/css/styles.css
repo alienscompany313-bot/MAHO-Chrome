@@ -615,3 +615,14 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .store-row a.contact-link:hover { color: var(--gold-deep); }
 .copy-num { color: var(--gold-deep); font-weight: 700; text-decoration: underline; cursor: pointer; }
 .copy-num:hover { color: #8a6a22; }
+
+/* Customer reviews */
+.review-cta { text-align: center; margin-top: 26px; }
+.review-cta #reviewForm { max-width: 520px; margin: 16px auto 0; text-align: start; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+.review-cta textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical; }
+.review-cta textarea:focus { outline: none; border-color: var(--gold); }
+.rating-input { display: inline-flex; gap: 4px; direction: ltr; }
+.rating-input .star { background: none; border: none; font-size: 30px; line-height: 1; cursor: pointer; color: #d9d2c2; padding: 0 2px; transition: color .12s, transform .12s; }
+.rating-input .star:hover { transform: scale(1.12); }
+.rating-input .star.on { color: var(--gold); }
+.reviews-empty { text-align: center; color: var(--muted); padding: 18px 0; }

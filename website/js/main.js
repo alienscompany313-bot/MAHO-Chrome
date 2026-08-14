@@ -72,6 +72,13 @@
       "testi2.name": "مریم حسینی", "testi2.role": "خریدار",
       "testi3.q": "«برای مجلس یک پیراهن شیک و یک کیف ست خریدم؛ همه تعریف کردند. حتماً دوباره از MAHO خرید می‌کنم.»",
       "testi3.name": "سمیرا نوری", "testi3.role": "مشتری جدید",
+      "review.write": "نوشتن نظر", "review.submit": "ثبت نظر", "review.rate": "امتیاز شما",
+      "review.ph": "نظر خود را درباره‌ی خرید یا خدمات بنویسید...",
+      "review.loginFirst": "برای نوشتن نظر، ابتدا وارد حساب کاربری شوید.",
+      "review.thanks": "نظر شما ثبت شد و پس از تایید مدیر نمایش داده می‌شود ✓",
+      "review.needText": "لطفاً امتیاز و متن نظر را وارد کنید.",
+      "review.empty": "هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهد!",
+      "review.customer": "مشتری MAHO",
       "cta.h2": "از تخفیف‌ها و محصولات جدید باخبر شوید",
       "cta.p": "ایمیل خود را وارد کنید تا پیشنهادهای ویژه‌ی MAHO را دریافت کنید.",
       "cta.ph": "ایمیل شما (example@mail.com)", "cta.btn": "عضویت",
@@ -158,6 +165,7 @@
       "co.deliverTime": "زمان دلیوری", "co.normal": "عادی", "co.urgent": "عاجل (همان روز)",
       "co.calcDist": "محاسبه‌ی فاصله (موقعیت من)", "co.distKm": "فاصله تا نزدیک‌ترین فروشگاه", "co.km": "کیلومتر",
       "co.manualKm": "یا فاصله (کیلومتر) را دستی وارد کنید", "co.deliveryFee": "هزینه دلیوری", "co.grand": "مبلغ قابل پرداخت",
+      "co.belowMin": "برای دلیوری، حداقل مبلغ سفارش {n} است. لطفاً بیشتر خرید کنید یا «دریافت حضوری» را انتخاب کنید.",
       "co.free": "رایگان", "co.geoFail": "دسترسی به موقعیت ممکن نشد؛ لطفاً فاصله را دستی وارد کنید.",
       "co.noStoreCoords": "مختصات فروشگاه ثبت نشده؛ فاصله دستی وارد شود.",
       "order.deliveryTo": "ارسال به آدرس", "order.pickupAt": "دریافت حضوری",
@@ -206,6 +214,13 @@
       "testi2.name": "Maryam Hosseini", "testi2.role": "Shopper",
       "testi3.q": "“I bought an elegant dress and a matching bag for a party; everyone complimented me. I'll definitely shop at MAHO again.”",
       "testi3.name": "Samira Nouri", "testi3.role": "New customer",
+      "review.write": "Write a review", "review.submit": "Submit review", "review.rate": "Your rating",
+      "review.ph": "Share your experience with your purchase or our service...",
+      "review.loginFirst": "Please sign in to your account to write a review.",
+      "review.thanks": "Your review was submitted and will appear after admin approval ✓",
+      "review.needText": "Please provide a rating and review text.",
+      "review.empty": "No reviews yet. Be the first to share your experience!",
+      "review.customer": "MAHO customer",
       "cta.h2": "Get offers & new arrivals",
       "cta.p": "Enter your email to receive MAHO's special offers.",
       "cta.ph": "Your email (example@mail.com)", "cta.btn": "Subscribe",
@@ -292,6 +307,7 @@
       "co.deliverTime": "Delivery time", "co.normal": "Normal", "co.urgent": "Same-day (urgent)",
       "co.calcDist": "Calculate distance (my location)", "co.distKm": "Distance to nearest store", "co.km": "km",
       "co.manualKm": "Or enter distance (km) manually", "co.deliveryFee": "Delivery fee", "co.grand": "Amount payable",
+      "co.belowMin": "For delivery, the minimum order is {n}. Please add more items or choose in-store pickup.",
       "co.free": "Free", "co.geoFail": "Couldn't get your location; please enter the distance manually.",
       "co.noStoreCoords": "Store coordinates not set; enter distance manually.",
       "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
@@ -353,7 +369,7 @@
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
-    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100 },
+    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0 },
     emailjs: { serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" },
   };
 
@@ -381,7 +397,7 @@
       CONFIG = Object.assign({}, CONFIG, n.config);
       CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
       CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
-      CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100 }, n.config.delivery || CONFIG.delivery);
+      CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0 }, n.config.delivery || CONFIG.delivery);
       CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
       const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
       CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
@@ -653,12 +669,19 @@
   function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const la = parseFloat(s.lat), lo = parseFloat(s.lng); if (isFinite(la) && isFinite(lo)) { const d = haversine(lat, lng, la, lo); if (best === null || d < best) best = d; } }); return best; }
   function currentKm() { let km = parseFloat(toEnDigits(($("#co_km") && $("#co_km").value) || "")); if (!isFinite(km) || km < 0) km = (distanceKm != null ? distanceKm : 0); return km; }
   function deliveryFee() { const cfg = CONFIG.delivery || {}; if (recvMethod !== "deliver" || !cfg.enabled) return 0; const km = currentKm(); let fee = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0); if (deliverTime === "urgent") fee += (cfg.urgentFee || 0); return fee; }
+  function deliveryMinOrder() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.minOrder) ? cfg.minOrder : 0; }
+  function belowDeliveryMin() { return recvMethod === "deliver" && deliveryMinOrder() > 0 && cartPriceTotal() < deliveryMinOrder(); }
   function updateCheckoutTotals() {
     const items = cartPriceTotal(), fee = deliveryFee(), grand = items + fee;
     if ($("#coItemsTotal")) $("#coItemsTotal").textContent = money(items);
     const row = $("#coDeliveryRow"); if (row) row.hidden = (recvMethod !== "deliver");
     if ($("#coDeliveryFee")) $("#coDeliveryFee").textContent = fee ? money(fee) : t("co.free");
     if ($("#cartTotal2")) $("#cartTotal2").textContent = money(grand);
+    const warn = $("#coMinWarn");
+    if (warn) {
+      if (belowDeliveryMin()) { warn.hidden = false; warn.textContent = t("co.belowMin").replace("{n}", money(deliveryMinOrder())); }
+      else { warn.hidden = true; warn.textContent = ""; }
+    }
   }
   const recvMethodsEl = $("#recvMethods");
   if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; recvMethod = b.dataset.recv; $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver"); updateCheckoutTotals(); });
@@ -852,6 +875,7 @@
     const note = ($("#co_note") && $("#co_note").value.trim()) || "";
     const email = ($("#co_email") && $("#co_email").value.trim()) || "";
     if (!nm || !ph || (recvMethod === "deliver" && !ad)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
+    if (belowDeliveryMin()) { if ($("#coMsg")) $("#coMsg").textContent = t("co.belowMin").replace("{n}", money(deliveryMinOrder())); return; }
     if ($("#coMsg")) $("#coMsg").textContent = "";
     const s = getSession();
     const customer = { name: nm, phone: ph, address: ad, addr: addrParts, note: note, email: email, customerNo: (s && s.customerNo) || "" };
@@ -1529,6 +1553,58 @@
   }
 
   /* -------------------- Apply language -------------------- */
+  /* -------------------- Customer reviews -------------------- */
+  const REVIEWS_KEY = "maho_reviews";
+  const getReviews = () => { try { return JSON.parse(localStorage.getItem(REVIEWS_KEY)) || []; } catch (_) { return []; } };
+  const saveReviews = (r) => { try { localStorage.setItem(REVIEWS_KEY, JSON.stringify(r)); } catch (_) {} };
+  function escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
+  function starStr(n) { n = Math.max(0, Math.min(5, parseInt(n, 10) || 0)); return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n); }
+  function renderReviews() {
+    const grid = $("#reviewsGrid"); if (!grid) return;
+    const all = getReviews().filter((r) => r.status === "approved");
+    all.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (b.date || 0) - (a.date || 0));
+    const list = all.slice(0, 6);
+    const empty = $("#reviewsEmpty");
+    if (!list.length) { grid.innerHTML = ""; if (empty) empty.hidden = false; return; }
+    if (empty) empty.hidden = true;
+    grid.innerHTML = list.map((r) => {
+      const nm = r.name || t("review.customer");
+      const initial = (String(nm).trim()[0]) || "م";
+      const who = r.customerNo ? escHtml(r.customerNo) : t("review.customer");
+      return `<div class="testi reveal in">
+        <div class="stars">${starStr(r.rating)}</div>
+        <p>${escHtml(r.text)}</p>
+        <div class="who"><div class="avatar">${escHtml(initial)}</div><div><b>${escHtml(nm)}</b><span>${who}</span></div></div>
+      </div>`;
+    }).join("");
+  }
+  let reviewRating = 0;
+  const ratingInput = $("#ratingInput");
+  function paintStars() { if (!ratingInput) return; $$(".star", ratingInput).forEach((s) => s.classList.toggle("on", (parseInt(s.dataset.val, 10) <= reviewRating))); }
+  if (ratingInput) ratingInput.addEventListener("click", (e) => { const b = e.target.closest(".star"); if (!b) return; reviewRating = parseInt(b.dataset.val, 10) || 0; paintStars(); });
+  const writeReviewBtn = $("#writeReviewBtn");
+  if (writeReviewBtn) writeReviewBtn.addEventListener("click", () => {
+    const note = $("#reviewLoginNote"), form = $("#reviewForm");
+    if (!getSession()) { if (note) note.hidden = false; openAcct(); return; }
+    if (note) note.hidden = true;
+    if (form) form.hidden = !form.hidden;
+  });
+  const reviewForm = $("#reviewForm");
+  if (reviewForm) reviewForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const s = getSession(); if (!s) { openAcct(); return; }
+    const txt = ($("#reviewText") && $("#reviewText").value.trim()) || "";
+    const msg = $("#reviewMsg");
+    if (!reviewRating || !txt) { if (msg) msg.textContent = t("review.needText"); return; }
+    const reviews = getReviews();
+    reviews.push({ id: "R" + Date.now().toString(36), name: s.name || t("review.customer"), customerNo: s.customerNo || "", rating: reviewRating, text: txt, date: Date.now(), status: "pending", featured: false });
+    saveReviews(reviews);
+    if ($("#reviewText")) $("#reviewText").value = "";
+    reviewRating = 0; paintStars();
+    reviewForm.hidden = true; if (msg) msg.textContent = "";
+    showToast(t("review.thanks"));
+  });
+
   function applyI18n() {
     $$("[data-i18n]").forEach((el) => { el.textContent = t(el.getAttribute("data-i18n")); });
     $$("[data-i18n-html]").forEach((el) => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
@@ -1544,6 +1620,7 @@
     renderShowcase();
     renderProducts();
     renderStores();
+    renderReviews();
     renderCart();
     updateCartBadge();
     renderAccount();

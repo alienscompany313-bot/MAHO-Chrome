@@ -233,22 +233,26 @@
           <span class="kicker" data-i18n="testi.kicker">نظر مشتریان</span>
           <h2 data-i18n="testi.h2">حرف دل مشتریان MAHO</h2>
         </div>
-        <div class="testi-grid">
-          <div class="testi reveal">
-            <div class="stars">★★★★★</div>
-            <p data-i18n="testi1.q">«جنس لباس‌ها عالی و دوختشان تمیز بود. مانتویی که خریدم دقیقاً مثل عکس بود و پرسنل هم خیلی خوش‌برخورد بودند.»</p>
-            <div class="who"><div class="avatar">ن</div><div><b data-i18n="testi1.name">نرگس احمدی</b><span data-i18n="testi1.role">مشتری وفادار</span></div></div>
-          </div>
-          <div class="testi reveal">
-            <div class="stars">★★★★★</div>
-            <p data-i18n="testi2.q">«تنوع شال و روسری بی‌نظیر است و قیمت‌ها منصفانه. ضمانت تعویض کالا باعث شد با خیال راحت خرید کنم.»</p>
-            <div class="who"><div class="avatar">م</div><div><b data-i18n="testi2.name">مریم حسینی</b><span data-i18n="testi2.role">خریدار</span></div></div>
-          </div>
-          <div class="testi reveal">
-            <div class="stars">★★★★★</div>
-            <p data-i18n="testi3.q">«برای مجلس یک پیراهن شیک و یک کیف ست خریدم؛ همه تعریف کردند. حتماً دوباره از MAHO خرید می‌کنم.»</p>
-            <div class="who"><div class="avatar">س</div><div><b data-i18n="testi3.name">سمیرا نوری</b><span data-i18n="testi3.role">مشتری جدید</span></div></div>
-          </div>
+        <div class="testi-grid" id="reviewsGrid"></div>
+        <p class="reviews-empty" id="reviewsEmpty" hidden data-i18n="review.empty">هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهد!</p>
+        <div class="review-cta reveal">
+          <button class="btn btn-outline" id="writeReviewBtn" data-i18n="review.write">نوشتن نظر</button>
+          <p class="muted" id="reviewLoginNote" hidden data-i18n="review.loginFirst">برای نوشتن نظر، ابتدا وارد حساب کاربری شوید.</p>
+          <form id="reviewForm" hidden>
+            <div class="field">
+              <label data-i18n="review.rate">امتیاز شما</label>
+              <div class="rating-input" id="ratingInput" role="radiogroup" aria-label="امتیاز">
+                <button type="button" class="star" data-val="1" aria-label="۱">★</button>
+                <button type="button" class="star" data-val="2" aria-label="۲">★</button>
+                <button type="button" class="star" data-val="3" aria-label="۳">★</button>
+                <button type="button" class="star" data-val="4" aria-label="۴">★</button>
+                <button type="button" class="star" data-val="5" aria-label="۵">★</button>
+              </div>
+            </div>
+            <div class="field"><textarea id="reviewText" rows="3" data-i18n-ph="review.ph" placeholder="نظر خود را درباره‌ی خرید یا خدمات بنویسید..."></textarea></div>
+            <button type="submit" class="btn btn-gold" data-i18n="review.submit">ثبت نظر</button>
+            <p class="form-note" id="reviewMsg" role="status" aria-live="polite"></p>
+          </form>
         </div>
       </div>
     </section>
@@ -410,6 +414,7 @@
           <div class="cart-total" style="font-size:15px"><span data-i18n="cart.total">مجموع</span><span id="coItemsTotal"></span></div>
           <div class="cart-total" id="coDeliveryRow" hidden style="font-size:15px"><span data-i18n="co.deliveryFee">هزینه دلیوری</span><span id="coDeliveryFee"></span></div>
           <div class="cart-total"><span data-i18n="co.grand">مبلغ قابل پرداخت</span><span id="cartTotal2"></span></div>
+          <p class="form-note" id="coMinWarn" hidden style="color:var(--red);margin:4px 0"></p>
           <button class="btn btn-lg" id="placeOrder" data-i18n="pay.placeWhatsapp">ثبت سفارش (واتساپ)</button>
         </div>
       </div>
