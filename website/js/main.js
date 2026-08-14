@@ -327,6 +327,16 @@
     { key: "beauty", name: "آرایشی و بهداشتی", name_en: "Beauty", icon: "sparkles" },
     { key: "accessory", name: "اکسسوری", name_en: "Accessories", icon: "ring" },
   ];
+  const DEFAULT_SHOWCASE = [
+    { title: "لباس مجلسی", title_en: "Evening dresses", sub: "پیراهن و کالای شب", sub_en: "Dresses & eveningwear", icon: "dress", filter: "clothing" },
+    { title: "مانتو و پالتو", title_en: "Manteaus & coats", sub: "روزمره و رسمی", sub_en: "Casual & formal", icon: "coat", filter: "clothing" },
+    { title: "بلوز و شومیز", title_en: "Blouses & tops", sub: "مدل‌های متنوع", sub_en: "Many styles", icon: "shirt", filter: "clothing" },
+    { title: "شال و روسری", title_en: "Scarves & shawls", sub: "نخی و ابریشمی", sub_en: "Cotton & silk", icon: "scarf", filter: "scarf" },
+    { title: "کیف زنانه", title_en: "Handbags", sub: "دستی و مجلسی", sub_en: "Everyday & evening", icon: "bag", filter: "bagshoes" },
+    { title: "کفش زنانه", title_en: "Women's shoes", sub: "پاشنه‌بلند و تخت", sub_en: "Heels & flats", icon: "heel", filter: "bagshoes" },
+    { title: "اکسسوری و بدلیجات", title_en: "Accessories & jewelry", sub: "گردنبند، دستبند و ساعت", sub_en: "Necklaces, bracelets & watches", icon: "ring", filter: "accessory" },
+    { title: "آرایشی و بهداشتی", title_en: "Beauty & care", sub: "لوازم آرایش و عطر", sub_en: "Makeup & perfume", icon: "sparkles", filter: "beauty" },
+  ];
 
   let STORES = [
     {
@@ -339,7 +349,7 @@
     },
   ];
   let CONFIG = {
-    categories: DEFAULT_CATS.slice(),
+    categories: DEFAULT_CATS.slice(), showcase: DEFAULT_SHOWCASE.slice(),
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
@@ -375,6 +385,8 @@
       CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
       const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
       CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
+      const sc = (n.config.showcase || []).filter((x) => x && (x.title || x.title_en));
+      CONFIG.showcase = sc.length ? sc : (CONFIG.showcase && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE.slice());
     }
   }
   function getCats() { return (Array.isArray(CONFIG.categories) && CONFIG.categories.length) ? CONFIG.categories : DEFAULT_CATS; }
@@ -461,6 +473,17 @@
       const show = filter === "all" || card.dataset.cat === filter;
       card.classList.toggle("is-hidden", !show);
     });
+  }
+  function renderShowcase() {
+    const grid = document.querySelector(".cat-grid");
+    if (!grid) return;
+    const items = (Array.isArray(CONFIG.showcase) && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE).filter((x) => x && (x.title || x.title_en));
+    grid.innerHTML = items.map((x) => {
+      const title = LANG === "en" ? (x.title_en || x.title) : x.title;
+      const sub = LANG === "en" ? (x.sub_en || x.sub) : x.sub;
+      const f = x.filter || "all";
+      return `<div class="cat-card in" data-filter="${f}" role="button" tabindex="0"><div class="ico">${icon(x.icon || "bag")}</div><h3>${title || ""}</h3><p>${sub || ""}</p></div>`;
+    }).join("");
   }
   const filterBar = $("#filterBar");
   function renderFilters() {
@@ -1485,6 +1508,7 @@
     document.documentElement.dir = LANG === "en" ? "ltr" : "rtl";
     applyI18n();
     renderFilters();
+    renderShowcase();
     renderProducts();
     renderStores();
     renderCart();

@@ -164,6 +164,16 @@
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnCats">ذخیره تغییرات</button></div>
     </div>
 
+    <!-- SHOWCASE CARDS (below hero) -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>کارت‌های دسته‌بندی (زیر هیدر)</h2><div class="sub">کارت‌های نمایشی زیر سربرگ صفحه‌ی اصلی. عنوان، زیرعنوان، آیکن و اینکه با کلیک به کدام کتگوری برود را تعیین کنید.</div></div>
+        <button class="btn btn-gold" id="addScBtn">+ افزودن کارت</button>
+      </div>
+      <div id="scRows"></div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnShowcase">ذخیره تغییرات</button></div>
+    </div>
+
     <!-- ORDERS -->
     <div class="card">
       <div class="row-between">
@@ -448,6 +458,16 @@
       {key:"accessory",name:"اکسسوری",name_en:"Accessories",icon:"ring"}
     ];
     var CAT_ICON_OPTS=[["dress","پیراهن / لباس"],["coat","مانتو / پالتو"],["shirt","بلوز / شومیز"],["scarf","شال / روسری"],["bag","کیف"],["heel","کفش"],["ring","انگشتر / بدلیجات"],["watch","ساعت"],["sparkles","لوازم آرایش"],["perfume","عطر"],["gift","هدیه / سایر"]];
+    var DEFAULT_SHOWCASE=[
+      {title:"لباس مجلسی",title_en:"Evening dresses",sub:"پیراهن و کالای شب",sub_en:"Dresses & eveningwear",icon:"dress",filter:"clothing"},
+      {title:"مانتو و پالتو",title_en:"Manteaus & coats",sub:"روزمره و رسمی",sub_en:"Casual & formal",icon:"coat",filter:"clothing"},
+      {title:"بلوز و شومیز",title_en:"Blouses & tops",sub:"مدل‌های متنوع",sub_en:"Many styles",icon:"shirt",filter:"clothing"},
+      {title:"شال و روسری",title_en:"Scarves & shawls",sub:"نخی و ابریشمی",sub_en:"Cotton & silk",icon:"scarf",filter:"scarf"},
+      {title:"کیف زنانه",title_en:"Handbags",sub:"دستی و مجلسی",sub_en:"Everyday & evening",icon:"bag",filter:"bagshoes"},
+      {title:"کفش زنانه",title_en:"Women's shoes",sub:"پاشنه‌بلند و تخت",sub_en:"Heels & flats",icon:"heel",filter:"bagshoes"},
+      {title:"اکسسوری و بدلیجات",title_en:"Accessories & jewelry",sub:"گردنبند، دستبند و ساعت",sub_en:"Necklaces, bracelets & watches",icon:"ring",filter:"accessory"},
+      {title:"آرایشی و بهداشتی",title_en:"Beauty & care",sub:"لوازم آرایش و عطر",sub_en:"Makeup & perfume",icon:"sparkles",filter:"beauty"}
+    ];
     function catList(){ if(!Array.isArray(state.config.categories)||!state.config.categories.length) state.config.categories=DEFAULT_CATS.map(function(c){return {key:c.key,name:c.name,name_en:c.name_en,icon:c.icon};}); return state.config.categories; }
     function catLabelA(key){ var c=(state.config&&Array.isArray(state.config.categories))?state.config.categories.filter(function(x){return x.key===key;})[0]:null; return c?(c.name||c.name_en||key):(CAT_LABEL[key]||key); }
     function slugKey(s){ var base=String(s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); return base||("cat_"+Date.now().toString(36)); }
@@ -562,8 +582,10 @@
     }
     function collectConfig(){
       var _cats=(state.config&&Array.isArray(state.config.categories))?state.config.categories:[];
+      var _sc=(state.config&&Array.isArray(state.config.showcase))?state.config.showcase:[];
       state.config={
         categories:_cats,
+        showcase:_sc,
         whatsapp:$("#cfg_whatsapp").value.trim(),
         logo:(state.config&&state.config.logo)||"",
         heroImage:(state.config&&state.config.heroImage)||"",
@@ -723,7 +745,48 @@
       el.innerHTML=cats.map(function(c){return '<option value="'+esc(c.key)+'">'+esc(c.name||c.name_en)+'</option>';}).join("");
       if(cur && cats.some(function(c){return c.key===cur;})) el.value=cur;
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
+    function showcaseList(){ if(!Array.isArray(state.config.showcase)||!state.config.showcase.length) state.config.showcase=DEFAULT_SHOWCASE.map(function(x){return {title:x.title,title_en:x.title_en,sub:x.sub,sub_en:x.sub_en,icon:x.icon,filter:x.filter};}); return state.config.showcase; }
+    function scFilterOptions(sel){
+      var cats=catList().filter(function(c){return c.name||c.name_en;});
+      var opts='<option value="all"'+((!sel||sel==="all")?' selected':'')+'>همه محصولات</option>';
+      opts+=cats.map(function(c){return '<option value="'+esc(c.key)+'"'+(sel===c.key?' selected':'')+'>'+esc(c.name||c.name_en)+'</option>';}).join("");
+      return opts;
+    }
+    function renderShowcaseAdmin(){
+      var wrap=$("#scRows"); if(!wrap) return;
+      var items=showcaseList();
+      wrap.innerHTML=items.map(function(x,i){
+        var iconOpts=CAT_ICON_OPTS.map(function(ic){return '<option value="'+ic[0]+'"'+(x.icon===ic[0]?' selected':'')+'>'+ic[1]+'</option>';}).join("");
+        return '<div class="sc-row" data-si="'+i+'" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>عنوان (فارسی)</label><input class="s-title" value="'+esc(x.title||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>عنوان (English)</label><input class="s-title_en" dir="ltr" value="'+esc(x.title_en||"")+'"></div>'
+          +'<div class="field" style="min-width:110px;margin:0"><label>آیکن</label><select class="s-icon">'+iconOpts+'</select></div>'
+          +'<div class="field" style="min-width:140px;margin:0"><label>می‌رود به کتگوری</label><select class="s-filter">'+scFilterOptions(x.filter)+'</select></div>'
+          +'<button class="btn btn-danger btn-sm s-del" type="button">حذف</button>'
+          +'</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>زیرعنوان (فارسی)</label><input class="s-sub" value="'+esc(x.sub||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>زیرعنوان (English)</label><input class="s-sub_en" dir="ltr" value="'+esc(x.sub_en||"")+'"></div>'
+          +'</div>'
+          +'</div>';
+      }).join("");
+    }
+    function collectShowcase(){
+      var rows=document.querySelectorAll("#scRows .sc-row"); var arr=[];
+      Array.prototype.forEach.call(rows,function(row){
+        arr.push({
+          title:row.querySelector(".s-title").value.trim(),
+          title_en:row.querySelector(".s-title_en").value.trim(),
+          sub:row.querySelector(".s-sub").value.trim(),
+          sub_en:row.querySelector(".s-sub_en").value.trim(),
+          icon:row.querySelector(".s-icon").value,
+          filter:row.querySelector(".s-filter").value
+        });
+      });
+      state.config.showcase=arr;
+    }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -853,13 +916,21 @@
       if(!confirm(msg)) return;
       cats.splice(i,1); renderCats(); fillCatSelect(); setDirty(true);
     });
-    $("#catRows").addEventListener("input",function(){ collectCats(); fillCatSelect(); setDirty(true); });
-    $("#catRows").addEventListener("change",function(){ collectCats(); fillCatSelect(); setDirty(true); });
+    $("#catRows").addEventListener("input",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
+    $("#catRows").addEventListener("change",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
     $("#saveBtnCats").onclick=function(){ collectCats(); saveAll(); };
+
+    /* ---------- showcase cards (below hero) ---------- */
+    $("#addScBtn").onclick=function(){ collectShowcase(); showcaseList().push({title:"",title_en:"",sub:"",sub_en:"",icon:"gift",filter:"all"}); renderShowcaseAdmin(); setDirty(true); };
+    $("#scRows").addEventListener("click",function(e){ var del=e.target.closest(".s-del"); if(!del)return; var row=del.closest(".sc-row"); if(!row)return; collectShowcase(); var i=parseInt(row.getAttribute("data-si"),10); showcaseList().splice(i,1); renderShowcaseAdmin(); setDirty(true); });
+    $("#scRows").addEventListener("input",function(){ collectShowcase(); setDirty(true); });
+    $("#scRows").addEventListener("change",function(){ collectShowcase(); setDirty(true); });
+    $("#saveBtnShowcase").onclick=function(){ collectShowcase(); saveAll(); };
 
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
       if(document.querySelector("#catRows .cat-row")) collectCats();
+      if(document.querySelector("#scRows .sc-row")) collectShowcase();
       collectConfig(); collectContent();
       try{
         localStorage.setItem(DATA_KEY, JSON.stringify(state));
