@@ -752,14 +752,21 @@
     ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order"].forEach(function(id){
       $("#"+id).addEventListener("input",function(){ setDirty(true); });
     });
+    function readImageFile(file,maxDim,quality,cb){
+      // SVG / GIF can't be reliably rasterized via canvas — keep them as-is (data URL)
+      if(/svg|gif/i.test(file.type)||/\.(svg|gif)$/i.test(file.name||"")){
+        var r=new FileReader(); r.onload=function(){ cb(r.result); }; r.onerror=function(){ cb(null); }; r.readAsDataURL(file); return;
+      }
+      resizeImage(file,maxDim,quality,cb);
+    }
     $("#cfg_logo").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
-      resizeImage(f,240,0.85,function(dataUrl){ if(dataUrl){ state.config.logo=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+      readImageFile(f,240,0.85,function(dataUrl){ if(dataUrl){ state.config.logo=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
     });
     $("#logoRemove").onclick=function(){ state.config.logo=""; fillConfig(); setDirty(true); };
     $("#cfg_hero").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
-      resizeImage(f,1600,0.78,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+      readImageFile(f,1600,0.78,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
     });
     $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 

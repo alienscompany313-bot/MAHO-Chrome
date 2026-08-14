@@ -1269,22 +1269,25 @@
     const hero = document.querySelector(".hero#home") || document.querySelector(".hero");
     if (!hero) return;
     const img = CONFIG.heroImage;
-    const baseGrad =
-      "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.30), transparent 60%)," +
-      "radial-gradient(900px 520px at 5% 110%, rgba(200,163,95,.16), transparent 60%)," +
-      "linear-gradient(155deg, #0e0e0e 0%, #1a1712 55%, #221c12 100%)";
     if (img) {
-      // dark overlay keeps hero text readable over any uploaded image
+      // Semi-transparent overlay keeps hero text readable while the uploaded
+      // image stays clearly visible. NOTE: no opaque base layer here, otherwise
+      // it would fully cover the image.
       hero.style.backgroundImage =
-        "linear-gradient(rgba(14,14,14,.72), rgba(34,28,18,.82))," + baseGrad + ",url('" + img + "')";
+        "linear-gradient(rgba(12,12,12,.55), rgba(20,17,10,.72))," +
+        "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.32), transparent 60%)," +
+        "radial-gradient(900px 520px at 5% 110%, rgba(200,163,95,.18), transparent 60%)," +
+        "url('" + img + "')";
       hero.style.backgroundSize = "cover, cover, cover, cover";
       hero.style.backgroundPosition = "center, center, center, center";
       hero.style.backgroundRepeat = "no-repeat";
+      hero.style.backgroundColor = "#0e0e0e";
     } else {
       hero.style.backgroundImage = "";
       hero.style.backgroundSize = "";
       hero.style.backgroundPosition = "";
       hero.style.backgroundRepeat = "";
+      hero.style.backgroundColor = "";
     }
   }
 
