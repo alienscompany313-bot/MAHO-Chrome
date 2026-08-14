@@ -320,6 +320,13 @@
     fa: { clothing: "پوشاک", scarf: "شال و روسری", bagshoes: "کیف و کفش", beauty: "آرایشی و بهداشتی", accessory: "اکسسوری" },
     en: { clothing: "Clothing", scarf: "Scarves", bagshoes: "Bags & Shoes", beauty: "Beauty", accessory: "Accessories" },
   };
+  const DEFAULT_CATS = [
+    { key: "clothing", name: "پوشاک", name_en: "Clothing", icon: "dress" },
+    { key: "scarf", name: "شال و روسری", name_en: "Scarves", icon: "scarf" },
+    { key: "bagshoes", name: "کیف و کفش", name_en: "Bags & Shoes", icon: "bag" },
+    { key: "beauty", name: "آرایشی و بهداشتی", name_en: "Beauty", icon: "sparkles" },
+    { key: "accessory", name: "اکسسوری", name_en: "Accessories", icon: "ring" },
+  ];
 
   let STORES = [
     {
@@ -332,6 +339,7 @@
     },
   ];
   let CONFIG = {
+    categories: DEFAULT_CATS.slice(),
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
@@ -365,8 +373,14 @@
       CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
       CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100 }, n.config.delivery || CONFIG.delivery);
       CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
+      const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
+      CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
     }
   }
+  function getCats() { return (Array.isArray(CONFIG.categories) && CONFIG.categories.length) ? CONFIG.categories : DEFAULT_CATS; }
+  function catObj(key) { return getCats().find((c) => c.key === key); }
+  function catLabel(key) { const c = catObj(key); if (c) return (LANG === "en" ? (c.name_en || c.name) : c.name) || key; return (CAT_LABEL[LANG] && CAT_LABEL[LANG][key]) || key; }
+  function catIcon(key) { const c = catObj(key); return (c && c.icon) || CAT_ICON[key] || "bag"; }
   let hasLocalDraft = false;
   try {
     const raw = localStorage.getItem(DATA_KEY);
@@ -392,7 +406,7 @@
       const imgs = productImages(p);
       const media = imgs.length
         ? `<img src="${imgs[0]}" alt="${name}" loading="lazy">`
-        : icon(p.icon || CAT_ICON[p.cat] || "bag");
+        : icon(p.icon || catIcon(p.cat));
       const stock = productStock(p);
       const out = stock <= 0;
       const low = stock > 0 && stock <= LOW_STOCK;
@@ -403,7 +417,7 @@
         <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
           <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}</div>
           <div class="product-body">
-            <span class="cat">${CAT_LABEL[LANG][p.cat]}</span>
+            <span class="cat">${catLabel(p.cat)}</span>
             <h3>${name}</h3>
             ${stockNote}
             <div class="product-foot">
@@ -449,6 +463,12 @@
     });
   }
   const filterBar = $("#filterBar");
+  function renderFilters() {
+    if (!filterBar) return;
+    const cats = getCats().filter((c) => c.name || c.name_en);
+    const chip = (f, label) => `<button class="chip${activeFilter === f ? " active" : ""}" data-filter="${f}">${label}</button>`;
+    filterBar.innerHTML = chip("all", t("filter.all")) + cats.map((c) => chip(c.key, LANG === "en" ? (c.name_en || c.name) : c.name)).join("");
+  }
   if (filterBar) {
     filterBar.addEventListener("click", (e) => {
       const chip = e.target.closest(".chip");
@@ -531,7 +551,7 @@
     if (cartFootEl) cartFootEl.style.display = "flex";
     cartItemsEl.innerHTML = CART.map((it) => {
       const nm = LANG === "en" ? (it.name_en || it.name) : it.name;
-      const media = it.image ? `<img src="${it.image}" alt="">` : icon(it.icon || CAT_ICON[it.cat] || "bag");
+      const media = it.image ? `<img src="${it.image}" alt="">` : icon(it.icon || catIcon(it.cat));
       const variant = variantLabel(it) ? `<span class="ci-variant">${variantLabel(it)}</span>` : "";
       return `
         <div class="cart-item">
@@ -917,7 +937,7 @@
   function qvShowImage(src, alt, cat) {
     const media = $("#qvMedia");
     media.className = "qv-media m-" + cat + (src ? " has-img" : "");
-    media.innerHTML = src ? `<img src="${src}" alt="${alt}">` : icon((qvProduct && qvProduct.icon) || CAT_ICON[cat] || "bag");
+    media.innerHTML = src ? `<img src="${src}" alt="${alt}">` : icon((qvProduct && qvProduct.icon) || catIcon(cat));
   }
   function openQuickView(p) {
     qvProduct = p; qvSize = ""; qvColor = ""; setQvQty(1);
@@ -929,7 +949,7 @@
       thumbs.hidden = false;
       thumbs.innerHTML = imgs.map((src, i) => `<img src="${src}" alt="" data-i="${i}" class="${i === 0 ? "active" : ""}">`).join("");
     } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
-    $("#qvCat").textContent = CAT_LABEL[LANG][p.cat] || "";
+    $("#qvCat").textContent = catLabel(p.cat) || "";
     $("#qvName").textContent = nm;
     $("#qvPrice").innerHTML = money(p.price) + (p.old ? ` <del>${money(p.old)}</del>` : "");
     // sizes
@@ -1464,6 +1484,7 @@
     document.documentElement.lang = LANG === "en" ? "en" : "fa";
     document.documentElement.dir = LANG === "en" ? "ltr" : "rtl";
     applyI18n();
+    renderFilters();
     renderProducts();
     renderStores();
     renderCart();

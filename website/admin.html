@@ -140,6 +140,17 @@
       </div>
     </div>
 
+    <!-- CATEGORIES -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>دسته‌بندی‌ها (کتگوری‌ها)</h2><div class="sub">نام کتگوری‌ها را تغییر بدهید یا کتگوری جدید اضافه کنید. این‌ها هم در فیلتر بالای محصولاتِ سایت و هم هنگام افزودن کالا استفاده می‌شوند.</div></div>
+        <button class="btn btn-gold" id="addCatBtn">+ افزودن کتگوری</button>
+      </div>
+      <div id="catRows"></div>
+      <p class="note">با تغییر نام یک کتگوری، همان کالاهای قبلی حفظ می‌شوند. اگر کتگوری‌ای را حذف کنید که روی کالا استفاده شده، آن کالاها بدون کتگوری می‌مانند.</p>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnCats">ذخیره تغییرات</button></div>
+    </div>
+
     <!-- ORDERS -->
     <div class="card">
       <div class="row-between">
@@ -416,6 +427,17 @@
     var $=function(s){return document.querySelector(s)};
     var DATA_KEY="maho_admin_data", PASS_KEY="maho_admin_pass", DEFAULT_PASS="maho1234";
     var CAT_LABEL={clothing:"پوشاک",scarf:"شال و روسری",bagshoes:"کیف و کفش",beauty:"آرایشی",accessory:"اکسسوری"};
+    var DEFAULT_CATS=[
+      {key:"clothing",name:"پوشاک",name_en:"Clothing",icon:"dress"},
+      {key:"scarf",name:"شال و روسری",name_en:"Scarves",icon:"scarf"},
+      {key:"bagshoes",name:"کیف و کفش",name_en:"Bags & Shoes",icon:"bag"},
+      {key:"beauty",name:"آرایشی و بهداشتی",name_en:"Beauty",icon:"sparkles"},
+      {key:"accessory",name:"اکسسوری",name_en:"Accessories",icon:"ring"}
+    ];
+    var CAT_ICON_OPTS=[["dress","پیراهن / لباس"],["coat","مانتو / پالتو"],["shirt","بلوز / شومیز"],["scarf","شال / روسری"],["bag","کیف"],["heel","کفش"],["ring","انگشتر / بدلیجات"],["watch","ساعت"],["sparkles","لوازم آرایش"],["perfume","عطر"],["gift","هدیه / سایر"]];
+    function catList(){ if(!Array.isArray(state.config.categories)||!state.config.categories.length) state.config.categories=DEFAULT_CATS.map(function(c){return {key:c.key,name:c.name,name_en:c.name_en,icon:c.icon};}); return state.config.categories; }
+    function catLabelA(key){ var c=(state.config&&Array.isArray(state.config.categories))?state.config.categories.filter(function(x){return x.key===key;})[0]:null; return c?(c.name||c.name_en||key):(CAT_LABEL[key]||key); }
+    function slugKey(s){ var base=String(s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); return base||("cat_"+Date.now().toString(36)); }
     var faMap="۰۱۲۳۴۵۶۷۸۹";
     var toFa=function(v){return String(v).replace(/[0-9]/g,function(d){return faMap[d]})};
     var toEn=function(v){return String(v==null?"":v).replace(/[۰-۹]/g,function(d){return faMap.indexOf(d)})};
@@ -526,7 +548,9 @@
       var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
     }
     function collectConfig(){
+      var _cats=(state.config&&Array.isArray(state.config.categories))?state.config.categories:[];
       state.config={
+        categories:_cats,
         whatsapp:$("#cfg_whatsapp").value.trim(),
         logo:(state.config&&state.config.logo)||"",
         heroImage:(state.config&&state.config.heroImage)||"",
@@ -633,7 +657,7 @@
         var stTxt=(st==="∞")?"∞":toFa(st);
         var tr=document.createElement("tr");
         tr.innerHTML='<td>'+thumb+'</td>'+
-          '<td><b>'+(p.name||"")+'</b><br><span class="note hide-sm">'+(CAT_LABEL[p.cat]||p.cat||"")+'</span></td>'+
+          '<td><b>'+(p.name||"")+'</b><br><span class="note hide-sm">'+(catLabelA(p.cat)||p.cat||"")+'</span></td>'+
           '<td class="hide-sm" dir="ltr">'+(p.code||"—")+'</td>'+
           '<td class="stockcell '+cls+'">'+stTxt+'</td>'+
           '<td class="price hide-sm">'+money(p.price)+'</td>'+
@@ -654,7 +678,39 @@
         b.appendChild(tr);
       });
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; renderTable(); renderStoreTable(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
+    function renderCats(){
+      var wrap=$("#catRows"); if(!wrap) return;
+      var cats=catList();
+      wrap.innerHTML=cats.map(function(c,i){
+        var opts=CAT_ICON_OPTS.map(function(ic){return '<option value="'+ic[0]+'"'+(c.icon===ic[0]?' selected':'')+'>'+ic[1]+'</option>';}).join("");
+        return '<div class="cat-row" data-ci="'+i+'" data-key="'+esc(c.key||"")+'" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (دری)</label><input class="c-name" value="'+esc(c.name||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (English)</label><input class="c-name_en" dir="ltr" value="'+esc(c.name_en||"")+'"></div>'
+          +'<div class="field" style="min-width:120px;margin:0"><label>آیکن</label><select class="c-icon">'+opts+'</select></div>'
+          +'<button class="btn btn-danger btn-sm c-del" type="button" title="حذف کتگوری">حذف</button>'
+          +'</div>';
+      }).join("");
+    }
+    function collectCats(){
+      var rows=document.querySelectorAll("#catRows .cat-row");
+      var arr=[];
+      Array.prototype.forEach.call(rows,function(row){
+        var name=row.querySelector(".c-name").value.trim();
+        var name_en=row.querySelector(".c-name_en").value.trim();
+        var iconv=row.querySelector(".c-icon").value;
+        var key=row.getAttribute("data-key")||slugKey(name||name_en);
+        arr.push({key:key,name:name,name_en:name_en,icon:iconv});
+      });
+      state.config.categories=arr;
+    }
+    function fillCatSelect(sel){
+      var el=$("#f_cat"); if(!el) return;
+      var cats=catList().filter(function(c){return c.name||c.name_en;});
+      var cur=sel||el.value;
+      el.innerHTML=cats.map(function(c){return '<option value="'+esc(c.key)+'">'+esc(c.name||c.name_en)+'</option>';}).join("");
+      if(cur && cats.some(function(c){return c.key===cur;})) el.value=cur;
+    }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -666,10 +722,12 @@
       editIndex=(typeof i==="number")?i:-1;
       $("#modalTitle").textContent=editIndex>=0?"ویرایش محصول":"افزودن محصول";
       $("#modalMsg").textContent="";
-      var p=editIndex>=0?state.products[editIndex]:{cat:"clothing",icon:"dress",badge:""};
+      var cats=catList(); var firstCat=(cats[0]&&cats[0].key)||"clothing";
+      var p=editIndex>=0?state.products[editIndex]:{cat:firstCat,icon:"dress",badge:""};
+      fillCatSelect(p.cat||firstCat);
       $("#f_name").value=p.name||""; $("#f_name_en").value=p.name_en||"";
       $("#f_code").value=p.code||""; $("#f_stock").value=(p.stock==null?"":p.stock);
-      $("#f_cat").value=p.cat||"clothing"; $("#f_icon").value=p.icon||"dress";
+      $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
       modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
@@ -770,8 +828,25 @@
     });
     $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 
+    /* ---------- categories ---------- */
+    $("#addCatBtn").onclick=function(){ collectCats(); var cats=catList(); cats.push({key:"cat_"+Date.now().toString(36),name:"",name_en:"",icon:"gift"}); renderCats(); fillCatSelect(); setDirty(true); };
+    $("#catRows").addEventListener("click",function(e){
+      var del=e.target.closest(".c-del"); if(!del) return;
+      var row=del.closest(".cat-row"); if(!row) return;
+      collectCats();
+      var i=parseInt(row.getAttribute("data-ci"),10); var cats=catList(); var c=cats[i]; if(!c) return;
+      var used=state.products.filter(function(p){return p.cat===c.key;}).length;
+      var msg=used>0?("این کتگوری روی "+toFa(used)+" کالا استفاده شده. با حذف، آن کالاها بدون کتگوری می‌مانند. حذف شود؟"):"این کتگوری حذف شود؟";
+      if(!confirm(msg)) return;
+      cats.splice(i,1); renderCats(); fillCatSelect(); setDirty(true);
+    });
+    $("#catRows").addEventListener("input",function(){ collectCats(); fillCatSelect(); setDirty(true); });
+    $("#catRows").addEventListener("change",function(){ collectCats(); fillCatSelect(); setDirty(true); });
+    $("#saveBtnCats").onclick=function(){ collectCats(); saveAll(); };
+
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
+      if(document.querySelector("#catRows .cat-row")) collectCats();
       collectConfig(); collectContent();
       try{
         localStorage.setItem(DATA_KEY, JSON.stringify(state));
