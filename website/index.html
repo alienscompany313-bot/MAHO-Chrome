@@ -3,6 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* Self-heal: remove any stale service worker/caches (from the older MAHO app)
+       so this site always loads the latest version instead of a cached copy. */
+    (function () {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+          navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }).catch(function () {});
+        }
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) { keys.forEach(function (k) { caches.delete(k); }); }).catch(function () {});
+        }
+      } catch (e) {}
+    })();
+  </script>
   <title>لباس و لوازم بانوان MAHO | پوشاک و لوازم زنانه</title>
   <meta name="description" content="لباس و لوازم بانوان MAHO — لباس زنانه، مانتو، شال و روسری، کیف، کفش، اکسسوری و لوازم آرایشی با کیفیت ممتاز و قیمت منصفانه. کوته سنگی، کابل، افغانستان.">
   <meta name="theme-color" content="#111111">
