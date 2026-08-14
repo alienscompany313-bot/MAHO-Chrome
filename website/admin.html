@@ -164,6 +164,20 @@
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnCats">ذخیره تغییرات</button></div>
     </div>
 
+    <!-- DISCOUNTS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>تخفیف‌ها</h2><div class="sub">برای همه‌ی محصولات، یا برای یک یا چند کالا تخفیف (درصد) بگذارید. قیمت تخفیف‌خورده هنگام افزودن به سبد به‌طور واقعی حساب می‌شود.</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px">
+        <div class="field" style="min-width:160px;margin:0"><label>تخفیف برای همه‌ی محصولات (٪)</label><input id="discAll" type="number" min="0" max="95" inputmode="numeric" placeholder="مثلاً 20"></div>
+        <button class="btn btn-gold btn-sm" id="applyDiscAll" type="button">اعمال به همه</button>
+        <button class="btn btn-outline btn-sm" id="clearDiscAll" type="button">حذف همه‌ی تخفیف‌ها</button>
+      </div>
+      <div id="discRows"></div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnDisc">ذخیره تغییرات</button></div>
+    </div>
+
     <!-- SHOWCASE CARDS (below hero) -->
     <div class="card">
       <div class="row-between">
@@ -442,7 +456,8 @@
           </select>
         </div>
         <div class="field"><label>قیمت (افغانی) *</label><input id="f_price" type="number" min="0" inputmode="numeric"></div>
-        <div class="field"><label>قیمت قبلی (برای تخفیف)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>قیمت قبلی (برای تخفیف دستی)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label>تخفیف (٪) — روی قیمت اعمال می‌شود</label><input id="f_discount" type="number" min="0" max="95" inputmode="numeric" placeholder="۰"></div>
         <div class="field"><label>برچسب</label>
           <select id="f_badge">
             <option value="">بدون برچسب</option>
@@ -788,6 +803,21 @@
         b.appendChild(tr);
       });
     }
+    function effPriceA(p){ var d=parseFloat(p&&p.discount); d=(isFinite(d)&&d>0)?Math.min(95,d):0; return d>0?Math.round((p.price||0)*(1-d/100)):(p.price||0); }
+    function renderDiscounts(){
+      var box=$("#discRows"); if(!box)return;
+      if(!state.products.length){ box.innerHTML='<p class="note">هنوز محصولی اضافه نشده است.</p>'; return; }
+      box.innerHTML=state.products.map(function(p,i){
+        var d=(p.discount!=null&&p.discount!==0)?p.discount:"";
+        var eff=effPriceA(p);
+        return '<div class="disc-row" data-di="'+i+'" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px dashed var(--line);padding:6px 0">'
+          +'<b style="flex:1;min-width:140px">'+(p.name||"")+'</b>'
+          +'<span class="note" dir="ltr">'+money(p.price)+'</span>'
+          +'<div class="field" style="margin:0;min-width:110px"><label style="font-size:12px">تخفیف (٪)</label><input class="d-val" type="number" min="0" max="95" inputmode="numeric" value="'+d+'"></div>'
+          +'<span class="note" dir="ltr">پس از تخفیف: <b>'+money(eff)+'</b></span>'
+          +'</div>';
+      }).join("");
+    }
     function renderStoreTable(){
       var b=$("#storeBody"); b.innerHTML="";
       state.stores.forEach(function(s,i){
@@ -873,7 +903,7 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -891,7 +921,7 @@
       $("#f_name").value=p.name||""; $("#f_name_en").value=p.name_en||"";
       $("#f_code").value=p.code||""; $("#f_stock").value=(p.stock==null?"":p.stock);
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
-      $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:"";
+      $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:""; $("#f_discount").value=(p.discount!=null&&p.discount!==0)?p.discount:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
       modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
       $("#f_sizes").value=(p.sizes||[]).join("، "); $("#f_colors").value=(p.colors||[]).join("، ");
@@ -926,6 +956,7 @@
       var p={ name:name, name_en:$("#f_name_en").value.trim(), code:$("#f_code").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price) };
       var stock=toEn($("#f_stock").value).trim(); if(stock!==""&&!isNaN(Number(stock))) p.stock=Number(stock);
       var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
+      var disc=toEn($("#f_discount").value).trim(); if(disc!==""&&!isNaN(Number(disc))&&Number(disc)>0) p.discount=Math.min(95,Number(disc));
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
       if(modalImages.length) p.images=modalImages.slice();
@@ -1033,6 +1064,11 @@
     $("#refreshOrders").onclick=renderOrdersAdmin;
     $("#refreshCust").onclick=renderCustomers;
     $("#refreshReviews").onclick=renderReviewsAdmin;
+    $("#applyDiscAll").onclick=function(){ var v=Number(toEn($("#discAll").value))||0; v=Math.max(0,Math.min(95,v)); state.products.forEach(function(p){ if(v>0) p.discount=v; else delete p.discount; }); renderDiscounts(); renderTable(); setDirty(true); };
+    $("#clearDiscAll").onclick=function(){ state.products.forEach(function(p){ delete p.discount; }); if($("#discAll")) $("#discAll").value=""; renderDiscounts(); renderTable(); setDirty(true); };
+    $("#discRows").addEventListener("input",function(e){ var inp=e.target.closest(".d-val"); if(!inp)return; var row=inp.closest(".disc-row"); var i=parseInt(row.getAttribute("data-di"),10); if(!(i>=0)||!state.products[i])return; var v=Number(toEn(inp.value))||0; v=Math.max(0,Math.min(95,v)); if(v>0) state.products[i].discount=v; else delete state.products[i].discount; setDirty(true); });
+    $("#discRows").addEventListener("change",function(e){ if(e.target.closest(".d-val")){ renderDiscounts(); renderTable(); } });
+    $("#saveBtnDisc").onclick=saveAll;
     $("#reviewsAdminBody").addEventListener("click",function(e){
       var ap=e.target.getAttribute("data-rev-approve"), ft=e.target.getAttribute("data-rev-feature"), dl=e.target.getAttribute("data-rev-del");
       var id=ap||ft||dl; if(!id)return;

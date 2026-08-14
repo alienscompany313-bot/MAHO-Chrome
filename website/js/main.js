@@ -75,7 +75,7 @@
       "review.write": "نوشتن نظر", "review.submit": "ثبت نظر", "review.rate": "امتیاز شما",
       "review.ph": "نظر خود را درباره‌ی خرید یا خدمات بنویسید...",
       "review.loginFirst": "برای نوشتن نظر، ابتدا وارد حساب کاربری شوید.",
-      "review.thanks": "نظر شما ثبت شد و پس از تایید مدیر نمایش داده می‌شود ✓",
+      "review.thanks": "از نظر شما سپاسگزاریم ✓",
       "review.needText": "لطفاً امتیاز و متن نظر را وارد کنید.",
       "review.empty": "هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهد!",
       "review.customer": "مشتری MAHO",
@@ -217,7 +217,7 @@
       "review.write": "Write a review", "review.submit": "Submit review", "review.rate": "Your rating",
       "review.ph": "Share your experience with your purchase or our service...",
       "review.loginFirst": "Please sign in to your account to write a review.",
-      "review.thanks": "Your review was submitted and will appear after admin approval ✓",
+      "review.thanks": "Thank you for your review ✓",
       "review.needText": "Please provide a rating and review text.",
       "review.empty": "No reviews yet. Be the first to share your experience!",
       "review.customer": "MAHO customer",
@@ -426,10 +426,12 @@
     if (!productGrid) return;
     productGrid.innerHTML = PRODUCTS.map((p, i) => {
       const badgeText = LANG === "en" ? (p.badgeText_en || p.badgeText) : p.badgeText;
-      const badge = p.badge
-        ? `<span class="product-badge ${p.badge === "new" ? "new" : ""}">${badgeText}</span>`
-        : "";
-      const old = p.old ? `<del>${money(p.old)}</del>` : "";
+      const disc = prodDiscount(p);
+      const badge = disc
+        ? `<span class="product-badge">${LANG === "en" ? (toDigits(disc) + "% off") : (toDigits(disc) + "٪ تخفیف")}</span>`
+        : (p.badge ? `<span class="product-badge ${p.badge === "new" ? "new" : ""}">${badgeText}</span>` : "");
+      const orig = origPrice(p);
+      const old = orig ? `<del>${money(orig)}</del>` : "";
       const name = LANG === "en" ? (p.name_en || p.name) : p.name;
       const imgs = productImages(p);
       const media = imgs.length
@@ -449,7 +451,7 @@
             <h3>${name}</h3>
             ${stockNote}
             <div class="product-foot">
-              <span class="price">${money(p.price)} ${old}</span>
+              <span class="price">${money(effPrice(p))} ${old}</span>
               <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
             </div>
           </div>
@@ -523,6 +525,9 @@
   function productSizes(p) { return Array.isArray(p.sizes) ? p.sizes.filter(Boolean) : []; }
   function productColors(p) { return Array.isArray(p.colors) ? p.colors.filter(Boolean) : []; }
   function colorName(v) { return String(v).split("|")[0].trim(); }
+  function prodDiscount(p) { const d = parseFloat(p && p.discount); return (isFinite(d) && d > 0) ? Math.min(95, d) : 0; }
+  function effPrice(p) { const d = prodDiscount(p); return d > 0 ? Math.round((p.price || 0) * (1 - d / 100)) : (p.price || 0); }
+  function origPrice(p) { const d = prodDiscount(p); return d > 0 ? (p.price || 0) : (p.old || 0); }
 
   /* -------------------- Cart -------------------- */
   const CART_KEY = "maho_cart";
@@ -542,7 +547,7 @@
     const key = p.name + "|" + size + "|" + color;
     const found = CART.find((it) => it.key === key);
     if (found) found.qty += qty;
-    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: p.price, code: p.code || "", cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
+    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: effPrice(p), code: p.code || "", cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
     saveCart(); updateCartBadge(); renderCart();
     const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
     showToast(t("toast.cart").replace("{name}", nm).replace("{n}", toDigits(cartQtyTotal())));
@@ -1005,7 +1010,7 @@
     } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
     $("#qvCat").textContent = catLabel(p.cat) || "";
     $("#qvName").textContent = nm;
-    $("#qvPrice").innerHTML = money(p.price) + (p.old ? ` <del>${money(p.old)}</del>` : "");
+    $("#qvPrice").innerHTML = money(effPrice(p)) + (origPrice(p) ? ` <del>${money(origPrice(p))}</del>` : "");
     // sizes
     const sizes = productSizes(p), colors = productColors(p);
     const sizesWrap = $("#qvSizesWrap"), colorsWrap = $("#qvColorsWrap");
