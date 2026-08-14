@@ -224,7 +224,7 @@
       "toast.news": "You're subscribed to the newsletter ✓",
       "form.err": "Please enter a valid email address.",
       "form.ok": "You're subscribed! You'll soon receive MAHO's special offers.",
-      "lang.other": "دری",
+      "lang.other": "فارسی",
       "cart.title": "Your cart", "cart.empty": "Your cart is empty.",
       "cart.total": "Total", "cart.checkout": "Order via WhatsApp",
       "cart.clear": "Clear cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",

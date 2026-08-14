@@ -224,11 +224,11 @@
       <h2>متن‌های سایت</h2>
       <div class="sub">متن‌های دیده‌شده در سایت (سربرگ، صفحه‌ی اصلی و فوتر). هر خانه را خالی بگذارید تا متن پیش‌فرض بماند.</div>
       <div class="grid2">
-        <div class="field"><label>زیرعنوان برند (دری)</label><input id="c_brandSub"></div>
+        <div class="field"><label>زیرعنوان برند (فارسی)</label><input id="c_brandSub"></div>
         <div class="field"><label>زیرعنوان برند (English)</label><input id="c_brandSub_en" dir="ltr"></div>
-        <div class="field"><label>عنوان بزرگ صفحه (دری)</label><input id="c_heroTitle"></div>
+        <div class="field"><label>عنوان بزرگ صفحه (فارسی)</label><input id="c_heroTitle"></div>
         <div class="field"><label>عنوان بزرگ صفحه (English)</label><input id="c_heroTitle_en" dir="ltr"></div>
-        <div class="field"><label>توضیح زیر عنوان (دری)</label><input id="c_heroLead"></div>
+        <div class="field"><label>توضیح زیر عنوان (فارسی)</label><input id="c_heroLead"></div>
         <div class="field"><label>توضیح زیر عنوان (English)</label><input id="c_heroLead_en" dir="ltr"></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">آمار سربرگ (اعداد بالای صفحه)</h3>
@@ -237,9 +237,9 @@
 
       <h3 style="margin:14px 0 6px;font-size:16px">فوتر (پایین سایت)</h3>
       <div class="grid2">
-        <div class="field"><label>توضیح فوتر (دری)</label><input id="c_footerDesc"></div>
+        <div class="field"><label>توضیح فوتر (فارسی)</label><input id="c_footerDesc"></div>
         <div class="field"><label>توضیح فوتر (English)</label><input id="c_footerDesc_en" dir="ltr"></div>
-        <div class="field"><label>آدرس فوتر (دری)</label><input id="c_footerAddr"></div>
+        <div class="field"><label>آدرس فوتر (فارسی)</label><input id="c_footerAddr"></div>
         <div class="field"><label>آدرس فوتر (English)</label><input id="c_footerAddr_en" dir="ltr"></div>
         <div class="field"><label>نمبر تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
         <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
@@ -349,7 +349,7 @@
     <div class="modal">
       <h3 id="modalTitle">افزودن محصول</h3>
       <div class="grid2">
-        <div class="field"><label>نام کالا (دری) *</label><input id="f_name"></div>
+        <div class="field"><label>نام کالا (فارسی) *</label><input id="f_name"></div>
         <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
         <div class="field"><label>کود کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
         <div class="field"><label>تعداد موجودی</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"></div>
@@ -411,13 +411,13 @@
     <div class="modal">
       <h3 id="storeModalTitle">افزودن فروشگاه</h3>
       <div class="grid2">
-        <div class="field"><label>نام (دری) *</label><input id="st_name"></div>
+        <div class="field"><label>نام (فارسی) *</label><input id="st_name"></div>
         <div class="field"><label>نام (English)</label><input id="st_name_en" dir="ltr"></div>
-        <div class="field"><label>آدرس (دری)</label><input id="st_area"></div>
+        <div class="field"><label>آدرس (فارسی)</label><input id="st_area"></div>
         <div class="field"><label>آدرس (English)</label><input id="st_area_en" dir="ltr"></div>
-        <div class="field"><label>ساعت کاری (دری)</label><input id="st_hours"></div>
+        <div class="field"><label>ساعت کاری (فارسی)</label><input id="st_hours"></div>
         <div class="field"><label>ساعت کاری (English)</label><input id="st_hours_en" dir="ltr"></div>
-        <div class="field"><label>نمبر تماس (دری)</label><input id="st_phone" dir="ltr"></div>
+        <div class="field"><label>نمبر تماس (فارسی)</label><input id="st_phone" dir="ltr"></div>
         <div class="field"><label>نمبر تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
       <div class="field"><label>لینک گوگل مپ</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
@@ -584,7 +584,7 @@
       if(box){
         box.innerHTML=[0,1,2,3].map(function(i){ var s=stats[i]||{}; return '<div class="grid2" style="border-bottom:1px dashed var(--line);padding-bottom:6px;margin-bottom:6px">'+
           '<div class="field"><label>عدد '+(i+1)+'</label><input id="stat'+i+'_value" type="number" dir="ltr" value="'+esc(s.value)+'"></div>'+
-          '<div class="field"><label>برچسب (دری)</label><input id="stat'+i+'_label" value="'+esc(s.label)+'"></div>'+
+          '<div class="field"><label>برچسب (فارسی)</label><input id="stat'+i+'_label" value="'+esc(s.label)+'"></div>'+
           '<div class="field"><label>برچسب (English)</label><input id="stat'+i+'_label_en" dir="ltr" value="'+esc(s.label_en)+'"></div></div>'; }).join("");
         [0,1,2,3].forEach(function(i){ ["value","label","label_en"].forEach(function(k){ var el=$("#stat"+i+"_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); }); });
       }
@@ -697,7 +697,7 @@
       wrap.innerHTML=cats.map(function(c,i){
         var opts=CAT_ICON_OPTS.map(function(ic){return '<option value="'+ic[0]+'"'+(c.icon===ic[0]?' selected':'')+'>'+ic[1]+'</option>';}).join("");
         return '<div class="cat-row" data-ci="'+i+'" data-key="'+esc(c.key||"")+'" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
-          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (دری)</label><input class="c-name" value="'+esc(c.name||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (فارسی)</label><input class="c-name" value="'+esc(c.name||"")+'"></div>'
           +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (English)</label><input class="c-name_en" dir="ltr" value="'+esc(c.name_en||"")+'"></div>'
           +'<div class="field" style="min-width:120px;margin:0"><label>آیکن</label><select class="c-icon">'+opts+'</select></div>'
           +'<button class="btn btn-danger btn-sm c-del" type="button" title="حذف کتگوری">حذف</button>'
