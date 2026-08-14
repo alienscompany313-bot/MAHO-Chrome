@@ -255,11 +255,55 @@
         <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">شبکه‌های اجتماعی (لینک)</h3>
+      <div class="sub">هر خانه‌ای که خالی بماند، آیکن آن در فوتر نمایش داده نمی‌شود.</div>
       <div class="grid2">
         <div class="field"><label>اینستاگرام</label><input id="c_instagram" dir="ltr" placeholder="https://instagram.com/..."></div>
         <div class="field"><label>تلگرام</label><input id="c_telegram" dir="ltr" placeholder="https://t.me/..."></div>
         <div class="field"><label>واتساپ</label><input id="c_whatsappLink" dir="ltr" placeholder="https://wa.me/93..."></div>
+        <div class="field"><label>فیسبوک</label><input id="c_facebook" dir="ltr" placeholder="https://facebook.com/..."></div>
+        <div class="field"><label>تیک‌تاک</label><input id="c_tiktok" dir="ltr" placeholder="https://tiktok.com/@..."></div>
       </div>
+
+      <h3 style="margin:14px 0 6px;font-size:16px">کارت‌های شناور روی هیدر</h3>
+      <div class="sub">سه کارت کوچکی که روی تصویر سربرگ شناورند. متن هر کارت را تغییر بدهید و اندازه‌ی کلی آن‌ها را تنظیم کنید.</div>
+      <div class="field" style="max-width:340px">
+        <label>اندازه‌ی کارت‌ها: <b id="heroScaleVal">۱۰۰٪</b></label>
+        <input id="c_heroScale" type="range" min="0.7" max="1.3" step="0.05" value="1" style="width:100%">
+      </div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
+        <b>کارت ۱</b>
+        <div class="grid2">
+          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc1_tag"></div>
+          <div class="field"><label>برچسب (English)</label><input id="c_hc1_tag_en" dir="ltr"></div>
+          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc1_title"></div>
+          <div class="field"><label>عنوان (English)</label><input id="c_hc1_title_en" dir="ltr"></div>
+          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc1_sub"></div>
+          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc1_sub_en" dir="ltr"></div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
+        <b>کارت ۲</b>
+        <div class="grid2">
+          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc2_tag"></div>
+          <div class="field"><label>برچسب (English)</label><input id="c_hc2_tag_en" dir="ltr"></div>
+          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc2_title"></div>
+          <div class="field"><label>عنوان (English)</label><input id="c_hc2_title_en" dir="ltr"></div>
+          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc2_sub"></div>
+          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc2_sub_en" dir="ltr"></div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
+        <b>کارت ۳</b>
+        <div class="grid2">
+          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc3_tag"></div>
+          <div class="field"><label>برچسب (English)</label><input id="c_hc3_tag_en" dir="ltr"></div>
+          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc3_title"></div>
+          <div class="field"><label>عنوان (English)</label><input id="c_hc3_title_en" dir="ltr"></div>
+          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc3_sub"></div>
+          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc3_sub_en" dir="ltr"></div>
+        </div>
+      </div>
+
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnContent">ذخیره تغییرات</button></div>
     </div>
 
@@ -597,10 +641,15 @@
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim()}
       };
     }
-    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink"];
+    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
+      "hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en",
+      "hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en",
+      "hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
+    function faPct(v){ return String(Math.round((parseFloat(v)||1)*100)).replace(/[0-9]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹"[d]})+"٪"; }
     function esc(s){ return String(s||"").replace(/"/g,"&quot;"); }
     function fillContent(){
       var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
+      var hs=$("#c_heroScale"); if(hs){ hs.value=(c.heroScale&&parseFloat(c.heroScale))?c.heroScale:"1"; var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); }
       var stats=c.stats||[];
       var box=$("#statsRows");
       if(box){
@@ -613,6 +662,7 @@
     }
     function collectContent(){
       var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} });
+      var hs=$("#c_heroScale"); if(hs && hs.value && parseFloat(hs.value)!==1) c.heroScale=hs.value;
       var stats=[];
       [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:(val!==""?Number(val):""),label:lab,label_en:laben}; else stats[i]=null; });
       if(stats.some(function(x){return x;})) c.stats=stats;
@@ -942,6 +992,7 @@
     }
     $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
     CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); });
+    (function(){ var hs=$("#c_heroScale"); if(hs) hs.addEventListener("input",function(){ var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); setDirty(true); }); })();
     $("#refreshOrders").onclick=renderOrdersAdmin;
     $("#refreshCust").onclick=renderCustomers;
     ["ordersSearch","ordersFilter","ordersSort"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",renderOrdersAdmin); el.addEventListener("change",renderOrdersAdmin); } });

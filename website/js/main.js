@@ -148,7 +148,7 @@
       "order.number": "نمبر سفارش", "order.emailSent": "ایمیل تایید سفارش برای شما فرستاده شد.",
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
       "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
-      "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت",
+      "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت", "copied": "کپی شد ✓",
       "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
       "acct.forgot": "پسورد را فراموش کرده‌اید؟", "acct.reset": "بازیابی پسورد",
       "acct.resetSent": "کود بازیابی به ایمیل شما فرستاده شد. کود و پسورد جدید را وارد کنید.",
@@ -282,7 +282,7 @@
       "order.number": "Order number", "order.emailSent": "An order confirmation email was sent to you.",
       "order.emailIntro": "Your order at MAHO is confirmed. Details:",
       "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
-      "share.copied": "Site link copied ✓", "share.title": "Check out this store",
+      "share.copied": "Site link copied ✓", "share.title": "Check out this store", "copied": "Copied ✓",
       "addr.country": "Country", "addr.province": "Province", "addr.district": "District", "addr.street": "Street", "addr.house": "House no.",
       "acct.forgot": "Forgot password?", "acct.reset": "Reset password",
       "acct.resetSent": "A reset code was sent to your email. Enter the code and a new password.",
@@ -460,7 +460,7 @@
           </div>
           <div class="store-row"><span class="ico">${icon("pin")}</span><span>${area}</span></div>
           <div class="store-row"><span class="ico">${icon("clock")}</span><span>${hours}</span></div>
-          <div class="store-row"><span class="ico">${icon("call")}</span><span>${phone}</span></div>
+          <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link" href="${telHref(phone)}" dir="ltr">${phone}</a></div>
           <a class="btn btn-outline" target="_blank" rel="noopener" href="${s.map}">${t("store.directions")}</a>
         </article>`;
     }).join("");
@@ -729,7 +729,7 @@
       if (h.link || h.number) {
         payInfoEl.hidden = false;
         payInfoEl.innerHTML = `${t("pay.hesabInfo")}<br>` +
-          (h.number ? `<b>${t("pay.hesabNumber")}:</b> <span dir="ltr">${h.number}</span>` : "");
+          (h.number ? `<b>${t("pay.hesabNumber")}:</b> <a href="#" class="copy-num" data-copy="${String(h.number).replace(/"/g, "&quot;")}" dir="ltr">${h.number}</a>` : "");
       } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noHesab"); }
       if (placeBtn) placeBtn.textContent = h.link ? t("pay.hesabOpen") : t("pay.placeBank");
     } else if (payMethod === "bank") {
@@ -739,7 +739,7 @@
         payInfoEl.innerHTML = `${t("pay.bankInfo")}<br>` +
           (b.holder ? `<b>${t("pay.holder")}:</b> ${b.holder}<br>` : "") +
           (b.name ? `<b>${t("pay.bankName")}:</b> ${b.name}<br>` : "") +
-          (b.number ? `<b>${t("pay.accountNo")}:</b> <span dir="ltr">${b.number}</span>` : "");
+          (b.number ? `<b>${t("pay.accountNo")}:</b> <a href="#" class="copy-num" data-copy="${String(b.number).replace(/"/g, "&quot;")}" dir="ltr">${b.number}</a>` : "");
       } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noBank"); }
       if (placeBtn) placeBtn.textContent = t("pay.placeBank");
     } else if (payMethod === "card") {
@@ -757,6 +757,13 @@
     $$(".pay-method", payMethodsEl).forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
     updatePayInfo();
+  });
+  if (payInfoEl) payInfoEl.addEventListener("click", (e) => {
+    const a = e.target.closest(".copy-num"); if (!a) return;
+    e.preventDefault();
+    const val = a.getAttribute("data-copy") || a.textContent || "";
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(val).then(() => showToast(t("copied"))).catch(() => {}); }
+    else { try { prompt("", val); } catch (_) {} }
   });
 
   /* orders storage */
@@ -1347,12 +1354,14 @@
     setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
     setSel('[data-i18n="footer.phone"]', c.footerPhone || "");
     setSel('[data-i18n="footer.email"]', c.footerEmail || "");
+    // Social links (instagram, telegram, whatsapp, facebook, tiktok) — show only those that have a URL
+    const socialUrls = [c.instagram, c.telegram, c.whatsappLink, c.facebook, c.tiktok];
     const socials = $$(".socials a");
-    if (socials.length >= 3) {
-      if (c.instagram) socials[0].href = c.instagram;
-      if (c.telegram) socials[1].href = c.telegram;
-      if (c.whatsappLink) socials[2].href = c.whatsappLink;
-    }
+    socials.forEach((a, i) => {
+      const url = socialUrls[i] || "";
+      if (url) { a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.display = ""; }
+      else { a.removeAttribute("href"); a.style.display = "none"; }
+    });
     const statsArr = c.stats || [];
     const statEls = $$(".hero-stats .stat");
     statsArr.forEach((st, i) => {
@@ -1362,6 +1371,30 @@
       const lab = LANG === "en" ? (st.label_en || st.label) : st.label;
       if (span && lab) span.textContent = lab;
     });
+    // Floating hero cards (editable text + size)
+    for (let n = 1; n <= 3; n++) {
+      const card = document.querySelector(".hero-card.c" + n);
+      if (!card) continue;
+      const tg = pick("hc" + n + "_tag"), ti = pick("hc" + n + "_title"), sb = pick("hc" + n + "_sub");
+      const tagEl = card.querySelector(".tag"), h4El = card.querySelector("h4"), subEl = card.querySelector("span:not(.tag)");
+      if (tg && tagEl) tagEl.textContent = tg;
+      if (ti && h4El) h4El.textContent = ti;
+      if (sb && subEl) subEl.textContent = sb;
+    }
+    const visual = document.querySelector(".hero-visual");
+    if (visual) {
+      const scale = parseFloat(c.heroScale);
+      if (scale && scale > 0) { visual.style.transform = "scale(" + scale + ")"; visual.style.transformOrigin = "center"; }
+      else { visual.style.transform = ""; }
+    }
+    linkifyContacts();
+  }
+  function telHref(s) { return "tel:" + String(s || "").replace(/[^\d+]/g, ""); }
+  function linkifyContacts() {
+    const ph = document.querySelector('.site-footer [data-i18n="footer.phone"]');
+    if (ph && ph.tagName === "A") { const v = (ph.textContent || "").trim(); ph.href = v ? telHref(v) : "#"; }
+    const em = document.querySelector('.site-footer [data-i18n="footer.email"]');
+    if (em && em.tagName === "A") { const v = (em.textContent || "").trim(); em.href = v ? ("mailto:" + v) : "#"; }
   }
 
   /* share */
