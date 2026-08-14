@@ -29,6 +29,12 @@
     .wrap{max-width:1050px;margin:22px auto;padding:0 16px 96px}
     .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:18px;box-shadow:0 2px 12px #0000000a}
     .card h2{margin:0 0 4px;font-size:20px}
+    #app .card.has-acc > :first-child{cursor:pointer;user-select:none}
+    #app .card.collapsed{padding-bottom:16px}
+    #app .card.collapsed > :not(:first-child){display:none !important}
+    #app .card.collapsed .row-between .sub{display:none}
+    .acc-caret{display:inline-block;margin-inline-start:8px;transition:transform .2s ease;color:var(--gold);font-size:.8em;vertical-align:middle}
+    .card.collapsed .acc-caret{transform:rotate(-90deg)}
     .card .sub{color:var(--muted);font-size:14px;margin-bottom:14px}
     .row-between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     table{width:100%;border-collapse:collapse}
@@ -99,11 +105,12 @@
     <div class="box">
       <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
       <div style="margin:4px 0 2px">پنل مدیریت</div>
-      <p class="note" style="color:#b9b3a6">برای ورود، رمز عبور را وارد کنید.</p>
-      <input type="password" id="gatePass" placeholder="رمز عبور" autocomplete="current-password">
+      <p class="note" style="color:#b9b3a6">برای ورود، نام کاربری و پسورد را وارد کنید.</p>
+      <input type="text" id="gateUser" placeholder="نام کاربری" autocomplete="username" dir="ltr">
+      <input type="password" id="gatePass" placeholder="پسورد" autocomplete="current-password" dir="ltr">
       <button class="btn btn-gold" style="width:100%" id="gateBtn">ورود</button>
       <p class="note" id="gateMsg" style="color:#ff9d9d;min-height:18px;margin:8px 0 0"></p>
-      <p class="note" style="color:#7d7768;margin-top:10px">رمز پیش‌فرض: <b>maho1234</b></p>
+      <p class="note" style="color:#7d7768;margin-top:10px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد <b>maho1234</b></p>
     </div>
   </div>
 
@@ -122,12 +129,12 @@
     <!-- PRODUCTS -->
     <div class="card">
       <div class="row-between">
-        <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها؛ همراه با کد کالا و تعداد موجودی. تغییرات پس از «ذخیره تغییرات» روی سایت شما دیده می‌شود.</div></div>
+        <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها؛ همراه با کود کالا و تعداد موجودی. تغییرات پس از «ذخیره تغییرات» روی سایت شما دیده می‌شود.</div></div>
         <button class="btn btn-gold" id="addBtn">+ افزودن محصول</button>
       </div>
       <div style="overflow:auto">
         <table>
-          <thead><tr><th>تصویر</th><th>نام</th><th class="hide-sm">کد</th><th>موجودی</th><th class="hide-sm">قیمت</th><th>عملیات</th></tr></thead>
+          <thead><tr><th>تصویر</th><th>نام</th><th class="hide-sm">کود</th><th>موجودی</th><th class="hide-sm">قیمت</th><th>عملیات</th></tr></thead>
           <tbody id="prodBody"></tbody>
         </table>
       </div>
@@ -138,17 +145,17 @@
       <div class="row-between">
         <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه. هر سفارش هنگام ثبت به واتساپ شما هم می‌رود. (برای دیدن سفارش‌های همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <label style="font-size:13px;font-weight:700">حالت تأیید:</label>
+          <label style="font-size:13px;font-weight:700">حالت تایید:</label>
           <select id="orderApprovalMode" class="ctrl"><option value="manual">دستی</option><option value="auto">خودکار</option></select>
           <button class="btn btn-outline btn-sm" id="refreshOrders">بازخوانی</button>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <input id="ordersSearch" class="ctrl" style="flex:1;min-width:200px" placeholder="جستجو: شماره سفارش، نام مشتری، شماره تماس، نام/کد کالا">
+        <input id="ordersSearch" class="ctrl" style="flex:1;min-width:200px" placeholder="جستجو: نمبر سفارش، نام مشتری، نمبر تماس، نام/کود کالا">
         <select id="ordersFilter" class="ctrl">
           <option value="all">همه وضعیت‌ها</option>
-          <option value="pending">در انتظار تأیید</option>
-          <option value="confirmed">تأیید شده</option>
+          <option value="pending">در انتظار تایید</option>
+          <option value="confirmed">تایید شده</option>
           <option value="await">در انتظار پرداخت</option>
           <option value="cancelled">لغو شده</option>
           <option value="return">درخواست برگشت</option>
@@ -170,7 +177,7 @@
         <button class="btn btn-outline btn-sm" id="refreshCust">بازخوانی</button>
       </div>
       <div style="overflow:auto">
-        <table><thead><tr><th>شماره مشتری</th><th>نام</th><th class="hide-sm">ایمیل</th><th>شماره تماس</th></tr></thead><tbody id="custBody"></tbody></table>
+        <table><thead><tr><th>نمبر مشتری</th><th>نام</th><th class="hide-sm">ایمیل</th><th>نمبر تماس</th></tr></thead><tbody id="custBody"></tbody></table>
       </div>
     </div>
 
@@ -182,7 +189,7 @@
       </div>
       <div style="overflow:auto">
         <table>
-          <thead><tr><th>نام</th><th class="hide-sm">آدرس</th><th>شماره</th><th>عملیات</th></tr></thead>
+          <thead><tr><th>نام</th><th class="hide-sm">آدرس</th><th>نمبر</th><th>عملیات</th></tr></thead>
           <tbody id="storeBody"></tbody>
         </table>
       </div>
@@ -210,7 +217,7 @@
         <div class="field"><label>توضیح فوتر (English)</label><input id="c_footerDesc_en" dir="ltr"></div>
         <div class="field"><label>آدرس فوتر (دری)</label><input id="c_footerAddr"></div>
         <div class="field"><label>آدرس فوتر (English)</label><input id="c_footerAddr_en" dir="ltr"></div>
-        <div class="field"><label>شماره تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
+        <div class="field"><label>نمبر تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
         <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">شبکه‌های اجتماعی (لینک)</h3>
@@ -225,7 +232,7 @@
     <!-- SETTINGS -->
     <div class="card">
       <h2>تنظیمات سایت</h2>
-      <div class="sub">لوگو، شماره واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
+      <div class="sub">لوگو، نمبر واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
 
       <div class="field">
         <label>لوگوی سایت (اختیاری)</label>
@@ -237,13 +244,23 @@
         <p class="note">اگر لوگو بگذارید، به‌جای حرف M در سربرگ سایت نشان داده می‌شود.</p>
       </div>
 
-      <div class="field"><label>شماره واتساپ برای سفارش (مثلاً 0700123456)</label><input id="cfg_whatsapp" dir="ltr" placeholder="0700123456"></div>
+      <div class="field">
+        <label>عکس/لوگوی پس‌زمینه‌ی سربرگ (اختیاری)</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <img id="heroPreview" class="logo-preview" style="width:120px;height:60px;border-radius:10px" alt="">
+          <input type="file" id="cfg_hero" accept="image/*" style="flex:1;min-width:180px">
+          <button class="btn btn-outline btn-sm" id="heroRemove" type="button">حذف عکس</button>
+        </div>
+        <p class="note">این عکس در پس‌زمینه‌ی سربرگ بالای صفحه‌ی اصلی نشان داده می‌شود (روی آن یک لایه‌ی تیره می‌آید تا نوشته‌ها خوانا بماند).</p>
+      </div>
+
+      <div class="field"><label>نمبر واتساپ برای سفارش (مثلاً 0700123456)</label><input id="cfg_whatsapp" dir="ltr" placeholder="0700123456"></div>
 
       <h3 style="margin:16px 0 6px;font-size:16px">اطلاعات پرداخت</h3>
       <div class="grid2">
         <div class="field"><label>نام صاحب حساب</label><input id="cfg_bank_holder"></div>
         <div class="field"><label>نام بانک</label><input id="cfg_bank_name"></div>
-        <div class="field"><label>شماره حساب / کارت</label><input id="cfg_bank_number" dir="ltr"></div>
+        <div class="field"><label>نمبر حساب / کارت</label><input id="cfg_bank_number" dir="ltr"></div>
         <div class="field"><label>لینک درگاه پرداخت آنلاین (اختیاری)</label><input id="cfg_paylink" dir="ltr" placeholder="https://..."></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">دلیوری (ارسال)</h3>
@@ -256,19 +273,19 @@
       </div>
 
       <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
-      <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت شماره/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
+      <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت نمبر/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
       <div class="grid2">
         <div class="field"><label>لینک پرداخت حساب پی</label><input id="cfg_hesab_link" dir="ltr" placeholder="https://..."></div>
-        <div class="field"><label>شماره/آی‌دی حساب پی</label><input id="cfg_hesab_number" dir="ltr"></div>
+        <div class="field"><label>نمبر/آی‌دی حساب پی</label><input id="cfg_hesab_number" dir="ltr"></div>
       </div>
 
       <h3 style="margin:16px 0 6px;font-size:16px">ایمیل (EmailJS)</h3>
-      <div class="sub">برای ارسال «کد تأیید حساب» و «تأیید سفارش». یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید. تا خالی است، حالت آزمایشی فعال می‌ماند.</div>
+      <div class="sub">برای ارسال «کود تایید حساب» و «تایید سفارش». یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید. تا خالی است، حالت آزمایشی فعال می‌ماند.</div>
       <div class="grid2">
         <div class="field"><label>Service ID</label><input id="cfg_ejs_service" dir="ltr"></div>
         <div class="field"><label>Public Key</label><input id="cfg_ejs_key" dir="ltr"></div>
-        <div class="field"><label>Template ID (کد تأیید حساب)</label><input id="cfg_ejs_template" dir="ltr"></div>
-        <div class="field"><label>Template ID (تأیید سفارش)</label><input id="cfg_ejs_order" dir="ltr"></div>
+        <div class="field"><label>Template ID (کود تایید حساب)</label><input id="cfg_ejs_template" dir="ltr"></div>
+        <div class="field"><label>Template ID (تایید سفارش)</label><input id="cfg_ejs_order" dir="ltr"></div>
       </div>
       <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>.</p>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات</button></div>
@@ -284,12 +301,14 @@
         <button class="btn btn-outline btn-sm" id="mahoImportBtn">وارد کردن اجناس از سیستم MAHO</button>
         <button class="btn btn-outline btn-sm" id="resetBtn">بازگردانی به نسخه‌ی منتشرشده</button>
       </div>
-      <p class="note" style="margin-top:10px">اتصال با سیستم MAHO: اگر برنامه‌ی MAHO Enterprise را در همین مرورگر باز کرده باشید، دکمه‌ی «وارد کردن اجناس از سیستم MAHO» اجناس آن را (نام، کد، قیمت، موجودی) به سایت می‌آورد.</p>
-      <div style="margin-top:16px" class="grid2">
-        <div class="field"><label>تغییر رمز عبور پنل</label><input id="newPass" placeholder="رمز جدید"></div>
-        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره رمز جدید</button></div>
+      <p class="note" style="margin-top:10px">اتصال با سیستم MAHO: اگر برنامه‌ی MAHO Enterprise را در همین مرورگر باز کرده باشید، دکمه‌ی «وارد کردن اجناس از سیستم MAHO» اجناس آن را (نام، کود، قیمت، موجودی) به سایت می‌آورد.</p>
+      <h3 style="margin:16px 0 6px;font-size:16px">ورود امن مدیر</h3>
+      <div class="grid2">
+        <div class="field"><label>نام کاربری مدیر</label><input id="newUser" dir="ltr" placeholder="admin"></div>
+        <div class="field"><label>پسورد جدید پنل</label><input id="newPass" type="password" placeholder="پسورد جدید"></div>
+        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره نام کاربری و پسورد</button></div>
       </div>
-      <p class="note">توجه: این محافظت ساده است؛ لینک این صفحه را خصوصی نگه دارید.</p>
+      <p class="note">پس از ۵ بار ورودِ نادرست، ورود برای مدتی قفل می‌شود؛ و پس از ۱۵ دقیقه بی‌فعالیتی به‌طور خودکار خارج می‌شوید. لینک این صفحه را خصوصی نگه دارید (برای امنیت کامل و چند‌کاربره، سرور MAHO را فعال کنید).</p>
     </div>
 
   </div>
@@ -308,7 +327,7 @@
       <div class="grid2">
         <div class="field"><label>نام کالا (دری) *</label><input id="f_name"></div>
         <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
-        <div class="field"><label>کد کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
+        <div class="field"><label>کود کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
         <div class="field"><label>تعداد موجودی</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"></div>
         <div class="field"><label>دسته</label>
           <select id="f_cat">
@@ -374,8 +393,8 @@
         <div class="field"><label>آدرس (English)</label><input id="st_area_en" dir="ltr"></div>
         <div class="field"><label>ساعت کاری (دری)</label><input id="st_hours"></div>
         <div class="field"><label>ساعت کاری (English)</label><input id="st_hours_en" dir="ltr"></div>
-        <div class="field"><label>شماره تماس (دری)</label><input id="st_phone" dir="ltr"></div>
-        <div class="field"><label>شماره تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
+        <div class="field"><label>نمبر تماس (دری)</label><input id="st_phone" dir="ltr"></div>
+        <div class="field"><label>نمبر تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
       <div class="field"><label>لینک گوگل مپ</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
       <div class="grid2">
@@ -423,15 +442,59 @@
       img.src=url;
     }
 
-    /* ---------- gate ---------- */
+    /* ---------- secure gate (username + password, lockout, idle logout) ---------- */
+    var USER_KEY="maho_admin_user", DEFAULT_USER="admin";
+    var LOCK_KEY="maho_admin_lock", SESS_KEY="maho_admin_ok", SESS_AT="maho_admin_ok_at";
+    var MAX_FAILS=5, LOCK_MS=60000, IDLE_MS=15*60*1000;
+    function adminUser(){ try{return localStorage.getItem(USER_KEY)||DEFAULT_USER}catch(e){return DEFAULT_USER} }
     function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
-    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; }
+    function getLock(){ try{return JSON.parse(localStorage.getItem(LOCK_KEY)||"{}")||{}}catch(e){return {}} }
+    function setLock(o){ try{localStorage.setItem(LOCK_KEY,JSON.stringify(o||{}))}catch(e){} }
+    function lockRemainingMs(){ var l=getLock(); return (l.until&&l.until>Date.now())?(l.until-Date.now()):0; }
+
+    function touchSession(){ try{ sessionStorage.setItem(SESS_KEY,"1"); sessionStorage.setItem(SESS_AT,String(Date.now())); }catch(e){} }
+    function sessionValid(){ try{ if(sessionStorage.getItem(SESS_KEY)!=="1")return false; var at=Number(sessionStorage.getItem(SESS_AT)||0); return (Date.now()-at)<IDLE_MS; }catch(e){return false} }
+
+    var idleTimer=null, idleBound=false;
+    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} $("#app").style.display="none"; $("#gate").style.display="flex"; if(msg)$("#gateMsg").textContent=msg; }
+    function startIdleWatch(){
+      function reset(){ if($("#app").style.display==="none")return; touchSession(); clearTimeout(idleTimer); idleTimer=setTimeout(function(){ showGate("به‌دلیل نبود فعالیت، به‌طور خودکار خارج شدید. دوباره وارد شوید."); }, IDLE_MS); }
+      if(!idleBound){ ["click","keydown","mousemove","touchstart","scroll"].forEach(function(ev){ document.addEventListener(ev,reset,{passive:true}); }); idleBound=true; }
+      reset();
+    }
+    function initAccordion(){
+      var cards=document.querySelectorAll("#app > .card");
+      Array.prototype.forEach.call(cards,function(card,idx){
+        if(card.dataset.acc)return; card.dataset.acc="1"; card.classList.add("has-acc");
+        var head=card.firstElementChild; if(!head)return;
+        var h2=head.matches&&head.matches("h2")?head:head.querySelector("h2");
+        if(h2 && !h2.querySelector(".acc-caret")){ var c=document.createElement("span"); c.className="acc-caret"; c.textContent="▾"; h2.appendChild(document.createTextNode(" ")); h2.appendChild(c); }
+        head.addEventListener("click",function(e){ if(e.target.closest("button,select,input,a,label,textarea"))return; card.classList.toggle("collapsed"); });
+        if(idx>0) card.classList.add("collapsed");
+      });
+    }
+    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; touchSession(); startIdleWatch(); initAccordion(); }
+
+    function updateGateLockUI(){
+      var rem=lockRemainingMs();
+      if(rem>0){ $("#gateBtn").disabled=true; $("#gateMsg").textContent="ورود قفل شد؛ "+toFa(Math.ceil(rem/1000))+" ثانیه دیگر دوباره امتحان کنید."; setTimeout(updateGateLockUI,1000); }
+      else { $("#gateBtn").disabled=false; if($("#gateMsg").textContent.indexOf("قفل")>=0)$("#gateMsg").textContent=""; }
+    }
     $("#gateBtn").onclick=function(){
-      if($("#gatePass").value===pass()){ sessionStorage.setItem("maho_admin_ok","1"); openApp(); }
-      else $("#gateMsg").textContent="رمز عبور اشتباه است.";
+      if(lockRemainingMs()>0){ updateGateLockUI(); return; }
+      var u=($("#gateUser").value||"").trim(), p=$("#gatePass").value||"";
+      if(u===adminUser() && p===pass()){ setLock({}); $("#gateMsg").textContent=""; $("#gatePass").value=""; openApp(); }
+      else {
+        var l=getLock(), fails=(l.fails||0)+1;
+        if(fails>=MAX_FAILS){ setLock({fails:0,until:Date.now()+LOCK_MS}); updateGateLockUI(); }
+        else { setLock({fails:fails}); $("#gateMsg").textContent="نام کاربری یا پسورد اشتباه است. ("+toFa(MAX_FAILS-fails)+" تلاش باقی مانده)"; }
+        $("#gatePass").value="";
+      }
     };
     $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
-    if(sessionStorage.getItem("maho_admin_ok")==="1") openApp();
+    $("#gateUser").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass").focus()});
+    updateGateLockUI();
+    if(sessionValid()) openApp(); else showGate();
 
     /* ---------- state / render ---------- */
     function setDirty(v){dirty=v; document.body.classList.toggle("dirty",v); var sb=$("#saveBar"); if(sb) sb.classList.toggle("show",v);}
@@ -460,11 +523,13 @@
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
+      var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
     }
     function collectConfig(){
       state.config={
         whatsapp:$("#cfg_whatsapp").value.trim(),
         logo:(state.config&&state.config.logo)||"",
+        heroImage:(state.config&&state.config.heroImage)||"",
         orderApproval:$("#orderApprovalMode").value,
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
@@ -499,8 +564,8 @@
     function statusMatch(o,filter){
       var s=o.status||"";
       if(filter==="all") return true;
-      if(filter==="pending") return s.indexOf("انتظار تأیید")>=0||s==="pending";
-      if(filter==="confirmed") return s.indexOf("تأیید شده")>=0||s==="confirmed";
+      if(filter==="pending") return s.indexOf("انتظار تایید")>=0||s.indexOf("انتظار تأیید")>=0||s==="pending";
+      if(filter==="confirmed") return s.indexOf("تایید شده")>=0||s.indexOf("تأیید شده")>=0||s==="confirmed";
       if(filter==="await") return s.indexOf("انتظار پرداخت")>=0||s==="awaiting_payment";
       if(filter==="cancelled") return s.indexOf("لغو")>=0||s==="cancelled";
       if(filter==="return") return s.indexOf("برگشت")>=0||s==="return_requested";
@@ -526,12 +591,12 @@
       box.innerHTML=list.map(function(o){
         var d=new Date(o.date); var c=o.customer||{};
         var items=(o.items||[]).map(function(it){
-          var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کد کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
+          var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کود کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
           var v=[]; if(it.size)v.push(it.size); if(it.color)v.push(it.color); var vs=v.length?' — '+v.join('، '):'';
           return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
         }).join("");
-        var s=o.status||""; var isCancelled=s.indexOf("لغو")>=0; var isConfirmed=s.indexOf("تأیید شده")>=0;
-        var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تأیید سفارش</button> ':'';
+        var s=o.status||""; var isCancelled=s.indexOf("لغو")>=0; var isConfirmed=s.indexOf("تایید شده")>=0||s.indexOf("تأیید شده")>=0;
+        var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تایید سفارش</button> ':'';
         var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
         var custNo=o.customerNo||(c.customerNo)||"";
         var dl=o.delivery||{};
@@ -692,6 +757,11 @@
       resizeImage(f,240,0.85,function(dataUrl){ if(dataUrl){ state.config.logo=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
     });
     $("#logoRemove").onclick=function(){ state.config.logo=""; fillConfig(); setDirty(true); };
+    $("#cfg_hero").addEventListener("change",function(e){
+      var f=e.target.files[0]; if(!f)return;
+      resizeImage(f,1600,0.78,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+    });
+    $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
@@ -711,7 +781,7 @@
     ["ordersSearch","ordersFilter","ordersSort"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",renderOrdersAdmin); el.addEventListener("change",renderOrdersAdmin); } });
     $("#ordersBody").addEventListener("click",function(e){
       var ap=e.target.getAttribute("data-approve"), cn=e.target.getAttribute("data-cancelo");
-      if(ap){ updateOrderStatus(ap,"تأیید شده"); }
+      if(ap){ updateOrderStatus(ap,"تایید شده"); }
       else if(cn){ if(confirm("این سفارش لغو شود؟")) updateOrderStatus(cn,"لغو شده"); }
     });
     $("#orderApprovalMode").addEventListener("change",function(){ if(!state.config)state.config={}; state.config.orderApproval=this.value; setDirty(true); });
@@ -751,12 +821,20 @@
       renderTable(); setDirty(true); toast("اجناس MAHO اضافه شد ✓");
     };
 
-    /* ---------- password ---------- */
+    /* ---------- admin username + password ---------- */
+    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); })();
     $("#passBtn").onclick=function(){
-      var np=$("#newPass").value.trim(); if(np.length<4){ alert("رمز باید حداقل ۴ نویسه باشد."); return; }
-      try{ localStorage.setItem(PASS_KEY,np); $("#newPass").value=""; alert("رمز جدید ذخیره شد ✓"); }catch(e){ alert("ذخیره نشد"); }
+      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim();
+      if(nu.length<3){ alert("نام کاربری باید حداقل ۳ نویسه باشد."); return; }
+      if(np && np.length<4){ alert("پسورد باید حداقل ۴ نویسه باشد."); return; }
+      try{
+        localStorage.setItem(USER_KEY,nu);
+        if(np){ localStorage.setItem(PASS_KEY,np); }
+        $("#newPass").value="";
+        alert(np?"نام کاربری و پسورد ذخیره شد ✓":"نام کاربری ذخیره شد ✓ (پسورد تغییر نکرد)");
+      }catch(e){ alert("ذخیره نشد"); }
     };
-    $("#logoutBtn").onclick=function(){ sessionStorage.removeItem("maho_admin_ok"); location.reload(); };
+    $("#logoutBtn").onclick=function(){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} location.reload(); };
 
     window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
   })();

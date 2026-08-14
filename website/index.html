@@ -347,8 +347,8 @@
           <button type="button" class="link-back" id="backToCart" data-i18n="co.back">→ بازگشت به سبد</button>
           <h4 data-i18n="co.title">مشخصات سفارش</h4>
           <div class="field"><label data-i18n="co.name">نام و تخلص *</label><input id="co_name"></div>
-          <div class="field"><label data-i18n="co.phone">شماره تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
-          <div class="field"><label data-i18n="co.email">ایمیل (برای تأیید سفارش)</label><input id="co_email" type="email" dir="ltr"></div>
+          <div class="field"><label data-i18n="co.phone">نمبر تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
+          <div class="field"><label data-i18n="co.email">ایمیل (برای تایید سفارش)</label><input id="co_email" type="email" dir="ltr"></div>
           <div class="field"><label data-i18n="addr.country">کشور</label><input id="co_country" value="افغانستان"></div>
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="co_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="co_district"></div>
@@ -409,37 +409,37 @@
             <button class="tab" id="tabSignup" data-i18n="acct.signup">ساخت حساب</button>
           </div>
           <div id="loginPane">
-            <div class="field"><label data-i18n="acct.phone">شماره تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
-            <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="lg_pass" type="password"></div>
+            <div class="field"><label data-i18n="acct.phone">نمبر تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password"></div>
             <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
-            <button type="button" class="link-back" id="forgotLink" style="margin-top:8px" data-i18n="acct.forgot">رمز را فراموش کرده‌اید؟</button>
+            <button type="button" class="link-back" id="forgotLink" style="margin-top:8px" data-i18n="acct.forgot">پسورد را فراموش کرده‌اید؟</button>
           </div>
           <div id="resetPane" hidden>
             <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="rs_email" type="email" dir="ltr"></div>
-            <button class="btn btn-lg" id="resetSendBtn" style="width:100%" data-i18n="acct.reset">ارسال کد بازیابی</button>
+            <button class="btn btn-lg" id="resetSendBtn" style="width:100%" data-i18n="acct.reset">ارسال کود بازیابی</button>
             <div id="resetStep2" hidden style="margin-top:10px">
-              <div class="field"><label data-i18n="acct.code">کد تأیید</label><input id="rs_code" dir="ltr" inputmode="numeric"></div>
-              <div class="field"><label data-i18n="acct.newPassPh">رمز عبور جدید</label><input id="rs_pass" type="password"></div>
-              <button class="btn btn-lg" id="resetDoneBtn" style="width:100%" data-i18n="acct.reset">تغییر رمز</button>
+              <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="rs_code" dir="ltr" inputmode="numeric"></div>
+              <div class="field"><label data-i18n="acct.newPassPh">پسورد جدید</label><input id="rs_pass" type="password"></div>
+              <button class="btn btn-lg" id="resetDoneBtn" style="width:100%" data-i18n="acct.reset">تغییر پسورد</button>
             </div>
             <button type="button" class="link-back" id="resetBack" style="margin-top:8px" data-i18n="acct.backLogin">→ بازگشت به ورود</button>
           </div>
           <div id="signupPane" hidden>
             <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="su_name"></div>
-            <div class="field"><label data-i18n="acct.phoneNum">شماره تماس</label><input id="su_phone" dir="ltr" inputmode="tel"></div>
+            <div class="field"><label data-i18n="acct.phoneNum">نمبر تماس</label><input id="su_phone" dir="ltr" inputmode="tel"></div>
             <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="su_email" type="email" dir="ltr"></div>
             <div class="field"><label data-i18n="addr.country">کشور</label><input id="su_country" value="افغانستان"></div>
             <div class="field"><label data-i18n="addr.province">ولایت</label><input id="su_province"></div>
             <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="su_district"></div>
             <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="su_street"></div>
             <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
-            <div class="field"><label data-i18n="acct.pass">رمز عبور</label><input id="su_pass" type="password"></div>
-            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کد تأیید</button>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password"></div>
+            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کود تایید</button>
           </div>
           <div id="verifyPane" hidden>
-            <p class="muted" data-i18n="acct.codeSent">کد تأیید به ایمیل شما فرستاده شد. آن را وارد کنید.</p>
-            <div class="field"><label data-i18n="acct.code">کد تأیید</label><input id="vf_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code"></div>
-            <button class="btn btn-lg" id="verifyBtn" style="width:100%" data-i18n="acct.verify">تأیید و ساخت حساب</button>
+            <p class="muted" data-i18n="acct.codeSent">کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.</p>
+            <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="vf_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code"></div>
+            <button class="btn btn-lg" id="verifyBtn" style="width:100%" data-i18n="acct.verify">تایید و ساخت حساب</button>
             <button class="btn btn-outline" id="resendBtn" style="width:100%;margin-top:8px" data-i18n="acct.resend">ارسال دوباره</button>
           </div>
           <p class="qv-msg" id="acctMsg"></p>
@@ -454,19 +454,19 @@
 
           <h4 data-i18n="acct.profile" style="margin:16px 0 8px">مشخصات من</h4>
           <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="pf_name"></div>
-          <div class="field"><label data-i18n="acct.phoneNum">شماره تماس</label><input id="pf_phone" dir="ltr"></div>
+          <div class="field"><label data-i18n="acct.phoneNum">نمبر تماس</label><input id="pf_phone" dir="ltr"></div>
           <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="pf_email" type="email" dir="ltr"></div>
           <div class="field"><label data-i18n="addr.country">کشور</label><input id="pf_country"></div>
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="pf_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="pf_district"></div>
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="pf_street"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="pf_house" dir="ltr"></div>
-          <div class="field"><label data-i18n="acct.newPass">رمز عبور جدید</label><input id="pf_pass" type="password"></div>
+          <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password"></div>
           <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>
           <div id="pfVerify" hidden style="margin-top:10px">
-            <p class="muted" data-i18n="acct.emailChangeCode">برای تغییر ایمیل، کد فرستاده‌شده به ایمیل جدید را وارد کنید.</p>
-            <div class="field"><label data-i18n="acct.code">کد تأیید</label><input id="pf_code" dir="ltr" inputmode="numeric"></div>
-            <button class="btn btn-lg" id="pfVerifyBtn" style="width:100%" data-i18n="acct.verifyNewEmail">تأیید ایمیل جدید</button>
+            <p class="muted" data-i18n="acct.emailChangeCode">برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.</p>
+            <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="pf_code" dir="ltr" inputmode="numeric"></div>
+            <button class="btn btn-lg" id="pfVerifyBtn" style="width:100%" data-i18n="acct.verifyNewEmail">تایید ایمیل جدید</button>
           </div>
           <p class="qv-msg" id="pfMsg"></p>
 
@@ -474,7 +474,7 @@
           <div id="payList"></div>
           <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="card" data-i18n="pay.tCard">کارت بانکی</option><option value="bank" data-i18n="pay.tBank">حساب بانکی</option></select></div>
           <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder"></div>
-          <div class="field"><label data-i18n="pay.accountNo">شماره حساب / کارت</label><input id="pay_number" dir="ltr" inputmode="numeric"></div>
+          <div class="field"><label data-i18n="pay.accountNo">نمبر حساب / کارت</label><input id="pay_number" dir="ltr" inputmode="numeric"></div>
           <div id="payCardExtra">
             <div class="field"><label data-i18n="pay.cvv">کود امنیتی (CVV)</label><input id="pay_cvv" dir="ltr" inputmode="numeric" maxlength="4"></div>
             <div class="field"><label data-i18n="pay.expiry">تاریخ انقضا (MM/YY)</label><input id="pay_expiry" dir="ltr" placeholder="MM/YY"></div>

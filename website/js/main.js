@@ -99,60 +99,60 @@
       "qv.size": "سایز", "qv.color": "رنگ", "qv.pick": "لطفاً سایز و رنگ را انتخاب کنید.",
       "cart.continue": "تکمیل سفارش ←",
       "co.back": "→ بازگشت به سبد", "co.title": "مشخصات سفارش",
-      "co.name": "نام و تخلص *", "co.phone": "شماره تماس *", "co.address": "آدرس تحویل *", "co.note": "توضیحات (اختیاری)",
-      "co.err": "لطفاً نام، شماره تماس و آدرس را وارد کنید.",
+      "co.name": "نام و تخلص *", "co.phone": "نمبر تماس *", "co.address": "آدرس تحویل *", "co.note": "توضیحات (اختیاری)",
+      "co.err": "لطفاً نام، نمبر تماس و آدرس را وارد کنید.",
       "acct.login": "ورود", "acct.signup": "ساخت حساب", "acct.create": "ساخت حساب", "acct.logout": "خروج از حساب",
-      "acct.name": "نام و تخلص", "acct.phone": "شماره تماس یا ایمیل", "acct.pass": "رمز عبور",
+      "acct.name": "نام و تخلص", "acct.phone": "نمبر تماس یا ایمیل", "acct.pass": "پسورد",
       "acct.exists": "این حساب قبلاً ساخته شده است.", "acct.bad": "اطلاعات ورود درست نیست.",
-      "acct.created": "حساب شما ساخته و تأیید شد ✓", "acct.hi": "خوش آمدید",
+      "acct.created": "حساب شما ساخته و تایید شد ✓", "acct.hi": "خوش آمدید",
       "acct.need": "برای ادامه لطفاً همه‌ی خانه‌ها را پر کنید.",
-      "acct.fullname": "نام مکمل", "acct.phoneNum": "شماره تماس", "acct.email": "ایمیل",
-      "acct.sendCode": "ارسال کد تأیید", "acct.codeSent": "کد تأیید به ایمیل شما فرستاده شد. آن را وارد کنید.",
-      "acct.code": "کد تأیید", "acct.verify": "تأیید و ساخت حساب", "acct.resend": "ارسال دوباره‌ی کد",
-      "acct.badCode": "کد وارد‌شده درست نیست.", "acct.needAll": "نام، شماره تماس، ایمیل و رمز را وارد کنید.",
+      "acct.fullname": "نام مکمل", "acct.phoneNum": "نمبر تماس", "acct.email": "ایمیل",
+      "acct.sendCode": "ارسال کود تایید", "acct.codeSent": "کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.",
+      "acct.code": "کود تایید", "acct.verify": "تایید و ساخت حساب", "acct.resend": "ارسال دوباره‌ی کود",
+      "acct.badCode": "کود وارد‌شده درست نیست.", "acct.needAll": "نام، نمبر تماس، ایمیل و پسورد را وارد کنید.",
       "acct.badEmail": "یک ایمیل معتبر وارد کنید.", "acct.emailExists": "این ایمیل قبلاً ثبت شده است.",
-      "acct.sending": "در حال ارسال کد...", "acct.sendFail": "ارسال ایمیل ناموفق بود. دوباره تلاش کنید.",
-      "acct.demoNote": "حالت آزمایشی: کد تأیید شما {code} است. برای ارسال واقعی ایمیل، تنظیمات EmailJS را در پنل مدیریت کامل کنید.",
+      "acct.sending": "در حال ارسال کود...", "acct.sendFail": "ارسال ایمیل ناموفق بود. دوباره تلاش کنید.",
+      "acct.demoNote": "حالت آزمایشی: کود تایید شما {code} است. برای ارسال واقعی ایمیل، تنظیمات EmailJS را در پنل مدیریت کامل کنید.",
       "order.customer": "مشتری", "order.addr": "آدرس", "order.note": "توضیحات",
       "order.header": "سلام، می‌خواهم این کالاها را سفارش بدهم:",
       "co.payment": "روش پرداخت",
       "pay.whatsapp": "سفارش از طریق واتساپ (پرداخت هنگام تحویل)",
       "pay.bank": "انتقال / پرداخت بانکی", "pay.card": "پرداخت آنلاین با کارت",
       "pay.bankInfo": "مبلغ را به حساب زیر انتقال دهید و رسید را در واتساپ بفرستید:",
-      "pay.holder": "به نام", "pay.bankName": "بانک", "pay.accountNo": "شماره حساب / کارت",
+      "pay.holder": "به نام", "pay.bankName": "بانک", "pay.accountNo": "نمبر حساب / کارت",
       "pay.noBank": "اطلاعات حساب بانکی هنوز ثبت نشده است. لطفاً از واتساپ استفاده کنید.",
       "pay.noCard": "درگاه پرداخت آنلاین هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "pay.placeWhatsapp": "ثبت سفارش (واتساپ)", "pay.payCard": "پرداخت با کارت ←", "pay.placeBank": "ثبت سفارش و نمایش حساب",
       "pay.hesab": "پرداخت با حساب پی (HesabPay)",
       "pay.hesabInfo": "با حساب پی پرداخت کنید و رسید را در واتساپ بفرستید:",
-      "pay.hesabNumber": "شماره/آی‌دی حساب پی", "pay.hesabOpen": "پرداخت با حساب پی ←",
+      "pay.hesabNumber": "نمبر/آی‌دی حساب پی", "pay.hesabOpen": "پرداخت با حساب پی ←",
       "pay.noHesab": "پرداخت با حساب پی هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "order.placed": "سفارش شما ثبت شد ✓",
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
       "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
-      "status.pending": "در انتظار تأیید", "status.awaitPay": "در انتظار پرداخت",
-      "status.confirmed": "تأیید شده",
+      "status.pending": "در انتظار تایید", "status.awaitPay": "در انتظار پرداخت",
+      "status.confirmed": "تایید شده",
       "status.cancelled": "لغو شده", "status.returnReq": "درخواست برگشت",
-      "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کد کالا",
+      "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کود کالا",
       "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
       "orders.cancelMsg": "سفارش لغو شد", "orders.returnMsg": "درخواست برگشت کالا",
-      "acct.custNo": "شماره مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
-      "acct.newPass": "رمز عبور جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
+      "acct.custNo": "نمبر مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
+      "acct.newPass": "پسورد جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
       "acct.saved": "تغییرات ذخیره شد ✓",
-      "acct.emailChangeCode": "برای تغییر ایمیل، کد فرستاده‌شده به ایمیل جدید را وارد کنید.",
-      "acct.verifyNewEmail": "تأیید ایمیل جدید", "acct.emailUpdated": "ایمیل شما به‌روزرسانی شد ✓",
+      "acct.emailChangeCode": "برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.",
+      "acct.verifyNewEmail": "تایید ایمیل جدید", "acct.emailUpdated": "ایمیل شما به‌روزرسانی شد ✓",
       "pay.type": "نوع", "pay.tCard": "کارت بانکی", "pay.tBank": "حساب بانکی",
       "pay.add": "افزودن معلومات پرداخت", "pay.none": "هنوز معلومات پرداختی اضافه نکرده‌اید.",
       "pay.localNote": "این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.",
-      "co.email": "ایمیل (برای تأیید سفارش)",
-      "order.number": "شماره سفارش", "order.emailSent": "ایمیل تأیید سفارش برای شما فرستاده شد.",
+      "co.email": "ایمیل (برای تایید سفارش)",
+      "order.number": "نمبر سفارش", "order.emailSent": "ایمیل تایید سفارش برای شما فرستاده شد.",
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
       "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
       "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت",
       "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
-      "acct.forgot": "رمز را فراموش کرده‌اید؟", "acct.reset": "بازیابی رمز عبور",
-      "acct.resetSent": "کد بازیابی به ایمیل شما فرستاده شد. کد و رمز جدید را وارد کنید.",
-      "acct.newPassPh": "رمز عبور جدید", "acct.resetDone": "رمز عبور شما تغییر کرد ✓", "acct.noEmail": "این ایمیل ثبت نشده است.",
+      "acct.forgot": "پسورد را فراموش کرده‌اید؟", "acct.reset": "بازیابی پسورد",
+      "acct.resetSent": "کود بازیابی به ایمیل شما فرستاده شد. کود و پسورد جدید را وارد کنید.",
+      "acct.newPassPh": "پسورد جدید", "acct.resetDone": "پسورد شما تغییر کرد ✓", "acct.noEmail": "این ایمیل ثبت نشده است.",
       "acct.backLogin": "→ بازگشت به ورود",
       "co.delivery": "روش دریافت", "co.pickup": "دریافت حضوری از فروشگاه", "co.deliver": "ارسال به آدرس (دلیوری)",
       "co.deliverTime": "زمان دلیوری", "co.normal": "عادی", "co.urgent": "عاجل (همان روز)",
@@ -332,7 +332,7 @@
     },
   ];
   let CONFIG = {
-    whatsapp: "93791505454", logo: "", orderApproval: "manual",
+    whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
     delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100 },
@@ -1264,6 +1264,30 @@
     });
   }
 
+  /* editable hero (header) background image/logo from admin */
+  function applyHero() {
+    const hero = document.querySelector(".hero#home") || document.querySelector(".hero");
+    if (!hero) return;
+    const img = CONFIG.heroImage;
+    const baseGrad =
+      "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.30), transparent 60%)," +
+      "radial-gradient(900px 520px at 5% 110%, rgba(200,163,95,.16), transparent 60%)," +
+      "linear-gradient(155deg, #0e0e0e 0%, #1a1712 55%, #221c12 100%)";
+    if (img) {
+      // dark overlay keeps hero text readable over any uploaded image
+      hero.style.backgroundImage =
+        "linear-gradient(rgba(14,14,14,.72), rgba(34,28,18,.82))," + baseGrad + ",url('" + img + "')";
+      hero.style.backgroundSize = "cover, cover, cover, cover";
+      hero.style.backgroundPosition = "center, center, center, center";
+      hero.style.backgroundRepeat = "no-repeat";
+    } else {
+      hero.style.backgroundImage = "";
+      hero.style.backgroundSize = "";
+      hero.style.backgroundPosition = "";
+      hero.style.backgroundRepeat = "";
+    }
+  }
+
   /* editable site texts (from admin) — override the i18n defaults when set */
   function applyContent() {
     const c = CONFIG.content || {};
@@ -1444,6 +1468,7 @@
     renderAccount();
     updatePayInfo();
     applyLogo();
+    applyHero();
     applyContent();
     formatCounters();
     updateYear();
