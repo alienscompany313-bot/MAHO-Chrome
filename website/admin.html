@@ -142,7 +142,7 @@
         <p class="note" style="color:#7d7768;margin-top:8px">با بازیابی، نام کاربری و پسوردها به پیش‌فرض (admin / maho1234 / maho1234) برمی‌گردند و باید دوباره تنظیم‌شان کنید.</p>
       </div>
       <div id="gateStep2" hidden>
-        <p class="note" style="color:#b9b3a6">کود تایید به ایمیل مدیر فرستاده شد. آن را وارد کنید.</p>
+        <p class="note" style="color:#b9b3a6">کود تایید را وارد کنید. در حالت آزمایشی، کود روی همین صفحه (متن زرد پایین) نشان داده می‌شود.</p>
         <input type="text" id="gateCode" placeholder="کود تایید" inputmode="numeric" dir="ltr" autocomplete="one-time-code">
         <button class="btn btn-gold" style="width:100%" id="gateVerifyBtn">تایید و ورود</button>
         <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px" id="gateBackBtn">بازگشت</button>
@@ -628,7 +628,7 @@
     function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
     function pass2(){ try{return localStorage.getItem(PASS2_KEY)||DEFAULT_PASS2}catch(e){return DEFAULT_PASS2} }
     function adminEmail(){ try{return localStorage.getItem(ADMIN_EMAIL_KEY)||""}catch(e){return ""} }
-    var pendingAdminCode=null;
+    var pendingAdminCode=null, pendingAdminDemo=false;
     function genAdminCode(){ return String(Math.floor(100000+Math.random()*900000)); }
     function sendAdminCode(code){
       var ej=(state.config&&state.config.emailjs)||{}; var em=adminEmail();
@@ -636,6 +636,10 @@
         return emailjs.send(ej.serviceId, ej.templateId, {to_email:em, email:em, to_name:"مدیر MAHO", passcode:code, code:code}, {publicKey:ej.publicKey}).then(function(){return {sent:true};}).catch(function(){return {sent:false, code:code};});
       }
       return Promise.resolve({sent:false, code:code});
+    }
+    function showAdminCodeHint(code, sent){
+      if(sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود تایید به ایمیل مدیر ("+adminEmail()+") فرستاده شد."; }
+      else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود تایید شما: "+code+" (برای امنیت واقعی، ایمیل مدیر و EmailJS را در تنظیمات وارد کنید)"; }
     }
     function getLock(){ try{return JSON.parse(localStorage.getItem(LOCK_KEY)||"{}")||{}}catch(e){return {}} }
     function setLock(o){ try{localStorage.setItem(LOCK_KEY,JSON.stringify(o||{}))}catch(e){} }
@@ -646,7 +650,7 @@
 
     var idleTimer=null, idleBound=false;
     function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); }
-    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; pendingRecoveryCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; } }
+    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; pendingAdminDemo=false; pendingRecoveryCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; } }
     function doAdminRecovery(){
       try{ localStorage.removeItem(USER_KEY); localStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS2_KEY); localStorage.removeItem(LOCK_KEY); }catch(e){}
       pendingAdminCode=null; pendingRecoveryCode=null;
@@ -682,12 +686,12 @@
       var u=($("#gateUser").value||"").trim(), p=$("#gatePass").value||"", p2=$("#gatePass2").value||"";
       if(u===adminUser() && p===pass() && p2===pass2()){
         setLock({});
-        var code=genAdminCode(); pendingAdminCode=code;
+        var code=genAdminCode(); pendingAdminCode=code; pendingAdminDemo=false;
         $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ارسال کود تایید...";
         sendAdminCode(code).then(function(res){
+          pendingAdminDemo=!res.sent;
           gateShowStep(2); var ce=$("#gateCode"); if(ce){ce.value=""; ce.focus();}
-          if(res.sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود تایید به ایمیل مدیر ("+adminEmail()+") فرستاده شد."; }
-          else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود تایید شما: "+code+" (برای امنیت واقعی، ایمیل مدیر و EmailJS را در تنظیمات وارد کنید)"; }
+          showAdminCodeHint(code, res.sent);
         });
       } else {
         var l=getLock(), fails=(l.fails||0)+1;
@@ -700,10 +704,15 @@
     $("#gateVerifyBtn").onclick=function(){
       if(!pendingAdminCode) { gateShowStep(1); return; }
       var entered=toEn(($("#gateCode").value||"").trim()).replace(/[^0-9]/g,"");
-      if(entered===pendingAdminCode){ pendingAdminCode=null; $("#gateMsg").textContent=""; $("#gatePass").value=""; $("#gatePass2").value=""; $("#gateCode").value=""; openApp(); }
-      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کود تایید اشتباه است."; }
+      if(entered===String(pendingAdminCode)){ pendingAdminCode=null; pendingAdminDemo=false; $("#gateMsg").textContent=""; $("#gatePass").value=""; $("#gatePass2").value=""; $("#gateCode").value=""; openApp(); }
+      else {
+        $("#gateMsg").style.color="#ff9d9d";
+        $("#gateMsg").textContent=pendingAdminDemo
+          ? ("کود تایید اشتباه است. کود آزمایشی هنوز: "+pendingAdminCode)
+          : "کود تایید اشتباه است.";
+      }
     };
-    $("#gateBackBtn").onclick=function(){ pendingAdminCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
+    $("#gateBackBtn").onclick=function(){ pendingAdminCode=null; pendingAdminDemo=false; gateShowStep(1); $("#gateMsg").textContent=""; };
     $("#gateForgot").onclick=function(){ pendingRecoveryCode=null; if($("#recCode"))$("#recCode").hidden=true; if($("#recCodeBtn"))$("#recCodeBtn").hidden=true; gateShowStep(3); $("#gateMsg").textContent=""; };
     $("#recBackBtn").onclick=function(){ pendingRecoveryCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
     $("#recKeyBtn").onclick=function(){
