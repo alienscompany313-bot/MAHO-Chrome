@@ -125,7 +125,20 @@
         <input type="password" id="gatePass" placeholder="پسورد اول" autocomplete="current-password" dir="ltr">
         <input type="password" id="gatePass2" placeholder="پسورد دوم" autocomplete="current-password" dir="ltr">
         <button class="btn btn-gold" style="width:100%" id="gateBtn">ادامه</button>
-        <p class="note" style="color:#7d7768;margin-top:10px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد اول و دوم هر دو <b>maho1234</b></p>
+        <button type="button" id="gateForgot" style="background:none;border:none;color:#c8a35f;cursor:pointer;font-family:inherit;font-size:13px;margin-top:10px;text-decoration:underline">رمز یا نام کاربری را فراموش کرده‌اید؟</button>
+        <p class="note" style="color:#7d7768;margin-top:6px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد اول و دوم هر دو <b>maho1234</b></p>
+      </div>
+      <div id="gateStep3" hidden>
+        <p class="note" style="color:#b9b3a6">بازیابی دسترسی مدیر</p>
+        <input type="text" id="recKey" placeholder="کلید بازیابی" dir="ltr">
+        <button class="btn btn-gold" style="width:100%" id="recKeyBtn">بازیابی با کلید</button>
+        <div style="margin-top:10px">
+          <button type="button" class="btn btn-outline btn-sm" style="width:100%" id="recEmailBtn">ارسال کود بازیابی به ایمیل مدیر</button>
+          <input type="text" id="recCode" placeholder="کود ایمیل بازیابی" inputmode="numeric" dir="ltr" hidden>
+          <button class="btn btn-gold" style="width:100%;margin-top:6px" id="recCodeBtn" hidden>تایید کود و بازیابی</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" id="recBackBtn">بازگشت</button>
+        <p class="note" style="color:#7d7768;margin-top:8px">با بازیابی، نام کاربری و پسوردها به پیش‌فرض (admin / maho1234 / maho1234) برمی‌گردند و باید دوباره تنظیم‌شان کنید.</p>
       </div>
       <div id="gateStep2" hidden>
         <p class="note" style="color:#b9b3a6">کود تایید به ایمیل مدیر فرستاده شد. آن را وارد کنید.</p>
@@ -428,6 +441,7 @@
         <div class="field"><label>ایمیل مدیر (کود ورود به اینجا فرستاده می‌شود)</label><input id="newEmail" dir="ltr" type="email" placeholder="admin@example.com"></div>
         <div class="field"><label>پسورد اول جدید</label><input id="newPass" type="password" placeholder="خالی = بدون تغییر"></div>
         <div class="field"><label>پسورد دوم جدید</label><input id="newPass2" type="password" placeholder="خالی = بدون تغییر"></div>
+        <div class="field"><label>کلید بازیابی (برای فراموشی رمز)</label><input id="newRecovery" dir="ltr" placeholder="maho-recovery"></div>
         <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره تنظیمات ورود</button></div>
       </div>
       <p class="note">هنگام هر ورود، پس از نام کاربری و دو پسورد، یک کود تایید به ایمیل مدیر فرستاده می‌شود و باید آن را وارد کنید. برای ارسال واقعی کود، ایمیل مدیر را وارد کنید و بخش «ایمیل (EmailJS)» را کامل کنید؛ در غیر این‌صورت کود در حالت آزمایشی روی صفحه نشان داده می‌شود. پس از ۵ ورودِ نادرست ورود موقتاً قفل و پس از ۱۵ دقیقه بی‌فعالیتی خروج خودکار می‌شود.</p>
@@ -592,6 +606,9 @@
     /* ---------- secure gate (username + password, lockout, idle logout) ---------- */
     var USER_KEY="maho_admin_user", DEFAULT_USER="admin";
     var PASS2_KEY="maho_admin_pass2", DEFAULT_PASS2="maho1234", ADMIN_EMAIL_KEY="maho_admin_email";
+    var RECOVERY_KEY="maho_admin_recovery", DEFAULT_RECOVERY="maho-recovery";
+    function adminRecovery(){ try{return localStorage.getItem(RECOVERY_KEY)||DEFAULT_RECOVERY}catch(e){return DEFAULT_RECOVERY} }
+    var pendingRecoveryCode=null;
     var LOCK_KEY="maho_admin_lock", SESS_KEY="maho_admin_ok", SESS_AT="maho_admin_ok_at";
     var MAX_FAILS=5, LOCK_MS=60000, IDLE_MS=15*60*1000;
     function adminUser(){ try{return localStorage.getItem(USER_KEY)||DEFAULT_USER}catch(e){return DEFAULT_USER} }
@@ -615,8 +632,15 @@
     function sessionValid(){ try{ if(sessionStorage.getItem(SESS_KEY)!=="1")return false; var at=Number(sessionStorage.getItem(SESS_AT)||0); return (Date.now()-at)<IDLE_MS; }catch(e){return false} }
 
     var idleTimer=null, idleBound=false;
-    function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); }
-    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if(msg)$("#gateMsg").textContent=msg; }
+    function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); }
+    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; pendingRecoveryCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; } }
+    function doAdminRecovery(){
+      try{ localStorage.removeItem(USER_KEY); localStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS2_KEY); localStorage.removeItem(LOCK_KEY); }catch(e){}
+      pendingAdminCode=null; pendingRecoveryCode=null;
+      if($("#recKey")) $("#recKey").value=""; if($("#recCode")) $("#recCode").value="";
+      gateShowStep(1);
+      if($("#gateMsg")){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="دسترسی بازیابی شد ✓ با پیش‌فرض وارد شوید: admin / maho1234 / maho1234 و سپس در «تنظیمات» تغییرشان دهید."; }
+    }
     function startIdleWatch(){
       function reset(){ if($("#app").style.display==="none")return; touchSession(); clearTimeout(idleTimer); idleTimer=setTimeout(function(){ showGate("به‌دلیل نبود فعالیت، به‌طور خودکار خارج شدید. دوباره وارد شوید."); }, IDLE_MS); }
       if(!idleBound){ ["click","keydown","mousemove","touchstart","scroll"].forEach(function(ev){ document.addEventListener(ev,reset,{passive:true}); }); idleBound=true; }
@@ -667,6 +691,30 @@
       else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کود تایید اشتباه است."; }
     };
     $("#gateBackBtn").onclick=function(){ pendingAdminCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
+    $("#gateForgot").onclick=function(){ pendingRecoveryCode=null; if($("#recCode"))$("#recCode").hidden=true; if($("#recCodeBtn"))$("#recCodeBtn").hidden=true; gateShowStep(3); $("#gateMsg").textContent=""; };
+    $("#recBackBtn").onclick=function(){ pendingRecoveryCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
+    $("#recKeyBtn").onclick=function(){
+      var k=($("#recKey").value||"").trim();
+      if(k && k===adminRecovery()){ doAdminRecovery(); }
+      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کلید بازیابی اشتباه است."; }
+    };
+    $("#recEmailBtn").onclick=function(){
+      var em=adminEmail();
+      if(!em){ $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="ایمیل مدیر تنظیم نشده؛ از «کلید بازیابی» استفاده کنید (پیش‌فرض: maho-recovery)."; return; }
+      var code=genAdminCode(); pendingRecoveryCode=code;
+      $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ارسال کود بازیابی...";
+      sendAdminCode(code).then(function(res){
+        if($("#recCode")) $("#recCode").hidden=false; if($("#recCodeBtn")) $("#recCodeBtn").hidden=false; var rc=$("#recCode"); if(rc){rc.value="";rc.focus();}
+        if(res.sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود بازیابی به ایمیل مدیر ("+em+") فرستاده شد."; }
+        else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود بازیابی: "+code; }
+      });
+    };
+    $("#recCodeBtn").onclick=function(){
+      if(!pendingRecoveryCode) return;
+      var entered=toEn(($("#recCode").value||"").trim()).replace(/[^0-9]/g,"");
+      if(entered===pendingRecoveryCode){ doAdminRecovery(); }
+      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کود بازیابی اشتباه است."; }
+    };
     $("#gatePass2").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
     $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass2").focus()});
     $("#gateUser").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass").focus()});
@@ -1236,23 +1284,31 @@
     };
 
     /* ---------- admin username + two passwords + email ---------- */
-    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); var ne=$("#newEmail"); if(ne) ne.value=adminEmail(); })();
+    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); var ne=$("#newEmail"); if(ne) ne.value=adminEmail(); var nr=$("#newRecovery"); if(nr) nr.value=adminRecovery(); })();
     $("#passBtn").onclick=function(){
-      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim(), np2=$("#newPass2").value.trim(), ne=($("#newEmail").value||"").trim();
+      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim(), np2=$("#newPass2").value.trim(), ne=($("#newEmail").value||"").trim(), nr=($("#newRecovery").value||"").trim();
       if(nu.length<3){ alert("نام کاربری باید حداقل ۳ نویسه باشد."); return; }
       if(np && np.length<4){ alert("پسورد اول باید حداقل ۴ نویسه باشد."); return; }
       if(np2 && np2.length<4){ alert("پسورد دوم باید حداقل ۴ نویسه باشد."); return; }
       if(ne && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ne)){ alert("ایمیل مدیر معتبر نیست."); return; }
+      if(nr && nr.length<4){ alert("کلید بازیابی باید حداقل ۴ نویسه باشد."); return; }
       try{
         localStorage.setItem(USER_KEY,nu);
         if(np){ localStorage.setItem(PASS_KEY,np); }
         if(np2){ localStorage.setItem(PASS2_KEY,np2); }
         localStorage.setItem(ADMIN_EMAIL_KEY,ne);
+        if(nr){ localStorage.setItem(RECOVERY_KEY,nr); }
         $("#newPass").value=""; $("#newPass2").value="";
         alert("تنظیمات ورود ذخیره شد ✓");
       }catch(e){ alert("ذخیره نشد"); }
     };
-    $("#logoutBtn").onclick=function(){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} location.reload(); };
+    $("#logoutBtn").onclick=function(){
+      if(dirty && !confirm("تغییرات ذخیره‌نشده دارید. بدون ذخیره خارج شوید؟")) return;
+      dirty=false; document.body.classList.remove("dirty"); var sb=$("#saveBar"); if(sb) sb.classList.remove("show");
+      clearTimeout(idleTimer);
+      showGate("از حساب خارج شدید.");
+      window.scrollTo(0,0);
+    };
 
     window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
   })();
