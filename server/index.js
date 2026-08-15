@@ -107,6 +107,8 @@ function corsOrigin(origin, cb) {
 }
 
 /* -------------------- persistence -------------------- */
+/* Seed from website/data.json ONLY when creating a brand-new DB file.
+   Existing production db.json / DATA_DIR is never wiped or re-seeded. */
 function defaultDb() {
   let seed = { products: [], stores: [], config: {} };
   try { seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8")); } catch (_) {}
@@ -120,13 +122,125 @@ function defaultDb() {
     seqOrder: 0,
   };
 }
+
+const DEFAULT_ICON_REGISTRY = [
+  { id: "dress", type: "sprite", label: "لباس", label_en: "Dress" },
+  { id: "coat", type: "sprite", label: "مانتو", label_en: "Coat" },
+  { id: "shirt", type: "sprite", label: "بلوز", label_en: "Blouse" },
+  { id: "scarf", type: "sprite", label: "شال", label_en: "Scarf" },
+  { id: "bag", type: "sprite", label: "کیف", label_en: "Bag" },
+  { id: "heel", type: "sprite", label: "کفش", label_en: "Shoes" },
+  { id: "ring", type: "sprite", label: "زیور", label_en: "Jewelry" },
+  { id: "watch", type: "sprite", label: "ساعت", label_en: "Watch" },
+  { id: "sparkles", type: "sprite", label: "زیبایی", label_en: "Beauty" },
+  { id: "perfume", type: "sprite", label: "عطر", label_en: "Perfume" },
+  { id: "gift", type: "sprite", label: "هدیه", label_en: "Gift" },
+];
+const MAHO_MAP_URL = "https://maps.app.goo.gl/8SJq7HECgYeGkCJD9";
+const MAHO_LAT = "34.51162312730907";
+const MAHO_LNG = "69.12056249589499";
+const LEGACY_MAHO_MAPS = [
+  "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
+];
+
+function parseLatLngFromText(url) {
+  const s = String(url || "");
+  const m = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
+    || s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+    || s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
+    || s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
+  if (!m) return null;
+  const la = parseFloat(m[1]), lo = parseFloat(m[2]);
+  if (!isFinite(la) || !isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180) return null;
+  return [la, lo];
+}
+
+function isMahoStore(s) {
+  const n = String((s && s.name) || "") + " " + String((s && s.name_en) || "");
+  return /MAHO/i.test(n);
+}
+
+/** Additive, non-destructive migration. Never clears products/orders/users/uploads. */
+function migrateDb(data) {
+  if (!data || typeof data !== "object") return false;
+  let changed = false;
+  data.config = data.config || {};
+
+  /* --- icon registry --- */
+  if (!Array.isArray(data.config.icons) || !data.config.icons.length) {
+    data.config.icons = DEFAULT_ICON_REGISTRY.map((x) => Object.assign({}, x));
+    changed = true;
+  } else {
+    const have = new Set(data.config.icons.map((x) => x && x.id).filter(Boolean));
+    DEFAULT_ICON_REGISTRY.forEach((def) => {
+      if (!have.has(def.id)) {
+        data.config.icons.push(Object.assign({}, def));
+        changed = true;
+      }
+    });
+  }
+
+  /* --- categories: stable key, order, enabled --- */
+  if (Array.isArray(data.config.categories)) {
+    data.config.categories.forEach((c, i) => {
+      if (!c || typeof c !== "object") return;
+      if (c.order == null || c.order === "") { c.order = i; changed = true; }
+      if (c.enabled == null) { c.enabled = true; changed = true; }
+      if (!c.key) {
+        c.key = "cat_" + i + "_" + Date.now().toString(36);
+        changed = true;
+      }
+    });
+  }
+
+  /* --- stores: separate map URL from lat/lng --- */
+  if (Array.isArray(data.stores)) {
+    data.stores.forEach((s) => {
+      if (!s || typeof s !== "object") return;
+      if (s.mapUrl && !s.map) { s.map = s.mapUrl; changed = true; }
+      const hasLat = s.lat != null && s.lat !== "" && isFinite(parseFloat(s.lat));
+      const hasLng = s.lng != null && s.lng !== "" && isFinite(parseFloat(s.lng));
+      if (!hasLat || !hasLng) {
+        const extracted = parseLatLngFromText(s.map || s.mapUrl || "");
+        if (extracted) {
+          if (!hasLat) { s.lat = String(extracted[0]); changed = true; }
+          if (!hasLng) { s.lng = String(extracted[1]); changed = true; }
+        }
+      }
+      if (isMahoStore(s)) {
+        const mapStr = String(s.map || "");
+        if (!mapStr || LEGACY_MAHO_MAPS.indexOf(mapStr) !== -1) {
+          s.map = MAHO_MAP_URL;
+          changed = true;
+        }
+        if (s.lat == null || s.lat === "" || !isFinite(parseFloat(s.lat))) {
+          s.lat = MAHO_LAT; changed = true;
+        }
+        if (s.lng == null || s.lng === "" || !isFinite(parseFloat(s.lng))) {
+          s.lng = MAHO_LNG; changed = true;
+        }
+      }
+    });
+  }
+  return changed;
+}
+
 let db;
 function loadDb() {
+  const existed = fs.existsSync(DB_FILE);
   try { db = JSON.parse(fs.readFileSync(DB_FILE, "utf8")); }
-  catch (_) { db = defaultDb(); saveDb(); }
+  catch (_) {
+    /* Only seed when there is no usable DB file yet */
+    db = defaultDb();
+    migrateDb(db);
+    saveDb();
+    return;
+  }
   db.products = db.products || []; db.stores = db.stores || []; db.config = db.config || {};
   db.users = db.users || []; db.orders = db.orders || [];
   db.seqCustomer = db.seqCustomer || 0; db.seqOrder = db.seqOrder || 0;
+  if (migrateDb(db)) saveDb();
+  if (!existed) { /* unreachable after catch, kept for clarity */ }
 }
 function saveDb() {
   try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (_) {}
@@ -185,16 +299,39 @@ function isAllowedImageUrl(v) {
     return u.protocol === "http:" || u.protocol === "https:";
   } catch (_) { return false; }
 }
+function scrubIconEntry(ic) {
+  if (!ic || typeof ic !== "object") return null;
+  const id = String(ic.id || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
+  if (!id) return null;
+  const type = String(ic.type || "sprite");
+  const label = String(ic.label || "").slice(0, 80);
+  const label_en = String(ic.label_en || "").slice(0, 80);
+  if (type === "emoji") {
+    const emoji = String(ic.emoji || "").replace(/[<>&"'`\\/]/g, "").slice(0, 8);
+    if (!emoji) return null;
+    return { id: id, type: "emoji", emoji: emoji, label: label, label_en: label_en };
+  }
+  if (type === "image") {
+    const url = isAllowedImageUrl(ic.url) ? ic.url : "";
+    if (!url || /\.svg(\?|$)/i.test(url)) return null; /* no raw SVG uploads as icons */
+    return { id: id, type: "image", url: url, label: label, label_en: label_en };
+  }
+  /* sprite — id must match built-in symbol names only (alphanumeric) */
+  return { id: id, type: "sprite", label: label, label_en: label_en };
+}
+
 function scrubImageFields(obj) {
   if (!obj || typeof obj !== "object") return obj;
   if (Array.isArray(obj)) return obj.map(scrubImageFields);
   const out = {};
   Object.keys(obj).forEach((k) => {
     const v = obj[k];
-    if ((k === "image" || k === "logo" || k === "heroImage") && typeof v === "string") {
+    if ((k === "image" || k === "logo" || k === "heroImage" || k === "url") && typeof v === "string") {
       out[k] = isAllowedImageUrl(v) ? v : "";
     } else if (k === "images" && Array.isArray(v)) {
       out[k] = v.filter(isAllowedImageUrl);
+    } else if (k === "icons" && Array.isArray(v)) {
+      out[k] = v.map(scrubIconEntry).filter(Boolean);
     } else if (v && typeof v === "object") {
       out[k] = scrubImageFields(v);
     } else {
@@ -202,6 +339,26 @@ function scrubImageFields(obj) {
     }
   });
   return out;
+}
+
+function clampStoreCoords(stores) {
+  if (!Array.isArray(stores)) return stores;
+  return stores.map((s) => {
+    if (!s || typeof s !== "object") return s;
+    const out = Object.assign({}, s);
+    if (out.mapUrl && !out.map) out.map = out.mapUrl;
+    if (out.lat != null && out.lat !== "") {
+      const la = parseFloat(out.lat);
+      if (!isFinite(la) || la < -90 || la > 90) delete out.lat;
+      else out.lat = String(la);
+    }
+    if (out.lng != null && out.lng !== "") {
+      const lo = parseFloat(out.lng);
+      if (!isFinite(lo) || lo < -180 || lo > 180) delete out.lng;
+      else out.lng = String(lo);
+    }
+    return out;
+  });
 }
 
 const sessions = new Map();
@@ -306,8 +463,12 @@ app.get("/api/admin/state", requireAdmin, (req, res) =>
 app.put("/api/admin/catalog", requireAdmin, (req, res) => {
   const b = scrubImageFields(req.body || {});
   if (Array.isArray(b.products)) db.products = b.products;
-  if (Array.isArray(b.stores)) db.stores = b.stores;
-  if (b.config && typeof b.config === "object") db.config = b.config;
+  if (Array.isArray(b.stores)) db.stores = clampStoreCoords(b.stores);
+  if (b.config && typeof b.config === "object") {
+    /* Preserve keys not sent; merge carefully without wiping unrelated data */
+    db.config = Object.assign({}, db.config, b.config);
+  }
+  migrateDb(db);
   saveDb();
   res.json({ ok: true, products: db.products.length });
 });

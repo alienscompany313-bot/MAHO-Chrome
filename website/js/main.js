@@ -24,7 +24,25 @@
       : toDigits(amount.toLocaleString("en-US"), "fa") + " افغانی";
   const toEnDigits = (s) => String(s == null ? "" : s).replace(/[۰-۹]/g, (d) => faMap.indexOf(d));
 
-  const icon = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  function escapeAttr(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function iconMeta(id) {
+    const icons = (CONFIG && Array.isArray(CONFIG.icons)) ? CONFIG.icons : [];
+    return icons.find((x) => x && x.id === id) || null;
+  }
+  function icon(id, cls) {
+    const c = cls || "ic";
+    const meta = iconMeta(id);
+    if (meta && meta.type === "emoji" && meta.emoji) {
+      return `<span class="${c} icon-emoji" aria-hidden="true">${escapeAttr(meta.emoji)}</span>`;
+    }
+    if (meta && meta.type === "image" && meta.url && !/\.svg(\?|$)/i.test(meta.url)) {
+      return `<img class="${c} icon-img" src="${escapeAttr(meta.url)}" alt="" loading="lazy">`;
+    }
+    const safe = String(id || "bag").replace(/[^a-zA-Z0-9_-]/g, "") || "bag";
+    return `<svg class="${c}" aria-hidden="true"><use href="#i-${safe}"></use></svg>`;
+  }
 
   /* -------------------- Translations -------------------- */
   const I18N = {
@@ -334,8 +352,6 @@
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
 
   /* -------------------- Data -------------------- */
-  const CAT_ICON = { clothing: "dress", scarf: "scarf", bagshoes: "bag", beauty: "sparkles", accessory: "ring" };
-
   let PRODUCTS = [
     { name: "پیراهن مجلسی بلند", name_en: "Long Evening Dress", cat: "clothing", icon: "dress", code: "DRS-001", stock: 10, price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف", badgeText_en: "16% off" },
     { name: "مانتو کژوال روزمره", name_en: "Casual Manteau", cat: "clothing", icon: "coat", code: "MNT-002", stock: 8, price: 3200, badge: "new", badgeText: "جدید", badgeText_en: "New" },
@@ -350,27 +366,28 @@
     { name: "ست گردنبند و دستبند", name_en: "Necklace & Bracelet Set", cat: "accessory", icon: "ring", code: "AKS-011", stock: 11, price: 1650 },
     { name: "ساعت مچی زنانه", name_en: "Women's Wristwatch", cat: "accessory", icon: "watch", code: "AKS-012", stock: 4, price: 3600, badge: "new", badgeText: "جدید", badgeText_en: "New" },
   ];
-  const CAT_LABEL = {
-    fa: { clothing: "پوشاک", scarf: "شال و روسری", bagshoes: "کیف و کفش", beauty: "آرایشی و بهداشتی", accessory: "اکسسوری" },
-    en: { clothing: "Clothing", scarf: "Scarves", bagshoes: "Bags & Shoes", beauty: "Beauty", accessory: "Accessories" },
-  };
+  /* Fallback seed only when backend has no categories yet — not used as fixed UI options. */
   const DEFAULT_CATS = [
-    { key: "clothing", name: "پوشاک", name_en: "Clothing", icon: "dress" },
-    { key: "scarf", name: "شال و روسری", name_en: "Scarves", icon: "scarf" },
-    { key: "bagshoes", name: "کیف و کفش", name_en: "Bags & Shoes", icon: "bag" },
-    { key: "beauty", name: "آرایشی و بهداشتی", name_en: "Beauty", icon: "sparkles" },
-    { key: "accessory", name: "اکسسوری", name_en: "Accessories", icon: "ring" },
+    { key: "clothing", name: "پوشاک", name_en: "Clothing", icon: "dress", order: 0, enabled: true },
+    { key: "scarf", name: "شال و روسری", name_en: "Scarves", icon: "scarf", order: 1, enabled: true },
+    { key: "bagshoes", name: "کیف و کفش", name_en: "Bags & Shoes", icon: "bag", order: 2, enabled: true },
+    { key: "beauty", name: "آرایشی و بهداشتی", name_en: "Beauty", icon: "sparkles", order: 3, enabled: true },
+    { key: "accessory", name: "اکسسوری", name_en: "Accessories", icon: "ring", order: 4, enabled: true },
   ];
-  const DEFAULT_SHOWCASE = [
-    { title: "لباس مجلسی", title_en: "Evening dresses", sub: "پیراهن و کالای شب", sub_en: "Dresses & eveningwear", icon: "dress", filter: "clothing" },
-    { title: "مانتو و پالتو", title_en: "Manteaus & coats", sub: "روزمره و رسمی", sub_en: "Casual & formal", icon: "coat", filter: "clothing" },
-    { title: "بلوز و شومیز", title_en: "Blouses & tops", sub: "مدل‌های متنوع", sub_en: "Many styles", icon: "shirt", filter: "clothing" },
-    { title: "شال و روسری", title_en: "Scarves & shawls", sub: "نخی و ابریشمی", sub_en: "Cotton & silk", icon: "scarf", filter: "scarf" },
-    { title: "کیف زنانه", title_en: "Handbags", sub: "دستی و مجلسی", sub_en: "Everyday & evening", icon: "bag", filter: "bagshoes" },
-    { title: "کفش زنانه", title_en: "Women's shoes", sub: "پاشنه‌بلند و تخت", sub_en: "Heels & flats", icon: "heel", filter: "bagshoes" },
-    { title: "اکسسوری و بدلیجات", title_en: "Accessories & jewelry", sub: "گردنبند، دستبند و ساعت", sub_en: "Necklaces, bracelets & watches", icon: "ring", filter: "accessory" },
-    { title: "آرایشی و بهداشتی", title_en: "Beauty & care", sub: "لوازم آرایش و عطر", sub_en: "Makeup & perfume", icon: "sparkles", filter: "beauty" },
+  const DEFAULT_ICONS = [
+    { id: "dress", type: "sprite", label: "لباس", label_en: "Dress" },
+    { id: "coat", type: "sprite", label: "مانتو", label_en: "Coat" },
+    { id: "shirt", type: "sprite", label: "بلوز", label_en: "Blouse" },
+    { id: "scarf", type: "sprite", label: "شال", label_en: "Scarf" },
+    { id: "bag", type: "sprite", label: "کیف", label_en: "Bag" },
+    { id: "heel", type: "sprite", label: "کفش", label_en: "Shoes" },
+    { id: "ring", type: "sprite", label: "زیور", label_en: "Jewelry" },
+    { id: "watch", type: "sprite", label: "ساعت", label_en: "Watch" },
+    { id: "sparkles", type: "sprite", label: "زیبایی", label_en: "Beauty" },
+    { id: "perfume", type: "sprite", label: "عطر", label_en: "Perfume" },
+    { id: "gift", type: "sprite", label: "هدیه", label_en: "Gift" },
   ];
+  const DEFAULT_SHOWCASE = [];
   const DEFAULT_TIMESLOTS = [
     { fa: "در اسرع وقت", en: "As soon as possible" },
     { fa: "امروز صبح (۹ تا ۱۲)", en: "Today morning (9–12)" },
@@ -386,11 +403,14 @@
       area_en: "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
       hours: "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب", hours_en: "Sat–Thu, 9:00 AM – 8:00 PM",
       phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
-      map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
+      map: "https://maps.app.goo.gl/8SJq7HECgYeGkCJD9",
+      lat: "34.51162312730907",
+      lng: "69.12056249589499",
     },
   ];
   let CONFIG = {
-    categories: DEFAULT_CATS.slice(), showcase: DEFAULT_SHOWCASE.slice(),
+    categories: DEFAULT_CATS.slice(), showcase: [],
+    icons: DEFAULT_ICONS.slice(),
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
@@ -430,13 +450,21 @@
       const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
       CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
       const sc = (n.config.showcase || []).filter((x) => x && (x.title || x.title_en));
-      CONFIG.showcase = sc.length ? sc : (CONFIG.showcase && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE.slice());
+      CONFIG.showcase = sc.length ? sc : (CONFIG.showcase && CONFIG.showcase.length ? CONFIG.showcase : []);
+      const icons = (n.config.icons || []).filter((x) => x && x.id);
+      CONFIG.icons = icons.length ? icons : (CONFIG.icons && CONFIG.icons.length ? CONFIG.icons : DEFAULT_ICONS.slice());
     }
   }
-  function getCats() { return (Array.isArray(CONFIG.categories) && CONFIG.categories.length) ? CONFIG.categories : DEFAULT_CATS; }
-  function catObj(key) { return getCats().find((c) => c.key === key); }
-  function catLabel(key) { const c = catObj(key); if (c) return (LANG === "en" ? (c.name_en || c.name) : c.name) || key; return (CAT_LABEL[LANG] && CAT_LABEL[LANG][key]) || key; }
-  function catIcon(key) { const c = catObj(key); return (c && c.icon) || CAT_ICON[key] || "bag"; }
+  function getCats(opts) {
+    const all = (Array.isArray(CONFIG.categories) && CONFIG.categories.length) ? CONFIG.categories.slice() : DEFAULT_CATS.slice();
+    all.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+    if (opts && opts.all) return all;
+    return all.filter((c) => c.enabled !== false);
+  }
+  function catObj(key) { return getCats({ all: true }).find((c) => c.key === key); }
+  function catLabel(key) { const c = catObj(key); if (c) return (LANG === "en" ? (c.name_en || c.name) : c.name) || key; return key; }
+  function catIcon(key) { const c = catObj(key); return (c && c.icon) || "bag"; }
+  function storeMapUrl(s) { return (s && (s.map || s.mapUrl)) || ""; }
   let hasLocalDraft = false;
   try {
     const raw = localStorage.getItem(DATA_KEY);
@@ -507,9 +535,15 @@
           <div class="store-row"><span class="ico">${icon("pin")}</span><span>${area}</span></div>
           <div class="store-row"><span class="ico">${icon("clock")}</span><span>${hours}</span></div>
           <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link" href="${telHref(phone)}" dir="ltr">${phone}</a></div>
-          <a class="btn btn-outline" target="_blank" rel="noopener" href="${s.map}">${t("store.directions")}</a>
+          <a class="btn btn-outline" target="_blank" rel="noopener" href="${escapeAttr(storeMapUrl(s) || '#')}">${t("store.directions")}</a>
         </article>`;
     }).join("");
+    const footerMap = $("#footerMapLink");
+    if (footerMap) {
+      const url = storeMapUrl(STORES[0]);
+      if (url) { footerMap.href = url; footerMap.style.display = ""; }
+      else { footerMap.removeAttribute("href"); footerMap.style.display = "none"; }
+    }
   }
 
   /* -------------------- Filtering -------------------- */
@@ -523,7 +557,13 @@
   function renderShowcase() {
     const grid = document.querySelector(".cat-grid");
     if (!grid) return;
-    const items = (Array.isArray(CONFIG.showcase) && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE).filter((x) => x && (x.title || x.title_en));
+    let items = (Array.isArray(CONFIG.showcase) && CONFIG.showcase.length ? CONFIG.showcase : []).filter((x) => x && (x.title || x.title_en));
+    /* If no showcase cards configured, build from enabled categories */
+    if (!items.length) {
+      items = getCats().filter((c) => c.name || c.name_en).map((c) => ({
+        title: c.name, title_en: c.name_en, sub: "", sub_en: "", icon: c.icon || "bag", filter: c.key,
+      }));
+    }
     grid.innerHTML = items.map((x) => {
       const title = LANG === "en" ? (x.title_en || x.title) : x.title;
       const sub = LANG === "en" ? (x.sub_en || x.sub) : x.sub;
@@ -708,20 +748,11 @@
     box.innerHTML = ts.map((s, i) => `<button type="button" class="pay-method${i === deliverSlot ? " active" : ""}" data-slot="${i}">${LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)}</button>`).join("");
   }
   function haversine(la1, lo1, la2, lo2) { const R = 6371, r = Math.PI / 180; const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r; const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
-  // Extract lat/lng from a Google Maps link/address (supports @lat,lng / !3d!4d / q=/ll= / bare pair)
-  function parseLatLng(url) {
-    const s = String(url || "");
-    let m = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
-      || s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
-      || s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
-      || s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
-    if (m) { const la = parseFloat(m[1]), lo = parseFloat(m[2]); if (isFinite(la) && isFinite(lo)) return [la, lo]; }
-    return null;
-  }
+  /* Delivery distance uses ONLY store.lat / store.lng — never the Maps profile URL. */
   function storeCoords(s) {
-    const la = parseFloat(s.lat), lo = parseFloat(s.lng);
-    if (isFinite(la) && isFinite(lo)) return [la, lo];
-    return parseLatLng(s.map || s.mapLink || "");
+    const la = parseFloat(s && s.lat), lo = parseFloat(s && s.lng);
+    if (isFinite(la) && isFinite(lo) && la >= -90 && la <= 90 && lo >= -180 && lo <= 180) return [la, lo];
+    return null;
   }
   function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const c = storeCoords(s); if (c) { const d = haversine(lat, lng, c[0], c[1]); if (best === null || d < best) best = d; } }); return best; }
   function currentKm() { let km = parseFloat(toEnDigits(($("#co_km") && $("#co_km").value) || "")); if (!isFinite(km) || km < 0) km = (distanceKm != null ? distanceKm : 0); return km; }

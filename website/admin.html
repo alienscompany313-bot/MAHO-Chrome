@@ -96,6 +96,21 @@
     .adm-items li{margin-bottom:8px}
     .adm-bc{max-width:150px;height:auto;background:#fff;border-radius:5px}
     .bc-code{font-size:11px;color:var(--muted)}
+    .icon-pick-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700}
+    .icon-pick-btn .preview{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#f3efe7}
+    .icon-pick-btn .preview .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+    .icon-pick-btn .preview img{width:22px;height:22px;object-fit:contain}
+    .icon-pick-btn .preview .icon-emoji{font-size:18px;line-height:1}
+    .icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;max-height:280px;overflow:auto;margin:10px 0}
+    .icon-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;color:var(--ink)}
+    .icon-tile:hover,.icon-tile.selected{border-color:var(--gold);background:#fff8ea}
+    .icon-tile .vis{width:36px;height:36px;display:grid;place-items:center}
+    .icon-tile .vis .ic{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.5}
+    .icon-tile .vis img{width:28px;height:28px;object-fit:contain}
+    .icon-tile .vis .icon-emoji{font-size:24px;line-height:1}
+    .icon-tile .lbl{text-align:center;line-height:1.3;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cat-row .ord-btns{display:flex;flex-direction:column;gap:4px}
+    .toggle-en{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
   </style>
 </head>
@@ -166,12 +181,26 @@
     <!-- CATEGORIES -->
     <div class="card">
       <div class="row-between">
-        <div><h2>دسته‌بندی‌ها (کتگوری‌ها)</h2><div class="sub">نام کتگوری‌ها را تغییر بدهید یا کتگوری جدید اضافه کنید. این‌ها هم در فیلتر بالای محصولاتِ سایت و هم هنگام افزودن کالا استفاده می‌شوند.</div></div>
+        <div><h2>کتگوری‌ها</h2><div class="sub">افزودن، ویرایش نام دری/انگلیسی، ترتیب، فعال/غیرفعال، آیکن و حذف. شناسه‌ی کتگوری ثابت می‌ماند تا محصولات جدا نشوند.</div></div>
         <button class="btn btn-gold" id="addCatBtn">+ افزودن کتگوری</button>
       </div>
       <div id="catRows"></div>
-      <p class="note">با تغییر نام یک کتگوری، همان کالاهای قبلی حفظ می‌شوند. اگر کتگوری‌ای را حذف کنید که روی کالا استفاده شده، آن کالاها بدون کتگوری می‌مانند.</p>
+      <p class="note">تغییر نام کتگوری محصولات را از آن جدا نمی‌کند. حذف کتگوری‌ای که روی محصول استفاده شده فقط با تأیید هشدار ممکن است.</p>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnCats">ذخیره تغییرات</button></div>
+    </div>
+
+    <!-- ICONS -->
+    <div class="card">
+      <div class="row-between">
+        <div><h2>آیکن‌ها</h2><div class="sub">نام نمایشی آیکن‌ها قابل ویرایش است. می‌توانید ایموجی سفارشی یا تصویر PNG/WebP آپلود کنید. HTML یا SVG خام پذیرفته نمی‌شود.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline" id="addEmojiIconBtn" type="button">+ ایموجی</button>
+          <button class="btn btn-gold" id="addUploadIconBtn" type="button">+ آپلود PNG/WebP</button>
+        </div>
+      </div>
+      <input type="file" id="iconUploadInput" accept="image/png,image/webp" hidden>
+      <div id="iconRows"></div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnIcons">ذخیره تغییرات</button></div>
     </div>
 
     <!-- DISCOUNTS -->
@@ -456,29 +485,12 @@
         <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
         <div class="field"><label>کود کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
         <div class="field"><label>تعداد موجودی</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"></div>
-        <div class="field"><label>دسته</label>
-          <select id="f_cat">
-            <option value="clothing">پوشاک</option>
-            <option value="scarf">شال و روسری</option>
-            <option value="bagshoes">کیف و کفش</option>
-            <option value="beauty">آرایشی و بهداشتی</option>
-            <option value="accessory">اکسسوری</option>
-          </select>
+        <div class="field"><label>کتگوری</label>
+          <select id="f_cat"></select>
         </div>
         <div class="field"><label>آیکن</label>
-          <select id="f_icon">
-            <option value="dress">پیراهن / لباس مجلسی</option>
-            <option value="coat">مانتو / پالتو</option>
-            <option value="shirt">بلوز / شومیز</option>
-            <option value="scarf">شال / روسری</option>
-            <option value="bag">کیف</option>
-            <option value="heel">کفش</option>
-            <option value="ring">انگشتر / بدلیجات</option>
-            <option value="watch">ساعت</option>
-            <option value="sparkles">لوازم آرایش</option>
-            <option value="perfume">عطر</option>
-            <option value="gift">هدیه / سایر</option>
-          </select>
+          <input type="hidden" id="f_icon" value="dress">
+          <button type="button" class="icon-pick-btn" id="f_iconBtn" data-target="f_icon"><span class="preview" id="f_iconPrev"></span><span>انتخاب آیکن</span></button>
         </div>
         <div class="field"><label>قیمت (افغانی) *</label><input id="f_price" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>قیمت قبلی (برای تخفیف دستی)</label><input id="f_old" type="number" min="0" inputmode="numeric"></div>
@@ -524,12 +536,28 @@
         <div class="field"><label>نمبر تماس (فارسی)</label><input id="st_phone" dir="ltr"></div>
         <div class="field"><label>نمبر تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
-      <div class="field"><label>لینک / آدرس گوگل مپ فروشگاه</label><input id="st_map" dir="ltr" placeholder="https://maps.google.com/...@34.52,69.18..."></div>
-      <p class="note" id="st_coordNote">برای محاسبه‌ی خودکار فاصله‌ی دلیوری، لینک گوگل‌مپ فروشگاه را اینجا بگذارید (نیازی به وارد کردن اعداد مختصات نیست). بهترین کار: در گوگل‌مپ محل فروشگاه را باز کنید و لینک نوار آدرس مرورگر را کپی کنید (این لینک شامل مختصات @lat,lng است).</p>
+      <div class="field"><label>لینک پروفایل Google Maps</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
+      <div class="grid2">
+        <div class="field"><label>Latitude (عرض جغرافیایی)</label><input id="st_lat" dir="ltr" inputmode="decimal" placeholder="مثلاً 34.5116"></div>
+        <div class="field"><label>Longitude (طول جغرافیایی)</label><input id="st_lng" dir="ltr" inputmode="decimal" placeholder="مثلاً 69.1205"></div>
+      </div>
+      <p class="note" id="st_coordNote">لینک نقشه فقط برای دکمه‌ی «مشاهده روی نقشه» است. فاصله و قیمت دلیوری فقط از Latitude و Longitude محاسبه می‌شود (−۹۰…۹۰ و −۱۸۰…۱۸۰).</p>
       <p class="note" id="storeMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="storeCancelBtn">لغو</button>
         <button class="btn btn-gold" id="storeOkBtn">ذخیره فروشگاه</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- icon picker modal -->
+  <div class="overlay" id="iconPickerOverlay">
+    <div class="modal" style="max-width:520px">
+      <h3>انتخاب آیکن</h3>
+      <p class="note">آیکن را به‌صورت تصویری انتخاب کنید. نام‌ها از بخش «آیکن‌ها» قابل ویرایش‌اند.</p>
+      <div class="icon-grid" id="iconPickerGrid"></div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" id="iconPickerCancel" type="button">بستن</button>
       </div>
     </div>
   </div>
@@ -539,15 +567,27 @@
     "use strict";
     var $=function(s){return document.querySelector(s)};
     var DATA_KEY="maho_admin_data"; /* cache only after successful server save — never credentials */
-    var CAT_LABEL={clothing:"پوشاک",scarf:"شال و روسری",bagshoes:"کیف و کفش",beauty:"آرایشی",accessory:"اکسسوری"};
+    /* Seed defaults only when backend has empty lists — not fixed UI option labels. */
     var DEFAULT_CATS=[
-      {key:"clothing",name:"پوشاک",name_en:"Clothing",icon:"dress"},
-      {key:"scarf",name:"شال و روسری",name_en:"Scarves",icon:"scarf"},
-      {key:"bagshoes",name:"کیف و کفش",name_en:"Bags & Shoes",icon:"bag"},
-      {key:"beauty",name:"آرایشی و بهداشتی",name_en:"Beauty",icon:"sparkles"},
-      {key:"accessory",name:"اکسسوری",name_en:"Accessories",icon:"ring"}
+      {key:"clothing",name:"پوشاک",name_en:"Clothing",icon:"dress",order:0,enabled:true},
+      {key:"scarf",name:"شال و روسری",name_en:"Scarves",icon:"scarf",order:1,enabled:true},
+      {key:"bagshoes",name:"کیف و کفش",name_en:"Bags & Shoes",icon:"bag",order:2,enabled:true},
+      {key:"beauty",name:"آرایشی و بهداشتی",name_en:"Beauty",icon:"sparkles",order:3,enabled:true},
+      {key:"accessory",name:"اکسسوری",name_en:"Accessories",icon:"ring",order:4,enabled:true}
     ];
-    var CAT_ICON_OPTS=[["dress","پیراهن / لباس"],["coat","مانتو / پالتو"],["shirt","بلوز / شومیز"],["scarf","شال / روسری"],["bag","کیف"],["heel","کفش"],["ring","انگشتر / بدلیجات"],["watch","ساعت"],["sparkles","لوازم آرایش"],["perfume","عطر"],["gift","هدیه / سایر"]];
+    var DEFAULT_ICONS=[
+      {id:"dress",type:"sprite",label:"لباس",label_en:"Dress"},
+      {id:"coat",type:"sprite",label:"مانتو",label_en:"Coat"},
+      {id:"shirt",type:"sprite",label:"بلوز",label_en:"Blouse"},
+      {id:"scarf",type:"sprite",label:"شال",label_en:"Scarf"},
+      {id:"bag",type:"sprite",label:"کیف",label_en:"Bag"},
+      {id:"heel",type:"sprite",label:"کفش",label_en:"Shoes"},
+      {id:"ring",type:"sprite",label:"زیور",label_en:"Jewelry"},
+      {id:"watch",type:"sprite",label:"ساعت",label_en:"Watch"},
+      {id:"sparkles",type:"sprite",label:"زیبایی",label_en:"Beauty"},
+      {id:"perfume",type:"sprite",label:"عطر",label_en:"Perfume"},
+      {id:"gift",type:"sprite",label:"هدیه",label_en:"Gift"}
+    ];
     var DEFAULT_TIMESLOTS=[
       {fa:"در اسرع وقت",en:"As soon as possible"},
       {fa:"امروز صبح (۹ تا ۱۲)",en:"Today morning (9–12)"},
@@ -555,27 +595,38 @@
       {fa:"امروز عصر (۴ تا ۸)",en:"Today evening (4–8)"},
       {fa:"فردا",en:"Tomorrow"}
     ];
-    var DEFAULT_SHOWCASE=[
-      {title:"لباس مجلسی",title_en:"Evening dresses",sub:"پیراهن و کالای شب",sub_en:"Dresses & eveningwear",icon:"dress",filter:"clothing"},
-      {title:"مانتو و پالتو",title_en:"Manteaus & coats",sub:"روزمره و رسمی",sub_en:"Casual & formal",icon:"coat",filter:"clothing"},
-      {title:"بلوز و شومیز",title_en:"Blouses & tops",sub:"مدل‌های متنوع",sub_en:"Many styles",icon:"shirt",filter:"clothing"},
-      {title:"شال و روسری",title_en:"Scarves & shawls",sub:"نخی و ابریشمی",sub_en:"Cotton & silk",icon:"scarf",filter:"scarf"},
-      {title:"کیف زنانه",title_en:"Handbags",sub:"دستی و مجلسی",sub_en:"Everyday & evening",icon:"bag",filter:"bagshoes"},
-      {title:"کفش زنانه",title_en:"Women's shoes",sub:"پاشنه‌بلند و تخت",sub_en:"Heels & flats",icon:"heel",filter:"bagshoes"},
-      {title:"اکسسوری و بدلیجات",title_en:"Accessories & jewelry",sub:"گردنبند، دستبند و ساعت",sub_en:"Necklaces, bracelets & watches",icon:"ring",filter:"accessory"},
-      {title:"آرایشی و بهداشتی",title_en:"Beauty & care",sub:"لوازم آرایش و عطر",sub_en:"Makeup & perfume",icon:"sparkles",filter:"beauty"}
-    ];
-    function catList(){ if(!Array.isArray(state.config.categories)||!state.config.categories.length) state.config.categories=DEFAULT_CATS.map(function(c){return {key:c.key,name:c.name,name_en:c.name_en,icon:c.icon};}); return state.config.categories; }
-    function catLabelA(key){ var c=(state.config&&Array.isArray(state.config.categories))?state.config.categories.filter(function(x){return x.key===key;})[0]:null; return c?(c.name||c.name_en||key):(CAT_LABEL[key]||key); }
+    var DEFAULT_SHOWCASE=[];
+    function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function catList(){
+      if(!Array.isArray(state.config.categories)||!state.config.categories.length)
+        state.config.categories=DEFAULT_CATS.map(function(c){return {key:c.key,name:c.name,name_en:c.name_en,icon:c.icon,order:c.order,enabled:c.enabled};});
+      state.config.categories.sort(function(a,b){return (Number(a.order)||0)-(Number(b.order)||0);});
+      return state.config.categories;
+    }
+    function catLabelA(key){ var c=catList().filter(function(x){return x.key===key;})[0]; return c?(c.name||c.name_en||key):key; }
     function slugKey(s){ var base=String(s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); return base||("cat_"+Date.now().toString(36)); }
+    function iconList(){
+      if(!Array.isArray(state.config.icons)||!state.config.icons.length)
+        state.config.icons=DEFAULT_ICONS.map(function(x){return Object.assign({},x);});
+      return state.config.icons;
+    }
+    function iconMeta(id){ return iconList().filter(function(x){return x&&x.id===id;})[0]||null; }
+    function iconVisual(id, cls){
+      var meta=iconMeta(id); cls=cls||"ic";
+      if(meta&&meta.type==="emoji"&&meta.emoji) return '<span class="'+cls+' icon-emoji">'+esc(meta.emoji)+'</span>';
+      if(meta&&meta.type==="image"&&meta.url&&!/\.svg(\?|$)/i.test(meta.url)) return '<img class="'+cls+' icon-img" src="'+esc(meta.url)+'" alt="">';
+      var safe=String(id||"bag").replace(/[^a-zA-Z0-9_-]/g,"")||"bag";
+      return '<svg class="'+cls+'"><use href="#i-'+safe+'"/></svg>';
+    }
     var faMap="۰۱۲۳۴۵۶۷۸۹";
     var toFa=function(v){return String(v).replace(/[0-9]/g,function(d){return faMap[d]})};
     var toEn=function(v){return String(v==null?"":v).replace(/[۰-۹]/g,function(d){return faMap.indexOf(d)})};
     var money=function(n){return toFa(Number(n).toLocaleString("en-US"))+" افغانی"};
-    var icon=function(id){return '<svg class="ic"><use href="#i-'+id+'"/></svg>'};
+    var icon=function(id){return iconVisual(id,"ic");};
     function parseList(v){ return String(v||"").split(/[,،]/).map(function(x){return x.trim()}).filter(Boolean); }
 
     var state={products:[],stores:[],config:{}}, editIndex=-1, storeEditIndex=-1, dirty=false, modalImages=[];
+    var iconPickTarget=null; /* id of hidden input to fill */
 
     var toastTimer;
     function toast(msg){ var el=$("#toast"); if(!el)return; el.textContent=msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.classList.remove("show")},2600); }
@@ -711,9 +762,11 @@
     function collectConfig(){
       var _cats=(state.config&&Array.isArray(state.config.categories))?state.config.categories:[];
       var _sc=(state.config&&Array.isArray(state.config.showcase))?state.config.showcase:[];
+      var _icons=(state.config&&Array.isArray(state.config.icons))?state.config.icons:[];
       state.config={
         categories:_cats,
         showcase:_sc,
+        icons:_icons,
         whatsapp:$("#cfg_whatsapp").value.trim(),
         logo:(state.config&&state.config.logo)||"",
         heroImage:(state.config&&state.config.heroImage)||"",
@@ -733,7 +786,6 @@
       "hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en",
       "hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
     function faPct(v){ return String(Math.round((parseFloat(v)||1)*100)).replace(/[0-9]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹"[d]})+"٪"; }
-    function esc(s){ return String(s||"").replace(/"/g,"&quot;"); }
     function fillContent(){
       var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
       var hs=$("#c_heroScale"); if(hs){ hs.value=(c.heroScale&&parseFloat(c.heroScale))?c.heroScale:"1"; var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); }
@@ -968,37 +1020,100 @@
       var wrap=$("#catRows"); if(!wrap) return;
       var cats=catList();
       wrap.innerHTML=cats.map(function(c,i){
-        var opts=CAT_ICON_OPTS.map(function(ic){return '<option value="'+ic[0]+'"'+(c.icon===ic[0]?' selected':'')+'>'+ic[1]+'</option>';}).join("");
+        var en=c.enabled!==false;
         return '<div class="cat-row" data-ci="'+i+'" data-key="'+esc(c.key||"")+'" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
-          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (فارسی)</label><input class="c-name" value="'+esc(c.name||"")+'"></div>'
-          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام (English)</label><input class="c-name_en" dir="ltr" value="'+esc(c.name_en||"")+'"></div>'
-          +'<div class="field" style="min-width:120px;margin:0"><label>آیکن</label><select class="c-icon">'+opts+'</select></div>'
+          +'<div class="ord-btns">'
+          +'<button type="button" class="btn btn-outline btn-sm c-up" title="بالا">↑</button>'
+          +'<button type="button" class="btn btn-outline btn-sm c-down" title="پایین">↓</button>'
+          +'</div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام دری</label><input class="c-name" value="'+esc(c.name||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>نام English</label><input class="c-name_en" dir="ltr" value="'+esc(c.name_en||"")+'"></div>'
+          +'<div class="field" style="min-width:140px;margin:0"><label>آیکن</label>'
+          +'<input type="hidden" class="c-icon" value="'+esc(c.icon||"gift")+'">'
+          +'<button type="button" class="icon-pick-btn c-icon-btn" data-ci="'+i+'"><span class="preview">'+iconVisual(c.icon||"gift")+'</span><span>انتخاب</span></button>'
+          +'</div>'
+          +'<label class="toggle-en"><input type="checkbox" class="c-enabled"'+(en?" checked":"")+'> فعال</label>'
           +'<button class="btn btn-danger btn-sm c-del" type="button" title="حذف کتگوری">حذف</button>'
+          +'<div class="note" style="width:100%;margin:0">شناسه ثابت: <code dir="ltr">'+esc(c.key||"")+'</code></div>'
           +'</div>';
       }).join("");
     }
     function collectCats(){
       var rows=document.querySelectorAll("#catRows .cat-row");
       var arr=[];
-      Array.prototype.forEach.call(rows,function(row){
+      Array.prototype.forEach.call(rows,function(row,i){
         var name=row.querySelector(".c-name").value.trim();
         var name_en=row.querySelector(".c-name_en").value.trim();
-        var iconv=row.querySelector(".c-icon").value;
+        var iconv=(row.querySelector(".c-icon")||{}).value||"gift";
         var key=row.getAttribute("data-key")||slugKey(name||name_en);
-        arr.push({key:key,name:name,name_en:name_en,icon:iconv});
+        var enEl=row.querySelector(".c-enabled");
+        arr.push({key:key,name:name,name_en:name_en,icon:iconv,order:i,enabled:enEl?!!enEl.checked:true});
       });
       state.config.categories=arr;
     }
     function fillCatSelect(sel){
       var el=$("#f_cat"); if(!el) return;
-      var cats=catList().filter(function(c){return c.name||c.name_en;});
+      var cats=catList().filter(function(c){return (c.name||c.name_en) && c.enabled!==false;});
+      /* keep current product's cat even if disabled */
       var cur=sel||el.value;
-      el.innerHTML=cats.map(function(c){return '<option value="'+esc(c.key)+'">'+esc(c.name||c.name_en)+'</option>';}).join("");
+      if(cur && !cats.some(function(c){return c.key===cur;})){
+        var orphan=catList().filter(function(c){return c.key===cur;})[0];
+        if(orphan) cats=cats.concat([orphan]);
+        else cats=cats.concat([{key:cur,name:cur}]);
+      }
+      el.innerHTML=cats.map(function(c){return '<option value="'+esc(c.key)+'">'+esc(c.name||c.name_en||c.key)+'</option>';}).join("");
       if(cur && cats.some(function(c){return c.key===cur;})) el.value=cur;
     }
-    function showcaseList(){ if(!Array.isArray(state.config.showcase)||!state.config.showcase.length) state.config.showcase=DEFAULT_SHOWCASE.map(function(x){return {title:x.title,title_en:x.title_en,sub:x.sub,sub_en:x.sub_en,icon:x.icon,filter:x.filter};}); return state.config.showcase; }
+    function setIconPreview(el, id){ if(el) el.innerHTML=iconVisual(id||"gift"); }
+    function openIconPicker(opts){
+      opts=opts||{};
+      iconPickTarget=opts;
+      var cur=opts.current||"";
+      if(!cur && opts.inputId){ var inp=document.getElementById(opts.inputId); if(inp) cur=inp.value||""; }
+      if(!cur && opts.hidden) cur=opts.hidden.value||"";
+      var grid=$("#iconPickerGrid"); if(!grid) return;
+      grid.innerHTML=iconList().map(function(ic){
+        return '<button type="button" class="icon-tile'+(ic.id===cur?" selected":"")+'" data-id="'+esc(ic.id)+'">'
+          +'<span class="vis">'+iconVisual(ic.id)+'</span>'
+          +'<span class="lbl">'+esc(ic.label||ic.label_en||ic.id)+'</span></button>';
+      }).join("");
+      $("#iconPickerOverlay").classList.add("show");
+    }
+    function closeIconPicker(){ $("#iconPickerOverlay").classList.remove("show"); iconPickTarget=null; }
+    function renderIconsAdmin(){
+      var wrap=$("#iconRows"); if(!wrap) return;
+      var list=iconList();
+      wrap.innerHTML=list.map(function(ic,i){
+        return '<div class="icon-admin-row" data-ii="'+i+'" data-id="'+esc(ic.id)+'" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
+          +'<div class="preview" style="width:40px;height:40px;display:grid;place-items:center;background:#f3efe7;border-radius:10px">'+iconVisual(ic.id)+'</div>'
+          +'<div class="field" style="flex:1;min-width:120px;margin:0"><label>نام دری</label><input class="i-label" value="'+esc(ic.label||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:120px;margin:0"><label>نام English</label><input class="i-label_en" dir="ltr" value="'+esc(ic.label_en||"")+'"></div>'
+          +'<div class="note" style="min-width:100px">نوع: '+esc(ic.type||"sprite")+(ic.type==="emoji"?" "+esc(ic.emoji||""):"")+'</div>'
+          +(ic.type==="sprite"?'':'<button type="button" class="btn btn-danger btn-sm i-del">حذف</button>')
+          +'</div>';
+      }).join("");
+    }
+    function collectIcons(){
+      var rows=document.querySelectorAll("#iconRows .icon-admin-row");
+      var arr=[];
+      Array.prototype.forEach.call(rows,function(row){
+        var id=row.getAttribute("data-id");
+        var prev=iconList().filter(function(x){return x.id===id;})[0]||{id:id,type:"sprite"};
+        arr.push({
+          id:id,
+          type:prev.type||"sprite",
+          emoji:prev.emoji||undefined,
+          url:prev.url||undefined,
+          label:row.querySelector(".i-label").value.trim(),
+          label_en:row.querySelector(".i-label_en").value.trim()
+        });
+      });
+      /* keep entries not rendered? shouldn't happen */
+      state.config.icons=arr;
+    }
+    function showcaseList(){ if(!Array.isArray(state.config.showcase)) state.config.showcase=[]; return state.config.showcase; }
     function scFilterOptions(sel){
-      var cats=catList().filter(function(c){return c.name||c.name_en;});
+      var cats=catList().filter(function(c){return (c.name||c.name_en) && c.enabled!==false;});
       var opts='<option value="all"'+((!sel||sel==="all")?' selected':'')+'>همه محصولات</option>';
       opts+=cats.map(function(c){return '<option value="'+esc(c.key)+'"'+(sel===c.key?' selected':'')+'>'+esc(c.name||c.name_en)+'</option>';}).join("");
       return opts;
@@ -1007,17 +1122,19 @@
       var wrap=$("#scRows"); if(!wrap) return;
       var items=showcaseList();
       wrap.innerHTML=items.map(function(x,i){
-        var iconOpts=CAT_ICON_OPTS.map(function(ic){return '<option value="'+ic[0]+'"'+(x.icon===ic[0]?' selected':'')+'>'+ic[1]+'</option>';}).join("");
         return '<div class="sc-row" data-si="'+i+'" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'
-          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>عنوان (فارسی)</label><input class="s-title" value="'+esc(x.title||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>عنوان (دری)</label><input class="s-title" value="'+esc(x.title||"")+'"></div>'
           +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>عنوان (English)</label><input class="s-title_en" dir="ltr" value="'+esc(x.title_en||"")+'"></div>'
-          +'<div class="field" style="min-width:110px;margin:0"><label>آیکن</label><select class="s-icon">'+iconOpts+'</select></div>'
+          +'<div class="field" style="min-width:140px;margin:0"><label>آیکن</label>'
+          +'<input type="hidden" class="s-icon" value="'+esc(x.icon||"gift")+'">'
+          +'<button type="button" class="icon-pick-btn s-icon-btn"><span class="preview">'+iconVisual(x.icon||"gift")+'</span><span>انتخاب</span></button>'
+          +'</div>'
           +'<div class="field" style="min-width:140px;margin:0"><label>می‌رود به کتگوری</label><select class="s-filter">'+scFilterOptions(x.filter)+'</select></div>'
           +'<button class="btn btn-danger btn-sm s-del" type="button">حذف</button>'
           +'</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
-          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>زیرعنوان (فارسی)</label><input class="s-sub" value="'+esc(x.sub||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>زیرعنوان (دری)</label><input class="s-sub" value="'+esc(x.sub||"")+'"></div>'
           +'<div class="field" style="flex:1;min-width:130px;margin:0"><label>زیرعنوان (English)</label><input class="s-sub_en" dir="ltr" value="'+esc(x.sub_en||"")+'"></div>'
           +'</div>'
           +'</div>';
@@ -1037,7 +1154,7 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(scrubLocalImages(d||{})); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
+    function loadInto(d){ var n=normalize(scrubLocalImages(d||{})); state.products=n.products; state.stores=n.stores; state.config=n.config; iconList(); catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); renderIconsAdmin(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
     function loadFromServer(){
       if(!window.MAHOApi || !MAHOApi.getToken("admin")){ showGate("برای مدیریت باید به سرور وارد شوید."); return; }
       MAHOApi.adminState().then(function(d){
@@ -1056,12 +1173,13 @@
       editIndex=(typeof i==="number")?i:-1;
       $("#modalTitle").textContent=editIndex>=0?"ویرایش محصول":"افزودن محصول";
       $("#modalMsg").textContent="";
-      var cats=catList(); var firstCat=(cats[0]&&cats[0].key)||"clothing";
+      var cats=catList(); var firstCat=(cats.filter(function(c){return c.enabled!==false;})[0]||cats[0]||{}).key||"";
       var p=editIndex>=0?state.products[editIndex]:{cat:firstCat,icon:"dress",badge:""};
       fillCatSelect(p.cat||firstCat);
       $("#f_name").value=p.name||""; $("#f_name_en").value=p.name_en||"";
       $("#f_code").value=p.code||""; $("#f_stock").value=(p.stock==null?"":p.stock);
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
+      setIconPreview($("#f_iconPrev"), p.icon||"dress");
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:""; $("#f_discount").value=(p.discount!=null&&p.discount!==0)?p.discount:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
       modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
@@ -1122,28 +1240,26 @@
       $("#st_area").value=s.area||""; $("#st_area_en").value=s.area_en||"";
       $("#st_hours").value=s.hours||""; $("#st_hours_en").value=s.hours_en||"";
       $("#st_phone").value=s.phone||""; $("#st_phone_en").value=s.phone_en||"";
-      $("#st_map").value=s.map||"";
+      $("#st_map").value=s.map||s.mapUrl||"";
+      $("#st_lat").value=(s.lat!=null?s.lat:"");
+      $("#st_lng").value=(s.lng!=null?s.lng:"");
       $("#storeOverlay").classList.add("show");
       updateStoreCoordNote();
     }
     function closeStore(){$("#storeOverlay").classList.remove("show")}
-    function parseLatLngA(url){
-      var s=String(url||"");
-      var m=s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
-        ||s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
-        ||s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
-        ||s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
-      if(m){ var la=parseFloat(m[1]),lo=parseFloat(m[2]); if(isFinite(la)&&isFinite(lo)) return [la,lo]; }
-      return null;
-    }
+    function validLat(v){ var n=parseFloat(toEn(v)); return isFinite(n)&&n>=-90&&n<=90; }
+    function validLng(v){ var n=parseFloat(toEn(v)); return isFinite(n)&&n>=-180&&n<=180; }
     function updateStoreCoordNote(){
       var note=$("#st_coordNote"); if(!note)return;
-      var c=parseLatLngA($("#st_map").value||"");
-      if(($("#st_map").value||"").trim()===""){ note.style.color=""; note.textContent="برای محاسبه‌ی خودکار فاصله‌ی دلیوری، لینک گوگل‌مپ فروشگاه را اینجا بگذارید (لینکی که شامل مختصات @lat,lng است)."; }
-      else if(c){ note.style.color="#2e7d32"; note.textContent="✔ مختصات از لینک شناسایی شد ("+c[0].toFixed(4)+", "+c[1].toFixed(4)+") — محاسبه‌ی فاصله فعال است."; }
-      else { note.style.color="#b26a00"; note.textContent="⚠ از این لینک مختصات پیدا نشد. لطفاً لینکی از نوار آدرس گوگل‌مپ (شامل @lat,lng) کپی کنید تا محاسبه‌ی فاصله کار کند."; }
+      var lat=$("#st_lat").value.trim(), lng=$("#st_lng").value.trim();
+      var map=($("#st_map").value||"").trim();
+      if(!lat&&!lng){ note.style.color=""; note.textContent="لینک نقشه فقط برای «مشاهده روی نقشه» است. برای دلیوری، Latitude و Longitude را جداگانه وارد کنید."; }
+      else if(validLat(lat)&&validLng(lng)){ note.style.color="#2e7d32"; note.textContent="✔ مختصات معتبر است — محاسبه‌ی فاصله از این اعداد انجام می‌شود."+(map?"":" (لینک نقشه هنوز خالی است)"); }
+      else { note.style.color="#b26a00"; note.textContent="⚠ Latitude باید بین −۹۰ و ۹۰ و Longitude بین −۱۸۰ و ۱۸۰ باشد."; }
     }
     $("#st_map").addEventListener("input",updateStoreCoordNote);
+    $("#st_lat").addEventListener("input",updateStoreCoordNote);
+    $("#st_lng").addEventListener("input",updateStoreCoordNote);
     $("#addStoreBtn").onclick=function(){openStore()};
     $("#storeCancelBtn").onclick=closeStore;
     $("#storeOverlay").addEventListener("click",function(e){if(e.target===$("#storeOverlay"))closeStore()});
@@ -1155,13 +1271,17 @@
     $("#storeOkBtn").onclick=function(){
       var name=$("#st_name").value.trim();
       if(!name){ $("#storeMsg").textContent="نام فروشگاه الزامی است."; return; }
+      var latRaw=$("#st_lat").value.trim(), lngRaw=$("#st_lng").value.trim();
+      if(latRaw!==""||lngRaw!==""){
+        if(!validLat(latRaw)||!validLng(lngRaw)){ $("#storeMsg").textContent="Latitude (−۹۰…۹۰) و Longitude (−۱۸۰…۱۸۰) را درست وارد کنید."; return; }
+      }
       var s={ name:name, name_en:$("#st_name_en").value.trim(),
         area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
         hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
         phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
         map:$("#st_map").value.trim() };
-      var c=parseLatLngA(s.map); if(c){ s.lat=String(c[0]); s.lng=String(c[1]); }
-      if(storeEditIndex>=0){ var prev=state.stores[storeEditIndex]||{}; if(!c&&prev.lat&&prev.lng){ s.lat=prev.lat; s.lng=prev.lng; } state.stores[storeEditIndex]=s; } else state.stores.push(s);
+      if(latRaw!==""&&lngRaw!==""){ s.lat=String(parseFloat(toEn(latRaw))); s.lng=String(parseFloat(toEn(lngRaw))); }
+      if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
       renderStoreTable(); setDirty(true); closeStore();
     };
 
@@ -1204,24 +1324,118 @@
     $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 
     /* ---------- categories ---------- */
-    $("#addCatBtn").onclick=function(){ collectCats(); var cats=catList(); cats.push({key:"cat_"+Date.now().toString(36),name:"",name_en:"",icon:"gift"}); renderCats(); fillCatSelect(); setDirty(true); };
+    $("#addCatBtn").onclick=function(){ collectCats(); var cats=catList(); cats.push({key:"cat_"+Date.now().toString(36),name:"",name_en:"",icon:"gift",order:cats.length,enabled:true}); renderCats(); fillCatSelect(); setDirty(true); };
     $("#catRows").addEventListener("click",function(e){
+      var pick=e.target.closest(".c-icon-btn");
+      if(pick){
+        var row=pick.closest(".cat-row"); if(!row) return;
+        var hid=row.querySelector(".c-icon");
+        openIconPicker({
+          hidden:hid,
+          preview:pick.querySelector(".preview"),
+          current:hid.value,
+          onPick:function(id){ hid.value=id; collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); }
+        });
+        return;
+      }
+      var up=e.target.closest(".c-up"), down=e.target.closest(".c-down");
+      if(up||down){
+        collectCats();
+        var row=(up||down).closest(".cat-row"); if(!row) return;
+        var i=parseInt(row.getAttribute("data-ci"),10); var cats=catList();
+        var j=up?i-1:i+1; if(j<0||j>=cats.length) return;
+        var tmp=cats[i]; cats[i]=cats[j]; cats[j]=tmp;
+        cats.forEach(function(c,idx){c.order=idx;});
+        renderCats(); fillCatSelect(); setDirty(true); return;
+      }
       var del=e.target.closest(".c-del"); if(!del) return;
       var row=del.closest(".cat-row"); if(!row) return;
       collectCats();
       var i=parseInt(row.getAttribute("data-ci"),10); var cats=catList(); var c=cats[i]; if(!c) return;
       var used=state.products.filter(function(p){return p.cat===c.key;}).length;
-      var msg=used>0?("این کتگوری روی "+toFa(used)+" کالا استفاده شده. با حذف، آن کالاها بدون کتگوری می‌مانند. حذف شود؟"):"این کتگوری حذف شود؟";
-      if(!confirm(msg)) return;
-      cats.splice(i,1); renderCats(); fillCatSelect(); setDirty(true);
+      if(used>0){
+        if(!confirm("هشدار: این کتگوری روی "+toFa(used)+" محصول استفاده شده است.\nحذف کتگوری محصولات را از شناسه‌ی «"+c.key+"» جدا نمی‌کند، اما کتگوری از فهرست مدیریت و فیلترها حذف می‌شود.\nآیا مطمئن هستید؟")) return;
+      } else if(!confirm("این کتگوری حذف شود؟")) return;
+      cats.splice(i,1); cats.forEach(function(x,idx){x.order=idx;}); renderCats(); fillCatSelect(); setDirty(true);
     });
     $("#catRows").addEventListener("input",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
     $("#catRows").addEventListener("change",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
     $("#saveBtnCats").onclick=function(){ collectCats(); saveAll(); };
 
+    /* ---------- icons ---------- */
+    if($("#f_iconBtn")) $("#f_iconBtn").onclick=function(){ openIconPicker({inputId:"f_icon", preview:$("#f_iconPrev")}); };
+    $("#iconPickerCancel").onclick=closeIconPicker;
+    $("#iconPickerOverlay").addEventListener("click",function(e){ if(e.target===$("#iconPickerOverlay")) closeIconPicker(); });
+    $("#iconPickerGrid").addEventListener("click",function(e){
+      var tile=e.target.closest(".icon-tile"); if(!tile||!iconPickTarget) return;
+      var id=tile.getAttribute("data-id");
+      if(iconPickTarget.preview) setIconPreview(iconPickTarget.preview, id);
+      if(iconPickTarget.hidden) iconPickTarget.hidden.value=id;
+      if(iconPickTarget.onPick) iconPickTarget.onPick(id);
+      else {
+        var inp=document.getElementById(iconPickTarget.inputId);
+        if(inp) inp.value=id;
+        setDirty(true);
+      }
+      closeIconPicker();
+    });
+    $("#iconRows").addEventListener("input",function(){ collectIcons(); setDirty(true); });
+    $("#iconRows").addEventListener("click",function(e){
+      var del=e.target.closest(".i-del"); if(!del) return;
+      collectIcons();
+      var row=del.closest(".icon-admin-row"); if(!row) return;
+      var id=row.getAttribute("data-id");
+      var usedCat=catList().some(function(c){return c.icon===id;});
+      var usedSc=showcaseList().some(function(x){return x.icon===id;});
+      var usedProd=state.products.some(function(p){return p.icon===id;});
+      if(usedCat||usedSc||usedProd){ if(!confirm("این آیکن در کتگوری/Showcase/محصول استفاده شده. حذف شود؟")) return; }
+      state.config.icons=iconList().filter(function(x){return x.id!==id;});
+      renderIconsAdmin(); renderCats(); renderShowcaseAdmin(); setDirty(true);
+    });
+    $("#addEmojiIconBtn").onclick=function(){
+      var em=prompt("ایموجی را وارد کنید (بدون HTML):","⭐");
+      if(!em) return;
+      em=String(em).replace(/[<>&"'`\\/]/g,"").trim().slice(0,8);
+      if(!em){ alert("ایموجی نامعتبر است."); return; }
+      collectIcons();
+      var id="emoji_"+Date.now().toString(36);
+      iconList().push({id:id,type:"emoji",emoji:em,label:em,label_en:em});
+      renderIconsAdmin(); setDirty(true);
+    };
+    $("#addUploadIconBtn").onclick=function(){ $("#iconUploadInput").click(); };
+    $("#iconUploadInput").addEventListener("change",function(e){
+      var f=e.target.files&&e.target.files[0]; e.target.value="";
+      if(!f) return;
+      if(!/^image\/(png|webp)$/i.test(f.type)){ alert("فقط PNG یا WebP مجاز است."); return; }
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){ alert("ابتدا وارد سرور شوید."); return; }
+      toast("آپلود آیکن…");
+      MAHOApi.adminUpload([f]).then(function(res){
+        var url=(res.urls&&res.urls[0])||res.url; if(!url) throw new Error("no url");
+        collectIcons();
+        var id="img_"+Date.now().toString(36);
+        iconList().push({id:id,type:"image",url:url,label:"آیکن سفارشی",label_en:"Custom icon"});
+        renderIconsAdmin(); setDirty(true); toast("آیکن آپلود شد ✓");
+      }).catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); });
+    });
+    if($("#saveBtnIcons")) $("#saveBtnIcons").onclick=function(){ collectIcons(); saveAll(); };
+
     /* ---------- showcase cards (below hero) ---------- */
     $("#addScBtn").onclick=function(){ collectShowcase(); showcaseList().push({title:"",title_en:"",sub:"",sub_en:"",icon:"gift",filter:"all"}); renderShowcaseAdmin(); setDirty(true); };
-    $("#scRows").addEventListener("click",function(e){ var del=e.target.closest(".s-del"); if(!del)return; var row=del.closest(".sc-row"); if(!row)return; collectShowcase(); var i=parseInt(row.getAttribute("data-si"),10); showcaseList().splice(i,1); renderShowcaseAdmin(); setDirty(true); });
+    $("#scRows").addEventListener("click",function(e){
+      var pick=e.target.closest(".s-icon-btn");
+      if(pick){
+        var row=pick.closest(".sc-row"); if(!row) return;
+        var hid=row.querySelector(".s-icon");
+        openIconPicker({
+          hidden:hid,
+          preview:pick.querySelector(".preview"),
+          current:hid.value,
+          onPick:function(id){ hid.value=id; collectShowcase(); setDirty(true); }
+        });
+        return;
+      }
+      var del=e.target.closest(".s-del"); if(!del)return; var row=del.closest(".sc-row"); if(!row)return; collectShowcase(); var i=parseInt(row.getAttribute("data-si"),10); showcaseList().splice(i,1); renderShowcaseAdmin(); setDirty(true);
+    });
     $("#scRows").addEventListener("input",function(){ collectShowcase(); setDirty(true); });
     $("#scRows").addEventListener("change",function(){ collectShowcase(); setDirty(true); });
     $("#saveBtnShowcase").onclick=function(){ collectShowcase(); saveAll(); };
@@ -1229,6 +1443,7 @@
     /* ---------- save / export / import / reset ---------- */
     function saveAll(){
       if(document.querySelector("#catRows .cat-row")) collectCats();
+      if(document.querySelector("#iconRows .icon-admin-row")) collectIcons();
       if(document.querySelector("#scRows .sc-row")) collectShowcase();
       if(document.querySelector("#tsRows .ts-row")) collectTs();
       collectConfig(); collectContent();

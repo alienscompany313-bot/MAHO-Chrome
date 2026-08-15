@@ -23,7 +23,9 @@
       "hours_en": "Sat–Thu, 9:00 AM – 8:00 PM",
       "phone": "‪+93 791 505 454‬",
       "phone_en": "+93 791 505 454",
-      "map": "https://maps.app.goo.gl/U6miPMFLBSY6woFo6"
+      "map": "https://maps.app.goo.gl/8SJq7HECgYeGkCJD9",
+      "lat": "34.51162312730907",
+      "lng": "69.12056249589499"
     }
   ],
   "config": {
@@ -34,6 +36,26 @@
     "paymentLink": "",
     "hesab": { "link": "", "number": "" },
     "delivery": { "enabled": true, "perKm": 10, "freeKm": 0, "urgentFee": 100 },
-    "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" }
+    "emailjs": { "serviceId": "", "templateId": "", "orderTemplateId": "", "publicKey": "" },
+    "categories": [
+      { "key": "clothing", "name": "پوشاک", "name_en": "Clothing", "icon": "dress", "order": 0, "enabled": true },
+      { "key": "scarf", "name": "شال و روسری", "name_en": "Scarves", "icon": "scarf", "order": 1, "enabled": true },
+      { "key": "bagshoes", "name": "کیف و کفش", "name_en": "Bags & Shoes", "icon": "bag", "order": 2, "enabled": true },
+      { "key": "beauty", "name": "آرایشی و بهداشتی", "name_en": "Beauty", "icon": "sparkles", "order": 3, "enabled": true },
+      { "key": "accessory", "name": "اکسسوری", "name_en": "Accessories", "icon": "ring", "order": 4, "enabled": true }
+    ],
+    "icons": [
+      { "id": "dress", "type": "sprite", "label": "لباس", "label_en": "Dress" },
+      { "id": "coat", "type": "sprite", "label": "مانتو", "label_en": "Coat" },
+      { "id": "shirt", "type": "sprite", "label": "بلوز", "label_en": "Blouse" },
+      { "id": "scarf", "type": "sprite", "label": "شال", "label_en": "Scarf" },
+      { "id": "bag", "type": "sprite", "label": "کیف", "label_en": "Bag" },
+      { "id": "heel", "type": "sprite", "label": "کفش", "label_en": "Shoes" },
+      { "id": "ring", "type": "sprite", "label": "زیور", "label_en": "Jewelry" },
+      { "id": "watch", "type": "sprite", "label": "ساعت", "label_en": "Watch" },
+      { "id": "sparkles", "type": "sprite", "label": "زیبایی", "label_en": "Beauty" },
+      { "id": "perfume", "type": "sprite", "label": "عطر", "label_en": "Perfume" },
+      { "id": "gift", "type": "sprite", "label": "هدیه", "label_en": "Gift" }
+    ]
   }
 }

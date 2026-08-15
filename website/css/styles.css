@@ -384,6 +384,10 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   transition: color .2s ease, background .2s ease, transform .2s ease;
 }
 .cat-card .ico .ic { width: 30px; height: 30px; stroke-width: 1.6; }
+.cat-card .ico .icon-emoji { font-size: 28px; line-height: 1; }
+.cat-card .ico .icon-img { width: 30px; height: 30px; object-fit: contain; }
+.product-media .icon-emoji { font-size: 48px; line-height: 1; }
+.product-media .icon-img { width: 64px; height: 64px; object-fit: contain; }
 .cat-card:hover .ico { color: #fff; background: linear-gradient(150deg, var(--gold), var(--gold-deep)); transform: translateY(-2px); }
 .cat-card h3 { font-size: 18px; margin-bottom: 4px; }
 .cat-card p { font-size: 13.5px; color: var(--muted); margin: 0; }
