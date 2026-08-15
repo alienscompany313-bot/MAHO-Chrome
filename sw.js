@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maho-enterprise-v1';
+const CACHE_NAME = 'maho-enterprise-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL).catch(() => {})));
   self.skipWaiting();
 });
 
@@ -19,13 +19,16 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Network-first: always try the latest from the network and only fall back to
+// cache when offline. This prevents the app (and anything hosted alongside it,
+// e.g. the /website/ storefront) from being frozen on a stale cached copy.
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    fetch(event.request).then(response => {
       const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
       return response;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
   );
 });

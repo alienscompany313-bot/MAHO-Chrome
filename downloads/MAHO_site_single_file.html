@@ -1,0 +1,2971 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* Self-heal: remove any stale service worker/caches (from the older MAHO app)
+       so this site always loads the latest version instead of a cached copy. */
+    (function () {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+          navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }).catch(function () {});
+        }
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) { keys.forEach(function (k) { caches.delete(k); }); }).catch(function () {});
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <title>لباس و لوازم بانوان MAHO | پوشاک و لوازم زنانه</title>
+  <meta name="description" content="لباس و لوازم بانوان MAHO — لباس زنانه، مانتو، شال و روسری، کیف، کفش، اکسسوری و لوازم آرایشی با کیفیت ممتاز و قیمت منصفانه. کوته سنگی، کابل، افغانستان.">
+  <meta name="theme-color" content="#111111">
+
+  <meta property="og:title" content="لباس و لوازم بانوان MAHO">
+  <meta property="og:description" content="پوشاک و لوازم زنانه با کیفیت ممتاز — MAHO، کوته سنگی، کابل.">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+/* ===========================================================
+   MAHO Retail — Storefront Website
+   Brand palette matches the MAHO Enterprise management app
+   (black + gold luxury, cream surfaces, Persian / RTL).
+   =========================================================== */
+
+:root {
+  --black: #111111;
+  --black-soft: #1c1c1c;
+  --gold: #c8a35f;
+  --gold-deep: #a9843f;
+  --gold-soft: #e8d3a3;
+  --cream: #fbf8f1;
+  --paper: #ffffff;
+  --ink: #23201a;
+  --muted: #7a7368;
+  --line: #ece5d6;
+  --green: #2e7d32;
+  --red: #c62828;
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 26px;
+  --shadow-sm: 0 2px 10px rgba(17, 17, 17, .06);
+  --shadow: 0 12px 34px rgba(17, 17, 17, .10);
+  --shadow-gold: 0 14px 34px rgba(200, 163, 95, .32);
+
+  --container: 1200px;
+  --header-h: 74px;
+
+  --font: "Vazirmatn", Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 14px); }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--cream);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .4em; font-weight: 800; letter-spacing: -.2px; }
+
+p { margin: 0 0 1em; }
+
+.container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: 22px; }
+
+.muted { color: var(--muted); }
+
+.accent { color: var(--gold-deep); }
+
+/* ---------- Icons (inline SVG sprite) ---------- */
+.ic {
+  width: 1em; height: 1em; flex: none;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: middle;
+}
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  --_bg: var(--gold);
+  --_fg: #1a1509;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: var(--_bg);
+  color: var(--_fg);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-gold); }
+.btn:active { transform: translateY(0); }
+.btn-ghost { --_bg: transparent; --_fg: #fff; border-color: rgba(255, 255, 255, .35); }
+.btn-ghost:hover { background: rgba(255, 255, 255, .10); box-shadow: none; }
+.btn-outline { --_bg: transparent; --_fg: var(--ink); border-color: var(--gold); }
+.btn-outline:hover { background: var(--gold); color: #1a1509; box-shadow: var(--shadow-gold); }
+.btn-lg { padding: 15px 30px; font-size: 16px; }
+
+/* ---------- Header ---------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--header-h);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  background: rgba(17, 17, 17, .78);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  transition: background .25s ease, box-shadow .25s ease, height .25s ease;
+}
+.site-header.scrolled { background: rgba(17, 17, 17, .96); box-shadow: 0 10px 30px rgba(0, 0, 0, .28); }
+.site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+
+.brand { display: flex; align-items: center; gap: 12px; color: #fff; }
+.brand .logo {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2px solid var(--gold); color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 700;
+  background: radial-gradient(circle at 30% 25%, rgba(200, 163, 95, .28), transparent 70%);
+}
+.brand .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand .brand-name { font-weight: 800; font-size: 20px; letter-spacing: .5px; }
+.brand .brand-sub { font-size: 11px; color: var(--gold-soft); letter-spacing: 2px; }
+
+.main-nav { display: flex; align-items: center; gap: 6px; }
+.main-nav a {
+  color: #e9e9e9; padding: 9px 13px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  position: relative; transition: color .18s ease, background .18s ease;
+}
+.main-nav a::after {
+  content: ""; position: absolute; inset-inline: 13px; bottom: 5px; height: 2px;
+  background: var(--gold); transform: scaleX(0); transform-origin: center; transition: transform .22s ease;
+}
+.main-nav a:hover, .main-nav a.active { color: #fff; }
+.main-nav a:hover::after, .main-nav a.active::after { transform: scaleX(1); }
+
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
+.lang-btn {
+  background: transparent; border: 1.5px solid rgba(255, 255, 255, .35); color: #fff;
+  font-family: inherit; font-weight: 700; font-size: 14px; padding: 8px 14px;
+  border-radius: 999px; cursor: pointer; transition: all .18s ease;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.lang-btn:hover { background: rgba(255, 255, 255, .1); border-color: var(--gold); color: var(--gold-soft); }
+.lang-btn .ic { width: 16px; height: 16px; }
+
+/* Cart button + badge */
+.cart-btn { position: relative; background: transparent; border: 1.5px solid rgba(255, 255, 255, .35); color: #fff; border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; transition: .18s; }
+.cart-btn:hover { border-color: var(--gold); color: var(--gold-soft); }
+.cart-btn .ic { width: 20px; height: 20px; }
+.cart-count { position: absolute; top: -6px; inset-inline-start: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--gold); color: #1a1509; font-size: 12px; font-weight: 800; display: grid; place-items: center; line-height: 1; }
+.cart-count.empty { display: none; }
+.cat-card { cursor: pointer; }
+
+/* Overlays / modals */
+.ov { position: fixed; inset: 0; background: #00000088; z-index: 150; display: none; opacity: 0; transition: opacity .25s; }
+.ov.show { display: block; opacity: 1; }
+.ov-body { position: absolute; }
+
+/* Quick view (centered modal) */
+.qv-modal { position: absolute; inset-inline: 0; top: 50%; margin-inline: auto; transform: translateY(-50%) scale(.96); transition: transform .25s; max-width: 620px; width: calc(100% - 32px); background: #fff; border-radius: 20px; overflow: hidden; max-height: 92vh; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.ov.show .qv-modal { transform: translateY(-50%) scale(1); }
+.qv-media { position: relative; aspect-ratio: 16/10; background: linear-gradient(150deg, var(--black-soft), #2b2419); display: grid; place-items: center; color: #fff; }
+.qv-media .ic { width: 88px; height: 88px; stroke-width: 1.2; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.qv-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.qv-body { padding: 22px; display: flex; flex-direction: column; gap: 6px; }
+.qv-cat { color: var(--gold-deep); font-weight: 700; font-size: 14px; }
+.qv-name { font-size: 23px; margin: 0; }
+.qv-price { font-size: 22px; font-weight: 800; margin-top: 4px; }
+.qv-price del { color: var(--muted); font-size: 15px; margin-inline-start: 8px; font-weight: 600; }
+.qv-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+.qty { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; }
+.qty button { width: 42px; height: 44px; border: 0; background: var(--cream); font-size: 20px; cursor: pointer; color: var(--ink); }
+.qty button:hover { background: var(--gold); color: #1a1509; }
+.qty input { width: 54px; height: 44px; border: 0; text-align: center; font-family: inherit; font-weight: 700; font-size: 16px; background: #fff; }
+.qty input:focus { outline: none; }
+.modal-x { position: absolute; top: 12px; inset-inline-end: 12px; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; color: #111; cursor: pointer; font-size: 18px; box-shadow: var(--shadow-sm); }
+
+/* Cart drawer */
+.cart-drawer { position: absolute; inset-block: 0; inset-inline-end: 0; width: min(430px, 100%); background: #fff; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .3s ease; }
+[dir="rtl"] .cart-drawer { transform: translateX(-100%); }
+.ov.show .cart-drawer { transform: none; }
+.cart-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+.cart-head h3 { margin: 0; font-size: 20px; }
+.cart-close { background: none; border: 0; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+.cart-items { flex: 1; overflow: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.cart-empty { color: var(--muted); text-align: center; margin: 48px 12px; }
+.cart-item { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+.ci-media { width: 58px; height: 58px; border-radius: 10px; overflow: hidden; flex: none; display: grid; place-items: center; background: linear-gradient(150deg, var(--black-soft), #2b2419); color: #fff; position: relative; }
+.ci-media .ic { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.ci-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ci-info { flex: 1; min-width: 0; }
+.ci-info b { display: block; font-size: 15px; }
+.ci-price { color: var(--muted); font-size: 13px; }
+.ci-remove { background: none; border: 0; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 700; padding: 2px 0; }
+.qty.sm button { width: 30px; height: 32px; font-size: 16px; }
+.qty.sm input { width: 34px; height: 32px; font-size: 14px; }
+.cart-foot { border-top: 1px solid var(--line); padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.cart-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; }
+.cart-foot .btn { justify-content: center; }
+.cart-screen { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.cart-screen[hidden] { display: none; }
+.ci-variant { color: var(--muted); font-size: 12.5px; }
+
+/* Quick-view gallery */
+.qv-thumbs { display: flex; gap: 8px; padding: 10px 16px 0; flex-wrap: wrap; }
+.qv-thumbs img { width: 54px; height: 54px; object-fit: cover; border-radius: 9px; border: 2px solid transparent; cursor: pointer; }
+.qv-thumbs img.active { border-color: var(--gold); }
+
+/* Option chips (size / color) */
+.qv-opt { margin-top: 12px; }
+.qv-opt-label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 7px; color: var(--muted); }
+.opt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt-chip { border: 1.5px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 15px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; transition: .15s; }
+.opt-chip:hover { border-color: var(--gold); }
+.opt-chip.active { background: var(--black); color: #fff; border-color: var(--black); }
+.qv-msg { min-height: 18px; margin: 10px 0 0; font-size: 13.5px; font-weight: 700; color: var(--red); }
+.qv-msg.ok { color: var(--green); }
+
+/* Checkout form + tabs + account */
+.link-back { background: none; border: 0; color: var(--gold-deep); font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 0 8px; }
+.checkout-form .field, .cart-items .field { margin-bottom: 12px; }
+.cart-items .field label, .qv-body .field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 5px; }
+.cart-items .field input, .qv-body .field input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; }
+.cart-items .field input:focus, .qv-body .field input:focus { outline: none; border-color: var(--gold); }
+.qv-body .field select { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; background: #fff; }
+.qv-body .field select:focus { outline: none; border-color: var(--gold); }
+.qv-body h4 { font-size: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.pay-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 8px; font-size: 13.5px; }
+.pay-item .pi-num { color: var(--muted); }
+.pay-item button { background: none; border: 0; color: var(--red); cursor: pointer; font-weight: 700; font-size: 13px; }
+.pay-none { color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
+.tabs { display: flex; gap: 6px; background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-bottom: 16px; }
+.tab { flex: 1; border: 0; background: transparent; font-family: inherit; font-weight: 700; font-size: 14px; padding: 9px; border-radius: 999px; cursor: pointer; color: var(--muted); }
+.tab.active { background: var(--black); color: #fff; }
+.acct-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--gold); color: #1a1509; display: grid; place-items: center; font-weight: 800; font-size: 26px; margin: 6px auto 0; }
+
+/* Payment methods */
+.pay-methods { display: flex; flex-direction: column; gap: 8px; }
+.pay-method { text-align: start; border: 1.5px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; padding: 12px 14px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; transition: .15s; position: relative; }
+.pay-method:hover { border-color: var(--gold); }
+.pay-method.active { border-color: var(--black); background: #fbf8f1; box-shadow: inset 0 0 0 1px var(--black); }
+.pay-info { margin-top: 10px; background: var(--cream); border: 1px dashed var(--gold); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; line-height: 1.9; }
+.pay-info b { color: var(--ink); }
+
+/* Orders list */
+.order-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.order-card .order-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.order-card .order-status { font-weight: 800; color: var(--gold-deep); }
+.order-card ul { margin: 8px 0; padding-inline-start: 18px; font-size: 14px; }
+.order-card .order-total { font-weight: 800; }
+.orders-empty { color: var(--muted); text-align: center; margin: 30px 0; }
+.order-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.btn-sm { padding: 7px 13px; font-size: 13px; }
+.btn-danger-sm { border: 1.5px solid #f4c9c9; background: #fdecec; color: var(--red); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.btn-danger-sm:hover { background: #f9dada; }
+.bc-wrap { margin-top: 6px; }
+.bc-code { display: block; font-size: 11px; color: var(--muted); }
+.barcode { max-width: 180px; height: auto; background: #fff; border-radius: 6px; }
+
+/* Fix quick-view zoom + make modals scrollable (also fixes account scroll) */
+.qv-modal { overflow-y: auto; }
+.qv-media { aspect-ratio: auto; height: 300px; }
+
+/* Stock indicators */
+.product-card.out { opacity: .9; }
+.product-media .out-overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #0007; color: #fff; font-weight: 800; font-size: 16px; letter-spacing: .5px; }
+.stock-note { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+.stock-note.low { color: var(--gold-deep); }
+.stock-note.out { color: var(--red); }
+.icon-btn:disabled { opacity: .4; cursor: not-allowed; }
+#payCardExtra[hidden] { display: none; }
+#co_km { border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; }
+.qv-opt-label { display: block; font-weight: 700; font-size: 13px; margin: 4px 0 6px; color: var(--muted); }
+
+.nav-toggle {
+  display: none; width: 44px; height: 44px; border: 0; border-radius: 12px;
+  background: rgba(255, 255, 255, .08); cursor: pointer; padding: 0;
+}
+.nav-toggle span, .nav-toggle span::before, .nav-toggle span::after {
+  content: ""; display: block; width: 22px; height: 2px; background: #fff; margin-inline: auto; border-radius: 2px;
+  transition: transform .25s ease, opacity .2s ease;
+}
+.nav-toggle span::before { transform: translateY(-7px); }
+.nav-toggle span::after { transform: translateY(5px); }
+body.nav-open .nav-toggle span { background: transparent; }
+body.nav-open .nav-toggle span::before { transform: rotate(45deg); }
+body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1px); }
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  min-height: min(92vh, 820px);
+  display: flex;
+  align-items: center;
+  padding-top: var(--header-h);
+  color: #fff;
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(200, 163, 95, .30), transparent 60%),
+    radial-gradient(900px 520px at 5% 110%, rgba(200, 163, 95, .16), transparent 60%),
+    linear-gradient(155deg, #0e0e0e 0%, #1a1712 55%, #221c12 100%);
+  overflow: hidden;
+}
+.hero::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(700px 500px at 75% 20%, #000, transparent 75%);
+          mask-image: radial-gradient(700px 500px at 75% 20%, #000, transparent 75%);
+  opacity: .5; pointer-events: none;
+}
+.hero .container { position: relative; z-index: 2; display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px; margin-bottom: 20px;
+  background: rgba(200, 163, 95, .14); border: 1px solid rgba(200, 163, 95, .4);
+  color: var(--gold-soft); font-size: 13px; font-weight: 700; letter-spacing: .5px;
+}
+.hero h1 { font-size: clamp(34px, 5.4vw, 60px); margin-bottom: 18px; }
+.hero h1 .grad {
+  background: linear-gradient(100deg, var(--gold-soft), var(--gold) 45%, var(--gold-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero p.lead { font-size: clamp(16px, 2vw, 19px); color: #d9d4c8; max-width: 560px; margin-bottom: 28px; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 14px; }
+.hero-stats { display: flex; gap: 30px; margin-top: 40px; flex-wrap: wrap; }
+.hero-stats .stat b { display: block; font-size: 30px; color: #fff; }
+.hero-stats .stat span { font-size: 13px; color: var(--gold-soft); letter-spacing: .5px; }
+
+/* Hero visual: stacked "cards" collage built purely with CSS */
+.hero-visual { position: relative; height: 460px; }
+.hero-card {
+  position: absolute; border-radius: var(--radius-lg); overflow: hidden;
+  background: linear-gradient(145deg, #26211a, #14110c);
+  border: 1px solid rgba(200, 163, 95, .28);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, .45);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 18px; color: #fff;
+}
+.hero-card .tag { align-self: flex-start; background: var(--gold); color: #1a1509; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 999px; margin-bottom: auto; }
+.hero-card h4 { margin: 0; font-size: 17px; }
+.hero-card span { color: var(--gold-soft); font-size: 13px; }
+.hero-card::before {
+  content: ""; position: absolute; inset: 0; z-index: -0;
+  background: radial-gradient(120% 120% at 20% 0%, rgba(200, 163, 95, .22), transparent 55%);
+}
+.hero-card.c1 { inset: 0 0 auto auto; width: 62%; height: 58%; transform: rotate(-3deg); }
+.hero-card.c2 { inset: auto auto 0 0; width: 58%; height: 62%; transform: rotate(2.5deg); }
+.hero-card.c3 { inset: 34% 6% auto auto; width: 46%; height: 40%; transform: rotate(6deg); z-index: 3; }
+.float { animation: float 6s ease-in-out infinite; }
+.float.d1 { animation-delay: -2s; }
+.float.d2 { animation-delay: -4s; }
+@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+
+/* ---------- Section shell ---------- */
+.section { padding: 92px 0; }
+.section-head { text-align: center; max-width: 660px; margin: 0 auto 52px; }
+.section-head .kicker {
+  display: inline-block; color: var(--gold-deep); font-weight: 800; letter-spacing: 3px;
+  font-size: 13px; margin-bottom: 12px; text-transform: uppercase;
+}
+.section-head h2 { font-size: clamp(26px, 3.6vw, 40px); }
+.section-head p { color: var(--muted); font-size: 17px; }
+.bg-paper { background: var(--paper); }
+
+/* ---------- Categories ---------- */
+.cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.cat-card {
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px 22px; text-align: center; box-shadow: var(--shadow-sm);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.cat-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); border-color: var(--gold-soft); }
+.cat-card .ico {
+  width: 66px; height: 66px; border-radius: 20px; margin: 0 auto 16px;
+  display: grid; place-items: center; color: var(--gold-deep);
+  background: linear-gradient(150deg, #fff, var(--cream)); border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(200, 163, 95, .12);
+  transition: color .2s ease, background .2s ease, transform .2s ease;
+}
+.cat-card .ico .ic { width: 30px; height: 30px; stroke-width: 1.6; }
+.cat-card:hover .ico { color: #fff; background: linear-gradient(150deg, var(--gold), var(--gold-deep)); transform: translateY(-2px); }
+.cat-card h3 { font-size: 18px; margin-bottom: 4px; }
+.cat-card p { font-size: 13.5px; color: var(--muted); margin: 0; }
+
+/* ---------- Products ---------- */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 34px; }
+.chip {
+  border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
+  padding: 9px 18px; border-radius: 999px; font-family: inherit; font-weight: 700; font-size: 14px;
+  cursor: pointer; transition: all .18s ease;
+}
+.chip:hover { border-color: var(--gold); }
+.chip.active { background: var(--black); color: #fff; border-color: var(--black); }
+
+.product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.product-card {
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+  transition: transform .2s ease, box-shadow .2s ease, opacity .25s ease;
+  display: flex; flex-direction: column;
+}
+.product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+.product-card.is-hidden { display: none; }
+.product-media {
+  position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center;
+  color: #fff; overflow: hidden;
+  background: linear-gradient(150deg, var(--black-soft), #2b2419);
+}
+.product-media .ic { width: 66px; height: 66px; stroke-width: 1.3; position: relative; z-index: 1; color: #fff; transition: transform .35s ease; }
+.product-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.product-card:hover .product-media img { transform: scale(1.05); transition: transform .4s ease; }
+/* Quick-view shows the FULL image at its natural aspect (never cropped, any screen) */
+.qv-media.has-img { height: 42vh; min-height: 220px; max-height: 42vh; background: #f4efe6; display: block; overflow: hidden; flex: 0 0 auto; }
+.qv-media.has-img img { position: static; width: 100%; height: 100%; max-height: none; object-fit: contain; display: block; margin: 0; }
+.product-card:hover .product-media .ic { transform: scale(1.08) rotate(-3deg); }
+.product-media::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 80% 0%, rgba(255, 255, 255, .16), transparent 60%); }
+/* Per-category tinted tiles */
+.product-media.m-clothing  { background: linear-gradient(150deg, #2b1a22, #4a2a38); }
+.product-media.m-scarf     { background: linear-gradient(150deg, #142428, #1f3d44); }
+.product-media.m-bagshoes  { background: linear-gradient(150deg, #241c14, #3f2f1f); }
+.product-media.m-beauty    { background: linear-gradient(150deg, #241a2b, #3d2a4a); }
+.product-media.m-accessory { background: linear-gradient(150deg, #221d12, #3a2f18); }
+.product-badge {
+  position: absolute; inset-block-start: 12px; inset-inline-start: 12px; z-index: 2;
+  font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 999px;
+  background: var(--gold); color: #1a1509;
+}
+.product-badge.new { background: #fff; color: var(--black); border: 1px solid var(--line); }
+.product-body { padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.product-body .cat { font-size: 12.5px; color: var(--gold-deep); font-weight: 700; }
+.product-body h3 { font-size: 17px; margin: 0; }
+.product-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 12px; }
+.price { font-weight: 800; font-size: 18px; }
+.price small { color: var(--muted); font-weight: 600; font-size: 12px; }
+.price del { color: var(--muted); font-weight: 600; font-size: 13px; margin-inline-start: 6px; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--cream); cursor: pointer; display: grid; place-items: center;
+  color: var(--ink); transition: all .18s ease;
+}
+.icon-btn .ic { width: 20px; height: 20px; }
+.icon-btn:hover { background: var(--gold); border-color: var(--gold); color: #1a1509; transform: translateY(-1px); }
+
+/* ---------- Features ---------- */
+.feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.feature {
+  padding: 26px; border-radius: var(--radius); background: var(--paper);
+  border: 1px solid var(--line);
+}
+.feature .ico {
+  width: 54px; height: 54px; border-radius: 15px; margin-bottom: 14px;
+  display: grid; place-items: center; color: var(--gold-deep);
+  background: linear-gradient(150deg, var(--cream), #fff); border: 1px solid var(--line);
+}
+.feature .ico .ic { width: 26px; height: 26px; }
+.feature h3 { font-size: 18px; }
+.feature p { color: var(--muted); font-size: 14.5px; margin: 0; }
+
+/* ---------- Stores ---------- */
+.store-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.store-grid.single { grid-template-columns: minmax(0, 460px); justify-content: center; }
+.store-card {
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.store-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+.store-card .store-top { display: flex; align-items: center; justify-content: space-between; }
+.store-card h3 { font-size: 20px; margin: 0; }
+.badge-open { font-size: 12px; font-weight: 800; color: var(--green); background: #e7f5ea; padding: 4px 10px; border-radius: 999px; }
+.store-row { display: flex; gap: 10px; color: var(--ink); font-size: 14.5px; align-items: flex-start; }
+.store-row .ico { color: var(--gold-deep); flex: none; display: grid; place-items: center; margin-top: 2px; }
+.store-row .ico .ic { width: 19px; height: 19px; }
+.store-card .btn { margin-top: 8px; align-self: flex-start; }
+
+/* ---------- Testimonials ---------- */
+.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.testi {
+  background: linear-gradient(160deg, #17140f, #221c12); color: #f3efe6;
+  border: 1px solid rgba(200, 163, 95, .22); border-radius: var(--radius); padding: 26px;
+}
+.testi .stars { color: var(--gold); letter-spacing: 3px; margin-bottom: 10px; }
+.testi p { color: #e7e1d4; font-size: 15px; }
+.testi .who { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.testi .avatar {
+  width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--gold); color: #1a1509; font-weight: 800;
+}
+.testi .who b { display: block; font-size: 15px; }
+.testi .who span { font-size: 12.5px; color: var(--gold-soft); }
+
+/* ---------- CTA / Newsletter ---------- */
+.cta-band {
+  background:
+    radial-gradient(700px 400px at 85% 10%, rgba(200, 163, 95, .3), transparent 60%),
+    linear-gradient(140deg, #0f0f0f, #201a11);
+  color: #fff; border-radius: var(--radius-lg); padding: 54px; text-align: center;
+  border: 1px solid rgba(200, 163, 95, .25);
+}
+.cta-band h2 { font-size: clamp(24px, 3.4vw, 36px); }
+.cta-band p { color: #d9d4c8; max-width: 520px; margin: 0 auto 26px; }
+.newsletter { display: flex; gap: 10px; max-width: 480px; margin: 0 auto; }
+.newsletter input {
+  flex: 1; padding: 14px 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .06); color: #fff; font-family: inherit; font-size: 15px;
+}
+.newsletter input::placeholder { color: #b9b3a6; }
+.newsletter input:focus { outline: none; border-color: var(--gold); }
+.form-note { margin-top: 14px; font-size: 14px; min-height: 20px; }
+.form-note.ok { color: #8fe0a1; }
+.form-note.err { color: #ff9d9d; }
+
+/* ---------- Footer ---------- */
+.site-footer { background: var(--black); color: #cfc9bd; padding: 60px 0 26px; }
+.footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.2fr; gap: 34px; }
+.site-footer .brand { color: #fff; margin-bottom: 14px; }
+.site-footer p { font-size: 14px; color: #a8a294; }
+.footer-col h4 { color: #fff; font-size: 15px; letter-spacing: 1px; margin-bottom: 14px; }
+.footer-col p .ic { width: 17px; height: 17px; color: var(--gold); margin-inline-start: 7px; vertical-align: -3px; }
+.footer-col a { display: block; padding: 5px 0; color: #bdb7a9; font-size: 14px; transition: color .15s ease; }
+.footer-col a:hover { color: var(--gold); }
+.socials { display: flex; gap: 10px; margin-top: 14px; }
+.socials a {
+  width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+  background: rgba(255, 255, 255, .07); color: #fff; transition: all .18s ease;
+}
+.socials a .ic { width: 19px; height: 19px; }
+.socials a:hover { background: var(--gold); color: #1a1509; }
+.footer-bottom {
+  margin-top: 40px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .1);
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #8f8a7d;
+}
+
+/* ---------- Back to top ---------- */
+.to-top {
+  position: fixed; inset-block-end: 24px; inset-inline-start: 24px; z-index: 90;
+  width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center;
+  background: var(--gold); color: #1a1509; box-shadow: var(--shadow-gold);
+  opacity: 0; transform: translateY(16px) scale(.9); pointer-events: none; transition: all .25s ease;
+}
+.to-top .ic { width: 22px; height: 22px; stroke-width: 2.2; }
+.to-top.show { opacity: 1; transform: none; pointer-events: auto; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; inset-block-end: 26px; inset-inline-end: 26px; z-index: 200;
+  background: var(--black); color: #fff; padding: 14px 20px; border-radius: 14px;
+  box-shadow: var(--shadow); border: 1px solid rgba(200, 163, 95, .4);
+  transform: translateY(120%); opacity: 0; transition: all .3s cubic-bezier(.2, .8, .2, 1);
+  display: flex; align-items: center; gap: 10px; font-weight: 600;
+}
+.toast.show { transform: none; opacity: 1; }
+.toast .dot { color: var(--gold); font-size: 18px; }
+
+/* ---------- Scroll reveal ---------- */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 980px) {
+  .hero .container { grid-template-columns: 1fr; }
+  .hero-visual { display: none; }
+  .cat-grid, .product-grid, .feature-grid { grid-template-columns: repeat(2, 1fr); }
+  .store-grid, .testi-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 760px) {
+  .nav-toggle { display: grid; place-items: center; }
+  .main-nav {
+    position: fixed; inset: var(--header-h) 0 auto 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    background: rgba(17, 17, 17, .98); padding: 10px 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    transform: translateY(-120%); transition: transform .3s ease; z-index: 99;
+  }
+  body.nav-open .main-nav { transform: none; }
+  .main-nav a { padding: 14px 8px; border-bottom: 1px solid rgba(255, 255, 255, .07); }
+  .main-nav a::after { display: none; }
+  .header-actions .btn:not(.nav-toggle) { display: none; }
+  .site-header .container { gap: 8px; }
+  .header-actions { gap: 6px; }
+  .brand .brand-sub { display: none; }
+  .brand .brand-name { font-size: 18px; }
+  .cart-btn { width: 38px; height: 38px; }
+  .lang-btn { padding: 8px 10px; }
+  #langLabel { display: none; }
+  .section { padding: 66px 0; }
+  .cta-band { padding: 34px 22px; }
+  .newsletter { flex-direction: column; }
+  .newsletter .btn { justify-content: center; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .hero-stats { gap: 22px; }
+}
+
+@media (max-width: 460px) {
+  .cat-grid, .product-grid, .feature-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* Clickable contact + copyable numbers */
+.contact-link { color: inherit; text-decoration: none; transition: color .15s; }
+.contact-link:hover { text-decoration: underline; }
+.store-row a.contact-link:hover { color: var(--gold-deep); }
+.copy-num { color: var(--gold-deep); font-weight: 700; text-decoration: underline; cursor: pointer; }
+.copy-num:hover { color: #8a6a22; }
+
+/* Customer reviews */
+.review-cta { text-align: center; margin-top: 26px; }
+.review-cta #reviewForm { max-width: 520px; margin: 16px auto 0; text-align: start; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+.review-cta textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical; }
+.review-cta textarea:focus { outline: none; border-color: var(--gold); }
+.rating-input { display: inline-flex; gap: 4px; direction: ltr; }
+.rating-input .star { background: none; border: none; font-size: 30px; line-height: 1; cursor: pointer; color: #d9d2c2; padding: 0 2px; transition: color .12s, transform .12s; }
+.rating-input .star:hover { transform: scale(1.12); }
+.rating-input .star.on { color: var(--gold); }
+.reviews-empty { text-align: center; color: var(--muted); padding: 18px 0; }
+
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+
+  <!-- ============ SVG ICON SPRITE ============ -->
+  <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M6.5 3.5 3 6l2 3.5 2-1V21h10V8.5l2 1L21 6l-3.5-2.5-2 .8a4 4 0 0 1-7 0z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.2L21.5 7H6.2"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11 4c.6 3.2 1.8 4.4 5 5-3.2.6-4.4 1.8-5 5-.6-3.2-1.8-4.4-5-5 3.2-.6 4.4-1.8 5-5z"/><path d="M18.3 13.6c.3 1.3.8 1.8 2.1 2.1-1.3.3-1.8.8-2.1 2.1-.3-1.3-.8-1.8-2.1-2.1 1.3-.3 1.8-.8 2.1-2.1z"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.2"/><path d="M12 9v3l2 1.3"/><path d="M9.2 6.2 9.6 3h4.8l.4 3.2M9.2 17.8l.4 3.2h4.8l.4-3.2"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="5" rx="1"/><path d="M12 22V7"/><path d="M20 12v10H4V12"/><path d="M12 7H7.7a2.4 2.4 0 0 1 0-4.8C10.9 2.2 12 7 12 7z"/><path d="M12 7h4.3a2.4 2.4 0 0 0 0-4.8C13.1 2.2 12 7 12 7z"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.6v5.4c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 5h11v11H2z"/><path d="M13 8h4l4 4v4h-8z"/><circle cx="7" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 5v5h-5"/><path d="M3 19v-5h5"/><path d="M20 10a8 8 0 0 0-14.3-3.3L3 10M4 14a8 8 0 0 0 14.3 3.3L21 14"/></symbol>
+    <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M20 15.5a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2h-1v-5.5zM4 15.5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h1v-5.5z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 9h13l1 11H4.5z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></symbol>
+    <symbol id="i-call" viewBox="0 0 24 24"><path d="M21 16.5v2.6a2 2 0 0 1-2.2 2 18.5 18.5 0 0 1-8-2.9 18 18 0 0 1-5.6-5.6 18.5 18.5 0 0 1-2.9-8A2 2 0 0 1 4.3 4h2.6a2 2 0 0 1 2 1.7 12 12 0 0 0 .7 2.6 2 2 0 0 1-.5 2.1l-1.1 1.1a15 15 0 0 0 5.6 5.6l1.1-1.1a2 2 0 0 1 2.1-.5 12 12 0 0 0 2.6.7 2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L3 21l2.3-6.5A8 8 0 1 1 21 11.5z"/></symbol>
+    <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M14 8.5V7c0-.8.5-1 1-1h1.5V3H14c-2.2 0-3.5 1.4-3.5 3.6V8.5H8V11.5h2.5V21h3.5V11.5H16.5L17 8.5z"/></symbol>
+    <symbol id="i-tiktok" viewBox="0 0 24 24"><path d="M15 4c.4 2.2 1.8 3.7 4 4v3c-1.5 0-2.9-.4-4-1.1V15a6 6 0 1 1-6-6c.3 0 .7 0 1 .1v3.2A2.8 2.8 0 1 0 12 15V4z"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5 15.4 17.5"/></symbol>
+    <symbol id="i-dress" viewBox="0 0 24 24"><path d="M9 3 12 5 15 3 16 6 14 7.5V9.5L17.5 20a1 1 0 0 1-1 1.3H7.5a1 1 0 0 1-1-1.3L10 9.5V7.5L8 6z"/><path d="M10 9.5h4"/></symbol>
+    <symbol id="i-coat" viewBox="0 0 24 24"><path d="M7 4 5 8l2 1v11h10V9l2-1-2-4-5 2z"/><path d="M12 6v14"/><path d="M12 11h.01M12 14h.01M12 17h.01"/></symbol>
+    <symbol id="i-scarf" viewBox="0 0 24 24"><path d="M5 6c3 3.5 11 3.5 14 0"/><path d="M6.5 7.5 8.5 19l3.5-2.2 3.5 2.2 2-11.5"/></symbol>
+    <symbol id="i-heel" viewBox="0 0 24 24"><path d="M4 8c0 5 3 9 8 10h7l-1.5-3-6-2.5C8 11 7 9.5 7 8z"/><path d="M17.5 15 19 18"/></symbol>
+    <symbol id="i-ring" viewBox="0 0 24 24"><path d="M12 9a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M9.5 6 12 8.5 14.5 6 12 3z"/><path d="M9.5 6 12 9.2M14.5 6 12 9.2"/></symbol>
+    <symbol id="i-perfume" viewBox="0 0 24 24"><path d="M10 3h4v2h-4z"/><path d="M9.5 5h5v1.6l1 1V19a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 8.5 19V7.6l1-1z"/><path d="M15 6.5 17 5M17 5V3"/></symbol>
+  </svg>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header" id="header">
+    <div class="container">
+      <a href="#home" class="brand" aria-label="MAHO">
+        <span class="logo">M</span>
+        <span class="brand-text">
+          <span class="brand-name">MAHO</span>
+          <span class="brand-sub" data-i18n="brand.sub">لباس و لوازم بانوان</span>
+        </span>
+      </a>
+
+      <nav class="main-nav" id="nav" aria-label="ناوبری اصلی">
+        <a href="#home" data-i18n="nav.home">خانه</a>
+        <a href="#categories" data-i18n="nav.categories">دسته‌بندی‌ها</a>
+        <a href="#products" data-i18n="nav.products">محصولات</a>
+        <a href="#stores" data-i18n="nav.stores">فروشگاه</a>
+        <a href="#about" data-i18n="nav.about">درباره ما</a>
+        <a href="#contact" data-i18n="nav.contact">تماس</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="cart-btn" id="shareBtn" type="button" aria-label="اشتراک‌گذاری"><svg class="ic"><use href="#i-share"/></svg></button>
+        <button class="cart-btn" id="accountBtn" type="button" aria-label="حساب کاربری"><svg class="ic"><use href="#i-user"/></svg></button>
+        <button class="cart-btn" id="cartBtn" type="button" aria-label="سبد خرید"><svg class="ic"><use href="#i-bag"/></svg><span class="cart-count empty" id="cartCount">0</span></button>
+        <button class="lang-btn" id="langToggle" type="button"><svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span></button>
+        <a class="btn btn-ghost" href="admin.html" data-i18n="header.portal">پنل مدیریت</a>
+        <button class="nav-toggle" id="navToggle" aria-label="منو" aria-expanded="false" aria-controls="nav">
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="home">
+      <div class="container">
+        <div class="hero-copy">
+          <span class="hero-eyebrow" data-i18n="hero.eyebrow">✦ لباس و لوازم بانوان MAHO</span>
+          <h1 data-i18n-html="hero.title">زیبایی و اصالت<br>در <span class="grad">پوشاک زنانه</span></h1>
+          <p class="lead" data-i18n="hero.lead">
+            از لباس مجلسی و مانتو تا شال، کیف، کفش و لوازم آرایشی —
+            هر آنچه یک خانم شیک‌پوش نیاز دارد، با کیفیت ممتاز و قیمت منصفانه در MAHO.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-lg" href="#products" data-i18n="hero.cta1">مشاهده‌ی محصولات ←</a>
+            <a class="btn btn-ghost btn-lg" href="#stores" data-i18n="hero.cta2">آدرس فروشگاه</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat"><b data-count="2500">۰</b><span data-i18n="stat.products">مدل و کالای متنوع</span></div>
+            <div class="stat"><b data-count="5000">۰</b><span data-i18n="stat.customers">مشتری راضی</span></div>
+            <div class="stat"><b data-count="15">۰</b><span data-i18n="stat.years">سال تجربه</span></div>
+            <div class="stat"><b data-count="12">۰</b><span data-i18n="stat.brands">برند معتبر</span></div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-card c1 float">
+            <span class="tag" data-i18n="herocard.tag1">پرفروش</span>
+            <h4 data-i18n="herocard.t1">لباس مجلسی</h4>
+            <span data-i18n="herocard.s1">پیراهن و کالای شب</span>
+          </div>
+          <div class="hero-card c2 float d1">
+            <span class="tag" data-i18n="herocard.tag2">جدید</span>
+            <h4 data-i18n="herocard.t2">شال و روسری</h4>
+            <span data-i18n="herocard.s2">کالکشن فصل جدید</span>
+          </div>
+          <div class="hero-card c3 float d2">
+            <span class="tag" data-i18n="herocard.tag3">۲۵٪ تخفیف</span>
+            <h4 data-i18n="herocard.t3">کیف و کفش</h4>
+            <span data-i18n="herocard.s3">پیشنهاد هفته</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CATEGORIES ============ -->
+    <section class="section" id="categories">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="kicker" data-i18n="cats.kicker">دسته‌بندی‌ها</span>
+          <h2 data-i18n="cats.h2">هر آنچه یک خانم لازم دارد</h2>
+          <p data-i18n="cats.p">از پوشاک و شال تا کیف، کفش، اکسسوری و لوازم آرایشی — همه در یک‌جا و دسته‌بندی‌شده.</p>
+        </div>
+        <div class="cat-grid">
+          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-dress"/></svg></div><h3 data-i18n="cat1.t">لباس مجلسی</h3><p data-i18n="cat1.d">پیراهن و کالای شب</p></div>
+          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-coat"/></svg></div><h3 data-i18n="cat2.t">مانتو و پالتو</h3><p data-i18n="cat2.d">روزمره و رسمی</p></div>
+          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-shirt"/></svg></div><h3 data-i18n="cat3.t">بلوز و شومیز</h3><p data-i18n="cat3.d">مدل‌های متنوع</p></div>
+          <div class="cat-card reveal" data-filter="scarf" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-scarf"/></svg></div><h3 data-i18n="cat4.t">شال و روسری</h3><p data-i18n="cat4.d">نخی و ابریشمی</p></div>
+          <div class="cat-card reveal" data-filter="bagshoes" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-bag"/></svg></div><h3 data-i18n="cat5.t">کیف زنانه</h3><p data-i18n="cat5.d">دستی و مجلسی</p></div>
+          <div class="cat-card reveal" data-filter="bagshoes" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-heel"/></svg></div><h3 data-i18n="cat6.t">کفش زنانه</h3><p data-i18n="cat6.d">پاشنه‌بلند و تخت</p></div>
+          <div class="cat-card reveal" data-filter="accessory" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-ring"/></svg></div><h3 data-i18n="cat7.t">اکسسوری و بدلیجات</h3><p data-i18n="cat7.d">گردنبند، دستبند و ساعت</p></div>
+          <div class="cat-card reveal" data-filter="beauty" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-sparkles"/></svg></div><h3 data-i18n="cat8.t">آرایشی و بهداشتی</h3><p data-i18n="cat8.d">لوازم آرایش و عطر</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRODUCTS ============ -->
+    <section class="section bg-paper" id="products">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="kicker" data-i18n="prod.kicker">جدیدترین‌ها</span>
+          <h2 data-i18n="prod.h2">پرفروش‌ترین‌ها</h2>
+          <p data-i18n="prod.p">گلچینی از شیک‌ترین کالاهای MAHO با قیمت ویژه.</p>
+        </div>
+
+        <div class="filter-bar reveal" id="filterBar">
+          <button class="chip active" data-filter="all" data-i18n="filter.all">همه</button>
+          <button class="chip" data-filter="clothing" data-i18n="filter.clothing">پوشاک</button>
+          <button class="chip" data-filter="scarf" data-i18n="filter.scarf">شال و روسری</button>
+          <button class="chip" data-filter="bagshoes" data-i18n="filter.bagshoes">کیف و کفش</button>
+          <button class="chip" data-filter="beauty" data-i18n="filter.beauty">آرایشی</button>
+          <button class="chip" data-filter="accessory" data-i18n="filter.accessory">اکسسوری</button>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+          <!-- products injected by main.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section class="section" id="about">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="kicker" data-i18n="feat.kicker">چرا MAHO</span>
+          <h2 data-i18n="feat.h2">تجربه‌ی خریدی که به آن اعتماد می‌کنید</h2>
+          <p data-i18n="feat.p">تعهد ما فقط فروش نیست؛ ساختن رابطه‌ای بلندمدت بر پایه‌ی اعتماد و کیفیت است.</p>
+        </div>
+        <div class="feature-grid">
+          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-shield"/></svg></div><h3 data-i18n="feat1.t">ضمانت اصالت</h3><p data-i18n="feat1.d">تمام کالاها اصل و باکیفیت انتخاب شده‌اند.</p></div>
+          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-truck"/></svg></div><h3 data-i18n="feat2.t">ارسال سریع</h3><p data-i18n="feat2.d">تحویل درب منزل در کوتاه‌ترین زمان در شهر.</p></div>
+          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-refresh"/></svg></div><h3 data-i18n="feat3.t">تعویض آسان</h3><p data-i18n="feat3.d">مهلت تعویض یا بازگشت کالا بدون دردسر.</p></div>
+          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-headphones"/></svg></div><h3 data-i18n="feat4.t">پشتیبانی خوب</h3><p data-i18n="feat4.d">همراه شما پیش و پس از خرید.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STORES ============ -->
+    <section class="section bg-paper" id="stores">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="kicker" data-i18n="stores.kicker">فروشگاه ما</span>
+          <h2 data-i18n="stores.h2">حضوری از فروشگاه MAHO دیدن کنید</h2>
+          <p data-i18n="stores.p">با تیمی آماده برای راهنمایی و انتخاب بهترین کالا در خدمت شما هستیم.</p>
+        </div>
+        <div class="store-grid single" id="storeGrid">
+          <!-- store injected by main.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TESTIMONIALS ============ -->
+    <section class="section" id="reviews">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="kicker" data-i18n="testi.kicker">نظر مشتریان</span>
+          <h2 data-i18n="testi.h2">حرف دل مشتریان MAHO</h2>
+        </div>
+        <div class="testi-grid" id="reviewsGrid"></div>
+        <p class="reviews-empty" id="reviewsEmpty" hidden data-i18n="review.empty">هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهد!</p>
+        <div class="review-cta reveal">
+          <button class="btn btn-outline" id="writeReviewBtn" data-i18n="review.write">نوشتن نظر</button>
+          <p class="muted" id="reviewLoginNote" hidden data-i18n="review.loginFirst">برای نوشتن نظر، ابتدا وارد حساب کاربری شوید.</p>
+          <form id="reviewForm" hidden>
+            <div class="field">
+              <label data-i18n="review.rate">امتیاز شما</label>
+              <div class="rating-input" id="ratingInput" role="radiogroup" aria-label="امتیاز">
+                <button type="button" class="star" data-val="1" aria-label="۱">★</button>
+                <button type="button" class="star" data-val="2" aria-label="۲">★</button>
+                <button type="button" class="star" data-val="3" aria-label="۳">★</button>
+                <button type="button" class="star" data-val="4" aria-label="۴">★</button>
+                <button type="button" class="star" data-val="5" aria-label="۵">★</button>
+              </div>
+            </div>
+            <div class="field"><textarea id="reviewText" rows="3" data-i18n-ph="review.ph" placeholder="نظر خود را درباره‌ی خرید یا خدمات بنویسید..."></textarea></div>
+            <button type="submit" class="btn btn-gold" data-i18n="review.submit">ثبت نظر</button>
+            <p class="form-note" id="reviewMsg" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA / CONTACT ============ -->
+    <section class="section" id="contact">
+      <div class="container">
+        <div class="cta-band reveal">
+          <h2 data-i18n="cta.h2">از تخفیف‌ها و محصولات جدید باخبر شوید</h2>
+          <p data-i18n="cta.p">ایمیل خود را وارد کنید تا پیشنهادهای ویژه‌ی MAHO را دریافت کنید.</p>
+          <form class="newsletter" id="newsletterForm" novalidate>
+            <input type="email" id="emailInput" placeholder="ایمیل شما (example@mail.com)" data-i18n-ph="cta.ph" aria-label="ایمیل" required>
+            <button class="btn btn-lg" type="submit" data-i18n="cta.btn">عضویت</button>
+          </form>
+          <div class="form-note" id="formNote" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <a href="#home" class="brand">
+            <span class="logo">M</span>
+            <span class="brand-text"><span class="brand-name">MAHO</span><span class="brand-sub" data-i18n="brand.sub">لباس و لوازم بانوان</span></span>
+          </a>
+          <p data-i18n="footer.desc">لباس و لوازم بانوان MAHO — پوشاک و لوازم زنانه با کیفیت ممتاز، ضمانت اصالت و خدمات پس از فروش قابل اعتماد.</p>
+          <div class="socials">
+            <a href="#" aria-label="اینستاگرام"><svg class="ic"><use href="#i-instagram"/></svg></a>
+            <a href="#" aria-label="تلگرام"><svg class="ic"><use href="#i-send"/></svg></a>
+            <a href="#" aria-label="واتساپ"><svg class="ic"><use href="#i-chat"/></svg></a>
+            <a href="#" aria-label="فیسبوک"><svg class="ic"><use href="#i-facebook"/></svg></a>
+            <a href="#" aria-label="تیک‌تاک"><svg class="ic"><use href="#i-tiktok"/></svg></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.shop">فروشگاه</h4>
+          <a href="#categories" data-i18n="footer.link.categories">دسته‌بندی‌ها</a>
+          <a href="#products" data-i18n="footer.link.products">محصولات</a>
+          <a href="#stores" data-i18n="footer.link.stores">فروشگاه</a>
+          <a href="#reviews" data-i18n="footer.link.reviews">نظر مشتریان</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.support">پشتیبانی</h4>
+          <a href="#contact" data-i18n="footer.link.contact">تماس با ما</a>
+          <a href="#about" data-i18n="footer.link.about">درباره‌ی MAHO</a>
+          <a href="#" data-i18n="footer.link.terms">قوانین و شرایط</a>
+          <a href="#" data-i18n="footer.link.track">پیگیری سفارش</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.contact">تماس</h4>
+          <p><svg class="ic"><use href="#i-pin"/></svg> <span data-i18n="footer.addr">کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵</span></p>
+        <p><svg class="ic"><use href="#i-call"/></svg> <a class="contact-link" data-i18n="footer.phone" href="tel:">۰۷۰۰ ۱۲۳ ۴۵۶</a></p>
+        <p><svg class="ic"><use href="#i-mail"/></svg> <a class="contact-link" data-i18n="footer.email" href="mailto:">info@maho.example</a></p>
+          <a class="btn btn-outline" target="_blank" rel="noopener" href="https://maps.app.goo.gl/U6miPMFLBSY6woFo6" style="margin-top:8px" data-i18n="footer.map">مشاهده روی نقشه ←</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span><span data-i18n="footer.copyPre">©</span> <span id="year">۱۴۰۴</span> <span data-i18n="footer.copy">MAHO — همه‌ی حقوق محفوظ است.</span></span>
+        <span data-i18n="footer.made">ساخته‌شده با ❤ برای مشتریان MAHO</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Quick view -->
+  <div class="ov" id="qvOverlay">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-label="جزئیات محصول">
+      <button class="modal-x" id="qvClose" aria-label="بستن">✕</button>
+      <div class="qv-media" id="qvMedia"></div>
+      <div class="qv-thumbs" id="qvThumbs"></div>
+      <div class="qv-body">
+        <span class="qv-cat" id="qvCat"></span>
+        <h3 class="qv-name" id="qvName"></h3>
+        <div class="qv-price" id="qvPrice"></div>
+        <div class="qv-opt" id="qvSizesWrap" hidden><span class="qv-opt-label" data-i18n="qv.size">سایز</span><div class="opt-chips" id="qvSizes"></div></div>
+        <div class="qv-opt" id="qvColorsWrap" hidden><span class="qv-opt-label" data-i18n="qv.color">رنگ</span><div class="opt-chips" id="qvColors"></div></div>
+        <div class="qv-row">
+          <div class="qty">
+            <button type="button" id="qvMinus" aria-label="کمتر">−</button>
+            <input id="qvQty" type="text" value="۱" inputmode="numeric" aria-label="تعداد">
+            <button type="button" id="qvPlus" aria-label="بیشتر">+</button>
+          </div>
+          <button class="btn btn-lg" id="qvAdd" data-i18n="qv.add">افزودن به سبد</button>
+        </div>
+        <p class="qv-msg" id="qvMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart drawer (with checkout steps) -->
+  <div class="ov" id="cartOverlay">
+    <aside class="cart-drawer" role="dialog" aria-modal="true" aria-label="سبد خرید">
+      <div class="cart-head">
+        <h3 id="cartTitle" data-i18n="cart.title">سبد خرید</h3>
+        <button class="cart-close" id="cartClose" aria-label="بستن">✕</button>
+      </div>
+
+      <!-- Step 1: items -->
+      <div class="cart-screen" id="screenItems">
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-foot" id="cartFoot">
+          <div class="cart-total"><span data-i18n="cart.total">مجموع</span><span id="cartTotal"></span></div>
+          <button class="btn btn-lg" id="toCheckout" data-i18n="cart.continue">تکمیل سفارش ←</button>
+          <button class="btn btn-outline" id="cartClear" data-i18n="cart.clear">خالی‌کردن سبد</button>
+        </div>
+      </div>
+
+      <!-- Step 2: delivery details -->
+      <div class="cart-screen" id="screenCheckout" hidden>
+        <div class="cart-items">
+          <button type="button" class="link-back" id="backToCart" data-i18n="co.back">→ بازگشت به سبد</button>
+          <h4 data-i18n="co.title">مشخصات سفارش</h4>
+          <div class="field"><label data-i18n="co.name">نام و تخلص *</label><input id="co_name"></div>
+          <div class="field"><label data-i18n="co.phone">نمبر تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
+          <div class="field"><label data-i18n="co.email">ایمیل (برای تایید سفارش)</label><input id="co_email" type="email" dir="ltr"></div>
+          <div class="field"><label data-i18n="addr.country">کشور</label><input id="co_country" value="افغانستان"></div>
+          <div class="field"><label data-i18n="addr.province">ولایت</label><input id="co_province"></div>
+          <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="co_district"></div>
+          <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="co_street"></div>
+          <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="co_area"></div>
+          <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="co_house" dir="ltr"></div>
+          <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
+
+          <div class="field" id="recvWrap">
+            <label data-i18n="co.delivery">روش دریافت</label>
+            <div class="pay-methods" id="recvMethods">
+              <button type="button" class="pay-method active" data-recv="pickup" data-i18n="co.pickup">دریافت حضوری از فروشگاه</button>
+              <button type="button" class="pay-method" data-recv="deliver" data-i18n="co.deliver">ارسال به آدرس (دلیوری)</button>
+            </div>
+            <div id="deliverBox" hidden style="margin-top:10px">
+              <span class="qv-opt-label" data-i18n="co.deliverTime">نوع دلیوری</span>
+              <div class="pay-methods" id="deliverTime">
+                <button type="button" class="pay-method active" data-time="normal" data-i18n="co.normal">عادی</button>
+                <button type="button" class="pay-method" data-time="urgent" data-i18n="co.urgent">عاجل (همان روز)</button>
+              </div>
+              <span class="qv-opt-label" data-i18n="co.timeslot" style="display:block;margin-top:12px">زمان دریافت / تحویل</span>
+              <div class="pay-methods" id="deliverSlots"></div>
+              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn btn-outline" id="calcDistBtn" data-i18n="co.calcDist">محاسبه‌ی فاصله (موقعیت من)</button>
+                <input id="co_km" class="ctrl" type="text" inputmode="decimal" placeholder="km" style="width:90px;text-align:center;padding:9px">
+              </div>
+              <p class="pay-info" id="distInfo" hidden></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label data-i18n="co.payment">روش پرداخت</label>
+            <div class="pay-methods" id="payMethods">
+              <button type="button" class="pay-method active" data-method="whatsapp" data-i18n="pay.whatsapp">سفارش از طریق واتساپ (پرداخت هنگام تحویل)</button>
+              <button type="button" class="pay-method" data-method="hesab" data-i18n="pay.hesab">پرداخت با حساب پی (HesabPay)</button>
+              <button type="button" class="pay-method" data-method="bank" data-i18n="pay.bank">انتقال / پرداخت بانکی</button>
+              <button type="button" class="pay-method" data-method="card" data-i18n="pay.card">پرداخت آنلاین با کارت</button>
+            </div>
+            <div class="pay-info" id="payInfo" hidden></div>
+          </div>
+
+          <div class="field" id="guestAcctWrap">
+            <label data-i18n="co.makeAccount">ساخت حساب (اختیاری)</label>
+            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="پسورد برای حساب جدید">
+            <p class="note" data-i18n="co.makeAccountHint">اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.</p>
+          </div>
+          <div class="field" id="coVerifyBox" hidden>
+            <label data-i18n="co.enterCode">کود تایید (به ایمیل شما فرستاده شد)</label>
+            <input id="co_acct_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code">
+            <p class="qv-msg" id="coVerifyMsg"></p>
+            <button type="button" class="btn btn-gold" id="coVerifyBtn" data-i18n="co.verifyPlace">تایید کود و ثبت سفارش</button>
+          </div>
+
+          <p class="qv-msg" id="coMsg"></p>
+        </div>
+        <div class="cart-foot">
+          <div class="cart-total" style="font-size:15px"><span data-i18n="cart.total">مجموع</span><span id="coItemsTotal"></span></div>
+          <div class="cart-total" id="coDeliveryRow" hidden style="font-size:15px"><span data-i18n="co.deliveryFee">هزینه دلیوری</span><span id="coDeliveryFee"></span></div>
+          <div class="cart-total"><span data-i18n="co.grand">مبلغ قابل پرداخت</span><span id="cartTotal2"></span></div>
+          <p class="form-note" id="coMinWarn" hidden style="color:var(--red);margin:4px 0"></p>
+          <button class="btn btn-lg" id="placeOrder" data-i18n="pay.placeWhatsapp">ثبت سفارش (واتساپ)</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Account modal -->
+  <div class="ov" id="acctOverlay">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-label="حساب کاربری" style="max-width:440px">
+      <button class="modal-x" id="acctClose" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <div class="acct-tabs" id="acctLoggedOut">
+          <div class="tabs">
+            <button class="tab active" id="tabLogin" data-i18n="acct.login">ورود</button>
+            <button class="tab" id="tabSignup" data-i18n="acct.signup">ساخت حساب</button>
+          </div>
+          <div id="loginPane">
+            <div class="field"><label data-i18n="acct.phone">نمبر تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password"></div>
+            <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
+            <button type="button" class="link-back" id="forgotLink" style="margin-top:8px" data-i18n="acct.forgot">پسورد را فراموش کرده‌اید؟</button>
+          </div>
+          <div id="resetPane" hidden>
+            <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="rs_email" type="email" dir="ltr"></div>
+            <button class="btn btn-lg" id="resetSendBtn" style="width:100%" data-i18n="acct.reset">ارسال کود بازیابی</button>
+            <div id="resetStep2" hidden style="margin-top:10px">
+              <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="rs_code" dir="ltr" inputmode="numeric"></div>
+              <div class="field"><label data-i18n="acct.newPassPh">پسورد جدید</label><input id="rs_pass" type="password"></div>
+              <button class="btn btn-lg" id="resetDoneBtn" style="width:100%" data-i18n="acct.reset">تغییر پسورد</button>
+            </div>
+            <button type="button" class="link-back" id="resetBack" style="margin-top:8px" data-i18n="acct.backLogin">→ بازگشت به ورود</button>
+          </div>
+          <div id="signupPane" hidden>
+            <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="su_name"></div>
+            <div class="field"><label data-i18n="acct.phoneNum">نمبر تماس</label><input id="su_phone" dir="ltr" inputmode="tel"></div>
+            <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="su_email" type="email" dir="ltr"></div>
+            <div class="field"><label data-i18n="addr.country">کشور</label><input id="su_country" value="افغانستان"></div>
+            <div class="field"><label data-i18n="addr.province">ولایت</label><input id="su_province"></div>
+            <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="su_district"></div>
+            <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="su_street"></div>
+            <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="su_area"></div>
+            <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password"></div>
+            <button class="btn btn-lg" id="signupBtn" style="width:100%" data-i18n="acct.sendCode">ارسال کود تایید</button>
+          </div>
+          <div id="verifyPane" hidden>
+            <p class="muted" data-i18n="acct.codeSent">کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.</p>
+            <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="vf_code" dir="ltr" inputmode="numeric" autocomplete="one-time-code"></div>
+            <button class="btn btn-lg" id="verifyBtn" style="width:100%" data-i18n="acct.verify">تایید و ساخت حساب</button>
+            <button class="btn btn-outline" id="resendBtn" style="width:100%;margin-top:8px" data-i18n="acct.resend">ارسال دوباره</button>
+          </div>
+          <p class="qv-msg" id="acctMsg"></p>
+        </div>
+        <div class="acct-loggedin" id="acctLoggedIn" hidden>
+          <div class="acct-avatar" id="acctAvatar">M</div>
+          <h3 id="acctName" style="text-align:center;margin:6px 0 0"></h3>
+          <p id="acctCustNo" style="text-align:center;font-weight:800;color:var(--gold-deep);margin:2px 0 0"></p>
+          <p class="muted" id="acctId" style="text-align:center;margin:2px 0 0"></p>
+
+          <button class="btn btn-lg" id="ordersBtn" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
+
+          <h4 data-i18n="acct.profile" style="margin:16px 0 8px">مشخصات من</h4>
+          <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="pf_name"></div>
+          <div class="field"><label data-i18n="acct.phoneNum">نمبر تماس</label><input id="pf_phone" dir="ltr"></div>
+          <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="pf_email" type="email" dir="ltr"></div>
+          <div class="field"><label data-i18n="addr.country">کشور</label><input id="pf_country"></div>
+          <div class="field"><label data-i18n="addr.province">ولایت</label><input id="pf_province"></div>
+          <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="pf_district"></div>
+          <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="pf_street"></div>
+          <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="pf_area"></div>
+          <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="pf_house" dir="ltr"></div>
+          <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password"></div>
+          <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>
+          <div id="pfVerify" hidden style="margin-top:10px">
+            <p class="muted" data-i18n="acct.emailChangeCode">برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.</p>
+            <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="pf_code" dir="ltr" inputmode="numeric"></div>
+            <button class="btn btn-lg" id="pfVerifyBtn" style="width:100%" data-i18n="acct.verifyNewEmail">تایید ایمیل جدید</button>
+          </div>
+          <p class="qv-msg" id="pfMsg"></p>
+
+          <h4 data-i18n="acct.savedInfo" style="margin:16px 0 8px">معلومات پرداخت</h4>
+          <div id="payList"></div>
+          <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="card" data-i18n="pay.tCard">کارت بانکی</option><option value="bank" data-i18n="pay.tBank">حساب بانکی</option></select></div>
+          <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder"></div>
+          <div class="field"><label data-i18n="pay.accountNo">نمبر حساب / کارت</label><input id="pay_number" dir="ltr" inputmode="numeric"></div>
+          <div id="payCardExtra">
+            <div class="field"><label data-i18n="pay.cvv">کود امنیتی (CVV)</label><input id="pay_cvv" dir="ltr" inputmode="numeric" maxlength="4"></div>
+            <div class="field"><label data-i18n="pay.expiry">تاریخ انقضا (MM/YY)</label><input id="pay_expiry" dir="ltr" placeholder="MM/YY"></div>
+            <div class="field"><label data-i18n="pay.cardAddr">آدرس کارت</label><input id="pay_cardaddr"></div>
+          </div>
+          <button class="btn btn-outline" id="addPayBtn" style="width:100%" data-i18n="pay.add">افزودن معلومات پرداخت</button>
+          <p class="note" data-i18n="pay.localNote" style="font-size:12px;color:var(--muted);margin-top:6px">این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.</p>
+
+          <button class="btn btn-outline" id="logoutBtn" style="width:100%;margin-top:14px" data-i18n="acct.logout">خروج از حساب</button>
+        </div>
+        <button class="btn btn-gold" id="ordersBtnAll" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Orders modal -->
+  <div class="ov" id="ordersOverlay">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-label="سفارشات من" style="max-width:540px">
+      <button class="modal-x" id="ordersClose" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <h3 data-i18n="orders.title">سفارشات من</h3>
+        <div id="ordersList" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="to-top" id="toTop" aria-label="بازگشت به بالا"><svg class="ic"><use href="#i-up"/></svg></button>
+  <div class="toast" id="toast"><span class="dot">●</span><span id="toastMsg"></span></div>
+
+  <script>
+/* ===========================================================
+   MAHO — women's clothing & essentials storefront
+   Bilingual (Dari / English), zero dependencies.
+   =========================================================== */
+(function () {
+  "use strict";
+
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+  /* -------------------- Language state -------------------- */
+  let LANG = "fa";
+  try {
+    const saved = localStorage.getItem("maho_lang");
+    if (saved === "fa" || saved === "en") LANG = saved;
+  } catch (_) {}
+
+  const faMap = "۰۱۲۳۴۵۶۷۸۹";
+  const toDigits = (value, lang = LANG) =>
+    lang === "en" ? String(value) : String(value).replace(/[0-9]/g, (d) => faMap[d]);
+  const money = (amount, lang = LANG) =>
+    lang === "en"
+      ? amount.toLocaleString("en-US") + " AFN"
+      : toDigits(amount.toLocaleString("en-US"), "fa") + " افغانی";
+  const toEnDigits = (s) => String(s == null ? "" : s).replace(/[۰-۹]/g, (d) => faMap.indexOf(d));
+
+  const icon = (id) => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+  /* -------------------- Translations -------------------- */
+  const I18N = {
+    fa: {
+      "nav.home": "خانه", "nav.categories": "دسته‌بندی‌ها", "nav.products": "محصولات",
+      "nav.stores": "فروشگاه", "nav.about": "درباره ما", "nav.contact": "تماس",
+      "header.portal": "پنل مدیریت",
+      "brand.sub": "لباس و لوازم بانوان",
+      "hero.eyebrow": "✦ لباس و لوازم بانوان MAHO",
+      "hero.title": 'زیبایی و اصالت<br>در <span class="grad">پوشاک زنانه</span>',
+      "hero.lead": "از لباس مجلسی و مانتو تا شال، کیف، کفش و لوازم آرایشی — هر آنچه یک خانم شیک‌پوش نیاز دارد، با کیفیت ممتاز و قیمت مناسب در MAHO.",
+      "hero.cta1": "مشاهده‌ی محصولات ←", "hero.cta2": "آدرس فروشگاه",
+      "stat.products": "مدل و کالای متنوع", "stat.customers": "مشتری راضی",
+      "stat.years": "سال تجربه", "stat.brands": "برند معتبر",
+      "herocard.tag1": "پرفروش", "herocard.t1": "لباس مجلسی", "herocard.s1": "پیراهن و کالای شب",
+      "herocard.tag2": "جدید", "herocard.t2": "شال و روسری", "herocard.s2": "کالکشن فصل جدید",
+      "herocard.tag3": "۲۵٪ تخفیف", "herocard.t3": "کیف و کفش", "herocard.s3": "پیشنهاد هفته",
+      "cats.kicker": "دسته‌بندی‌ها", "cats.h2": "هر آنچه یک خانم لازم دارد",
+      "cats.p": "از پوشاک و شال تا کیف، کفش، اکسسوری و لوازم آرایشی — همه در یک‌جا و دسته‌بندی‌شده.",
+      "cat1.t": "لباس مجلسی", "cat1.d": "پیراهن و کالای شب",
+      "cat2.t": "مانتو و پالتو", "cat2.d": "روزمره و رسمی",
+      "cat3.t": "بلوز و شومیز", "cat3.d": "مدل‌های متنوع",
+      "cat4.t": "شال و روسری", "cat4.d": "نخی و ابریشمی",
+      "cat5.t": "کیف زنانه", "cat5.d": "دستی و مجلسی",
+      "cat6.t": "کفش زنانه", "cat6.d": "پاشنه‌بلند و تخت",
+      "cat7.t": "اکسسوری و بدلیجات", "cat7.d": "گردنبند، دستبند و ساعت",
+      "cat8.t": "آرایشی و بهداشتی", "cat8.d": "لوازم آرایش و عطر",
+      "prod.kicker": "جدیدترین‌ها", "prod.h2": "پرفروش‌ترین‌ها",
+      "prod.p": "گلچینی از شیک‌ترین کالاهای MAHO با قیمت ویژه.",
+      "filter.all": "همه", "filter.clothing": "پوشاک", "filter.scarf": "شال و روسری",
+      "filter.bagshoes": "کیف و کفش", "filter.beauty": "آرایشی", "filter.accessory": "اکسسوری",
+      "feat.kicker": "چرا MAHO", "feat.h2": "تجربه‌ی خریدی که به آن اعتماد می‌کنید",
+      "feat.p": "تعهد ما فقط فروش نیست؛ ساختن رابطه‌ای بلندمدت بر پایه‌ی اعتماد و کیفیت است.",
+      "feat1.t": "ضمانت اصالت", "feat1.d": "تمام کالاها اصل و باکیفیت انتخاب شده‌اند.",
+      "feat2.t": "ارسال سریع", "feat2.d": "تحویل درب منزل در کوتاه‌ترین زمان در شهر.",
+      "feat3.t": "تعویض آسان", "feat3.d": "مهلت تعویض یا بازگشت کالا بدون دردسر.",
+      "feat4.t": "پشتیبانی خوب", "feat4.d": "همراه شما پیش و پس از خرید.",
+      "stores.kicker": "فروشگاه ما", "stores.h2": "حضوری از فروشگاه MAHO دیدن کنید",
+      "stores.p": "با تیمی آماده برای راهنمایی و انتخاب بهترین کالا در خدمت شما هستیم.",
+      "store.open": "باز است", "store.directions": "مسیریابی روی نقشه ←",
+      "testi.kicker": "نظر مشتریان", "testi.h2": "حرف دل مشتریان MAHO",
+      "testi1.q": "«جنس لباس‌ها عالی و دوختشان تمیز بود. مانتویی که خریدم دقیقاً مثل عکس بود و پرسنل هم خیلی خوش‌برخورد بودند.»",
+      "testi1.name": "نرگس احمدی", "testi1.role": "مشتری وفادار",
+      "testi2.q": "«تنوع شال و روسری بی‌نظیر است و قیمت‌ها منصفانه. ضمانت تعویض کالا باعث شد با خیال راحت خرید کنم.»",
+      "testi2.name": "مریم حسینی", "testi2.role": "خریدار",
+      "testi3.q": "«برای مجلس یک پیراهن شیک و یک کیف ست خریدم؛ همه تعریف کردند. حتماً دوباره از MAHO خرید می‌کنم.»",
+      "testi3.name": "سمیرا نوری", "testi3.role": "مشتری جدید",
+      "review.write": "نوشتن نظر", "review.submit": "ثبت نظر", "review.rate": "امتیاز شما",
+      "review.ph": "نظر خود را درباره‌ی خرید یا خدمات بنویسید...",
+      "review.loginFirst": "برای نوشتن نظر، ابتدا وارد حساب کاربری شوید.",
+      "review.thanks": "از نظر شما سپاسگزاریم ✓",
+      "review.needText": "لطفاً امتیاز و متن نظر را وارد کنید.",
+      "review.empty": "هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهد!",
+      "review.customer": "مشتری MAHO",
+      "cta.h2": "از تخفیف‌ها و محصولات جدید باخبر شوید",
+      "cta.p": "ایمیل خود را وارد کنید تا پیشنهادهای ویژه‌ی MAHO را دریافت کنید.",
+      "cta.ph": "ایمیل شما (example@mail.com)", "cta.btn": "عضویت",
+      "footer.desc": "لباس و لوازم بانوان MAHO — پوشاک و لوازم زنانه با کیفیت ممتاز، ضمانت اصالت و خدمات پس از فروش قابل اعتماد.",
+      "footer.shop": "فروشگاه", "footer.link.categories": "دسته‌بندی‌ها",
+      "footer.link.products": "محصولات", "footer.link.stores": "فروشگاه", "footer.link.reviews": "نظر مشتریان",
+      "footer.support": "پشتیبانی", "footer.link.contact": "تماس با ما", "footer.link.about": "درباره‌ی MAHO",
+      "footer.link.terms": "قوانین و شرایط", "footer.link.track": "پیگیری سفارش",
+      "footer.contact": "تماس",
+      "footer.addr": "کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵",
+      "footer.phone": "‪+93 791 505 454‬", "footer.email": "info@maho.example",
+      "footer.map": "مشاهده روی نقشه ←",
+      "footer.copyPre": "©", "footer.copy": "MAHO — همه‌ی حقوق محفوظ است.",
+      "footer.made": "ساخته‌شده با ❤ برای مشتریان MAHO",
+      "toast.cart": "«{name}» به سبد خرید اضافه شد ({n})",
+      "toast.news": "عضویت در خبرنامه با موفقیت انجام شد ✓",
+      "form.err": "لطفاً یک ایمیل معتبر وارد کنید.",
+      "form.ok": "عضویت شما ثبت شد! به‌زودی پیشنهادهای ویژه‌ی MAHO را دریافت می‌کنید.",
+      "lang.other": "English",
+      "cart.title": "سبد خرید", "cart.empty": "سبد خرید شما خالی است.",
+      "cart.total": "مجموع", "cart.checkout": "ثبت سفارش از طریق واتساپ",
+      "cart.clear": "خالی‌کردن سبد", "cart.remove": "حذف", "cart.emptyToast": "سبد خرید خالی است.",
+      "stock.out": "ناموجود", "stock.left": "{n} دانه باقی مانده", "stock.max": "بیشتر از موجودی نمی‌توانید سفارش دهید.",
+      "qv.add": "افزودن به سبد",
+      "qv.size": "سایز", "qv.color": "رنگ", "qv.pick": "لطفاً سایز و رنگ را انتخاب کنید.",
+      "cart.continue": "تکمیل سفارش ←",
+      "co.back": "→ بازگشت به سبد", "co.title": "مشخصات سفارش",
+      "co.name": "نام و تخلص *", "co.phone": "نمبر تماس *", "co.address": "آدرس تحویل *", "co.note": "توضیحات (اختیاری)",
+      "co.err": "لطفاً نام، نمبر تماس و آدرس را وارد کنید.",
+      "acct.login": "ورود", "acct.signup": "ساخت حساب", "acct.create": "ساخت حساب", "acct.logout": "خروج از حساب",
+      "acct.name": "نام و تخلص", "acct.phone": "نمبر تماس یا ایمیل", "acct.pass": "پسورد",
+      "acct.exists": "این حساب قبلاً ساخته شده است.", "acct.bad": "اطلاعات ورود درست نیست.",
+      "acct.created": "حساب شما ساخته و تایید شد ✓", "acct.hi": "خوش آمدید",
+      "acct.need": "برای ادامه لطفاً همه‌ی خانه‌ها را پر کنید.",
+      "acct.fullname": "نام مکمل", "acct.phoneNum": "نمبر تماس", "acct.email": "ایمیل",
+      "acct.sendCode": "ارسال کود تایید", "acct.codeSent": "کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.",
+      "acct.code": "کود تایید", "acct.verify": "تایید و ساخت حساب", "acct.resend": "ارسال دوباره‌ی کود",
+      "acct.badCode": "کود وارد‌شده درست نیست.", "acct.needAll": "نام، نمبر تماس، ایمیل و پسورد را وارد کنید.",
+      "acct.badEmail": "یک ایمیل معتبر وارد کنید.", "acct.emailExists": "این ایمیل قبلاً ثبت شده است.",
+      "acct.sending": "در حال ارسال کود...", "acct.sendFail": "ارسال ایمیل ناموفق بود. دوباره تلاش کنید.",
+      "acct.demoNote": "حالت آزمایشی: کود تایید شما {code} است. برای ارسال واقعی ایمیل، تنظیمات EmailJS را در پنل مدیریت کامل کنید.",
+      "order.customer": "مشتری", "order.addr": "آدرس", "order.note": "توضیحات",
+      "order.header": "سلام، می‌خواهم این کالاها را سفارش بدهم:",
+      "co.payment": "روش پرداخت",
+      "pay.whatsapp": "سفارش از طریق واتساپ (پرداخت هنگام تحویل)",
+      "pay.bank": "انتقال / پرداخت بانکی", "pay.card": "پرداخت آنلاین با کارت",
+      "pay.bankInfo": "مبلغ را به حساب زیر انتقال دهید و رسید را در واتساپ بفرستید:",
+      "pay.holder": "به نام", "pay.bankName": "بانک", "pay.accountNo": "نمبر حساب / کارت",
+      "pay.noBank": "اطلاعات حساب بانکی هنوز ثبت نشده است. لطفاً از واتساپ استفاده کنید.",
+      "pay.noCard": "درگاه پرداخت آنلاین هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
+      "pay.placeWhatsapp": "ثبت سفارش (واتساپ)", "pay.payCard": "پرداخت با کارت ←", "pay.placeBank": "ثبت سفارش و نمایش حساب",
+      "pay.hesab": "پرداخت با حساب پی (HesabPay)",
+      "pay.hesabInfo": "با حساب پی پرداخت کنید و رسید را در واتساپ بفرستید:",
+      "pay.hesabNumber": "نمبر/آی‌دی حساب پی", "pay.hesabOpen": "پرداخت با حساب پی ←",
+      "pay.noHesab": "پرداخت با حساب پی هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
+      "order.placed": "سفارش شما ثبت شد ✓",
+      "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
+      "orders.date": "تاریخ", "orders.pay": "پرداخت", "orders.items": "کالاها",
+      "status.pending": "در انتظار تایید", "status.awaitPay": "در انتظار پرداخت",
+      "status.confirmed": "تایید شده",
+      "status.cancelled": "لغو شده", "status.returnReq": "درخواست برگشت",
+      "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کود کالا",
+      "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
+      "orders.cancelMsg": "سفارش لغو شد", "orders.returnMsg": "درخواست برگشت کالا",
+      "acct.custNo": "نمبر مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
+      "acct.newPass": "پسورد جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
+      "acct.saved": "تغییرات ذخیره شد ✓",
+      "acct.emailChangeCode": "برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.",
+      "acct.verifyNewEmail": "تایید ایمیل جدید", "acct.emailUpdated": "ایمیل شما به‌روزرسانی شد ✓",
+      "pay.type": "نوع", "pay.tCard": "کارت بانکی", "pay.tBank": "حساب بانکی",
+      "pay.add": "افزودن معلومات پرداخت", "pay.none": "هنوز معلومات پرداختی اضافه نکرده‌اید.",
+      "pay.localNote": "این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.",
+      "co.email": "ایمیل (برای تایید سفارش)",
+      "order.number": "نمبر سفارش", "order.emailSent": "ایمیل تایید سفارش برای شما فرستاده شد.",
+      "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
+      "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
+      "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت", "copied": "کپی شد ✓",
+      "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.area": "منطقه / ساحه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
+      "acct.forgot": "پسورد را فراموش کرده‌اید؟", "acct.reset": "بازیابی پسورد",
+      "acct.resetSent": "کود بازیابی به ایمیل شما فرستاده شد. کود و پسورد جدید را وارد کنید.",
+      "acct.newPassPh": "پسورد جدید", "acct.resetDone": "پسورد شما تغییر کرد ✓", "acct.noEmail": "این ایمیل ثبت نشده است.",
+      "acct.backLogin": "→ بازگشت به ورود",
+      "co.delivery": "روش دریافت", "co.pickup": "دریافت حضوری از فروشگاه", "co.deliver": "ارسال به آدرس (دلیوری)",
+      "co.deliverTime": "زمان دلیوری", "co.normal": "عادی", "co.urgent": "عاجل (همان روز)",
+      "co.calcDist": "محاسبه‌ی فاصله (موقعیت من)", "co.distKm": "فاصله تا نزدیک‌ترین فروشگاه", "co.km": "کیلومتر",
+      "co.manualKm": "یا فاصله (کیلومتر) را دستی وارد کنید", "co.deliveryFee": "هزینه دلیوری", "co.grand": "مبلغ قابل پرداخت",
+      "co.belowMin": "برای دلیوری، حداقل مبلغ سفارش {n} است. لطفاً بیشتر خرید کنید یا «دریافت حضوری» را انتخاب کنید.",
+      "co.beyondMax": "دلیوری فقط تا {n} کیلومتری فروشگاه انجام می‌شود؛ آدرس شما دورتر است.",
+      "co.timeslot": "زمان دریافت / تحویل",
+      "co.ts0": "در اسرع وقت", "co.ts1": "امروز صبح (۹ تا ۱۲)", "co.ts2": "امروز بعد از ظهر (۱۲ تا ۴)", "co.ts3": "امروز عصر (۴ تا ۸)", "co.ts4": "فردا",
+      "co.makeAccount": "ساخت حساب (اختیاری)", "co.passPh": "پسورد برای حساب جدید",
+      "co.makeAccountHint": "اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.",
+      "co.enterCode": "کود تایید (به ایمیل شما فرستاده شد)", "co.verifyPlace": "تایید کود و ثبت سفارش",
+      "co.acctNeedEmail": "برای ساخت حساب، یک ایمیل معتبر وارد کنید.", "co.acctExists": "این ایمیل قبلاً حساب دارد؛ لطفاً وارد شوید.",
+      "co.codeSentEmail": "کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.", "co.acctCreated": "حساب شما ساخته شد ✓ نمبر مشتری: {no}",
+      "acct.welcomeMsg": "حساب شما در MAHO ساخته شد. نمبر مشتری شما: {no}. با همین ایمیل و پسورد می‌توانید وارد شوید.",
+      "co.free": "رایگان", "co.geoFail": "دسترسی به موقعیت ممکن نشد؛ لطفاً فاصله را دستی وارد کنید.",
+      "co.noStoreCoords": "مختصات فروشگاه ثبت نشده؛ فاصله دستی وارد شود.",
+      "order.deliveryTo": "ارسال به آدرس", "order.pickupAt": "دریافت حضوری",
+    },
+    en: {
+      "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
+      "nav.stores": "Store", "nav.about": "About", "nav.contact": "Contact",
+      "header.portal": "Admin panel",
+      "brand.sub": "WOMEN'S CLOTHING & ESSENTIALS",
+      "hero.eyebrow": "✦ MAHO Women's Clothing & Essentials",
+      "hero.title": 'Elegance & quality<br>in <span class="grad">women\'s fashion</span>',
+      "hero.lead": "From evening dresses and manteaus to scarves, bags, shoes and cosmetics — everything a stylish woman needs, with premium quality and fair prices at MAHO.",
+      "hero.cta1": "Shop products →", "hero.cta2": "Our location",
+      "stat.products": "Products & styles", "stat.customers": "Happy customers",
+      "stat.years": "Years of experience", "stat.brands": "Trusted brands",
+      "herocard.tag1": "Bestseller", "herocard.t1": "Evening wear", "herocard.s1": "Dresses & eveningwear",
+      "herocard.tag2": "New", "herocard.t2": "Scarves", "herocard.s2": "New season",
+      "herocard.tag3": "25% off", "herocard.t3": "Bags & shoes", "herocard.s3": "Weekly deal",
+      "cats.kicker": "Categories", "cats.h2": "Everything she needs",
+      "cats.p": "From clothing and scarves to bags, shoes, accessories and cosmetics — all in one place, neatly organized.",
+      "cat1.t": "Evening dresses", "cat1.d": "Dresses & eveningwear",
+      "cat2.t": "Manteaus & coats", "cat2.d": "Casual & formal",
+      "cat3.t": "Blouses & tops", "cat3.d": "Many styles",
+      "cat4.t": "Scarves & shawls", "cat4.d": "Cotton & silk",
+      "cat5.t": "Handbags", "cat5.d": "Everyday & evening",
+      "cat6.t": "Women's shoes", "cat6.d": "Heels & flats",
+      "cat7.t": "Accessories & jewelry", "cat7.d": "Necklaces, bracelets & watches",
+      "cat8.t": "Beauty & care", "cat8.d": "Makeup & perfume",
+      "prod.kicker": "New arrivals", "prod.h2": "Bestsellers",
+      "prod.p": "A selection of MAHO's most stylish items at special prices.",
+      "filter.all": "All", "filter.clothing": "Clothing", "filter.scarf": "Scarves",
+      "filter.bagshoes": "Bags & shoes", "filter.beauty": "Beauty", "filter.accessory": "Accessories",
+      "feat.kicker": "Why MAHO", "feat.h2": "A shopping experience you can trust",
+      "feat.p": "Our commitment isn't just selling — it's building a lasting relationship based on trust and quality.",
+      "feat1.t": "Genuine quality", "feat1.d": "Every item is genuine and carefully selected.",
+      "feat2.t": "Fast delivery", "feat2.d": "Home delivery across the city in no time.",
+      "feat3.t": "Easy exchange", "feat3.d": "Hassle-free exchange or return window.",
+      "feat4.t": "Friendly support", "feat4.d": "With you before and after your purchase.",
+      "stores.kicker": "Our store", "stores.h2": "Visit the MAHO store in person",
+      "stores.p": "Our team is ready to help you choose the best.",
+      "store.open": "Open now", "store.directions": "Get directions →",
+      "testi.kicker": "Testimonials", "testi.h2": "What MAHO customers say",
+      "testi1.q": "“The clothing quality and stitching were excellent. The manteau I bought looked exactly like the photo, and the staff were very kind.”",
+      "testi1.name": "Narges Ahmadi", "testi1.role": "Loyal customer",
+      "testi2.q": "“The variety of scarves is amazing and prices are fair. The exchange guarantee let me shop with peace of mind.”",
+      "testi2.name": "Maryam Hosseini", "testi2.role": "Shopper",
+      "testi3.q": "“I bought an elegant dress and a matching bag for a party; everyone complimented me. I'll definitely shop at MAHO again.”",
+      "testi3.name": "Samira Nouri", "testi3.role": "New customer",
+      "review.write": "Write a review", "review.submit": "Submit review", "review.rate": "Your rating",
+      "review.ph": "Share your experience with your purchase or our service...",
+      "review.loginFirst": "Please sign in to your account to write a review.",
+      "review.thanks": "Thank you for your review ✓",
+      "review.needText": "Please provide a rating and review text.",
+      "review.empty": "No reviews yet. Be the first to share your experience!",
+      "review.customer": "MAHO customer",
+      "cta.h2": "Get offers & new arrivals",
+      "cta.p": "Enter your email to receive MAHO's special offers.",
+      "cta.ph": "Your email (example@mail.com)", "cta.btn": "Subscribe",
+      "footer.desc": "MAHO Women's Clothing & Essentials — premium women's apparel and supplies with genuine quality and reliable after-sales service.",
+      "footer.shop": "Shop", "footer.link.categories": "Categories",
+      "footer.link.products": "Products", "footer.link.stores": "Store", "footer.link.reviews": "Testimonials",
+      "footer.support": "Support", "footer.link.contact": "Contact us", "footer.link.about": "About MAHO",
+      "footer.link.terms": "Terms & conditions", "footer.link.track": "Track order",
+      "footer.contact": "Contact",
+      "footer.addr": "Kote Sangi, Kabul — Mubarak Center, 4th floor, shop 74 & 75",
+      "footer.phone": "+93 791 505 454", "footer.email": "info@maho.example",
+      "footer.map": "View on map →",
+      "footer.copyPre": "©", "footer.copy": "MAHO — All rights reserved.",
+      "footer.made": "Made with ❤ for MAHO customers",
+      "toast.cart": "“{name}” added to your cart ({n})",
+      "toast.news": "You're subscribed to the newsletter ✓",
+      "form.err": "Please enter a valid email address.",
+      "form.ok": "You're subscribed! You'll soon receive MAHO's special offers.",
+      "lang.other": "فارسی",
+      "cart.title": "Your cart", "cart.empty": "Your cart is empty.",
+      "cart.total": "Total", "cart.checkout": "Order via WhatsApp",
+      "cart.clear": "Clear cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",
+      "stock.out": "Out of stock", "stock.left": "{n} left in stock", "stock.max": "You can't order more than the available stock.",
+      "qv.add": "Add to cart",
+      "qv.size": "Size", "qv.color": "Color", "qv.pick": "Please select size and color.",
+      "cart.continue": "Checkout →",
+      "co.back": "← Back to cart", "co.title": "Order details",
+      "co.name": "Full name *", "co.phone": "Phone *", "co.address": "Delivery address *", "co.note": "Notes (optional)",
+      "co.err": "Please enter your name, phone and address.",
+      "acct.login": "Log in", "acct.signup": "Sign up", "acct.create": "Create account", "acct.logout": "Log out",
+      "acct.name": "Full name", "acct.phone": "Phone or email", "acct.pass": "Password",
+      "acct.exists": "This account already exists.", "acct.bad": "Incorrect login details.",
+      "acct.created": "Your account was created & verified ✓", "acct.hi": "Welcome",
+      "acct.need": "Please fill in all fields to continue.",
+      "acct.fullname": "Full name", "acct.phoneNum": "Phone number", "acct.email": "Email",
+      "acct.sendCode": "Send verification code", "acct.codeSent": "A verification code was sent to your email. Enter it below.",
+      "acct.code": "Verification code", "acct.verify": "Verify & create account", "acct.resend": "Resend code",
+      "acct.badCode": "The code is incorrect.", "acct.needAll": "Enter your name, phone, email and password.",
+      "acct.badEmail": "Enter a valid email address.", "acct.emailExists": "This email is already registered.",
+      "acct.sending": "Sending code...", "acct.sendFail": "Sending the email failed. Please try again.",
+      "acct.demoNote": "Demo mode: your verification code is {code}. To send real emails, configure EmailJS in the admin panel.",
+      "order.customer": "Customer", "order.addr": "Address", "order.note": "Notes",
+      "order.header": "Hello, I'd like to order these items:",
+      "co.payment": "Payment method",
+      "pay.whatsapp": "Order via WhatsApp (pay on delivery)",
+      "pay.bank": "Bank transfer / payment", "pay.card": "Pay online by card",
+      "pay.bankInfo": "Please transfer the amount to the account below and send the receipt on WhatsApp:",
+      "pay.holder": "Account holder", "pay.bankName": "Bank", "pay.accountNo": "Account / card number",
+      "pay.noBank": "Bank account details are not set yet. Please use WhatsApp.",
+      "pay.noCard": "Online payment is not set up yet. Please use WhatsApp or bank transfer.",
+      "pay.placeWhatsapp": "Place order (WhatsApp)", "pay.payCard": "Pay by card →", "pay.placeBank": "Place order & show account",
+      "pay.hesab": "Pay with HesabPay",
+      "pay.hesabInfo": "Pay via HesabPay and send the receipt on WhatsApp:",
+      "pay.hesabNumber": "HesabPay number/ID", "pay.hesabOpen": "Pay with HesabPay →",
+      "pay.noHesab": "HesabPay is not set up yet. Please use WhatsApp or bank transfer.",
+      "order.placed": "Your order has been placed ✓",
+      "orders.title": "My orders", "orders.empty": "You have no orders yet.",
+      "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
+      "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
+      "status.confirmed": "Confirmed",
+      "status.cancelled": "Cancelled", "status.returnReq": "Return requested",
+      "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
+      "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
+      "orders.cancelMsg": "Order cancelled", "orders.returnMsg": "Return request",
+      "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
+      "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
+      "acct.saved": "Changes saved ✓",
+      "acct.emailChangeCode": "To change your email, enter the code sent to the new address.",
+      "acct.verifyNewEmail": "Verify new email", "acct.emailUpdated": "Your email was updated ✓",
+      "pay.type": "Type", "pay.tCard": "Bank card", "pay.tBank": "Bank account",
+      "pay.add": "Add payment info", "pay.none": "No saved payment info yet.",
+      "pay.localNote": "This info is stored only on your device.",
+      "co.email": "Email (for order confirmation)",
+      "order.number": "Order number", "order.emailSent": "An order confirmation email was sent to you.",
+      "order.emailIntro": "Your order at MAHO is confirmed. Details:",
+      "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
+      "share.copied": "Site link copied ✓", "share.title": "Check out this store", "copied": "Copied ✓",
+      "addr.country": "Country", "addr.province": "Province", "addr.district": "District", "addr.area": "Area / Zone", "addr.street": "Street", "addr.house": "House no.",
+      "acct.forgot": "Forgot password?", "acct.reset": "Reset password",
+      "acct.resetSent": "A reset code was sent to your email. Enter the code and a new password.",
+      "acct.newPassPh": "New password", "acct.resetDone": "Your password was changed ✓", "acct.noEmail": "This email is not registered.",
+      "acct.backLogin": "← Back to login",
+      "co.delivery": "Receiving method", "co.pickup": "Pick up at the store", "co.deliver": "Deliver to my address",
+      "co.deliverTime": "Delivery time", "co.normal": "Normal", "co.urgent": "Same-day (urgent)",
+      "co.calcDist": "Calculate distance (my location)", "co.distKm": "Distance to nearest store", "co.km": "km",
+      "co.manualKm": "Or enter distance (km) manually", "co.deliveryFee": "Delivery fee", "co.grand": "Amount payable",
+      "co.belowMin": "For delivery, the minimum order is {n}. Please add more items or choose in-store pickup.",
+      "co.beyondMax": "Delivery is only available within {n} km of the store; your address is farther.",
+      "co.timeslot": "Pickup / delivery time",
+      "co.ts0": "As soon as possible", "co.ts1": "Today morning (9–12)", "co.ts2": "Today afternoon (12–4)", "co.ts3": "Today evening (4–8)", "co.ts4": "Tomorrow",
+      "co.makeAccount": "Create an account (optional)", "co.passPh": "Password for your new account",
+      "co.makeAccountHint": "If you set a password, a verification code is emailed to you when you place the order; after verifying, your account is created and its details are emailed to you.",
+      "co.enterCode": "Verification code (sent to your email)", "co.verifyPlace": "Verify code & place order",
+      "co.acctNeedEmail": "Enter a valid email to create an account.", "co.acctExists": "This email already has an account; please sign in.",
+      "co.codeSentEmail": "A verification code was sent to your email. Enter it below.", "co.acctCreated": "Your account was created ✓ Customer no: {no}",
+      "acct.welcomeMsg": "Your MAHO account has been created. Your customer number: {no}. You can sign in with this email and password.",
+      "co.free": "Free", "co.geoFail": "Couldn't get your location; please enter the distance manually.",
+      "co.noStoreCoords": "Store coordinates not set; enter distance manually.",
+      "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
+    },
+  };
+  const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
+
+  /* -------------------- Data -------------------- */
+  const CAT_ICON = { clothing: "dress", scarf: "scarf", bagshoes: "bag", beauty: "sparkles", accessory: "ring" };
+
+  let PRODUCTS = [
+    { name: "پیراهن مجلسی بلند", name_en: "Long Evening Dress", cat: "clothing", icon: "dress", code: "DRS-001", stock: 10, price: 4200, old: 5000, badge: "sale", badgeText: "۱۶٪ تخفیف", badgeText_en: "16% off" },
+    { name: "مانتو کژوال روزمره", name_en: "Casual Manteau", cat: "clothing", icon: "coat", code: "MNT-002", stock: 8, price: 3200, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "بلوز و شومیز آستین‌بلند", name_en: "Long-sleeve Blouse", cat: "clothing", icon: "shirt", code: "BLZ-003", stock: 20, price: 1450 },
+    { name: "شال نخی طرح‌دار", name_en: "Patterned Cotton Shawl", cat: "scarf", icon: "scarf", code: "SHL-004", stock: 5, price: 650, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "روسری ابریشمی", name_en: "Silk Headscarf", cat: "scarf", icon: "scarf", code: "RSR-005", stock: 12, price: 1200, old: 1350, badge: "sale", badgeText: "۱۰٪ تخفیف", badgeText_en: "10% off" },
+    { name: "کیف دستی چرم", name_en: "Leather Handbag", cat: "bagshoes", icon: "bag", code: "KIF-006", stock: 6, price: 2800 },
+    { name: "کفش پاشنه‌بلند مجلسی", name_en: "Evening High Heels", cat: "bagshoes", icon: "heel", code: "KFS-007", stock: 5, price: 3100, old: 3900, badge: "sale", badgeText: "۲۰٪ تخفیف", badgeText_en: "20% off" },
+    { name: "کفش تخت راحتی", name_en: "Comfort Flats", cat: "bagshoes", icon: "heel", code: "KFS-008", stock: 15, price: 1900 },
+    { name: "ست لوازم آرایش", name_en: "Makeup Set", cat: "beauty", icon: "sparkles", code: "ARZ-009", stock: 9, price: 2500, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+    { name: "عطر زنانه لوکس", name_en: "Luxury Women's Perfume", cat: "beauty", icon: "perfume", code: "ATR-010", stock: 7, price: 3900, old: 4400, badge: "sale", badgeText: "۱۲٪ تخفیف", badgeText_en: "12% off" },
+    { name: "ست گردنبند و دستبند", name_en: "Necklace & Bracelet Set", cat: "accessory", icon: "ring", code: "AKS-011", stock: 11, price: 1650 },
+    { name: "ساعت مچی زنانه", name_en: "Women's Wristwatch", cat: "accessory", icon: "watch", code: "AKS-012", stock: 4, price: 3600, badge: "new", badgeText: "جدید", badgeText_en: "New" },
+  ];
+  const CAT_LABEL = {
+    fa: { clothing: "پوشاک", scarf: "شال و روسری", bagshoes: "کیف و کفش", beauty: "آرایشی و بهداشتی", accessory: "اکسسوری" },
+    en: { clothing: "Clothing", scarf: "Scarves", bagshoes: "Bags & Shoes", beauty: "Beauty", accessory: "Accessories" },
+  };
+  const DEFAULT_CATS = [
+    { key: "clothing", name: "پوشاک", name_en: "Clothing", icon: "dress" },
+    { key: "scarf", name: "شال و روسری", name_en: "Scarves", icon: "scarf" },
+    { key: "bagshoes", name: "کیف و کفش", name_en: "Bags & Shoes", icon: "bag" },
+    { key: "beauty", name: "آرایشی و بهداشتی", name_en: "Beauty", icon: "sparkles" },
+    { key: "accessory", name: "اکسسوری", name_en: "Accessories", icon: "ring" },
+  ];
+  const DEFAULT_SHOWCASE = [
+    { title: "لباس مجلسی", title_en: "Evening dresses", sub: "پیراهن و کالای شب", sub_en: "Dresses & eveningwear", icon: "dress", filter: "clothing" },
+    { title: "مانتو و پالتو", title_en: "Manteaus & coats", sub: "روزمره و رسمی", sub_en: "Casual & formal", icon: "coat", filter: "clothing" },
+    { title: "بلوز و شومیز", title_en: "Blouses & tops", sub: "مدل‌های متنوع", sub_en: "Many styles", icon: "shirt", filter: "clothing" },
+    { title: "شال و روسری", title_en: "Scarves & shawls", sub: "نخی و ابریشمی", sub_en: "Cotton & silk", icon: "scarf", filter: "scarf" },
+    { title: "کیف زنانه", title_en: "Handbags", sub: "دستی و مجلسی", sub_en: "Everyday & evening", icon: "bag", filter: "bagshoes" },
+    { title: "کفش زنانه", title_en: "Women's shoes", sub: "پاشنه‌بلند و تخت", sub_en: "Heels & flats", icon: "heel", filter: "bagshoes" },
+    { title: "اکسسوری و بدلیجات", title_en: "Accessories & jewelry", sub: "گردنبند، دستبند و ساعت", sub_en: "Necklaces, bracelets & watches", icon: "ring", filter: "accessory" },
+    { title: "آرایشی و بهداشتی", title_en: "Beauty & care", sub: "لوازم آرایش و عطر", sub_en: "Makeup & perfume", icon: "sparkles", filter: "beauty" },
+  ];
+  const DEFAULT_TIMESLOTS = [
+    { fa: "در اسرع وقت", en: "As soon as possible" },
+    { fa: "امروز صبح (۹ تا ۱۲)", en: "Today morning (9–12)" },
+    { fa: "امروز بعد از ظهر (۱۲ تا ۴)", en: "Today afternoon (12–4)" },
+    { fa: "امروز عصر (۴ تا ۸)", en: "Today evening (4–8)" },
+    { fa: "فردا", en: "Tomorrow" },
+  ];
+
+  let STORES = [
+    {
+      name: "لباس و لوازم بانوان MAHO", name_en: "MAHO Women's Clothing & Essentials",
+      area: "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
+      area_en: "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
+      hours: "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب", hours_en: "Sat–Thu, 9:00 AM – 8:00 PM",
+      phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
+      map: "https://maps.app.goo.gl/U6miPMFLBSY6woFo6",
+    },
+  ];
+  let CONFIG = {
+    categories: DEFAULT_CATS.slice(), showcase: DEFAULT_SHOWCASE.slice(),
+    whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
+    bank: { holder: "", name: "", number: "" }, paymentLink: "",
+    hesab: { link: "", number: "" },
+    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0, timeslots: DEFAULT_TIMESLOTS.slice() },
+    emailjs: { serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" },
+  };
+
+  /* -------------------- Catalog data source --------------------
+     Priority: owner's local draft (admin panel) > published data.json > built-in defaults. */
+  const DATA_KEY = "maho_admin_data";
+  function normalizeData(d) {
+    d = d || {};
+    const products = Array.isArray(d.products) ? d.products : null;
+    let stores = Array.isArray(d.stores) ? d.stores : (d.store ? [d.store] : null);
+    let config = Object.assign({}, d.config || {});
+    if (d.store) { // migrate legacy single-store config
+      if (config.whatsapp == null) config.whatsapp = d.store.whatsapp;
+      if (config.bank == null) config.bank = d.store.bank;
+      if (config.paymentLink == null) config.paymentLink = d.store.paymentLink;
+      if (config.emailjs == null) config.emailjs = d.store.emailjs;
+    }
+    return { products: products, stores: stores, config: config };
+  }
+  function applyData(d) {
+    const n = normalizeData(d);
+    if (n.products && n.products.length) PRODUCTS = n.products;
+    if (n.stores && n.stores.length) STORES = n.stores;
+    if (n.config) {
+      CONFIG = Object.assign({}, CONFIG, n.config);
+      CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
+      CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
+      CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0 }, n.config.delivery || CONFIG.delivery);
+      const ts = (CONFIG.delivery.timeslots || []).filter((x) => x && (x.fa || x.en));
+      CONFIG.delivery.timeslots = ts.length ? ts : DEFAULT_TIMESLOTS.slice();
+      CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
+      const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
+      CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
+      const sc = (n.config.showcase || []).filter((x) => x && (x.title || x.title_en));
+      CONFIG.showcase = sc.length ? sc : (CONFIG.showcase && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE.slice());
+    }
+  }
+  function getCats() { return (Array.isArray(CONFIG.categories) && CONFIG.categories.length) ? CONFIG.categories : DEFAULT_CATS; }
+  function catObj(key) { return getCats().find((c) => c.key === key); }
+  function catLabel(key) { const c = catObj(key); if (c) return (LANG === "en" ? (c.name_en || c.name) : c.name) || key; return (CAT_LABEL[LANG] && CAT_LABEL[LANG][key]) || key; }
+  function catIcon(key) { const c = catObj(key); return (c && c.icon) || CAT_ICON[key] || "bag"; }
+  let hasLocalDraft = false;
+  try {
+    const raw = localStorage.getItem(DATA_KEY);
+    if (raw) { applyData(JSON.parse(raw)); hasLocalDraft = true; }
+  } catch (_) {}
+
+  /* -------------------- Inventory helpers -------------------- */
+  const LOW_STOCK = 5;
+  function productStock(p) { if (p.stock == null || p.stock === "") return Infinity; const n = parseInt(p.stock, 10); return isNaN(n) ? Infinity : n; }
+
+  /* -------------------- Render products -------------------- */
+  let activeFilter = "all";
+  const productGrid = $("#productGrid");
+  function renderProducts() {
+    if (!productGrid) return;
+    productGrid.innerHTML = PRODUCTS.map((p, i) => {
+      const badgeText = LANG === "en" ? (p.badgeText_en || p.badgeText) : p.badgeText;
+      const disc = prodDiscount(p);
+      const badge = disc
+        ? `<span class="product-badge">${LANG === "en" ? (toDigits(disc) + "% off") : (toDigits(disc) + "٪ تخفیف")}</span>`
+        : (p.badge ? `<span class="product-badge ${p.badge === "new" ? "new" : ""}">${badgeText}</span>` : "");
+      const orig = origPrice(p);
+      const old = orig ? `<del>${money(orig)}</del>` : "";
+      const name = LANG === "en" ? (p.name_en || p.name) : p.name;
+      const imgs = productImages(p);
+      const media = imgs.length
+        ? `<img src="${imgs[0]}" alt="${name}" loading="lazy">`
+        : icon(p.icon || catIcon(p.cat));
+      const stock = productStock(p);
+      const out = stock <= 0;
+      const low = stock > 0 && stock <= LOW_STOCK;
+      const outOverlay = out ? `<span class="out-overlay">${t("stock.out")}</span>` : "";
+      const stockNote = low ? `<span class="stock-note low">${t("stock.left").replace("{n}", toDigits(stock))}</span>`
+        : (out ? `<span class="stock-note out">${t("stock.out")}</span>` : "");
+      return `
+        <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
+          <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}</div>
+          <div class="product-body">
+            <span class="cat">${catLabel(p.cat)}</span>
+            <h3>${name}</h3>
+            ${stockNote}
+            <div class="product-foot">
+              <span class="price">${money(effPrice(p))} ${old}</span>
+              <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
+            </div>
+          </div>
+        </article>`;
+    }).join("");
+    applyFilter(activeFilter);
+  }
+
+  /* -------------------- Render store -------------------- */
+  const storeGrid = $("#storeGrid");
+  function renderStores() {
+    if (!storeGrid) return;
+    storeGrid.className = "store-grid" + (STORES.length <= 1 ? " single" : "");
+    storeGrid.innerHTML = STORES.map((s) => {
+      const name = LANG === "en" ? (s.name_en || s.name) : s.name;
+      const area = LANG === "en" ? (s.area_en || s.area) : s.area;
+      const hours = LANG === "en" ? (s.hours_en || s.hours) : s.hours;
+      const phone = LANG === "en" ? (s.phone_en || s.phone) : s.phone;
+      return `
+        <article class="store-card">
+          <div class="store-top">
+            <h3>${name}</h3>
+            <span class="badge-open">${t("store.open")}</span>
+          </div>
+          <div class="store-row"><span class="ico">${icon("pin")}</span><span>${area}</span></div>
+          <div class="store-row"><span class="ico">${icon("clock")}</span><span>${hours}</span></div>
+          <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link" href="${telHref(phone)}" dir="ltr">${phone}</a></div>
+          <a class="btn btn-outline" target="_blank" rel="noopener" href="${s.map}">${t("store.directions")}</a>
+        </article>`;
+    }).join("");
+  }
+
+  /* -------------------- Filtering -------------------- */
+  function applyFilter(filter) {
+    activeFilter = filter;
+    $$(".product-card", productGrid).forEach((card) => {
+      const show = filter === "all" || card.dataset.cat === filter;
+      card.classList.toggle("is-hidden", !show);
+    });
+  }
+  function renderShowcase() {
+    const grid = document.querySelector(".cat-grid");
+    if (!grid) return;
+    const items = (Array.isArray(CONFIG.showcase) && CONFIG.showcase.length ? CONFIG.showcase : DEFAULT_SHOWCASE).filter((x) => x && (x.title || x.title_en));
+    grid.innerHTML = items.map((x) => {
+      const title = LANG === "en" ? (x.title_en || x.title) : x.title;
+      const sub = LANG === "en" ? (x.sub_en || x.sub) : x.sub;
+      const f = x.filter || "all";
+      return `<div class="cat-card in" data-filter="${f}" role="button" tabindex="0"><div class="ico">${icon(x.icon || "bag")}</div><h3>${title || ""}</h3><p>${sub || ""}</p></div>`;
+    }).join("");
+  }
+  const filterBar = $("#filterBar");
+  function renderFilters() {
+    if (!filterBar) return;
+    const cats = getCats().filter((c) => c.name || c.name_en);
+    const chip = (f, label) => `<button class="chip${activeFilter === f ? " active" : ""}" data-filter="${f}">${label}</button>`;
+    filterBar.innerHTML = chip("all", t("filter.all")) + cats.map((c) => chip(c.key, LANG === "en" ? (c.name_en || c.name) : c.name)).join("");
+  }
+  if (filterBar) {
+    filterBar.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      $$(".chip", filterBar).forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      applyFilter(chip.dataset.filter);
+    });
+  }
+
+  /* -------------------- Product helpers (images / variants) -------------------- */
+  function productImages(p) { return Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []); }
+  function productSizes(p) { return Array.isArray(p.sizes) ? p.sizes.filter(Boolean) : []; }
+  function productColors(p) { return Array.isArray(p.colors) ? p.colors.filter(Boolean) : []; }
+  function colorName(v) { return String(v).split("|")[0].trim(); }
+  function prodDiscount(p) { const d = parseFloat(p && p.discount); return (isFinite(d) && d > 0) ? Math.min(95, d) : 0; }
+  function effPrice(p) { const d = prodDiscount(p); return d > 0 ? Math.round((p.price || 0) * (1 - d / 100)) : (p.price || 0); }
+  function origPrice(p) { const d = prodDiscount(p); return d > 0 ? (p.price || 0) : (p.old || 0); }
+
+  /* -------------------- Cart -------------------- */
+  const CART_KEY = "maho_cart";
+  let CART = [];
+  try { const raw = localStorage.getItem(CART_KEY); if (raw) CART = JSON.parse(raw) || []; } catch (_) {}
+  const saveCart = () => { try { localStorage.setItem(CART_KEY, JSON.stringify(CART)); } catch (_) {} };
+  const cartQtyTotal = () => CART.reduce((s, it) => s + it.qty, 0);
+  const cartPriceTotal = () => CART.reduce((s, it) => s + it.price * it.qty, 0);
+
+  function cartQtyForName(name) { return CART.filter((it) => it.name === name).reduce((s, it) => s + it.qty, 0); }
+  function addToCart(p, qty, size, color) {
+    qty = Math.max(1, qty || 1);
+    const stock = productStock(p);
+    if (stock <= 0) { showToast(t("stock.out")); return; }
+    if (cartQtyForName(p.name) + qty > stock) { showToast(t("stock.max")); return; }
+    size = size || ""; color = color || "";
+    const key = p.name + "|" + size + "|" + color;
+    const found = CART.find((it) => it.key === key);
+    if (found) found.qty += qty;
+    else CART.push({ key: key, name: p.name, name_en: p.name_en, price: effPrice(p), code: p.code || "", cat: p.cat, image: productImages(p)[0] || "", icon: p.icon || "", size: size, color: color, qty: qty });
+    saveCart(); updateCartBadge(); renderCart();
+    const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
+    showToast(t("toast.cart").replace("{name}", nm).replace("{n}", toDigits(cartQtyTotal())));
+  }
+  function changeQty(key, delta) {
+    const it = CART.find((x) => x.key === key); if (!it) return;
+    if (delta > 0) {
+      const p = PRODUCTS.find((x) => x.name === it.name);
+      const stock = p ? productStock(p) : Infinity;
+      if (cartQtyForName(it.name) + 1 > stock) { showToast(t("stock.max")); return; }
+    }
+    it.qty += delta;
+    if (it.qty <= 0) CART = CART.filter((x) => x.key !== key);
+    saveCart(); updateCartBadge(); renderCart();
+  }
+  function removeItem(key) { CART = CART.filter((x) => x.key !== key); saveCart(); updateCartBadge(); renderCart(); }
+
+  const cartCountEl = $("#cartCount");
+  function updateCartBadge() {
+    if (!cartCountEl) return;
+    const n = cartQtyTotal();
+    cartCountEl.textContent = toDigits(n);
+    cartCountEl.classList.toggle("empty", n === 0);
+  }
+  function variantLabel(it) {
+    const parts = [];
+    if (it.size) parts.push(t("qv.size") + ": " + it.size);
+    if (it.color) parts.push(t("qv.color") + ": " + colorName(it.color));
+    return parts.join(" · ");
+  }
+  const cartItemsEl = $("#cartItems");
+  const cartTotalEl = $("#cartTotal");
+  const cartTotal2El = $("#cartTotal2");
+  const cartFootEl = $("#cartFoot");
+  function renderCart() {
+    if (!cartItemsEl) return;
+    const total = money(cartPriceTotal());
+    if (cartTotalEl) cartTotalEl.textContent = total;
+    if (cartTotal2El) cartTotal2El.textContent = total;
+    if (!CART.length) {
+      cartItemsEl.innerHTML = `<p class="cart-empty">${t("cart.empty")}</p>`;
+      if (cartFootEl) cartFootEl.style.display = "none";
+      return;
+    }
+    if (cartFootEl) cartFootEl.style.display = "flex";
+    cartItemsEl.innerHTML = CART.map((it) => {
+      const nm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const media = it.image ? `<img src="${it.image}" alt="">` : icon(it.icon || catIcon(it.cat));
+      const variant = variantLabel(it) ? `<span class="ci-variant">${variantLabel(it)}</span>` : "";
+      return `
+        <div class="cart-item">
+          <div class="ci-media">${media}</div>
+          <div class="ci-info">
+            <b>${nm}</b>
+            ${variant}
+            <span class="ci-price">${money(it.price)} × ${toDigits(it.qty)} = <b>${money(it.price * it.qty)}</b></span>
+            <button class="ci-remove" data-remove="${it.key}">${t("cart.remove")}</button>
+          </div>
+          <div class="qty sm">
+            <button type="button" data-dec="${it.key}" aria-label="-">−</button>
+            <input value="${toDigits(it.qty)}" readonly aria-label="تعداد">
+            <button type="button" data-inc="${it.key}" aria-label="+">+</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  /* product grid: click card = quick view, click bag = add (open quick view if it has options) */
+  if (productGrid) {
+    productGrid.addEventListener("click", (e) => {
+      const card = e.target.closest(".product-card");
+      if (!card) return;
+      const p = PRODUCTS[parseInt(card.dataset.idx, 10)];
+      if (!p) return;
+      if (e.target.closest("[data-addcart]")) {
+        if (productSizes(p).length || productColors(p).length) openQuickView(p);
+        else addToCart(p, 1, "", "");
+        return;
+      }
+      openQuickView(p);
+    });
+    productGrid.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const card = e.target.closest(".product-card"); if (!card) return;
+      e.preventDefault();
+      const p = PRODUCTS[parseInt(card.dataset.idx, 10)]; if (p) openQuickView(p);
+    });
+  }
+
+  /* cart drawer + checkout steps */
+  const cartOverlay = $("#cartOverlay");
+  const screenItems = $("#screenItems");
+  const screenCheckout = $("#screenCheckout");
+  function showScreen(which) {
+    if (screenItems) screenItems.hidden = which !== "items";
+    if (screenCheckout) screenCheckout.hidden = which !== "checkout";
+  }
+  function openCart() { renderCart(); showScreen("items"); if (cartOverlay) cartOverlay.classList.add("show"); }
+  function closeCart() { if (cartOverlay) cartOverlay.classList.remove("show"); }
+  const cartBtn = $("#cartBtn"); if (cartBtn) cartBtn.addEventListener("click", openCart);
+  const cartClose = $("#cartClose"); if (cartClose) cartClose.addEventListener("click", closeCart);
+  if (cartOverlay) cartOverlay.addEventListener("click", (e) => { if (e.target === cartOverlay) closeCart(); });
+  if (cartItemsEl) cartItemsEl.addEventListener("click", (e) => {
+    const inc = e.target.closest("[data-inc]"), dec = e.target.closest("[data-dec]"), rm = e.target.closest("[data-remove]");
+    if (inc) changeQty(inc.getAttribute("data-inc"), 1);
+    else if (dec) changeQty(dec.getAttribute("data-dec"), -1);
+    else if (rm) removeItem(rm.getAttribute("data-remove"));
+  });
+  const cartClear = $("#cartClear"); if (cartClear) cartClear.addEventListener("click", () => { CART = []; saveCart(); updateCartBadge(); renderCart(); });
+
+  /* -------------------- address helpers -------------------- */
+  function composeAddress(a) {
+    a = a || {}; const parts = [];
+    const line1 = [a.house, a.street].filter(Boolean).join(" "); if (line1) parts.push(line1);
+    if (a.area) parts.push(a.area);
+    if (a.district) parts.push(a.district); if (a.province) parts.push(a.province); if (a.country) parts.push(a.country);
+    return parts.join("، ");
+  }
+  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), area: g("area"), street: g("street"), house: g("house") }; }
+  function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("area", a.area); s("street", a.street); s("house", a.house); }
+
+  /* -------------------- delivery -------------------- */
+  let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
+  function getTimeslots() { const ts = (CONFIG.delivery && CONFIG.delivery.timeslots) || []; return (ts.length ? ts : DEFAULT_TIMESLOTS).filter((x) => x && (x.fa || x.en)); }
+  function timeslotLabel(i) { const ts = getTimeslots(); const s = ts[i] || ts[0]; return s ? (LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)) : ""; }
+  function renderTimeslots() {
+    const box = $("#deliverSlots"); if (!box) return;
+    const ts = getTimeslots();
+    if (deliverSlot >= ts.length) deliverSlot = 0;
+    box.innerHTML = ts.map((s, i) => `<button type="button" class="pay-method${i === deliverSlot ? " active" : ""}" data-slot="${i}">${LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)}</button>`).join("");
+  }
+  function haversine(la1, lo1, la2, lo2) { const R = 6371, r = Math.PI / 180; const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r; const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
+  // Extract lat/lng from a Google Maps link/address (supports @lat,lng / !3d!4d / q=/ll= / bare pair)
+  function parseLatLng(url) {
+    const s = String(url || "");
+    let m = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/)
+      || s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/)
+      || s.match(/[?&](?:q|ll|sll|center|destination|daddr)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/)
+      || s.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
+    if (m) { const la = parseFloat(m[1]), lo = parseFloat(m[2]); if (isFinite(la) && isFinite(lo)) return [la, lo]; }
+    return null;
+  }
+  function storeCoords(s) {
+    const la = parseFloat(s.lat), lo = parseFloat(s.lng);
+    if (isFinite(la) && isFinite(lo)) return [la, lo];
+    return parseLatLng(s.map || s.mapLink || "");
+  }
+  function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const c = storeCoords(s); if (c) { const d = haversine(lat, lng, c[0], c[1]); if (best === null || d < best) best = d; } }); return best; }
+  function currentKm() { let km = parseFloat(toEnDigits(($("#co_km") && $("#co_km").value) || "")); if (!isFinite(km) || km < 0) km = (distanceKm != null ? distanceKm : 0); return km; }
+  function deliveryFee() { const cfg = CONFIG.delivery || {}; if (recvMethod !== "deliver" || !cfg.enabled) return 0; const km = currentKm(); let fee = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0); if (deliverTime === "urgent") fee += (cfg.urgentFee || 0); return fee; }
+  function deliveryMinOrder() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.minOrder) ? cfg.minOrder : 0; }
+  function deliveryMaxKm() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.maxKm) ? cfg.maxKm : 0; }
+  function belowDeliveryMin() { return recvMethod === "deliver" && deliveryMinOrder() > 0 && cartPriceTotal() < deliveryMinOrder(); }
+  function beyondDeliveryMax() { const mx = deliveryMaxKm(); return recvMethod === "deliver" && mx > 0 && currentKm() > mx; }
+  function deliveryBlockMsg() {
+    if (recvMethod !== "deliver") return "";
+    if (belowDeliveryMin()) return t("co.belowMin").replace("{n}", money(deliveryMinOrder()));
+    if (beyondDeliveryMax()) return t("co.beyondMax").replace("{n}", toDigits(deliveryMaxKm()));
+    return "";
+  }
+  function updateCheckoutTotals() {
+    const items = cartPriceTotal(), fee = deliveryFee(), grand = items + fee;
+    if ($("#coItemsTotal")) $("#coItemsTotal").textContent = money(items);
+    const row = $("#coDeliveryRow"); if (row) row.hidden = (recvMethod !== "deliver");
+    if ($("#coDeliveryFee")) $("#coDeliveryFee").textContent = fee ? money(fee) : t("co.free");
+    if ($("#cartTotal2")) $("#cartTotal2").textContent = money(grand);
+    const warn = $("#coMinWarn");
+    if (warn) { const msg = deliveryBlockMsg(); if (msg) { warn.hidden = false; warn.textContent = msg; } else { warn.hidden = true; warn.textContent = ""; } }
+  }
+  const recvMethodsEl = $("#recvMethods");
+  if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; recvMethod = b.dataset.recv; $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver"); updateCheckoutTotals(); });
+  const deliverTimeEl = $("#deliverTime");
+  if (deliverTimeEl) deliverTimeEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverTime = b.dataset.time; $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); updateCheckoutTotals(); });
+  const deliverSlotsEl = $("#deliverSlots");
+  if (deliverSlotsEl) deliverSlotsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverSlot = parseInt(b.dataset.slot, 10) || 0; $$(".pay-method", deliverSlotsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); });
+  const coKmEl = $("#co_km");
+  if (coKmEl) coKmEl.addEventListener("input", () => { const n = parseFloat(toEnDigits(coKmEl.value)); distanceKm = isFinite(n) ? n : null; updateCheckoutTotals(); });
+  const calcBtn = $("#calcDistBtn");
+  if (calcBtn) calcBtn.addEventListener("click", () => {
+    const di = $("#distInfo");
+    if (!navigator.geolocation) { if (di) { di.hidden = false; di.textContent = t("co.geoFail"); } return; }
+    calcBtn.disabled = true;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      calcBtn.disabled = false;
+      const km = nearestStoreKm(pos.coords.latitude, pos.coords.longitude);
+      if (km == null) { if (di) { di.hidden = false; di.textContent = t("co.noStoreCoords"); } return; }
+      distanceKm = km; if (coKmEl) coKmEl.value = toDigits(Math.round(km * 10) / 10);
+      if (di) { di.hidden = false; di.textContent = t("co.distKm") + ": " + toDigits(Math.round(km * 10) / 10) + " " + t("co.km"); }
+      updateCheckoutTotals();
+    }, () => { calcBtn.disabled = false; if (di) { di.hidden = false; di.textContent = t("co.geoFail"); } }, { timeout: 8000 });
+  });
+
+  const toCheckoutBtn = $("#toCheckout");
+  if (toCheckoutBtn) toCheckoutBtn.addEventListener("click", () => {
+    if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    const s = getSession();
+    if (s) {
+      if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || "";
+      if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || "";
+      if ($("#co_email")) $("#co_email").value = $("#co_email").value || s.email || "";
+    }
+    fillAddr("co", (s && s.addr) || null);
+    // Guest account block only for not-logged-in customers
+    const gaw = $("#guestAcctWrap"); if (gaw) gaw.hidden = !!s;
+    const cvb = $("#coVerifyBox"); if (cvb) cvb.hidden = true;
+    pendingCheckoutAccount = null;
+    if ($("#co_pass")) $("#co_pass").value = "";
+    if ($("#coMsg")) $("#coMsg").textContent = "";
+    payMethod = "whatsapp";
+    if (payMethodsEl) $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
+    updatePayInfo();
+    // reset delivery
+    recvMethod = "pickup"; deliverTime = "normal"; distanceKm = null;
+    if (recvMethodsEl) $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.recv === "pickup"));
+    if (deliverTimeEl) $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.toggle("active", x.dataset.time === "normal"));
+    if ($("#deliverBox")) $("#deliverBox").hidden = true;
+    if (coKmEl) coKmEl.value = ""; if ($("#distInfo")) $("#distInfo").hidden = true;
+    updateCheckoutTotals();
+    showScreen("checkout");
+  });
+  const backToCartBtn = $("#backToCart");
+  if (backToCartBtn) backToCartBtn.addEventListener("click", () => showScreen("items"));
+
+  function waNumber() {
+    let s = CONFIG.whatsapp || (STORES[0] && STORES[0].phone) || "";
+    s = toEnDigits(s).replace(/[^0-9]/g, "");
+    if (!s) return "";
+    if (s.charAt(0) === "0") s = "93" + s.slice(1);
+    return s;
+  }
+  /* payment method selection */
+  let payMethod = "whatsapp";
+  const payMethodsEl = $("#payMethods");
+  const payInfoEl = $("#payInfo");
+  function bankInfo() { return CONFIG.bank || {}; }
+  function paymentLink() { return CONFIG.paymentLink || ""; }
+  function hesabInfo() { return CONFIG.hesab || {}; }
+  function updatePayInfo() {
+    if (!payInfoEl) return;
+    const placeBtn = $("#placeOrder");
+    if (payMethod === "hesab") {
+      const h = hesabInfo();
+      if (h.link || h.number) {
+        payInfoEl.hidden = false;
+        payInfoEl.innerHTML = `${t("pay.hesabInfo")}<br>` +
+          (h.number ? `<b>${t("pay.hesabNumber")}:</b> <a href="#" class="copy-num" data-copy="${String(h.number).replace(/"/g, "&quot;")}" dir="ltr">${h.number}</a>` : "");
+      } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noHesab"); }
+      if (placeBtn) placeBtn.textContent = h.link ? t("pay.hesabOpen") : t("pay.placeBank");
+    } else if (payMethod === "bank") {
+      const b = bankInfo();
+      if (b.holder || b.number || b.name) {
+        payInfoEl.hidden = false;
+        payInfoEl.innerHTML = `${t("pay.bankInfo")}<br>` +
+          (b.holder ? `<b>${t("pay.holder")}:</b> ${b.holder}<br>` : "") +
+          (b.name ? `<b>${t("pay.bankName")}:</b> ${b.name}<br>` : "") +
+          (b.number ? `<b>${t("pay.accountNo")}:</b> <a href="#" class="copy-num" data-copy="${String(b.number).replace(/"/g, "&quot;")}" dir="ltr">${b.number}</a>` : "");
+      } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noBank"); }
+      if (placeBtn) placeBtn.textContent = t("pay.placeBank");
+    } else if (payMethod === "card") {
+      payInfoEl.hidden = false;
+      payInfoEl.textContent = paymentLink() ? t("pay.card") : t("pay.noCard");
+      if (placeBtn) placeBtn.textContent = t("pay.payCard");
+    } else {
+      payInfoEl.hidden = true; payInfoEl.textContent = "";
+      if (placeBtn) placeBtn.textContent = t("pay.placeWhatsapp");
+    }
+  }
+  if (payMethodsEl) payMethodsEl.addEventListener("click", (e) => {
+    const b = e.target.closest(".pay-method"); if (!b) return;
+    payMethod = b.dataset.method;
+    $$(".pay-method", payMethodsEl).forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    updatePayInfo();
+  });
+  if (payInfoEl) payInfoEl.addEventListener("click", (e) => {
+    const a = e.target.closest(".copy-num"); if (!a) return;
+    e.preventDefault();
+    const val = a.getAttribute("data-copy") || a.textContent || "";
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(val).then(() => showToast(t("copied"))).catch(() => {}); }
+    else { try { prompt("", val); } catch (_) {} }
+  });
+
+  /* orders storage */
+  const ORDERS_KEY = "maho_orders";
+  const getOrders = () => { try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; } catch (_) { return []; } };
+  const saveOrders = (o) => { try { localStorage.setItem(ORDERS_KEY, JSON.stringify(o)); } catch (_) {} };
+  function recordOrder(customer, method, status, delivery) {
+    const orders = getOrders();
+    const itemsTotal = cartPriceTotal();
+    const fee = (delivery && delivery.fee) || 0;
+    const order = {
+      id: "MAHO-" + Date.now().toString().slice(-6),
+      date: Date.now(),
+      items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", price: it.price, qty: it.qty, size: it.size, color: it.color })),
+      itemsTotal: itemsTotal, deliveryFee: fee, total: itemsTotal + fee,
+      delivery: delivery || null, customerNo: (customer && customer.customerNo) || "",
+      customer: customer, payment: method, status: status,
+    };
+    orders.unshift(order);
+    saveOrders(orders);
+    return order;
+  }
+  function persistCatalog() { try { localStorage.setItem(DATA_KEY, JSON.stringify({ products: PRODUCTS, stores: STORES, config: CONFIG })); } catch (_) {} }
+  function adjustStock(items, sign) {
+    let changed = false;
+    (items || []).forEach((it) => {
+      const p = PRODUCTS.find((x) => x.name === it.name);
+      if (!p) return;
+      const cur = productStock(p);
+      if (isFinite(cur)) { p.stock = Math.max(0, cur + sign * it.qty); changed = true; }
+    });
+    if (changed) { persistCatalog(); renderProducts(); }
+  }
+  function orderSummaryText(order) {
+    const lines = order.items.map((it) => {
+      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const v = [];
+      if (it.size) v.push(t("qv.size") + " " + it.size);
+      if (it.color) v.push(t("qv.color") + " " + colorName(it.color));
+      const vs = v.length ? " (" + v.join("، ") + ")" : "";
+      return "• " + inm + vs + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+    });
+    return lines.join("\n") + "\n" + t("cart.total") + ": " + money(order.total);
+  }
+  function sendOrderEmail(order, email, name) {
+    const cfg = CONFIG.emailjs || {};
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && cfg.serviceId && cfg.orderTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      emailjs.send(cfg.serviceId, cfg.orderTemplateId,
+        { to_email: email, email: email, to_name: name || "", order_no: order.id, order_summary: orderSummaryText(order), order_total: money(order.total) },
+        { publicKey: cfg.publicKey }
+      ).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+  function orderMessage(order) {
+    const lines = order.items.map((it) => {
+      const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+      const v = [];
+      if (it.size) v.push(t("qv.size") + " " + it.size);
+      if (it.color) v.push(t("qv.color") + " " + colorName(it.color));
+      const vs = v.length ? " (" + v.join("، ") + ")" : "";
+      const code = it.code ? " [" + it.code + "]" : "";
+      return "• " + inm + vs + code + " × " + toDigits(it.qty) + " = " + money(it.price * it.qty);
+    });
+    const c = order.customer || {};
+    const payLabel = order.payment === "bank" ? t("pay.bank") : order.payment === "card" ? t("pay.card") : order.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
+    const d = order.delivery || {};
+    const recvLine = d.method === "deliver"
+      ? "\n" + t("co.delivery") + ": " + t("order.deliveryTo") + (d.time === "urgent" ? " (" + t("co.urgent") + ")" : "") + " — " + t("co.deliveryFee") + ": " + (order.deliveryFee ? money(order.deliveryFee) : t("co.free"))
+      : "\n" + t("co.delivery") + ": " + t("order.pickupAt");
+    const timeLine = d.timeslot ? "\n" + t("co.timeslot") + ": " + d.timeslot : "";
+    return t("order.header") + "\n" + t("order.number") + ": " + order.id + "\n\n" + lines.join("\n") +
+      "\n\n" + t("cart.total") + ": " + money(order.total) +
+      "\n\n" + t("order.customer") + ": " + (c.name || "") + (c.customerNo ? " (" + c.customerNo + ")" : "") +
+      "\n" + t("acct.phone") + ": " + (c.phone || "") +
+      "\n" + t("order.addr") + ": " + (c.address || "") + recvLine + timeLine + (c.note ? "\n" + t("order.note") + ": " + c.note : "") +
+      "\n" + t("co.payment") + ": " + payLabel;
+  }
+  function selectedTimeslot() { return { key: String(deliverSlot), label: timeslotLabel(deliverSlot) }; }
+  function sendAccountInfo(email, name, customerNo) {
+    const cfg = CONFIG.emailjs || {};
+    if (email && cfg.serviceId && cfg.welcomeTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      emailjs.send(cfg.serviceId, cfg.welcomeTemplateId,
+        { to_email: email, email: email, to_name: name || "", customer_no: customerNo, message: t("acct.welcomeMsg").replace("{no}", customerNo) },
+        { publicKey: cfg.publicKey }
+      ).catch(() => {});
+      return true;
+    }
+    return false;
+  }
+  function createGuestAccount(p) {
+    const users = getUsers();
+    const customerNo = nextCustomerNo();
+    users.push({ name: p.name, phone: p.phone, email: p.email, address: p.address || "", addr: p.addr || {}, id: p.email, pass: p.pass, verified: true, customerNo: customerNo, payments: [] });
+    saveUsers(users);
+    setSession({ name: p.name, id: p.email, email: p.email, phone: p.phone, address: p.address || "", addr: p.addr || {}, customerNo: customerNo });
+    sendAccountInfo(p.email, p.name, customerNo);
+    return customerNo;
+  }
+  // Actually place the order using the currently selected payment method.
+  function finalizeOrder(customer, delivery) {
+    let order;
+    if (payMethod === "hesab") {
+      const h = hesabInfo();
+      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
+      order = recordOrder(customer, "hesab", t("status.awaitPay"), delivery);
+      if (h.link) window.open(h.link, "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+    } else if (payMethod === "card") {
+      const link = paymentLink();
+      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return null; }
+      order = recordOrder(customer, "card", t("status.awaitPay"), delivery);
+      window.open(link, "_blank");
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+    } else if (payMethod === "bank") {
+      order = recordOrder(customer, "bank", t("status.awaitPay"), delivery);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+    } else {
+      const st = CONFIG.orderApproval === "auto" ? t("status.confirmed") : t("status.pending");
+      order = recordOrder(customer, "whatsapp", st, delivery);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+    }
+    adjustStock(order.items, -1);
+    const emailed = sendOrderEmail(order, customer.email, customer.name);
+    CART = []; saveCart(); updateCartBadge(); renderCart();
+    showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
+    closeCart(); openOrders();
+    return order;
+  }
+  let pendingCheckoutAccount = null;
+  function readCheckout() {
+    const nm = ($("#co_name") && $("#co_name").value.trim()) || "";
+    const ph = ($("#co_phone") && $("#co_phone").value.trim()) || "";
+    const addrParts = readAddr("co");
+    const ad = composeAddress(addrParts);
+    const note = ($("#co_note") && $("#co_note").value.trim()) || "";
+    const email = ($("#co_email") && $("#co_email").value.trim()) || "";
+    const ts = selectedTimeslot();
+    return { nm, ph, addrParts, ad, note, email, ts };
+  }
+  const placeOrderBtn = $("#placeOrder");
+  if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
+    if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    const f = readCheckout();
+    if (!f.nm || !f.ph || (recvMethod === "deliver" && !f.ad)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
+    const delBlock = deliveryBlockMsg(); if (delBlock) { if ($("#coMsg")) $("#coMsg").textContent = delBlock; return; }
+    if ($("#coMsg")) $("#coMsg").textContent = "";
+    const s = getSession();
+    const customer = { name: f.nm, phone: f.ph, address: f.ad, addr: f.addrParts, note: f.note, email: f.email, customerNo: (s && s.customerNo) || "" };
+    const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee(), timeslot: f.ts.label, timeslotKey: f.ts.key };
+
+    // Guest wants to create an account (password provided, not logged in) -> verify by email code first.
+    const pass = ($("#co_pass") && $("#co_pass").value.trim()) || "";
+    if (!s && pass) {
+      if (!emailOk(f.email)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctNeedEmail"); return; }
+      if (getUsers().some((u) => (u.email || u.id || "").toLowerCase() === f.email.toLowerCase())) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctExists"); return; }
+      const code = genCode();
+      pendingCheckoutAccount = { code: code, name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery };
+      const box = $("#coVerifyBox"); if (box) box.hidden = false;
+      const vm = $("#coVerifyMsg");
+      sendCode(f.email, f.nm, code).then((res) => {
+        if (vm) { vm.className = "qv-msg ok"; vm.textContent = res.sent ? t("co.codeSentEmail") : t("acct.demoNote").replace("{code}", code); }
+        const ce = $("#co_acct_code"); if (ce) ce.focus();
+      }).catch(() => { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.sendFail"); } });
+      return;
+    }
+    finalizeOrder(customer, delivery);
+  });
+  const coVerifyBtn = $("#coVerifyBtn");
+  if (coVerifyBtn) coVerifyBtn.addEventListener("click", () => {
+    if (!pendingCheckoutAccount) return;
+    const entered = toEnDigits(($("#co_acct_code") && $("#co_acct_code").value || "").trim()).replace(/[^0-9]/g, "");
+    const vm = $("#coVerifyMsg");
+    if (entered !== pendingCheckoutAccount.code) { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } return; }
+    const p = pendingCheckoutAccount;
+    const customerNo = createGuestAccount(p);
+    const customer = Object.assign({}, p.customer, { customerNo: customerNo });
+    pendingCheckoutAccount = null;
+    if ($("#co_acct_code")) $("#co_acct_code").value = "";
+    if ($("#co_pass")) $("#co_pass").value = "";
+    const box = $("#coVerifyBox"); if (box) box.hidden = true;
+    renderAccount();
+    showToast(t("co.acctCreated").replace("{no}", customerNo));
+    finalizeOrder(customer, p.delivery);
+  });
+
+  /* My Orders */
+  const ordersOverlay = $("#ordersOverlay");
+  let barcodeSeq = 0;
+  function renderOrders() {
+    const list = $("#ordersList"); if (!list) return;
+    const orders = getOrders();
+    if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+    const pending = [];
+    list.innerHTML = orders.map((o) => {
+      const items = o.items.map((it) => {
+        const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+        const variant = [];
+        if (it.size) variant.push(t("qv.size") + " " + it.size);
+        if (it.color) variant.push(t("qv.color") + " " + colorName(it.color));
+        const vs = variant.length ? " — " + variant.join("، ") : "";
+        let bc = "";
+        if (it.code) {
+          const bid = "bc" + (++barcodeSeq);
+          pending.push({ id: bid, code: it.code });
+          bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
+        }
+        return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
+      }).join("");
+      const d = new Date(o.date);
+      const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
+      const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
+      const closed = o.status === t("status.cancelled") || o.status === t("status.returnReq");
+      const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
+      return `
+        <div class="order-card">
+          <div class="order-top">
+            <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
+            <span class="order-status">${o.status || ""}</span>
+          </div>
+          <ul>${items}</ul>
+          <div class="order-top">
+            <span>${t("orders.pay")}: ${payLabel}</span>
+            <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
+          </div>
+          ${actions}
+        </div>`;
+    }).join("");
+    if (typeof JsBarcode !== "undefined") {
+      pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
+    }
+  }
+  function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
+  function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
+  const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
+  const ordersBtnAll = $("#ordersBtnAll"); if (ordersBtnAll) ordersBtnAll.addEventListener("click", () => { closeAcct(); openOrders(); });
+  const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
+  if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
+  const ordersListEl = $("#ordersList");
+  if (ordersListEl) ordersListEl.addEventListener("click", (e) => {
+    const cancelBtn = e.target.closest("[data-cancel]"), returnBtn = e.target.closest("[data-return]");
+    if (cancelBtn) {
+      const id = cancelBtn.getAttribute("data-cancel");
+      if (!confirm(t("orders.confirmCancel"))) return;
+      const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
+      o.status = t("status.cancelled"); saveOrders(orders);
+      adjustStock(o.items, 1);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.cancelMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
+      renderOrders();
+    } else if (returnBtn) {
+      const id = returnBtn.getAttribute("data-return");
+      if (!confirm(t("orders.confirmReturn"))) return;
+      const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
+      o.status = t("status.returnReq"); saveOrders(orders);
+      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.returnMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
+      renderOrders();
+    }
+  });
+
+  /* -------------------- Quick view (gallery + size/color) -------------------- */
+  const qvOverlay = $("#qvOverlay");
+  let qvProduct = null, qvQty = 1, qvSize = "", qvColor = "", qvStock = Infinity;
+  const qvQtyEl = $("#qvQty");
+  function setQvQty(n) { n = Math.max(1, n); if (n > qvStock) n = Math.max(1, qvStock); qvQty = n; if (qvQtyEl) qvQtyEl.value = toDigits(qvQty); }
+  function qvShowImage(src, alt, cat) {
+    const media = $("#qvMedia");
+    media.className = "qv-media m-" + cat + (src ? " has-img" : "");
+    media.innerHTML = src ? `<img src="${src}" alt="${alt}">` : icon((qvProduct && qvProduct.icon) || catIcon(cat));
+  }
+  function openQuickView(p) {
+    qvProduct = p; qvSize = ""; qvColor = ""; setQvQty(1);
+    const nm = LANG === "en" ? (p.name_en || p.name) : p.name;
+    const imgs = productImages(p);
+    qvShowImage(imgs[0] || "", nm, p.cat);
+    const thumbs = $("#qvThumbs");
+    if (imgs.length > 1) {
+      thumbs.hidden = false;
+      thumbs.innerHTML = imgs.map((src, i) => `<img src="${src}" alt="" data-i="${i}" class="${i === 0 ? "active" : ""}">`).join("");
+    } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
+    $("#qvCat").textContent = catLabel(p.cat) || "";
+    $("#qvName").textContent = nm;
+    $("#qvPrice").innerHTML = money(effPrice(p)) + (origPrice(p) ? ` <del>${money(origPrice(p))}</del>` : "");
+    // sizes
+    const sizes = productSizes(p), colors = productColors(p);
+    const sizesWrap = $("#qvSizesWrap"), colorsWrap = $("#qvColorsWrap");
+    if (sizes.length) { sizesWrap.hidden = false; $("#qvSizes").innerHTML = sizes.map((s) => `<button type="button" class="opt-chip" data-size="${s}">${s}</button>`).join(""); }
+    else { sizesWrap.hidden = true; $("#qvSizes").innerHTML = ""; }
+    if (colors.length) {
+      colorsWrap.hidden = false;
+      $("#qvColors").innerHTML = colors.map((c) => {
+        const nmc = colorName(c), hex = (String(c).split("|")[1] || "").trim();
+        const sw = hex ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hex};margin-inline-end:6px;border:1px solid #0002;vertical-align:-1px"></span>` : "";
+        return `<button type="button" class="opt-chip" data-color="${nmc}">${sw}${nmc}</button>`;
+      }).join("");
+    } else { colorsWrap.hidden = true; $("#qvColors").innerHTML = ""; }
+    qvStock = productStock(p); setQvQty(1);
+    const out = qvStock <= 0;
+    const addBtn = $("#qvAdd"); if (addBtn) addBtn.disabled = out;
+    if ($("#qvMsg")) {
+      if (out) { $("#qvMsg").textContent = t("stock.out"); $("#qvMsg").className = "qv-msg"; }
+      else if (qvStock <= LOW_STOCK) { $("#qvMsg").textContent = t("stock.left").replace("{n}", toDigits(qvStock)); $("#qvMsg").className = "qv-msg ok"; }
+      else { $("#qvMsg").textContent = ""; $("#qvMsg").className = "qv-msg"; }
+    }
+    if (qvOverlay) qvOverlay.classList.add("show");
+  }
+  function closeQuickView() { if (qvOverlay) qvOverlay.classList.remove("show"); }
+  const qvThumbsEl = $("#qvThumbs");
+  if (qvThumbsEl) qvThumbsEl.addEventListener("click", (e) => {
+    const img = e.target.closest("img[data-i]"); if (!img || !qvProduct) return;
+    const imgs = productImages(qvProduct);
+    qvShowImage(imgs[parseInt(img.dataset.i, 10)], "", qvProduct.cat);
+    $$("img", qvThumbsEl).forEach((x) => x.classList.remove("active"));
+    img.classList.add("active");
+  });
+  const qvSizesEl = $("#qvSizes");
+  if (qvSizesEl) qvSizesEl.addEventListener("click", (e) => { const c = e.target.closest("[data-size]"); if (!c) return; $$(".opt-chip", qvSizesEl).forEach((x) => x.classList.remove("active")); c.classList.add("active"); qvSize = c.dataset.size; });
+  const qvColorsEl = $("#qvColors");
+  if (qvColorsEl) qvColorsEl.addEventListener("click", (e) => { const c = e.target.closest("[data-color]"); if (!c) return; $$(".opt-chip", qvColorsEl).forEach((x) => x.classList.remove("active")); c.classList.add("active"); qvColor = c.dataset.color; });
+  const qvClose = $("#qvClose"); if (qvClose) qvClose.addEventListener("click", closeQuickView);
+  if (qvOverlay) qvOverlay.addEventListener("click", (e) => { if (e.target === qvOverlay) closeQuickView(); });
+  const qvPlus = $("#qvPlus"); if (qvPlus) qvPlus.addEventListener("click", () => setQvQty(qvQty + 1));
+  const qvMinus = $("#qvMinus"); if (qvMinus) qvMinus.addEventListener("click", () => setQvQty(qvQty - 1));
+  if (qvQtyEl) qvQtyEl.addEventListener("input", () => { const n = parseInt(toEnDigits(qvQtyEl.value).replace(/[^0-9]/g, ""), 10); qvQty = isNaN(n) ? 1 : Math.max(1, n); });
+  const qvAdd = $("#qvAdd");
+  if (qvAdd) qvAdd.addEventListener("click", () => {
+    if (!qvProduct) return;
+    const needSize = productSizes(qvProduct).length && !qvSize;
+    const needColor = productColors(qvProduct).length && !qvColor;
+    if (needSize || needColor) { if ($("#qvMsg")) { $("#qvMsg").textContent = t("qv.pick"); $("#qvMsg").className = "qv-msg"; } return; }
+    addToCart(qvProduct, qvQty, qvSize, qvColor);
+    closeQuickView();
+  });
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); closeAcct(); closeOrders(); } });
+
+  /* -------------------- Accounts (client-side) -------------------- */
+  const USERS_KEY = "maho_users", SESS_KEY = "maho_session";
+  const getUsers = () => { try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch (_) { return []; } };
+  const saveUsers = (u) => { try { localStorage.setItem(USERS_KEY, JSON.stringify(u)); } catch (_) {} };
+  const getSession = () => { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch (_) { return null; } };
+  const setSession = (s) => { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {} };
+  const CUST_SEQ_KEY = "maho_cust_seq";
+  function nextCustomerNo() {
+    let n = 0; try { n = parseInt(localStorage.getItem(CUST_SEQ_KEY) || "0", 10) || 0; } catch (_) {}
+    n += 1; try { localStorage.setItem(CUST_SEQ_KEY, String(n)); } catch (_) {}
+    return "MO" + String(n).padStart(6, "0");
+  }
+  function findUserIndex(users, s) {
+    return users.findIndex((u) => (u.email && s.email && u.email.toLowerCase() === s.email.toLowerCase()) || (u.id && s.id && u.id === s.id));
+  }
+  function updateUser(mutator) {
+    const s = getSession(); if (!s) return null;
+    const users = getUsers(); const idx = findUserIndex(users, s); if (idx < 0) return null;
+    mutator(users[idx], users, idx); saveUsers(users); return users[idx];
+  }
+  function currentUser() {
+    const s = getSession(); if (!s) return null;
+    const users = getUsers(); const idx = findUserIndex(users, s); if (idx < 0) return null;
+    if (!users[idx].customerNo) { users[idx].customerNo = nextCustomerNo(); saveUsers(users); }
+    return users[idx];
+  }
+  const maskNum = (n) => { const d = toEnDigits(n).replace(/[^0-9]/g, ""); return d.length > 4 ? "•••• " + d.slice(-4) : d; };
+  const acctOverlay = $("#acctOverlay");
+  function renderPayList(u) {
+    const list = $("#payList"); if (!list) return;
+    const pays = (u && u.payments) || [];
+    if (!pays.length) { list.innerHTML = `<p class="pay-none">${t("pay.none")}</p>`; return; }
+    list.innerHTML = pays.map((p) => {
+      const typeLabel = p.type === "bank" ? t("pay.tBank") : t("pay.tCard");
+      return `<div class="pay-item"><span><b>${typeLabel}</b>${p.holder ? " — " + p.holder : ""} <span class="pi-num" dir="ltr">${maskNum(p.number)}</span></span><button type="button" data-delpay="${p.id}">${t("cart.remove")}</button></div>`;
+    }).join("");
+  }
+  function renderAccount() {
+    const s = getSession();
+    const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
+    if (!out || !inn) return;
+    if (s) {
+      const u = currentUser() || {};
+      out.hidden = true; inn.hidden = false;
+      $("#acctName").textContent = u.name || s.name || "";
+      $("#acctCustNo").textContent = (u.customerNo || s.customerNo) ? (t("acct.custNo") + ": " + (u.customerNo || s.customerNo)) : "";
+      $("#acctId").textContent = u.email || s.email || s.id || "";
+      $("#acctAvatar").textContent = (u.name || s.name || "M").trim().charAt(0).toUpperCase();
+      if ($("#pf_name")) $("#pf_name").value = u.name || "";
+      if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
+      if ($("#pf_email")) $("#pf_email").value = u.email || "";
+      fillAddr("pf", u.addr);
+      if ($("#pf_pass")) $("#pf_pass").value = "";
+      if ($("#pfVerify")) $("#pfVerify").hidden = true;
+      if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
+      renderPayList(u);
+    } else { out.hidden = false; inn.hidden = true; }
+  }
+  function openAcct() { renderAccount(); if (acctOverlay) acctOverlay.classList.add("show"); }
+  function closeAcct() { if (acctOverlay) acctOverlay.classList.remove("show"); }
+  const accountBtn = $("#accountBtn"); if (accountBtn) accountBtn.addEventListener("click", openAcct);
+  const acctClose = $("#acctClose"); if (acctClose) acctClose.addEventListener("click", closeAcct);
+  if (acctOverlay) acctOverlay.addEventListener("click", (e) => { if (e.target === acctOverlay) closeAcct(); });
+  const tabLogin = $("#tabLogin"), tabSignup = $("#tabSignup");
+  function showSignupStep(step) { // 'form' | 'verify'
+    if ($("#signupPane")) $("#signupPane").hidden = step !== "form";
+    if ($("#verifyPane")) $("#verifyPane").hidden = step !== "verify";
+  }
+  function selectTab(login) {
+    if (tabLogin) tabLogin.classList.toggle("active", login);
+    if (tabSignup) tabSignup.classList.toggle("active", !login);
+    if ($("#loginPane")) $("#loginPane").hidden = !login;
+    if ($("#signupPane")) $("#signupPane").hidden = login;
+    if ($("#verifyPane")) $("#verifyPane").hidden = true;
+    if ($("#resetPane")) $("#resetPane").hidden = true;
+    if ($("#acctMsg")) { $("#acctMsg").textContent = ""; $("#acctMsg").className = "qv-msg"; }
+  }
+  if (tabLogin) tabLogin.addEventListener("click", () => selectTab(true));
+  if (tabSignup) tabSignup.addEventListener("click", () => selectTab(false));
+  function acctMsg(text, ok) { const m = $("#acctMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+
+  const emailCfg = () => CONFIG.emailjs || {};
+  const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
+  function sendCode(email, name, code) {
+    const cfg = emailCfg();
+    if (cfg.serviceId && cfg.templateId && cfg.publicKey && typeof emailjs !== "undefined") {
+      return emailjs.send(cfg.serviceId, cfg.templateId,
+        { to_email: email, email: email, to_name: name, passcode: code, code: code },
+        { publicKey: cfg.publicKey }
+      ).then(() => ({ sent: true }));
+    }
+    return Promise.resolve({ sent: false, code: code }); // demo (no email service configured)
+  }
+  let pendingSignup = null;
+  const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const signupBtn = $("#signupBtn");
+  if (signupBtn) signupBtn.addEventListener("click", () => {
+    const name = ($("#su_name").value || "").trim();
+    const phone = ($("#su_phone").value || "").trim();
+    const email = ($("#su_email").value || "").trim();
+    const addr = readAddr("su");
+    const address = composeAddress(addr);
+    const pass = ($("#su_pass").value || "").trim();
+    if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
+    if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
+    const users = getUsers();
+    if (users.some((u) => (u.email || u.id || "").toLowerCase() === email.toLowerCase())) { acctMsg(t("acct.emailExists")); return; }
+    const code = genCode();
+    pendingSignup = { name: name, phone: phone, email: email, addr: addr, address: address, pass: pass, code: code };
+    acctMsg(t("acct.sending"), true);
+    sendCode(email, name, code).then((res) => {
+      showSignupStep("verify");
+      if (res.sent) acctMsg(t("acct.codeSent"), true);
+      else acctMsg(t("acct.demoNote").replace("{code}", code), true);
+    }).catch(() => { acctMsg(t("acct.sendFail")); });
+  });
+
+  const verifyBtn = $("#verifyBtn");
+  if (verifyBtn) verifyBtn.addEventListener("click", () => {
+    if (!pendingSignup) return;
+    const entered = toEnDigits(($("#vf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
+    const users = getUsers();
+    const customerNo = nextCustomerNo();
+    users.push({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, address: pendingSignup.address || "", addr: pendingSignup.addr || {}, id: pendingSignup.email, pass: pendingSignup.pass, verified: true, customerNo: customerNo, payments: [] });
+    saveUsers(users);
+    setSession({ name: pendingSignup.name, id: pendingSignup.email, email: pendingSignup.email, phone: pendingSignup.phone, address: pendingSignup.address || "", addr: pendingSignup.addr || {}, customerNo: customerNo });
+    const nm = pendingSignup.name; pendingSignup = null;
+    if ($("#vf_code")) $("#vf_code").value = "";
+    renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
+  });
+  const resendBtn = $("#resendBtn");
+  if (resendBtn) resendBtn.addEventListener("click", () => {
+    if (!pendingSignup) return;
+    pendingSignup.code = genCode();
+    acctMsg(t("acct.sending"), true);
+    sendCode(pendingSignup.email, pendingSignup.name, pendingSignup.code).then((res) => {
+      if (res.sent) acctMsg(t("acct.codeSent"), true);
+      else acctMsg(t("acct.demoNote").replace("{code}", pendingSignup.code), true);
+    }).catch(() => { acctMsg(t("acct.sendFail")); });
+  });
+
+  const loginBtn = $("#loginBtn");
+  if (loginBtn) loginBtn.addEventListener("click", () => {
+    const id = ($("#lg_id").value || "").trim(), pass = ($("#lg_pass").value || "").trim();
+    const u = getUsers().find((x) => pass === x.pass && [x.email, x.phone, x.id].some((v) => v && v.toLowerCase() === id.toLowerCase()));
+    if (!u) { acctMsg(t("acct.bad")); return; }
+    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone, customerNo: u.customerNo }); renderAccount();
+    acctMsg(t("acct.hi") + "، " + u.name, true); showToast(t("acct.hi") + "، " + u.name);
+  });
+  const logoutBtn = $("#logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); selectTab(true); renderAccount(); });
+
+  /* forgot password */
+  let pendingReset = null;
+  const forgotLink = $("#forgotLink");
+  if (forgotLink) forgotLink.addEventListener("click", () => { if ($("#loginPane")) $("#loginPane").hidden = true; if ($("#resetPane")) $("#resetPane").hidden = false; if ($("#resetStep2")) $("#resetStep2").hidden = true; acctMsg(""); });
+  const resetBack = $("#resetBack");
+  if (resetBack) resetBack.addEventListener("click", () => selectTab(true));
+  const resetSendBtn = $("#resetSendBtn");
+  if (resetSendBtn) resetSendBtn.addEventListener("click", () => {
+    const email = ($("#rs_email").value || "").trim();
+    if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
+    const u = getUsers().find((x) => (x.email || "").toLowerCase() === email.toLowerCase());
+    if (!u) { acctMsg(t("acct.noEmail")); return; }
+    const code = genCode(); pendingReset = { email: email, code: code };
+    acctMsg(t("acct.sending"), true);
+    sendCode(email, u.name, code).then((res) => {
+      if ($("#resetStep2")) $("#resetStep2").hidden = false;
+      if (res.sent) acctMsg(t("acct.resetSent"), true);
+      else acctMsg(t("acct.resetSent") + " — " + t("acct.demoNote").replace("{code}", code), true);
+    }).catch(() => acctMsg(t("acct.sendFail")));
+  });
+  const resetDoneBtn = $("#resetDoneBtn");
+  if (resetDoneBtn) resetDoneBtn.addEventListener("click", () => {
+    if (!pendingReset) return;
+    const code = toEnDigits(($("#rs_code").value || "").trim()).replace(/[^0-9]/g, "");
+    const np = ($("#rs_pass").value || "").trim();
+    if (code !== pendingReset.code) { acctMsg(t("acct.badCode")); return; }
+    if (np.length < 4) { acctMsg(t("acct.needAll")); return; }
+    const users = getUsers(); const u = users.find((x) => (x.email || "").toLowerCase() === pendingReset.email.toLowerCase());
+    if (!u) { acctMsg(t("acct.noEmail")); return; }
+    u.pass = np; saveUsers(users); pendingReset = null;
+    if ($("#rs_code")) $("#rs_code").value = ""; if ($("#rs_pass")) $("#rs_pass").value = "";
+    selectTab(true); acctMsg(t("acct.resetDone"), true); showToast(t("acct.resetDone"));
+  });
+
+  /* profile edit + payment info */
+  let pendingEmailChange = null;
+  function pfMsg(text, ok) { const m = $("#pfMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+  const saveProfileBtn = $("#saveProfileBtn");
+  if (saveProfileBtn) saveProfileBtn.addEventListener("click", () => {
+    const u = currentUser(); if (!u) return;
+    const name = ($("#pf_name").value || "").trim();
+    const phone = ($("#pf_phone").value || "").trim();
+    const email = ($("#pf_email").value || "").trim();
+    const newpass = ($("#pf_pass").value || "").trim();
+    if (!name || !phone || !email) { pfMsg(t("acct.needAll")); return; }
+    if (!emailOk(email)) { pfMsg(t("acct.badEmail")); return; }
+    const emailChanged = email.toLowerCase() !== (u.email || "").toLowerCase();
+    if (emailChanged && getUsers().some((x) => (x.email || "").toLowerCase() === email.toLowerCase())) { pfMsg(t("acct.emailExists")); return; }
+    const addrParts = readAddr("pf");
+    const address = composeAddress(addrParts);
+    updateUser((usr) => { usr.name = name; usr.phone = phone; usr.address = address; usr.addr = addrParts; if (newpass) usr.pass = newpass; });
+    setSession(Object.assign({}, getSession(), { name: name, phone: phone, address: address, addr: addrParts }));
+    if (emailChanged) {
+      const code = genCode(); pendingEmailChange = { email: email, code: code };
+      if ($("#pfVerify")) $("#pfVerify").hidden = false;
+      pfMsg(t("acct.sending"), true);
+      sendCode(email, name, code).then((res) => {
+        if (res.sent) pfMsg(t("acct.emailChangeCode"), true);
+        else pfMsg(t("acct.emailChangeCode") + " — " + t("acct.demoNote").replace("{code}", code), true);
+      }).catch(() => pfMsg(t("acct.sendFail")));
+    } else { renderAccount(); pfMsg(t("acct.saved"), true); showToast(t("acct.saved")); }
+  });
+  const pfVerifyBtn = $("#pfVerifyBtn");
+  if (pfVerifyBtn) pfVerifyBtn.addEventListener("click", () => {
+    if (!pendingEmailChange) return;
+    const entered = toEnDigits(($("#pf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (entered !== pendingEmailChange.code) { pfMsg(t("acct.badCode")); return; }
+    const newEmail = pendingEmailChange.email;
+    updateUser((usr) => { usr.email = newEmail; usr.id = newEmail; });
+    setSession(Object.assign({}, getSession(), { email: newEmail, id: newEmail }));
+    pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
+    renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
+  });
+  const payTypeEl = $("#pay_type");
+  function togglePayCardExtra() { const ex = $("#payCardExtra"); if (ex) ex.hidden = (payTypeEl && payTypeEl.value !== "card"); }
+  if (payTypeEl) payTypeEl.addEventListener("change", togglePayCardExtra);
+  togglePayCardExtra();
+  const addPayBtn = $("#addPayBtn");
+  if (addPayBtn) addPayBtn.addEventListener("click", () => {
+    const u = currentUser(); if (!u) return;
+    const type = $("#pay_type").value;
+    const holder = ($("#pay_holder").value || "").trim();
+    const number = ($("#pay_number").value || "").trim();
+    if (!number) { pfMsg(t("acct.needAll")); return; }
+    const entry = { id: Date.now(), type: type, holder: holder, number: number };
+    if (type === "card") {
+      entry.cvv = ($("#pay_cvv").value || "").trim();
+      entry.expiry = ($("#pay_expiry").value || "").trim();
+      entry.cardAddr = ($("#pay_cardaddr").value || "").trim();
+    }
+    updateUser((usr) => { usr.payments = usr.payments || []; usr.payments.push(entry); });
+    ["#pay_holder", "#pay_number", "#pay_cvv", "#pay_expiry", "#pay_cardaddr"].forEach((s) => { if ($(s)) $(s).value = ""; });
+    renderPayList(currentUser()); showToast(t("acct.saved"));
+  });
+  const payListEl = $("#payList");
+  if (payListEl) payListEl.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-delpay]"); if (!b) return;
+    const id = b.getAttribute("data-delpay");
+    updateUser((usr) => { usr.payments = (usr.payments || []).filter((p) => String(p.id) !== String(id)); });
+    renderPayList(currentUser());
+  });
+
+  /* category cards -> filter + scroll to products */
+  const catGrid = document.querySelector(".cat-grid");
+  function gotoFilter(filter) {
+    const chip = document.querySelector('.chip[data-filter="' + filter + '"]');
+    if (chip) { $$(".chip", filterBar).forEach((c) => c.classList.remove("active")); chip.classList.add("active"); }
+    applyFilter(filter);
+    const sec = document.querySelector("#products");
+    if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  if (catGrid) {
+    catGrid.addEventListener("click", (e) => { const c = e.target.closest(".cat-card"); if (c && c.dataset.filter) gotoFilter(c.dataset.filter); });
+    catGrid.addEventListener("keydown", (e) => { if (e.key !== "Enter" && e.key !== " ") return; const c = e.target.closest(".cat-card"); if (c && c.dataset.filter) { e.preventDefault(); gotoFilter(c.dataset.filter); } });
+  }
+
+  /* logo (from admin) */
+  function applyLogo() {
+    const url = CONFIG.logo;
+    $$(".brand .logo").forEach((el) => {
+      if (url) el.innerHTML = `<img src="${url}" alt="MAHO" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      else el.textContent = "M";
+    });
+  }
+
+  /* editable hero (header) background image/logo from admin */
+  function applyHero() {
+    const hero = document.querySelector(".hero#home") || document.querySelector(".hero");
+    if (!hero) return;
+    const img = CONFIG.heroImage;
+    if (img) {
+      // Semi-transparent overlay keeps hero text readable while the uploaded
+      // image stays clearly visible. NOTE: no opaque base layer here, otherwise
+      // it would fully cover the image.
+      hero.style.backgroundImage =
+        "linear-gradient(rgba(12,12,12,.55), rgba(20,17,10,.72))," +
+        "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.32), transparent 60%)," +
+        "radial-gradient(900px 520px at 5% 110%, rgba(200,163,95,.18), transparent 60%)," +
+        "url('" + img + "')";
+      hero.style.backgroundSize = "cover, cover, cover, cover";
+      hero.style.backgroundPosition = "center, center, center, center";
+      hero.style.backgroundRepeat = "no-repeat";
+      hero.style.backgroundColor = "#0e0e0e";
+    } else {
+      hero.style.backgroundImage = "";
+      hero.style.backgroundSize = "";
+      hero.style.backgroundPosition = "";
+      hero.style.backgroundRepeat = "";
+      hero.style.backgroundColor = "";
+    }
+  }
+
+  /* editable site texts (from admin) — override the i18n defaults when set */
+  function applyContent() {
+    const c = CONFIG.content || {};
+    const pick = (k) => (LANG === "en" ? (c[k + "_en"] || c[k] || "") : (c[k] || ""));
+    const setSel = (sel, val) => { if (val) { const el = $(sel); if (el) el.textContent = val; } };
+    const bs = pick("brandSub"); if (bs) $$(".brand-sub").forEach((el) => (el.textContent = bs));
+    setSel(".hero-eyebrow", pick("heroEyebrow"));
+    setSel("#home h1", pick("heroTitle"));
+    setSel("#home .lead", pick("heroLead"));
+    setSel('[data-i18n="footer.desc"]', pick("footerDesc"));
+    setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
+    setSel('[data-i18n="footer.phone"]', c.footerPhone || "");
+    setSel('[data-i18n="footer.email"]', c.footerEmail || "");
+    // Social links (instagram, telegram, whatsapp, facebook, tiktok) — show only those that have a URL
+    const socialUrls = [c.instagram, c.telegram, c.whatsappLink, c.facebook, c.tiktok];
+    const socials = $$(".socials a");
+    socials.forEach((a, i) => {
+      const url = socialUrls[i] || "";
+      if (url) { a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.display = ""; }
+      else { a.removeAttribute("href"); a.style.display = "none"; }
+    });
+    const statsArr = c.stats || [];
+    const statEls = $$(".hero-stats .stat");
+    statsArr.forEach((st, i) => {
+      if (!st || !statEls[i]) return;
+      const b = statEls[i].querySelector("b"), span = statEls[i].querySelector("span");
+      if (b && st.value != null && st.value !== "") { b.setAttribute("data-count", String(st.value)); b.textContent = toDigits(parseInt(st.value, 10) || 0); }
+      const lab = LANG === "en" ? (st.label_en || st.label) : st.label;
+      if (span && lab) span.textContent = lab;
+    });
+    // Floating hero cards (editable text + size)
+    for (let n = 1; n <= 3; n++) {
+      const card = document.querySelector(".hero-card.c" + n);
+      if (!card) continue;
+      const tg = pick("hc" + n + "_tag"), ti = pick("hc" + n + "_title"), sb = pick("hc" + n + "_sub");
+      const tagEl = card.querySelector(".tag"), h4El = card.querySelector("h4"), subEl = card.querySelector("span:not(.tag)");
+      if (tg && tagEl) tagEl.textContent = tg;
+      if (ti && h4El) h4El.textContent = ti;
+      if (sb && subEl) subEl.textContent = sb;
+    }
+    const visual = document.querySelector(".hero-visual");
+    if (visual) {
+      const scale = parseFloat(c.heroScale);
+      if (scale && scale > 0) { visual.style.transform = "scale(" + scale + ")"; visual.style.transformOrigin = "center"; }
+      else { visual.style.transform = ""; }
+    }
+    linkifyContacts();
+  }
+  function telHref(s) { return "tel:" + String(s || "").replace(/[^\d+]/g, ""); }
+  function linkifyContacts() {
+    const ph = document.querySelector('.site-footer [data-i18n="footer.phone"]');
+    if (ph && ph.tagName === "A") { const v = (ph.textContent || "").trim(); ph.href = v ? telHref(v) : "#"; }
+    const em = document.querySelector('.site-footer [data-i18n="footer.email"]');
+    if (em && em.tagName === "A") { const v = (em.textContent || "").trim(); em.href = v ? ("mailto:" + v) : "#"; }
+  }
+
+  /* share */
+  const shareBtn = $("#shareBtn");
+  if (shareBtn) shareBtn.addEventListener("click", () => {
+    const url = location.href;
+    const data = { title: t("share.title"), text: t("share.title"), url: url };
+    if (navigator.share) { navigator.share(data).catch(() => {}); }
+    else if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(() => showToast(t("share.copied"))).catch(() => prompt(url)); }
+    else { prompt("", url); }
+  });
+
+  /* -------------------- Toast -------------------- */
+  const toast = $("#toast");
+  const toastMsg = $("#toastMsg");
+  let toastTimer;
+  function showToast(msg) {
+    if (!toast) return;
+    toastMsg.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+
+  /* -------------------- Mobile nav -------------------- */
+  const navToggle = $("#navToggle");
+  const nav = $("#nav");
+  if (navToggle && nav) {
+    navToggle.addEventListener("click", () => {
+      const open = document.body.classList.toggle("nav-open");
+      navToggle.setAttribute("aria-expanded", String(open));
+    });
+    nav.addEventListener("click", (e) => {
+      if (e.target.closest("a")) {
+        document.body.classList.remove("nav-open");
+        navToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  /* -------------------- Header shadow + back to top -------------------- */
+  const header = $("#header");
+  const toTop = $("#toTop");
+  const onScroll = () => {
+    const y = window.scrollY;
+    if (header) header.classList.toggle("scrolled", y > 20);
+    if (toTop) toTop.classList.toggle("show", y > 500);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+  if (toTop) toTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  /* -------------------- Active nav link on scroll -------------------- */
+  const navLinks = $$(".main-nav a");
+  const sections = navLinks.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  if ("IntersectionObserver" in window && sections.length) {
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = "#" + entry.target.id;
+          navLinks.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === id));
+        }
+      });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    sections.forEach((s) => spy.observe(s));
+  }
+
+  /* -------------------- Scroll reveal -------------------- */
+  if ("IntersectionObserver" in window) {
+    const revObs = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) { entry.target.classList.add("in"); obs.unobserve(entry.target); }
+      });
+    }, { threshold: 0.12 });
+    $$(".reveal").forEach((el) => revObs.observe(el));
+  } else {
+    $$(".reveal").forEach((el) => el.classList.add("in"));
+  }
+
+  /* -------------------- Animated stat counters -------------------- */
+  const counters = $$("[data-count]");
+  function formatCounters() { counters.forEach((el) => { el.textContent = toDigits(parseInt(el.dataset.count, 10)); }); }
+  if (counters.length && "IntersectionObserver" in window) {
+    const countObs = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseInt(el.dataset.count, 10);
+        const dur = 1400, start = performance.now();
+        const tick = (now) => {
+          const p = Math.min((now - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = toDigits(Math.floor(eased * target));
+          if (p < 1) requestAnimationFrame(tick); else el.textContent = toDigits(target);
+        };
+        requestAnimationFrame(tick);
+        obs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    counters.forEach((c) => countObs.observe(c));
+  } else {
+    formatCounters();
+  }
+
+  /* -------------------- Newsletter form -------------------- */
+  const form = $("#newsletterForm");
+  const emailInput = $("#emailInput");
+  const note = $("#formNote");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const value = (emailInput.value || "").trim();
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      if (!valid) {
+        note.textContent = t("form.err");
+        note.className = "form-note err";
+        emailInput.focus();
+        return;
+      }
+      note.textContent = t("form.ok");
+      note.className = "form-note ok";
+      form.reset();
+      showToast(t("toast.news"));
+    });
+  }
+
+  /* -------------------- Footer year -------------------- */
+  const yearEl = $("#year");
+  function updateYear() {
+    const gy = new Date().getFullYear();
+    yearEl && (yearEl.textContent = LANG === "en" ? String(gy) : toDigits(gy - 621));
+  }
+
+  /* -------------------- Apply language -------------------- */
+  /* -------------------- Customer reviews -------------------- */
+  const REVIEWS_KEY = "maho_reviews";
+  const getReviews = () => { try { return JSON.parse(localStorage.getItem(REVIEWS_KEY)) || []; } catch (_) { return []; } };
+  const saveReviews = (r) => { try { localStorage.setItem(REVIEWS_KEY, JSON.stringify(r)); } catch (_) {} };
+  function escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
+  function starStr(n) { n = Math.max(0, Math.min(5, parseInt(n, 10) || 0)); return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n); }
+  function renderReviews() {
+    const grid = $("#reviewsGrid"); if (!grid) return;
+    const all = getReviews().filter((r) => r.status === "approved");
+    all.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (b.date || 0) - (a.date || 0));
+    const list = all.slice(0, 6);
+    const empty = $("#reviewsEmpty");
+    if (!list.length) { grid.innerHTML = ""; if (empty) empty.hidden = false; return; }
+    if (empty) empty.hidden = true;
+    grid.innerHTML = list.map((r) => {
+      const nm = r.name || t("review.customer");
+      const initial = (String(nm).trim()[0]) || "م";
+      const who = r.customerNo ? escHtml(r.customerNo) : t("review.customer");
+      return `<div class="testi reveal in">
+        <div class="stars">${starStr(r.rating)}</div>
+        <p>${escHtml(r.text)}</p>
+        <div class="who"><div class="avatar">${escHtml(initial)}</div><div><b>${escHtml(nm)}</b><span>${who}</span></div></div>
+      </div>`;
+    }).join("");
+  }
+  let reviewRating = 0;
+  const ratingInput = $("#ratingInput");
+  function paintStars() { if (!ratingInput) return; $$(".star", ratingInput).forEach((s) => s.classList.toggle("on", (parseInt(s.dataset.val, 10) <= reviewRating))); }
+  if (ratingInput) ratingInput.addEventListener("click", (e) => { const b = e.target.closest(".star"); if (!b) return; reviewRating = parseInt(b.dataset.val, 10) || 0; paintStars(); });
+  const writeReviewBtn = $("#writeReviewBtn");
+  if (writeReviewBtn) writeReviewBtn.addEventListener("click", () => {
+    const note = $("#reviewLoginNote"), form = $("#reviewForm");
+    if (!getSession()) { if (note) note.hidden = false; openAcct(); return; }
+    if (note) note.hidden = true;
+    if (form) form.hidden = !form.hidden;
+  });
+  const reviewForm = $("#reviewForm");
+  if (reviewForm) reviewForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const s = getSession(); if (!s) { openAcct(); return; }
+    const txt = ($("#reviewText") && $("#reviewText").value.trim()) || "";
+    const msg = $("#reviewMsg");
+    if (!reviewRating || !txt) { if (msg) msg.textContent = t("review.needText"); return; }
+    const reviews = getReviews();
+    reviews.push({ id: "R" + Date.now().toString(36), name: s.name || t("review.customer"), customerNo: s.customerNo || "", rating: reviewRating, text: txt, date: Date.now(), status: "pending", featured: false });
+    saveReviews(reviews);
+    if ($("#reviewText")) $("#reviewText").value = "";
+    reviewRating = 0; paintStars();
+    reviewForm.hidden = true; if (msg) msg.textContent = "";
+    showToast(t("review.thanks"));
+  });
+
+  function applyI18n() {
+    $$("[data-i18n]").forEach((el) => { el.textContent = t(el.getAttribute("data-i18n")); });
+    $$("[data-i18n-html]").forEach((el) => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+    $$("[data-i18n-ph]").forEach((el) => { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
+  }
+  function applyLang(lang) {
+    LANG = lang === "en" ? "en" : "fa";
+    try { localStorage.setItem("maho_lang", LANG); } catch (_) {}
+    document.documentElement.lang = LANG === "en" ? "en" : "fa";
+    document.documentElement.dir = LANG === "en" ? "ltr" : "rtl";
+    applyI18n();
+    renderFilters();
+    renderShowcase();
+    renderProducts();
+    renderStores();
+    renderReviews();
+    renderTimeslots();
+    renderCart();
+    updateCartBadge();
+    renderAccount();
+    updatePayInfo();
+    applyLogo();
+    applyHero();
+    applyContent();
+    formatCounters();
+    updateYear();
+    const label = $("#langLabel");
+    if (label) label.textContent = t("lang.other");
+  }
+  const langToggle = $("#langToggle");
+  if (langToggle) langToggle.addEventListener("click", () => applyLang(LANG === "fa" ? "en" : "fa"));
+
+  /* -------------------- Init -------------------- */
+  applyLang(LANG);
+
+  /* Load the published catalog (data.json) unless the owner has a local draft.
+     Fails silently when opened from a single file (file://) — defaults are used. */
+  if (!hasLocalDraft) {
+    fetch("data.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.products) && d.products.length) {
+          applyData(d);
+          renderProducts();
+          renderStores();
+        }
+      })
+      .catch(() => {});
+  }
+})();
+
+</script>
+</body>
+</html>
