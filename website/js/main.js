@@ -31,7 +31,7 @@
     fa: {
       "nav.home": "خانه", "nav.categories": "دسته‌بندی‌ها", "nav.products": "محصولات",
       "nav.stores": "فروشگاه", "nav.about": "درباره ما", "nav.contact": "تماس",
-      "header.portal": "ورود به پرتال",
+      "header.portal": "پنل مدیریت",
       "brand.sub": "لباس و لوازم بانوان",
       "hero.eyebrow": "✦ لباس و لوازم بانوان MAHO",
       "hero.title": 'زیبایی و اصالت<br>در <span class="grad">پوشاک زنانه</span>',
@@ -182,7 +182,7 @@
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
       "nav.stores": "Store", "nav.about": "About", "nav.contact": "Contact",
-      "header.portal": "Staff Portal",
+      "header.portal": "Admin panel",
       "brand.sub": "WOMEN'S CLOTHING & ESSENTIALS",
       "hero.eyebrow": "✦ MAHO Women's Clothing & Essentials",
       "hero.title": 'Elegance & quality<br>in <span class="grad">women\'s fashion</span>',
