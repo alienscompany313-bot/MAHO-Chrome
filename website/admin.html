@@ -24,6 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="js/api.js"></script>
   <style>
     :root{--black:#141414;--gold:#c8a35f;--gold-deep:#a9843f;--cream:#fbf8f1;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--radius:14px}
     *{box-sizing:border-box}
@@ -421,6 +422,18 @@
         <div class="field"><label>Template ID (خوش‌آمد / مشخصات حساب)</label><input id="cfg_ejs_welcome" dir="ltr"></div>
       </div>
       <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>. متغیرهای قالب خوش‌آمد: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{customer_no}}</code>، <code>{{message}}</code>.</p>
+
+      <h3 style="margin:16px 0 6px;font-size:16px">سرور مرکزی (Production API)</h3>
+      <div class="sub">اگر بک‌اند Node را روی Render/Railway/VPS اجرا می‌کنید، آدرس عمومی آن را اینجا بگذارید (مثلاً <code>https://maho-api.onrender.com</code>). وقتی خالی باشد و سایت از خود سرور سرو شود، همان دامنه استفاده می‌شود. پسورد API باید با متغیر محیطی <code>ADMIN_PASSWORD</code> سرور یکی باشد (پیش‌فرض <code>maho1234</code>).</div>
+      <div class="grid2">
+        <div class="field"><label>آدرس API</label><input id="cfg_api_url" dir="ltr" placeholder="https://maho-api.onrender.com یا خالی برای همین دامنه"></div>
+        <div class="field"><label>پسورد API (ADMIN_PASSWORD)</label><input id="cfg_api_pass" type="password" dir="ltr" placeholder="maho1234"></div>
+      </div>
+      <div class="tb-actions" style="gap:10px;margin-top:8px">
+        <button class="btn btn-outline btn-sm" id="apiTestBtn" type="button">آزمایش اتصال سرور</button>
+        <button class="btn btn-outline btn-sm" id="apiPullBtn" type="button">بارگذاری از سرور</button>
+        <span class="note" id="apiStatusNote" style="margin:0"></span>
+      </div>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات</button></div>
     </div>
 
@@ -747,6 +760,8 @@
       var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
       var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0); $("#cfg_delivery_max").value=(dl.maxKm!=null?dl.maxKm:0);
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||""; $("#cfg_ejs_welcome").value=ej.welcomeTemplateId||"";
+      if($("#cfg_api_url")) $("#cfg_api_url").value=c.apiUrl||(window.MAHOApi?MAHOApi.configuredUrl():"")||"";
+      if($("#cfg_api_pass")){ try{ $("#cfg_api_pass").value=localStorage.getItem("maho_api_admin_pass")||""; }catch(e){ $("#cfg_api_pass").value=""; } }
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
       var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
@@ -765,8 +780,12 @@
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
         delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
-        emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()}
+        emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()},
+        apiUrl:($("#cfg_api_url")&&$("#cfg_api_url").value.trim())||"",
+        content:(state.config&&state.config.content)||{}
       };
+      try{ localStorage.setItem("maho_api_admin_pass",($("#cfg_api_pass")&&$("#cfg_api_pass").value)||""); }catch(e){}
+      if(window.MAHOApi) MAHOApi.setConfiguredUrl(state.config.apiUrl||"");
     }
     var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
       "hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en",
@@ -807,46 +826,65 @@
       if(filter==="return") return s.indexOf("برگشت")>=0||s==="return_requested";
       return true;
     }
+    function apiAdminPass(){ try{ return ($("#cfg_api_pass")&&$("#cfg_api_pass").value)||localStorage.getItem("maho_api_admin_pass")||pass()||"maho1234"; }catch(e){ return "maho1234"; } }
+    function setApiNote(msg, ok){ var n=$("#apiStatusNote"); if(!n)return; n.style.color=ok?"#2e7d32":"#b26a00"; n.textContent=msg||""; }
+    function withApiOnline(fn, onFail){
+      if(!window.MAHOApi){ if(onFail) onFail(); return; }
+      collectConfig();
+      MAHOApi.probe().then(function(res){
+        if(!res.ok){ if(onFail) onFail(); return; }
+        MAHOApi.ensureAdmin(apiAdminPass()).then(function(){ fn(); }).catch(function(err){ setApiNote("ورود API ناموفق: "+((err&&err.message)||err), false); if(onFail) onFail(); });
+      });
+    }
+    function statusLabelFa(code){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa"):code; }
     function readOrders(){ try{return JSON.parse(localStorage.getItem("maho_orders"))||[];}catch(e){return[];} }
+    function writeOrders(orders){ try{ localStorage.setItem("maho_orders",JSON.stringify(orders||[])); }catch(e){} }
     function renderOrdersAdmin(){
       var box=$("#ordersBody"); if(!box)return;
-      var orders=readOrders();
-      var q=($("#ordersSearch")&&$("#ordersSearch").value.trim().toLowerCase())||"";
-      var filter=($("#ordersFilter")&&$("#ordersFilter").value)||"all";
-      var sort=($("#ordersSort")&&$("#ordersSort").value)||"newest";
-      var list=orders.filter(function(o){
-        if(!statusMatch(o,filter)) return false;
-        if(!q) return true;
-        var hay=(o.id||"")+" "+((o.customer&&o.customer.name)||"")+" "+((o.customer&&o.customer.phone)||"")+" "+(o.items||[]).map(function(it){return (it.name||"")+" "+(it.code||"")}).join(" ");
-        return hay.toLowerCase().indexOf(q)>=0;
-      });
-      list.sort(function(a,b){ if(sort==="oldest")return a.date-b.date; if(sort==="total_desc")return (b.total||0)-(a.total||0); if(sort==="total_asc")return (a.total||0)-(b.total||0); return b.date-a.date; });
-      if(!orders.length){ box.innerHTML='<p class="note">هنوز سفارشی روی این دستگاه ثبت نشده است.</p>'; return; }
-      if(!list.length){ box.innerHTML='<p class="note">سفارشی مطابق جستجو/فیلتر پیدا نشد.</p>'; return; }
-      var pending=[];
-      box.innerHTML=list.map(function(o){
-        var d=new Date(o.date); var c=o.customer||{};
-        var items=(o.items||[]).map(function(it){
-          var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کود کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
-          var v=[]; if(it.size)v.push(it.size); if(it.color)v.push(it.color); var vs=v.length?' — '+v.join('، '):'';
-          return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
+      var paint=function(orders){
+        writeOrders(orders);
+        var q=($("#ordersSearch")&&$("#ordersSearch").value.trim().toLowerCase())||"";
+        var filter=($("#ordersFilter")&&$("#ordersFilter").value)||"all";
+        var sort=($("#ordersSort")&&$("#ordersSort").value)||"newest";
+        var list=orders.filter(function(o){
+          if(!statusMatch(o,filter)) return false;
+          if(!q) return true;
+          var hay=(o.id||"")+" "+((o.customer&&o.customer.name)||"")+" "+((o.customer&&o.customer.phone)||"")+" "+(o.items||[]).map(function(it){return (it.name||"")+" "+(it.code||"")}).join(" ");
+          return hay.toLowerCase().indexOf(q)>=0;
+        });
+        list.sort(function(a,b){ if(sort==="oldest")return a.date-b.date; if(sort==="total_desc")return (b.total||0)-(a.total||0); if(sort==="total_asc")return (a.total||0)-(b.total||0); return b.date-a.date; });
+        if(!orders.length){ box.innerHTML='<p class="note">هنوز سفارشی ثبت نشده است.</p>'; return; }
+        if(!list.length){ box.innerHTML='<p class="note">سفارشی مطابق جستجو/فیلتر پیدا نشد.</p>'; return; }
+        var pending=[];
+        box.innerHTML=list.map(function(o){
+          var d=new Date(o.date); var c=o.customer||{};
+          var items=(o.items||[]).map(function(it){
+            var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کود کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
+            var v=[]; if(it.size)v.push(it.size); if(it.color)v.push(it.color); var vs=v.length?' — '+v.join('، '):'';
+            return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
+          }).join("");
+          var code=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(o.status):o.status;
+          var s=statusLabelFa(code);
+          var isCancelled=code==="cancelled"; var isConfirmed=code==="confirmed";
+          var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تایید سفارش</button> ':'';
+          var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
+          var custNo=o.customerNo||(c.customerNo)||"";
+          var dl=o.delivery||{};
+          var delLine=(dl.method==="deliver")
+            ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
+            : 'دریافت حضوری';
+          return '<div class="adm-order"><div class="row-between"><b dir="ltr">'+(o.id||"")+'</b><span class="tag">'+s+'</span></div>'+
+            '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
+            '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
+            '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
+            '<ul class="adm-items">'+items+'</ul>'+
+            '<div class="row-between"><b>مجموع: '+money(o.total||0)+'</b><span>'+approveBtn+cancelBtn+'</span></div></div>';
         }).join("");
-        var s=o.status||""; var isCancelled=s.indexOf("لغو")>=0; var isConfirmed=s.indexOf("تایید شده")>=0||s.indexOf("تأیید شده")>=0;
-        var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تایید سفارش</button> ':'';
-        var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
-        var custNo=o.customerNo||(c.customerNo)||"";
-        var dl=o.delivery||{};
-        var delLine=(dl.method==="deliver")
-          ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
-          : 'دریافت حضوری';
-        return '<div class="adm-order"><div class="row-between"><b dir="ltr">'+(o.id||"")+'</b><span class="tag">'+s+'</span></div>'+
-          '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
-          '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
-          '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
-          '<ul class="adm-items">'+items+'</ul>'+
-          '<div class="row-between"><b>مجموع: '+money(o.total||0)+'</b><span>'+approveBtn+cancelBtn+'</span></div></div>';
-      }).join("");
-      if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
+        if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
+      };
+      withApiOnline(function(){
+        MAHOApi.adminOrders().then(function(res){ paint(res.orders||[]); setApiNote("سفارش‌ها از سرور ✓", true); }).catch(function(){ paint(readOrders()); });
+      }, function(){ paint(readOrders()); });
     }
     function orderSummaryTextA(o){
       var lines=(o.items||[]).map(function(it){ var v=[]; if(it.size)v.push("سایز "+it.size); if(it.color)v.push("رنگ "+it.color); var vs=v.length?" ("+v.join("، ")+")":""; return "• "+(it.name||"")+vs+" × "+toFa(it.qty||1)+" = "+money((it.price||0)*(it.qty||1)); });
@@ -864,17 +902,34 @@
       return false;
     }
     function updateOrderStatus(id,status){
-      var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=status;
-      try{ localStorage.setItem("maho_orders",JSON.stringify(orders)); }catch(e){}
-      var emailed=false;
-      if(status==="تایید شده") emailed=sendApprovalEmail(o);
-      renderOrdersAdmin(); toast(emailed?("سفارش تایید شد و ایمیل تایید (نمبر "+o.id+") فرستاده شد ✓"):"وضعیت سفارش به‌روزرسانی شد ✓");
+      var code=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(status):status;
+      var finish=function(o){
+        var orders=readOrders(); var local=orders.find(function(x){return x.id===id});
+        if(local){ local.status=code; writeOrders(orders); }
+        else if(o){ orders.unshift(o); writeOrders(orders); }
+        var emailed=false;
+        if(code==="confirmed") emailed=sendApprovalEmail(o||local||{});
+        renderOrdersAdmin(); toast(emailed?("سفارش تایید شد و ایمیل تایید (نمبر "+id+") فرستاده شد ✓"):"وضعیت سفارش به‌روزرسانی شد ✓");
+      };
+      withApiOnline(function(){
+        MAHOApi.adminSetOrderStatus(id, code).then(function(res){ finish(res.order); }).catch(function(){
+          var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=code; writeOrders(orders); finish(o);
+        });
+      }, function(){
+        var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=code; writeOrders(orders); finish(o);
+      });
     }
     function renderCustomers(){
-      var b=$("#custBody"); if(!b)return; var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){}
-      var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
-      if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای روی این دستگاه ثبت‌نام نکرده است.</td></tr>'; return; }
-      b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
+      var b=$("#custBody"); if(!b)return;
+      var paint=function(users){
+        try{ localStorage.setItem("maho_users",JSON.stringify(users||[])); }catch(e){}
+        var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
+        if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای ثبت‌نام نکرده است.</td></tr>'; return; }
+        b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
+      };
+      withApiOnline(function(){
+        MAHOApi.adminCustomers().then(function(res){ paint(res.customers||[]); }).catch(function(){ var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){} paint(users); });
+      }, function(){ var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){} paint(users); });
     }
     function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
     function saveReviews(r){ try{localStorage.setItem("maho_reviews",JSON.stringify(r));}catch(e){} }
@@ -1042,8 +1097,18 @@
     }
     function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
     function loadInitial(){
-      try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
-      fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
+      var finishLocal=function(){
+        try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
+        fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
+      };
+      if(window.MAHOApi){
+        MAHOApi.probe().then(function(res){
+          if(!res.ok){ finishLocal(); return; }
+          MAHOApi.ensureAdmin(apiAdminPass()).then(function(){
+            return MAHOApi.adminState().then(function(d){ loadInto(d||{}); setApiNote("متصل به سرور ✓", true); });
+          }).catch(function(){ finishLocal(); });
+        });
+      } else finishLocal();
     }
     loadInitial();
 
@@ -1157,9 +1222,26 @@
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_delivery_max","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order","cfg_ejs_welcome"].forEach(function(id){
-      $("#"+id).addEventListener("input",function(){ setDirty(true); });
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_delivery_max","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order","cfg_ejs_welcome","cfg_api_url","cfg_api_pass"].forEach(function(id){
+      var el=$("#"+id); if(el) el.addEventListener("input",function(){ setDirty(true); });
     });
+    if($("#apiTestBtn")) $("#apiTestBtn").onclick=function(){
+      collectConfig();
+      if(!window.MAHOApi){ setApiNote("کلاینت API بارگذاری نشده", false); return; }
+      setApiNote("در حال آزمایش...", true);
+      MAHOApi.probe().then(function(res){
+        if(!res.ok){ setApiNote("سرور در دسترس نیست", false); return; }
+        MAHOApi.ensureAdmin(apiAdminPass()).then(function(){
+          var d=res.data||{};
+          setApiNote("متصل ✓ — محصولات: "+(d.products||0)+"، سفارش‌ها: "+(d.orders||0)+"، مشتریان: "+(d.customers||0), true);
+        }).catch(function(err){ setApiNote("سرور هست ولی پسورد API اشتباه است: "+((err&&err.message)||err), false); });
+      });
+    };
+    if($("#apiPullBtn")) $("#apiPullBtn").onclick=function(){
+      withApiOnline(function(){
+        MAHOApi.adminState().then(function(d){ loadInto(d||{}); setDirty(true); toast("از سرور بارگذاری شد ✓"); setApiNote("از سرور بارگذاری شد ✓", true); }).catch(function(err){ alert("بارگذاری از سرور ناموفق: "+((err&&err.message)||err)); });
+      }, function(){ alert("سرور در دسترس نیست."); });
+    };
     function readImageFile(file,maxDim,quality,cb){
       // SVG / GIF can't be reliably rasterized via canvas — keep them as-is (data URL)
       if(/svg|gif/i.test(file.type)||/\.(svg|gif)$/i.test(file.name||"")){
@@ -1217,7 +1299,11 @@
         alert(quota
           ? ("ذخیره نشد: حافظه‌ی مرورگر پر شده است (حجم فعلی حدود "+sizeKB+" کیلوبایت؛ سقف مرورگر حدود ۵۰۰۰ کیلوبایت است).\n\nعلت معمولاً عکس‌هاست. راه‌حل‌ها:\n۱) تعداد/حجم عکس‌های محصولات را کم کنید.\n۲) عکس پس‌زمینه‌ی سربرگ (هیدر) یا لوگو را حذف/کوچک‌تر کنید.\n۳) برای عکس‌های زیاد و سفارش‌های متمرکز، سرور (پوشه‌ی server) را فعال کنید.")
           : ("ذخیره ناموفق بود: "+(e&&e.message?e.message:e)));
+        return;
       }
+      withApiOnline(function(){
+        MAHOApi.adminSaveCatalog(state).then(function(){ setApiNote("روی سرور هم ذخیره شد ✓", true); toast("روی سرور هم ذخیره شد ✓"); }).catch(function(err){ setApiNote("ذخیره محلی شد؛ سرور خطا داد: "+((err&&err.message)||err), false); });
+      });
     }
     $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
     CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); });

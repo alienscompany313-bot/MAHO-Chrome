@@ -3,6 +3,7 @@
    MAHO backend API
    Central catalog, customer accounts (email-verified), orders,
    and admin management. JSON-file persistence (no native deps).
+   Serves website/ statically so one deploy hosts store + API.
    =========================================================== */
 const express = require("express");
 const cors = require("cors");
@@ -17,6 +18,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "maho1234";
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DB_FILE = path.join(DATA_DIR, "db.json");
 const SEED_FILE = path.join(__dirname, "..", "website", "data.json");
+const WEBSITE_DIR = path.join(__dirname, "..", "website");
+const ROOT_DIR = path.join(__dirname, "..");
 
 /* SMTP (optional). When not configured, verification codes are returned in the
    API response (dev mode) so the flow works without an email provider. */
@@ -77,8 +80,24 @@ function token() { return crypto.randomBytes(24).toString("hex"); }
 function nextCustomerNo() { db.seqCustomer += 1; return "MO" + String(db.seqCustomer).padStart(6, "0"); }
 function nextOrderNo() { db.seqOrder += 1; return "MAHO-" + String(100000 + db.seqOrder); }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ""));
-function publicUser(u) { return u ? { id: u.id, name: u.name, phone: u.phone, email: u.email, address: u.address, customerNo: u.customerNo, payments: u.payments || [] } : null; }
-function publicConfig(c) { c = c || {}; return { whatsapp: c.whatsapp || "", logo: c.logo || "", bank: c.bank || {}, paymentLink: c.paymentLink || "", content: c.content || {} }; }
+function publicUser(u) { return u ? { id: u.id, name: u.name, phone: u.phone, email: u.email, address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: u.payments || [] } : null; }
+/* Full public config — credentials never live here */
+function publicConfig(c) { return Object.assign({}, c || {}); }
+
+function normalizeStatus(s) {
+  const v = String(s || "");
+  if (v === "confirmed" || v.indexOf("تایید شده") >= 0 || v.indexOf("تأیید شده") >= 0) return "confirmed";
+  if (v === "cancelled" || v.indexOf("لغو") >= 0) return "cancelled";
+  if (v === "awaiting_payment" || v.indexOf("انتظار پرداخت") >= 0) return "awaiting_payment";
+  if (v === "return_requested" || v.indexOf("برگشت") >= 0) return "return_requested";
+  if (v === "pending" || v.indexOf("انتظار") >= 0) return "pending";
+  return v || "pending";
+}
+
+function orderEmailBody(order) {
+  const lines = (order.items || []).map((it) => "• " + it.name + (it.size ? " " + it.size : "") + (it.color ? " " + it.color : "") + " x" + it.qty + " = " + (it.price * it.qty)).join("\n");
+  return "سفارش شما ثبت شد.\nشماره سفارش: " + order.id + "\n\n" + lines + "\n\nمجموع: " + (order.total || 0);
+}
 
 /* sessions: token -> {type, userId} (in-memory) */
 const sessions = new Map();
@@ -113,10 +132,23 @@ app.put("/api/admin/catalog", requireAdmin, (req, res) => {
   if (Array.isArray(b.products)) db.products = b.products;
   if (Array.isArray(b.stores)) db.stores = b.stores;
   if (b.config && typeof b.config === "object") db.config = b.config;
-  saveDb(); res.json({ ok: true });
+  saveDb(); res.json({ ok: true, products: db.products.length });
 });
 app.get("/api/admin/orders", requireAdmin, (req, res) => res.json({ orders: db.orders }));
 app.get("/api/admin/customers", requireAdmin, (req, res) => res.json({ customers: db.users.map(publicUser) }));
+app.post("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
+  const o = db.orders.find((x) => x.id === req.params.id);
+  if (!o) return res.status(404).json({ error: "not found" });
+  const prev = normalizeStatus(o.status);
+  const next = normalizeStatus((req.body || {}).status);
+  if (prev !== "cancelled" && next === "cancelled") decStock(o.items, 1);
+  o.status = next;
+  saveDb();
+  if (next === "confirmed" && o.customer && o.customer.email && emailOk(o.customer.email)) {
+    sendMail(o.customer.email, "MAHO — تایید سفارش " + o.id, orderEmailBody(o));
+  }
+  res.json({ order: o });
+});
 
 /* -------------------- auth -------------------- */
 app.post("/api/auth/register", (req, res) => {
@@ -124,11 +156,12 @@ app.post("/api/auth/register", (req, res) => {
   const name = String(b.name || "").trim(), phone = String(b.phone || "").trim();
   const email = String(b.email || "").trim(), address = String(b.address || "").trim();
   const password = String(b.password || "");
+  const addr = b.addr && typeof b.addr === "object" ? b.addr : {};
   if (!name || !phone || !email || !password) return res.status(400).json({ error: "missing fields" });
   if (!emailOk(email)) return res.status(400).json({ error: "bad email" });
   if (db.users.some((u) => (u.email || "").toLowerCase() === email.toLowerCase())) return res.status(409).json({ error: "email exists" });
   const code = genCode();
-  pendingReg.set(email.toLowerCase(), { code: code, exp: Date.now() + 15 * 60000, data: { name, phone, email, address, password } });
+  pendingReg.set(email.toLowerCase(), { code: code, exp: Date.now() + 15 * 60000, data: { name, phone, email, address, addr, password } });
   const body = "کد تأیید حساب شما در MAHO: " + code + "\nMAHO verification code: " + code;
   sendMail(email, "MAHO — کد تأیید / verification code", body);
   const out = { pending: true };
@@ -142,7 +175,7 @@ app.post("/api/auth/verify", (req, res) => {
   if (p.code !== code) return res.status(400).json({ error: "bad code" });
   pendingReg.delete(email);
   const d = p.data;
-  const user = { id: crypto.randomUUID(), name: d.name, phone: d.phone, email: d.email, address: d.address, pass: hashPw(d.password), verified: true, customerNo: nextCustomerNo(), payments: [], createdAt: Date.now() };
+  const user = { id: crypto.randomUUID(), name: d.name, phone: d.phone, email: d.email, address: d.address, addr: d.addr || {}, pass: hashPw(d.password), verified: true, customerNo: nextCustomerNo(), payments: [], createdAt: Date.now() };
   db.users.push(user); saveDb();
   const t = token(); sessions.set(t, { type: "user", userId: user.id });
   res.json({ token: t, user: publicUser(user) });
@@ -162,6 +195,7 @@ app.put("/api/me", requireUser, (req, res) => {
   if (b.name != null) u.name = String(b.name).trim();
   if (b.phone != null) u.phone = String(b.phone).trim();
   if (b.address != null) u.address = String(b.address).trim();
+  if (b.addr && typeof b.addr === "object") u.addr = b.addr;
   if (b.password) u.pass = hashPw(String(b.password));
   if (Array.isArray(b.payments)) u.payments = b.payments;
   let emailPending = false;
@@ -178,7 +212,7 @@ app.put("/api/me", requireUser, (req, res) => {
     if (ALLOW_DEV_CODES) out.devCode = code;
     return res.json(out);
   }
-  saveDb(); res.json({ user: publicUser(u) });
+  saveDb(); res.json({ user: publicUser(u), emailPending: emailPending });
 });
 app.post("/api/me/verify-email", requireUser, (req, res) => {
   const u = req.user; const code = String((req.body || {}).code || "").trim();
@@ -220,8 +254,7 @@ app.post("/api/orders", (req, res) => {
   decStock(order.items, -1);
   saveDb();
   if (customer.email && emailOk(customer.email)) {
-    const lines = order.items.map((it) => "• " + it.name + (it.size ? " " + it.size : "") + (it.color ? " " + it.color : "") + " x" + it.qty + " = " + (it.price * it.qty)).join("\n");
-    sendMail(customer.email, "MAHO — تأیید سفارش " + order.id, "سفارش شما ثبت شد.\nشماره سفارش: " + order.id + "\n\n" + lines + "\n\nمجموع: " + total);
+    sendMail(customer.email, "MAHO — تأیید سفارش " + order.id, orderEmailBody(order));
   }
   res.json({ order: order });
 });
@@ -234,7 +267,7 @@ function findOrderForReq(req) {
 }
 app.post("/api/orders/:id/cancel", (req, res) => {
   const o = findOrderForReq(req); if (!o) return res.status(404).json({ error: "not found" });
-  if (o.status !== "cancelled") { o.status = "cancelled"; decStock(o.items, 1); saveDb(); }
+  if (normalizeStatus(o.status) !== "cancelled") { o.status = "cancelled"; decStock(o.items, 1); saveDb(); }
   res.json({ order: o });
 });
 app.post("/api/orders/:id/return", (req, res) => {
@@ -243,4 +276,11 @@ app.post("/api/orders/:id/return", (req, res) => {
   res.json({ order: o });
 });
 
-app.listen(PORT, () => console.log("MAHO backend on :" + PORT + " (email=" + EMAIL_ENABLED + ", devCodes=" + ALLOW_DEV_CODES + ")"));
+/* -------------------- static website (production) -------------------- */
+app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
+app.use("/downloads", express.static(path.join(ROOT_DIR, "downloads")));
+app.get("/icon-192.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-192.png")));
+app.get("/icon-512.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-512.png")));
+app.get("/", (req, res) => res.sendFile(path.join(WEBSITE_DIR, "index.html")));
+
+app.listen(PORT, () => console.log("MAHO backend on :" + PORT + " (email=" + EMAIL_ENABLED + ", devCodes=" + ALLOW_DEV_CODES + ", static=" + WEBSITE_DIR + ")"));

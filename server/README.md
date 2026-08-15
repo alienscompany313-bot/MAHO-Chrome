@@ -4,6 +4,9 @@ A small Node.js/Express API that makes the MAHO store **central and live**: one 
 catalog, customer accounts with **real email verification**, and orders/customers the
 owner can see from anywhere (not just one browser).
 
+In production the same process also **serves the storefront** from `website/` — one
+URL for both the shop and the API.
+
 Data is stored in a JSON file (`data/db.json`) — no database server needed. For higher
 volume you can later swap the storage layer for a real database.
 
@@ -15,14 +18,18 @@ npm install
 npm start           # http://localhost:4000
 ```
 
-Health check: `GET http://localhost:4000/api/health`
+Open:
+
+- Store: http://localhost:4000/
+- Admin: http://localhost:4000/admin.html
+- Health: http://localhost:4000/api/health
 
 ## Configuration (environment variables)
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `PORT` | Port to listen on | `4000` |
-| `ADMIN_PASSWORD` | Admin panel password | `maho1234` (change it!) |
+| `ADMIN_PASSWORD` | Password for `/api/admin/*` | `maho1234` (change it!) |
 | `DATA_DIR` | Where `db.json` is stored | `server/data` |
 | `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM` | Email sending (verification + order confirmation) | empty |
 | `ALLOW_DEV_CODES` | If `true`, verification codes are returned in the API response (no email needed). Auto-enabled when SMTP is not set. | auto |
@@ -32,27 +39,39 @@ responses include `devCode` so the flow works without an email provider. Set the
 variables (e.g. Gmail app password, or any provider) to send **real** emails and disable
 dev codes.
 
+## Production wiring (storefront ↔ API)
+
+1. Deploy this `server/` folder (it serves `website/` automatically).
+2. In **Admin → Site settings → سرور مرکزی**, leave API URL empty (same origin) or set
+   the public API URL if the static site is hosted separately.
+3. Set **پسورد API** to the same value as `ADMIN_PASSWORD`.
+4. Click **آزمایش اتصال سرور**, then **ذخیره تغییرات** — catalog saves both locally and
+   to the server. Customers/orders then sync across browsers.
+
+The storefront auto-detects `/api/health`. When the API is up it uses central catalog,
+accounts, and orders; when offline it falls back to `data.json` + localStorage.
+
 ## Deploy (free / low-cost options)
 
 Any Node host works. Examples:
 
 - **Render.com** (free web service): New → Web Service → connect this repo → Root
-  Directory `server`, Build `npm install`, Start `npm start`. Add env vars (ADMIN_PASSWORD,
-  SMTP_*). Use a persistent disk mounted at `server/data` so orders/customers survive
-  restarts.
-- **Railway.app / Fly.io / Cyclic**: similar — set root to `server`, start `npm start`.
+  Directory `server`, Build `npm install`, Start `npm start`. Add env vars (`ADMIN_PASSWORD`,
+  `SMTP_*`). Use a persistent disk mounted at `server/data` (or set `DATA_DIR`) so
+  orders/customers survive restarts.
+- **Railway.app / Fly.io**: similar — set root to `server`, start `npm start`.
 - **Your own VPS**: `npm install && ADMIN_PASSWORD=... SMTP_...=... node index.js`, behind
   Nginx with HTTPS; keep it running with `pm2` or a systemd service.
 
-After deploying you get a public URL like `https://maho-api.onrender.com`. Put that URL
-into the website so the storefront/admin use the backend (frontend wiring is the next
-step; the site keeps working offline against the built-in defaults until then).
+After deploy, open the service URL — the shop and admin are already there. Optional:
+host `website/` on GitHub Pages/Netlify and point the admin “API URL” at the Node service.
 
 ## API (summary)
 
 - `GET /api/health`, `GET /api/catalog`
 - `POST /api/admin/login` → token; `GET /api/admin/state`, `PUT /api/admin/catalog`,
-  `GET /api/admin/orders`, `GET /api/admin/customers`
+  `GET /api/admin/orders`, `GET /api/admin/customers`,
+  `POST /api/admin/orders/:id/status`
 - `POST /api/auth/register` → (email code) `POST /api/auth/verify` → token;
   `POST /api/auth/login`
 - `GET/PUT /api/me`, `POST /api/me/verify-email`

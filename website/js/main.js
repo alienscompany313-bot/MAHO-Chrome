@@ -401,6 +401,7 @@
   /* -------------------- Catalog data source --------------------
      Priority: owner's local draft (admin panel) > published data.json > built-in defaults. */
   const DATA_KEY = "maho_admin_data";
+  let apiOnline = false;
   function normalizeData(d) {
     d = d || {};
     const products = Array.isArray(d.products) ? d.products : null;
@@ -879,6 +880,7 @@
   }
   function persistCatalog() { try { localStorage.setItem(DATA_KEY, JSON.stringify({ products: PRODUCTS, stores: STORES, config: CONFIG })); } catch (_) {} }
   function adjustStock(items, sign) {
+    if (apiOnline) return; /* stock is owned by the backend when live */
     let changed = false;
     (items || []).forEach((it) => {
       const p = PRODUCTS.find((x) => x.name === it.name);
@@ -887,6 +889,23 @@
       if (isFinite(cur)) { p.stock = Math.max(0, cur + sign * it.qty); changed = true; }
     });
     if (changed) { persistCatalog(); renderProducts(); }
+  }
+  function sessionFromApiUser(user, token) {
+    if (!user) return null;
+    return {
+      name: user.name, id: user.id || user.email, email: user.email, phone: user.phone,
+      address: user.address || "", addr: user.addr || {}, customerNo: user.customerNo || "",
+      apiToken: token || (window.MAHOApi && MAHOApi.getToken("user")) || "",
+    };
+  }
+  function orderStatusText(code) {
+    if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG);
+    return code || "";
+  }
+  function withApiOrderStatus(order) {
+    if (!order) return order;
+    const code = (window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(order.status) : order.status;
+    return Object.assign({}, order, { status: orderStatusText(code), statusCode: code });
   }
   function orderSummaryText(order) {
     const lines = order.items.map((it) => {
@@ -955,34 +974,65 @@
     sendAccountInfo(p.email, p.name, customerNo);
     return customerNo;
   }
-  // Actually place the order using the currently selected payment method.
-  function finalizeOrder(customer, delivery) {
-    let order;
+  function afterOrderPlaced(order, customer) {
     if (payMethod === "hesab") {
       const h = hesabInfo();
-      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
-      order = recordOrder(customer, "hesab", t("status.awaitPay"), delivery);
       if (h.link) window.open(h.link, "_blank");
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else if (payMethod === "card") {
       const link = paymentLink();
-      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return null; }
-      order = recordOrder(customer, "card", t("status.awaitPay"), delivery);
-      window.open(link, "_blank");
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
-    } else if (payMethod === "bank") {
-      order = recordOrder(customer, "bank", t("status.awaitPay"), delivery);
+      if (link) window.open(link, "_blank");
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     } else {
-      const st = CONFIG.orderApproval === "auto" ? t("status.confirmed") : t("status.pending");
-      order = recordOrder(customer, "whatsapp", st, delivery);
       window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     }
-    adjustStock(order.items, -1);
-    const emailed = sendOrderEmail(order, customer.email, customer.name);
+    const emailed = !apiOnline && sendOrderEmail(order, customer.email, customer.name);
     CART = []; saveCart(); updateCartBadge(); renderCart();
     showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
     closeCart(); openOrders();
+  }
+  // Actually place the order using the currently selected payment method.
+  function finalizeOrder(customer, delivery) {
+    if (payMethod === "hesab") {
+      const h = hesabInfo();
+      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
+    } else if (payMethod === "card") {
+      const link = paymentLink();
+      if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return null; }
+    }
+
+    if (apiOnline && window.MAHOApi) {
+      const payload = {
+        items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", price: it.price, qty: it.qty, size: it.size, color: it.color })),
+        customer: customer,
+        payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
+        delivery: delivery,
+      };
+      MAHOApi.placeOrder(payload).then((res) => {
+        const order = withApiOrderStatus(res.order);
+        const local = getOrders();
+        local.unshift(order);
+        saveOrders(local);
+        afterOrderPlaced(order, customer);
+      }).catch((err) => {
+        if ($("#coMsg")) $("#coMsg").textContent = (err && err.message) || t("acct.sendFail");
+      });
+      return null;
+    }
+
+    let order;
+    if (payMethod === "hesab") {
+      order = recordOrder(customer, "hesab", t("status.awaitPay"), delivery);
+    } else if (payMethod === "card") {
+      order = recordOrder(customer, "card", t("status.awaitPay"), delivery);
+    } else if (payMethod === "bank") {
+      order = recordOrder(customer, "bank", t("status.awaitPay"), delivery);
+    } else {
+      const st = CONFIG.orderApproval === "auto" ? t("status.confirmed") : t("status.pending");
+      order = recordOrder(customer, "whatsapp", st, delivery);
+    }
+    adjustStock(order.items, -1);
+    afterOrderPlaced(order, customer);
     return order;
   }
   let pendingCheckoutAccount = null;
@@ -1011,6 +1061,19 @@
     const pass = ($("#co_pass") && $("#co_pass").value.trim()) || "";
     if (!s && pass) {
       if (!emailOk(f.email)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctNeedEmail"); return; }
+      if (apiOnline && window.MAHOApi) {
+        pendingCheckoutAccount = { name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery, viaApi: true };
+        const box = $("#coVerifyBox"); if (box) box.hidden = false;
+        const vm = $("#coVerifyMsg");
+        MAHOApi.register({ name: f.nm, phone: f.ph, email: f.email, address: f.ad, addr: f.addrParts, password: pass }).then((res) => {
+          pendingCheckoutAccount.devCode = res.devCode || "";
+          if (vm) { vm.className = "qv-msg ok"; vm.textContent = res.devCode ? t("acct.demoNote").replace("{code}", res.devCode) : t("co.codeSentEmail"); }
+          const ce = $("#co_acct_code"); if (ce) ce.focus();
+        }).catch((err) => {
+          if (vm) { vm.className = "qv-msg"; vm.textContent = (err && err.status === 409) ? t("co.acctExists") : ((err && err.message) || t("acct.sendFail")); }
+        });
+        return;
+      }
       if (getUsers().some((u) => (u.email || u.id || "").toLowerCase() === f.email.toLowerCase())) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctExists"); return; }
       const code = genCode();
       pendingCheckoutAccount = { code: code, name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery };
@@ -1029,17 +1092,28 @@
     if (!pendingCheckoutAccount) return;
     const entered = toEnDigits(($("#co_acct_code") && $("#co_acct_code").value || "").trim()).replace(/[^0-9]/g, "");
     const vm = $("#coVerifyMsg");
-    if (entered !== pendingCheckoutAccount.code) { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } return; }
     const p = pendingCheckoutAccount;
+    const finishLocal = (customerNo) => {
+      const customer = Object.assign({}, p.customer, { customerNo: customerNo });
+      pendingCheckoutAccount = null;
+      if ($("#co_acct_code")) $("#co_acct_code").value = "";
+      if ($("#co_pass")) $("#co_pass").value = "";
+      const box = $("#coVerifyBox"); if (box) box.hidden = true;
+      renderAccount();
+      showToast(t("co.acctCreated").replace("{no}", customerNo));
+      finalizeOrder(customer, p.delivery);
+    };
+    if (p.viaApi && window.MAHOApi) {
+      MAHOApi.verify({ email: p.email, code: entered }).then((res) => {
+        const u = res.user || {};
+        setSession(sessionFromApiUser(u, res.token));
+        finishLocal(u.customerNo || "");
+      }).catch(() => { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } });
+      return;
+    }
+    if (entered !== pendingCheckoutAccount.code) { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } return; }
     const customerNo = createGuestAccount(p);
-    const customer = Object.assign({}, p.customer, { customerNo: customerNo });
-    pendingCheckoutAccount = null;
-    if ($("#co_acct_code")) $("#co_acct_code").value = "";
-    if ($("#co_pass")) $("#co_pass").value = "";
-    const box = $("#coVerifyBox"); if (box) box.hidden = true;
-    renderAccount();
-    showToast(t("co.acctCreated").replace("{no}", customerNo));
-    finalizeOrder(customer, p.delivery);
+    finishLocal(customerNo);
   });
 
   /* My Orders */
@@ -1047,46 +1121,58 @@
   let barcodeSeq = 0;
   function renderOrders() {
     const list = $("#ordersList"); if (!list) return;
-    const orders = getOrders();
-    if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
-    const pending = [];
-    list.innerHTML = orders.map((o) => {
-      const items = o.items.map((it) => {
-        const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
-        const variant = [];
-        if (it.size) variant.push(t("qv.size") + " " + it.size);
-        if (it.color) variant.push(t("qv.color") + " " + colorName(it.color));
-        const vs = variant.length ? " — " + variant.join("، ") : "";
-        let bc = "";
-        if (it.code) {
-          const bid = "bc" + (++barcodeSeq);
-          pending.push({ id: bid, code: it.code });
-          bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
-        }
-        return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
+    const paint = (orders) => {
+      if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+      const pending = [];
+      list.innerHTML = orders.map((o) => {
+        const display = withApiOrderStatus(o);
+        const items = (o.items || []).map((it) => {
+          const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
+          const variant = [];
+          if (it.size) variant.push(t("qv.size") + " " + it.size);
+          if (it.color) variant.push(t("qv.color") + " " + colorName(it.color));
+          const vs = variant.length ? " — " + variant.join("، ") : "";
+          let bc = "";
+          if (it.code) {
+            const bid = "bc" + (++barcodeSeq);
+            pending.push({ id: bid, code: it.code });
+            bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
+          }
+          return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
+        }).join("");
+        const d = new Date(o.date);
+        const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
+        const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
+        const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
+        const closed = code === "cancelled" || code === "return_requested" || o.status === t("status.cancelled") || o.status === t("status.returnReq");
+        const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
+        return `
+          <div class="order-card">
+            <div class="order-top">
+              <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
+              <span class="order-status">${display.status || ""}</span>
+            </div>
+            <ul>${items}</ul>
+            <div class="order-top">
+              <span>${t("orders.pay")}: ${payLabel}</span>
+              <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
+            </div>
+            ${actions}
+          </div>`;
       }).join("");
-      const d = new Date(o.date);
-      const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
-      const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
-      const closed = o.status === t("status.cancelled") || o.status === t("status.returnReq");
-      const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
-      return `
-        <div class="order-card">
-          <div class="order-top">
-            <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
-            <span class="order-status">${o.status || ""}</span>
-          </div>
-          <ul>${items}</ul>
-          <div class="order-top">
-            <span>${t("orders.pay")}: ${payLabel}</span>
-            <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
-          </div>
-          ${actions}
-        </div>`;
-    }).join("");
-    if (typeof JsBarcode !== "undefined") {
-      pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
+      if (typeof JsBarcode !== "undefined") {
+        pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
+      }
+    };
+    if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+      MAHOApi.myOrders().then((res) => {
+        const orders = (res.orders || []).map(withApiOrderStatus);
+        saveOrders(orders);
+        paint(orders);
+      }).catch(() => paint(getOrders()));
+      return;
     }
+    paint(getOrders());
   }
   function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
   function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
@@ -1100,18 +1186,33 @@
     if (cancelBtn) {
       const id = cancelBtn.getAttribute("data-cancel");
       if (!confirm(t("orders.confirmCancel"))) return;
+      const applyLocal = (o) => {
+        const orders = getOrders(); const local = orders.find((x) => x.id === id);
+        if (local) { local.status = t("status.cancelled"); saveOrders(orders); }
+        adjustStock((o && o.items) || (local && local.items) || [], 1);
+        window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.cancelMsg") + " — " + t("order.number") + ": " + id), "_blank");
+        renderOrders();
+      };
+      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+        MAHOApi.cancelOrder(id).then((res) => applyLocal(res.order)).catch(() => applyLocal(null));
+        return;
+      }
       const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
       o.status = t("status.cancelled"); saveOrders(orders);
-      adjustStock(o.items, 1);
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.cancelMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
-      renderOrders();
+      applyLocal(o);
     } else if (returnBtn) {
       const id = returnBtn.getAttribute("data-return");
       if (!confirm(t("orders.confirmReturn"))) return;
-      const orders = getOrders(); const o = orders.find((x) => x.id === id); if (!o) return;
-      o.status = t("status.returnReq"); saveOrders(orders);
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.returnMsg") + " — " + t("order.number") + ": " + o.id), "_blank");
-      renderOrders();
+      const applyLocal = () => {
+        const orders = getOrders(); const o = orders.find((x) => x.id === id); if (o) { o.status = t("status.returnReq"); saveOrders(orders); }
+        window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.returnMsg") + " — " + t("order.number") + ": " + id), "_blank");
+        renderOrders();
+      };
+      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+        MAHOApi.returnOrder(id).then(() => applyLocal()).catch(() => applyLocal());
+        return;
+      }
+      applyLocal();
     }
   });
 
@@ -1233,7 +1334,7 @@
     const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
     if (!out || !inn) return;
     if (s) {
-      const u = currentUser() || {};
+      const u = currentUser() || s;
       out.hidden = true; inn.hidden = false;
       $("#acctName").textContent = u.name || s.name || "";
       $("#acctCustNo").textContent = (u.customerNo || s.customerNo) ? (t("acct.custNo") + ": " + (u.customerNo || s.customerNo)) : "";
@@ -1242,11 +1343,26 @@
       if ($("#pf_name")) $("#pf_name").value = u.name || "";
       if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
       if ($("#pf_email")) $("#pf_email").value = u.email || "";
-      fillAddr("pf", u.addr);
+      fillAddr("pf", u.addr || s.addr);
       if ($("#pf_pass")) $("#pf_pass").value = "";
       if ($("#pfVerify")) $("#pfVerify").hidden = true;
       if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
       renderPayList(u);
+      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+        MAHOApi.me().then((res) => {
+          if (!res.user) return;
+          setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
+          const nu = res.user;
+          $("#acctName").textContent = nu.name || "";
+          $("#acctCustNo").textContent = nu.customerNo ? (t("acct.custNo") + ": " + nu.customerNo) : "";
+          $("#acctId").textContent = nu.email || "";
+          if ($("#pf_name")) $("#pf_name").value = nu.name || "";
+          if ($("#pf_phone")) $("#pf_phone").value = nu.phone || "";
+          if ($("#pf_email")) $("#pf_email").value = nu.email || "";
+          fillAddr("pf", nu.addr);
+          renderPayList(nu);
+        }).catch(() => {});
+      }
     } else { out.hidden = false; inn.hidden = true; }
   }
   function openAcct() { renderAccount(); if (acctOverlay) acctOverlay.classList.add("show"); }
@@ -1297,6 +1413,18 @@
     const pass = ($("#su_pass").value || "").trim();
     if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
     if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
+    if (apiOnline && window.MAHOApi) {
+      acctMsg(t("acct.sending"), true);
+      MAHOApi.register({ name: name, phone: phone, email: email, address: address, addr: addr, password: pass }).then((res) => {
+        pendingSignup = { name: name, phone: phone, email: email, addr: addr, address: address, pass: pass, viaApi: true, code: res.devCode || "" };
+        showSignupStep("verify");
+        if (res.devCode) acctMsg(t("acct.demoNote").replace("{code}", res.devCode), true);
+        else acctMsg(t("acct.codeSent"), true);
+      }).catch((err) => {
+        acctMsg((err && err.status === 409) ? t("acct.emailExists") : ((err && err.message) || t("acct.sendFail")));
+      });
+      return;
+    }
     const users = getUsers();
     if (users.some((u) => (u.email || u.id || "").toLowerCase() === email.toLowerCase())) { acctMsg(t("acct.emailExists")); return; }
     const code = genCode();
@@ -1313,6 +1441,16 @@
   if (verifyBtn) verifyBtn.addEventListener("click", () => {
     if (!pendingSignup) return;
     const entered = toEnDigits(($("#vf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (pendingSignup.viaApi && window.MAHOApi) {
+      MAHOApi.verify({ email: pendingSignup.email, code: entered }).then((res) => {
+        const u = res.user || {};
+        setSession(sessionFromApiUser(u, res.token));
+        const nm = pendingSignup.name; pendingSignup = null;
+        if ($("#vf_code")) $("#vf_code").value = "";
+        renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
+      }).catch(() => acctMsg(t("acct.badCode")));
+      return;
+    }
     if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
     const users = getUsers();
     const customerNo = nextCustomerNo();
@@ -1326,6 +1464,15 @@
   const resendBtn = $("#resendBtn");
   if (resendBtn) resendBtn.addEventListener("click", () => {
     if (!pendingSignup) return;
+    if (pendingSignup.viaApi && window.MAHOApi) {
+      acctMsg(t("acct.sending"), true);
+      MAHOApi.register({ name: pendingSignup.name, phone: pendingSignup.phone, email: pendingSignup.email, address: pendingSignup.address, addr: pendingSignup.addr, password: pendingSignup.pass }).then((res) => {
+        pendingSignup.code = res.devCode || "";
+        if (res.devCode) acctMsg(t("acct.demoNote").replace("{code}", res.devCode), true);
+        else acctMsg(t("acct.codeSent"), true);
+      }).catch(() => acctMsg(t("acct.sendFail")));
+      return;
+    }
     pendingSignup.code = genCode();
     acctMsg(t("acct.sending"), true);
     sendCode(pendingSignup.email, pendingSignup.name, pendingSignup.code).then((res) => {
@@ -1337,13 +1484,26 @@
   const loginBtn = $("#loginBtn");
   if (loginBtn) loginBtn.addEventListener("click", () => {
     const id = ($("#lg_id").value || "").trim(), pass = ($("#lg_pass").value || "").trim();
+    if (apiOnline && window.MAHOApi) {
+      MAHOApi.login({ id: id, password: pass }).then((res) => {
+        setSession(sessionFromApiUser(res.user, res.token));
+        renderAccount();
+        acctMsg(t("acct.hi") + "، " + (res.user && res.user.name), true);
+        showToast(t("acct.hi") + "، " + (res.user && res.user.name));
+      }).catch(() => acctMsg(t("acct.bad")));
+      return;
+    }
     const u = getUsers().find((x) => pass === x.pass && [x.email, x.phone, x.id].some((v) => v && v.toLowerCase() === id.toLowerCase()));
     if (!u) { acctMsg(t("acct.bad")); return; }
     setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone, customerNo: u.customerNo }); renderAccount();
     acctMsg(t("acct.hi") + "، " + u.name, true); showToast(t("acct.hi") + "، " + u.name);
   });
   const logoutBtn = $("#logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", () => { setSession(null); selectTab(true); renderAccount(); });
+  if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    setSession(null);
+    if (window.MAHOApi) MAHOApi.logoutUser();
+    selectTab(true); renderAccount();
+  });
 
   /* forgot password */
   let pendingReset = null;
@@ -1384,17 +1544,35 @@
   function pfMsg(text, ok) { const m = $("#pfMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
   const saveProfileBtn = $("#saveProfileBtn");
   if (saveProfileBtn) saveProfileBtn.addEventListener("click", () => {
-    const u = currentUser(); if (!u) return;
+    const u = currentUser();
+    const s = getSession();
+    if (!u && !(apiOnline && s && MAHOApi.getToken("user"))) return;
     const name = ($("#pf_name").value || "").trim();
     const phone = ($("#pf_phone").value || "").trim();
     const email = ($("#pf_email").value || "").trim();
     const newpass = ($("#pf_pass").value || "").trim();
     if (!name || !phone || !email) { pfMsg(t("acct.needAll")); return; }
     if (!emailOk(email)) { pfMsg(t("acct.badEmail")); return; }
-    const emailChanged = email.toLowerCase() !== (u.email || "").toLowerCase();
-    if (emailChanged && getUsers().some((x) => (x.email || "").toLowerCase() === email.toLowerCase())) { pfMsg(t("acct.emailExists")); return; }
     const addrParts = readAddr("pf");
     const address = composeAddress(addrParts);
+    if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+      const body = { name: name, phone: phone, address: address, addr: addrParts, email: email };
+      if (newpass) body.password = newpass;
+      MAHOApi.updateMe(body).then((res) => {
+        setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
+        if (res.emailPending) {
+          pendingEmailChange = { email: email, viaApi: true, code: res.devCode || "" };
+          if ($("#pfVerify")) $("#pfVerify").hidden = false;
+          pfMsg(res.devCode ? (t("acct.emailChangeCode") + " — " + t("acct.demoNote").replace("{code}", res.devCode)) : t("acct.emailChangeCode"), true);
+        } else {
+          renderAccount(); pfMsg(t("acct.saved"), true); showToast(t("acct.saved"));
+        }
+      }).catch((err) => pfMsg((err && err.status === 409) ? t("acct.emailExists") : ((err && err.message) || t("acct.sendFail"))));
+      return;
+    }
+    if (!u) return;
+    const emailChanged = email.toLowerCase() !== (u.email || "").toLowerCase();
+    if (emailChanged && getUsers().some((x) => (x.email || "").toLowerCase() === email.toLowerCase())) { pfMsg(t("acct.emailExists")); return; }
     updateUser((usr) => { usr.name = name; usr.phone = phone; usr.address = address; usr.addr = addrParts; if (newpass) usr.pass = newpass; });
     setSession(Object.assign({}, getSession(), { name: name, phone: phone, address: address, addr: addrParts }));
     if (emailChanged) {
@@ -1411,6 +1589,14 @@
   if (pfVerifyBtn) pfVerifyBtn.addEventListener("click", () => {
     if (!pendingEmailChange) return;
     const entered = toEnDigits(($("#pf_code").value || "").trim()).replace(/[^0-9]/g, "");
+    if (pendingEmailChange.viaApi && window.MAHOApi) {
+      MAHOApi.verifyEmailChange({ code: entered }).then((res) => {
+        setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
+        pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
+        renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
+      }).catch(() => pfMsg(t("acct.badCode")));
+      return;
+    }
     if (entered !== pendingEmailChange.code) { pfMsg(t("acct.badCode")); return; }
     const newEmail = pendingEmailChange.email;
     updateUser((usr) => { usr.email = newEmail; usr.id = newEmail; });
@@ -1772,18 +1958,41 @@
   /* -------------------- Init -------------------- */
   applyLang(LANG);
 
-  /* Load the published catalog (data.json) unless the owner has a local draft.
-     Fails silently when opened from a single file (file://) — defaults are used. */
-  if (!hasLocalDraft) {
-    fetch("data.json", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d && Array.isArray(d.products) && d.products.length) {
-          applyData(d);
-          renderProducts();
-          renderStores();
-        }
-      })
-      .catch(() => {});
+  function refreshFromCatalog(d) {
+    if (!d) return;
+    applyData(d);
+    renderFilters();
+    renderShowcase();
+    renderProducts();
+    renderStores();
+    applyLogo();
+    applyHero();
+    applyContent();
+    formatCounters();
+  }
+
+  function loadPublishedCatalog() {
+    if (!hasLocalDraft) {
+      return fetch("data.json", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && Array.isArray(d.products) && d.products.length) refreshFromCatalog(d);
+        })
+        .catch(() => {});
+    }
+    return Promise.resolve();
+  }
+
+  /* Prefer live API catalog when the backend is up; fall back to data.json / local draft. */
+  if (window.MAHOApi) {
+    MAHOApi.probe().then((res) => {
+      apiOnline = !!(res && res.ok);
+      if (!apiOnline) return loadPublishedCatalog();
+      return MAHOApi.getCatalog().then((d) => {
+        if (d && Array.isArray(d.products)) refreshFromCatalog(d);
+      }).catch(() => loadPublishedCatalog());
+    });
+  } else {
+    loadPublishedCatalog();
   }
 })();
