@@ -159,14 +159,7 @@
           <p data-i18n="cats.p">از پوشاک و شال تا کیف، کفش، اکسسوری و لوازم آرایشی — همه در یک‌جا و دسته‌بندی‌شده.</p>
         </div>
         <div class="cat-grid">
-          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-dress"/></svg></div><h3 data-i18n="cat1.t">لباس مجلسی</h3><p data-i18n="cat1.d">پیراهن و کالای شب</p></div>
-          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-coat"/></svg></div><h3 data-i18n="cat2.t">مانتو و پالتو</h3><p data-i18n="cat2.d">روزمره و رسمی</p></div>
-          <div class="cat-card reveal" data-filter="clothing" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-shirt"/></svg></div><h3 data-i18n="cat3.t">بلوز و شومیز</h3><p data-i18n="cat3.d">مدل‌های متنوع</p></div>
-          <div class="cat-card reveal" data-filter="scarf" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-scarf"/></svg></div><h3 data-i18n="cat4.t">شال و روسری</h3><p data-i18n="cat4.d">نخی و ابریشمی</p></div>
-          <div class="cat-card reveal" data-filter="bagshoes" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-bag"/></svg></div><h3 data-i18n="cat5.t">کیف زنانه</h3><p data-i18n="cat5.d">دستی و مجلسی</p></div>
-          <div class="cat-card reveal" data-filter="bagshoes" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-heel"/></svg></div><h3 data-i18n="cat6.t">کفش زنانه</h3><p data-i18n="cat6.d">پاشنه‌بلند و تخت</p></div>
-          <div class="cat-card reveal" data-filter="accessory" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-ring"/></svg></div><h3 data-i18n="cat7.t">اکسسوری و بدلیجات</h3><p data-i18n="cat7.d">گردنبند، دستبند و ساعت</p></div>
-          <div class="cat-card reveal" data-filter="beauty" role="button" tabindex="0"><div class="ico"><svg class="ic"><use href="#i-sparkles"/></svg></div><h3 data-i18n="cat8.t">آرایشی و بهداشتی</h3><p data-i18n="cat8.d">لوازم آرایش و عطر</p></div>
+          <!-- filled dynamically from config.showcase / categories -->
         </div>
       </div>
     </section>
@@ -181,12 +174,7 @@
         </div>
 
         <div class="filter-bar reveal" id="filterBar">
-          <button class="chip active" data-filter="all" data-i18n="filter.all">همه</button>
-          <button class="chip" data-filter="clothing" data-i18n="filter.clothing">پوشاک</button>
-          <button class="chip" data-filter="scarf" data-i18n="filter.scarf">شال و روسری</button>
-          <button class="chip" data-filter="bagshoes" data-i18n="filter.bagshoes">کیف و کفش</button>
-          <button class="chip" data-filter="beauty" data-i18n="filter.beauty">آرایشی</button>
-          <button class="chip" data-filter="accessory" data-i18n="filter.accessory">اکسسوری</button>
+          <!-- chips filled dynamically from config.categories -->
         </div>
 
         <div class="product-grid" id="productGrid">
@@ -310,7 +298,7 @@
           <p><svg class="ic"><use href="#i-pin"/></svg> <span data-i18n="footer.addr">کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵</span></p>
         <p><svg class="ic"><use href="#i-call"/></svg> <a class="contact-link" data-i18n="footer.phone" href="tel:">۰۷۰۰ ۱۲۳ ۴۵۶</a></p>
         <p><svg class="ic"><use href="#i-mail"/></svg> <a class="contact-link" data-i18n="footer.email" href="mailto:">info@maho.example</a></p>
-          <a class="btn btn-outline" target="_blank" rel="noopener" href="https://maps.app.goo.gl/U6miPMFLBSY6woFo6" style="margin-top:8px" data-i18n="footer.map">مشاهده روی نقشه ←</a>
+          <a class="btn btn-outline" id="footerMapLink" target="_blank" rel="noopener" href="#" style="margin-top:8px" data-i18n="footer.map">مشاهده روی نقشه ←</a>
         </div>
       </div>
       <div class="footer-bottom">
