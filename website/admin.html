@@ -121,31 +121,17 @@
       <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
       <div style="margin:4px 0 2px">پنل مدیریت</div>
       <div id="gateStep1">
-        <p class="note" style="color:#b9b3a6">برای ورود، نام کاربری و هر دو پسورد را وارد کنید.</p>
-        <input type="text" id="gateUser" placeholder="نام کاربری" autocomplete="username" dir="ltr">
-        <input type="password" id="gatePass" placeholder="پسورد اول" autocomplete="current-password" dir="ltr">
-        <input type="password" id="gatePass2" placeholder="پسورد دوم" autocomplete="current-password" dir="ltr">
-        <button class="btn btn-gold" style="width:100%" id="gateBtn">ادامه</button>
-        <button type="button" id="gateForgot" style="background:none;border:none;color:#c8a35f;cursor:pointer;font-family:inherit;font-size:13px;margin-top:10px;text-decoration:underline">رمز یا نام کاربری را فراموش کرده‌اید؟</button>
-        <p class="note" style="color:#7d7768;margin-top:6px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد اول و دوم هر دو <b>maho1234</b></p>
+        <p class="note" style="color:#b9b3a6">ورود فقط از طریق سرور. پسورد همان <code>ADMIN_PASSWORD</code> محیطی بک‌اند است.</p>
+        <input type="password" id="gatePass" placeholder="پسورد مدیر (ADMIN_PASSWORD)" autocomplete="current-password" dir="ltr">
+        <button class="btn btn-gold" style="width:100%" id="gateBtn">ورود</button>
+        <p class="note" style="color:#7d7768;margin-top:6px">هیچ پسورد پیش‌فرضی وجود ندارد. اگر سرور در دسترس نباشد، پنل باز نمی‌شود.</p>
       </div>
       <div id="gateStep3" hidden>
-        <p class="note" style="color:#b9b3a6">بازیابی دسترسی مدیر</p>
-        <input type="text" id="recKey" placeholder="کلید بازیابی" dir="ltr">
-        <button class="btn btn-gold" style="width:100%" id="recKeyBtn">بازیابی با کلید</button>
-        <div style="margin-top:10px">
-          <button type="button" class="btn btn-outline btn-sm" style="width:100%" id="recEmailBtn">ارسال کود بازیابی به ایمیل مدیر</button>
-          <input type="text" id="recCode" placeholder="کود ایمیل بازیابی" inputmode="numeric" dir="ltr" hidden>
-          <button class="btn btn-gold" style="width:100%;margin-top:6px" id="recCodeBtn" hidden>تایید کود و بازیابی</button>
-        </div>
+        <p class="note" style="color:#b9b3a6">بازیابی پسورد فقط از طریق تنظیم مجدد <code>ADMIN_PASSWORD</code> روی سرور ممکن است. با پشتیبانی یا میزبان خود تماس بگیرید.</p>
         <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" id="recBackBtn">بازگشت</button>
-        <p class="note" style="color:#7d7768;margin-top:8px">با بازیابی، نام کاربری و پسوردها به پیش‌فرض (admin / maho1234 / maho1234) برمی‌گردند و باید دوباره تنظیم‌شان کنید.</p>
       </div>
       <div id="gateStep2" hidden>
-        <p class="note" style="color:#b9b3a6">کود تایید را وارد کنید. در حالت آزمایشی، کود روی همین صفحه (متن زرد پایین) نشان داده می‌شود.</p>
-        <input type="text" id="gateCode" placeholder="کود تایید" inputmode="numeric" dir="ltr" autocomplete="one-time-code">
-        <button class="btn btn-gold" style="width:100%" id="gateVerifyBtn">تایید و ورود</button>
-        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px" id="gateBackBtn">بازگشت</button>
+        <p class="note" style="color:#b9b3a6">در حال ورود به سرور…</p>
       </div>
       <p class="note" id="gateMsg" style="color:#ff9d9d;min-height:18px;margin:8px 0 0"></p>
     </div>
@@ -423,18 +409,17 @@
       </div>
       <p class="note">متغیرهای قالب سفارش: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{order_no}}</code>، <code>{{order_summary}}</code>، <code>{{order_total}}</code>. متغیرهای قالب خوش‌آمد: <code>{{to_email}}</code>، <code>{{to_name}}</code>، <code>{{customer_no}}</code>، <code>{{message}}</code>.</p>
 
-      <h3 style="margin:16px 0 6px;font-size:16px">سرور مرکزی (Production API)</h3>
-      <div class="sub">اگر بک‌اند Node را روی Render/Railway/VPS اجرا می‌کنید، آدرس عمومی آن را اینجا بگذارید (مثلاً <code>https://maho-api.onrender.com</code>). وقتی خالی باشد و سایت از خود سرور سرو شود، همان دامنه استفاده می‌شود. پسورد API باید با متغیر محیطی <code>ADMIN_PASSWORD</code> سرور یکی باشد (پیش‌فرض <code>maho1234</code>).</div>
+      <h3 style="margin:16px 0 6px;font-size:16px">سرور مرکزی (الزامی)</h3>
+      <div class="sub">پنل مدیریت فقط با بک‌اند کار می‌کند. آدرس API را در صورت نیاز تنظیم کنید (خالی = همین دامنه). پسورد مدیر فقط روی سرور با <code>ADMIN_PASSWORD</code> تنظیم می‌شود — در مرورگر ذخیره نمی‌شود.</div>
       <div class="grid2">
-        <div class="field"><label>آدرس API</label><input id="cfg_api_url" dir="ltr" placeholder="https://maho-api.onrender.com یا خالی برای همین دامنه"></div>
-        <div class="field"><label>پسورد API (ADMIN_PASSWORD)</label><input id="cfg_api_pass" type="password" dir="ltr" placeholder="maho1234"></div>
+        <div class="field"><label>آدرس API</label><input id="cfg_api_url" dir="ltr" placeholder="خالی برای همین دامنه، یا https://api.example.com"></div>
+        <div class="field"><label>وضعیت</label><div class="note" id="apiStatusNote" style="margin:8px 0 0">—</div></div>
       </div>
       <div class="tb-actions" style="gap:10px;margin-top:8px">
         <button class="btn btn-outline btn-sm" id="apiTestBtn" type="button">آزمایش اتصال سرور</button>
         <button class="btn btn-outline btn-sm" id="apiPullBtn" type="button">بارگذاری از سرور</button>
-        <span class="note" id="apiStatusNote" style="margin:0"></span>
       </div>
-      <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات</button></div>
+      <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات روی سرور</button></div>
     </div>
 
     <!-- PUBLISH / MAHO / BACKUP -->
@@ -448,16 +433,9 @@
         <button class="btn btn-outline btn-sm" id="resetBtn">بازگردانی به نسخه‌ی منتشرشده</button>
       </div>
       <p class="note" style="margin-top:10px">اتصال با سیستم MAHO: اگر برنامه‌ی MAHO Enterprise را در همین مرورگر باز کرده باشید، دکمه‌ی «وارد کردن اجناس از سیستم MAHO» اجناس آن را (نام، کود، قیمت، موجودی) به سایت می‌آورد.</p>
-      <h3 style="margin:16px 0 6px;font-size:16px">ورود امن مدیر (دو پسورد + کود ایمیلی)</h3>
-      <div class="grid2">
-        <div class="field"><label>نام کاربری مدیر</label><input id="newUser" dir="ltr" placeholder="admin"></div>
-        <div class="field"><label>ایمیل مدیر (کود ورود به اینجا فرستاده می‌شود)</label><input id="newEmail" dir="ltr" type="email" placeholder="admin@example.com"></div>
-        <div class="field"><label>پسورد اول جدید</label><input id="newPass" type="password" placeholder="خالی = بدون تغییر"></div>
-        <div class="field"><label>پسورد دوم جدید</label><input id="newPass2" type="password" placeholder="خالی = بدون تغییر"></div>
-        <div class="field"><label>کلید بازیابی (برای فراموشی رمز)</label><input id="newRecovery" dir="ltr" placeholder="maho-recovery"></div>
-        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره تنظیمات ورود</button></div>
-      </div>
-      <p class="note">هنگام هر ورود، پس از نام کاربری و دو پسورد، یک کود تایید به ایمیل مدیر فرستاده می‌شود و باید آن را وارد کنید. برای ارسال واقعی کود، ایمیل مدیر را وارد کنید و بخش «ایمیل (EmailJS)» را کامل کنید؛ در غیر این‌صورت کود در حالت آزمایشی روی صفحه نشان داده می‌شود. پس از ۵ ورودِ نادرست ورود موقتاً قفل و پس از ۱۵ دقیقه بی‌فعالیتی خروج خودکار می‌شود.</p>
+      <h3 style="margin:16px 0 6px;font-size:16px">امنیت مدیر</h3>
+      <div class="sub">پسورد مدیر فقط با متغیر محیطی <code>ADMIN_PASSWORD</code> روی سرور تنظیم می‌شود (حداقل ۱۲ نویسه، حروف+عدد؛ بدون پسورد پیش‌فرض). تغییر آن از این پنل ممکن نیست.</div>
+      <p class="note">عکس‌های محصول، لوگو و هیرو فقط از طریق آپلود امن سرور ذخیره می‌شوند (مسیر <code>/uploads/…</code>) — هرگز Base64 در مرورگر یا db.json ذخیره نمی‌شود.</p>
     </div>
 
   </div>
@@ -560,7 +538,7 @@
   (function(){
     "use strict";
     var $=function(s){return document.querySelector(s)};
-    var DATA_KEY="maho_admin_data", PASS_KEY="maho_admin_pass", DEFAULT_PASS="maho1234";
+    var DATA_KEY="maho_admin_data"; /* cache only after successful server save — never credentials */
     var CAT_LABEL={clothing:"پوشاک",scarf:"شال و روسری",bagshoes:"کیف و کفش",beauty:"آرایشی",accessory:"اکسسوری"};
     var DEFAULT_CATS=[
       {key:"clothing",name:"پوشاک",name_en:"Clothing",icon:"dress"},
@@ -602,61 +580,44 @@
     var toastTimer;
     function toast(msg){ var el=$("#toast"); if(!el)return; el.textContent=msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.classList.remove("show")},2600); }
 
-    function resizeImage(file,maxDim,quality,cb){
-      var url=URL.createObjectURL(file), img=new Image();
-      img.onload=function(){
-        var w=img.width,h=img.height,scale=Math.min(1,maxDim/Math.max(w,h));
-        var cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale));
-        var c=document.createElement("canvas"); c.width=cw; c.height=ch;
-        c.getContext("2d").drawImage(img,0,0,cw,ch);
-        URL.revokeObjectURL(url);
-        try{ cb(c.toDataURL("image/jpeg",quality)); }catch(e){ cb(null); }
-      };
-      img.onerror=function(){ URL.revokeObjectURL(url); cb(null); };
-      img.src=url;
+    function isDataUrl(v){ return typeof v==="string" && /^data:/i.test(v); }
+    function scrubLocalImages(obj){
+      if(!obj||typeof obj!=="object") return obj;
+      if(Array.isArray(obj)) return obj.map(scrubLocalImages);
+      var out={};
+      Object.keys(obj).forEach(function(k){
+        var v=obj[k];
+        if((k==="image"||k==="logo"||k==="heroImage") && typeof v==="string"){ out[k]=isDataUrl(v)?"":v; }
+        else if(k==="images" && Array.isArray(v)){ out[k]=v.filter(function(u){ return typeof u==="string" && !isDataUrl(u); }); }
+        else if(v && typeof v==="object") out[k]=scrubLocalImages(v);
+        else out[k]=v;
+      });
+      return out;
     }
 
-    /* ---------- secure gate (username + password, lockout, idle logout) ---------- */
-    var USER_KEY="maho_admin_user", DEFAULT_USER="admin";
-    var PASS2_KEY="maho_admin_pass2", DEFAULT_PASS2="maho1234", ADMIN_EMAIL_KEY="maho_admin_email";
-    var RECOVERY_KEY="maho_admin_recovery", DEFAULT_RECOVERY="maho-recovery";
-    function adminRecovery(){ try{return localStorage.getItem(RECOVERY_KEY)||DEFAULT_RECOVERY}catch(e){return DEFAULT_RECOVERY} }
-    var pendingRecoveryCode=null;
-    var LOCK_KEY="maho_admin_lock", SESS_KEY="maho_admin_ok", SESS_AT="maho_admin_ok_at";
-    var MAX_FAILS=5, LOCK_MS=60000, IDLE_MS=15*60*1000;
-    function adminUser(){ try{return localStorage.getItem(USER_KEY)||DEFAULT_USER}catch(e){return DEFAULT_USER} }
-    function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
-    function pass2(){ try{return localStorage.getItem(PASS2_KEY)||DEFAULT_PASS2}catch(e){return DEFAULT_PASS2} }
-    function adminEmail(){ try{return localStorage.getItem(ADMIN_EMAIL_KEY)||""}catch(e){return ""} }
-    var pendingAdminCode=null, pendingAdminDemo=false;
-    function genAdminCode(){ return String(Math.floor(100000+Math.random()*900000)); }
-    function sendAdminCode(code){
-      var ej=(state.config&&state.config.emailjs)||{}; var em=adminEmail();
-      if(em && ej.serviceId && ej.templateId && ej.publicKey && typeof emailjs!=="undefined"){
-        return emailjs.send(ej.serviceId, ej.templateId, {to_email:em, email:em, to_name:"مدیر MAHO", passcode:code, code:code}, {publicKey:ej.publicKey}).then(function(){return {sent:true};}).catch(function(){return {sent:false, code:code};});
-      }
-      return Promise.resolve({sent:false, code:code});
-    }
-    function showAdminCodeHint(code, sent){
-      if(sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود تایید به ایمیل مدیر ("+adminEmail()+") فرستاده شد."; }
-      else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود تایید شما: "+code+" (برای امنیت واقعی، ایمیل مدیر و EmailJS را در تنظیمات وارد کنید)"; }
-    }
+    /* ---------- secure gate: backend-only auth ---------- */
+    var SESS_KEY="maho_admin_ok", SESS_AT="maho_admin_ok_at";
+    var LOCK_KEY="maho_admin_lock", MAX_FAILS=5, LOCK_MS=60000, IDLE_MS=15*60*1000;
     function getLock(){ try{return JSON.parse(localStorage.getItem(LOCK_KEY)||"{}")||{}}catch(e){return {}} }
     function setLock(o){ try{localStorage.setItem(LOCK_KEY,JSON.stringify(o||{}))}catch(e){} }
     function lockRemainingMs(){ var l=getLock(); return (l.until&&l.until>Date.now())?(l.until-Date.now()):0; }
-
     function touchSession(){ try{ sessionStorage.setItem(SESS_KEY,"1"); sessionStorage.setItem(SESS_AT,String(Date.now())); }catch(e){} }
-    function sessionValid(){ try{ if(sessionStorage.getItem(SESS_KEY)!=="1")return false; var at=Number(sessionStorage.getItem(SESS_AT)||0); return (Date.now()-at)<IDLE_MS; }catch(e){return false} }
-
+    function sessionValid(){
+      try{
+        if(sessionStorage.getItem(SESS_KEY)!=="1") return false;
+        if(!(window.MAHOApi && MAHOApi.getToken("admin"))) return false;
+        var at=Number(sessionStorage.getItem(SESS_AT)||0);
+        return (Date.now()-at)<IDLE_MS;
+      }catch(e){ return false; }
+    }
     var idleTimer=null, idleBound=false;
     function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); }
-    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; pendingAdminDemo=false; pendingRecoveryCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; } }
-    function doAdminRecovery(){
-      try{ localStorage.removeItem(USER_KEY); localStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS2_KEY); localStorage.removeItem(LOCK_KEY); }catch(e){}
-      pendingAdminCode=null; pendingRecoveryCode=null;
-      if($("#recKey")) $("#recKey").value=""; if($("#recCode")) $("#recCode").value="";
+    function showGate(msg){
+      try{ sessionStorage.removeItem(SESS_KEY); sessionStorage.removeItem(SESS_AT); }catch(e){}
+      if(window.MAHOApi) MAHOApi.logoutAdmin();
       gateShowStep(1);
-      if($("#gateMsg")){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="دسترسی بازیابی شد ✓ با پیش‌فرض وارد شوید: admin / maho1234 / maho1234 و سپس در «تنظیمات» تغییرشان دهید."; }
+      $("#app").style.display="none"; $("#gate").style.display="flex";
+      if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; }
     }
     function startIdleWatch(){
       function reset(){ if($("#app").style.display==="none")return; touchSession(); clearTimeout(idleTimer); idleTimer=setTimeout(function(){ showGate("به‌دلیل نبود فعالیت، به‌طور خودکار خارج شدید. دوباره وارد شوید."); }, IDLE_MS); }
@@ -674,73 +635,46 @@
         if(idx>0) card.classList.add("collapsed");
       });
     }
-    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; touchSession(); startIdleWatch(); initAccordion(); }
+    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; touchSession(); startIdleWatch(); initAccordion(); loadFromServer(); }
 
     function updateGateLockUI(){
       var rem=lockRemainingMs();
       if(rem>0){ $("#gateBtn").disabled=true; $("#gateMsg").textContent="ورود قفل شد؛ "+toFa(Math.ceil(rem/1000))+" ثانیه دیگر دوباره امتحان کنید."; setTimeout(updateGateLockUI,1000); }
       else { $("#gateBtn").disabled=false; if($("#gateMsg").textContent.indexOf("قفل")>=0)$("#gateMsg").textContent=""; }
     }
+    function requireApiClient(){
+      if(!window.MAHOApi){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کلاینت API بارگذاری نشده است."; return false; }
+      return true;
+    }
     $("#gateBtn").onclick=function(){
       if(lockRemainingMs()>0){ updateGateLockUI(); return; }
-      var u=($("#gateUser").value||"").trim(), p=$("#gatePass").value||"", p2=$("#gatePass2").value||"";
-      if(u===adminUser() && p===pass() && p2===pass2()){
+      if(!requireApiClient()) return;
+      var p=($("#gatePass").value||"");
+      if(!p){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="پسورد سرور را وارد کنید."; return; }
+      $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ورود به سرور…";
+      gateShowStep(2);
+      MAHOApi.probe().then(function(res){
+        if(!res.ok) throw new Error("سرور در دسترس نیست");
+        return MAHOApi.adminLogin(p);
+      }).then(function(){
         setLock({});
-        var code=genAdminCode(); pendingAdminCode=code; pendingAdminDemo=false;
-        $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ارسال کود تایید...";
-        sendAdminCode(code).then(function(res){
-          pendingAdminDemo=!res.sent;
-          gateShowStep(2); var ce=$("#gateCode"); if(ce){ce.value=""; ce.focus();}
-          showAdminCodeHint(code, res.sent);
-        });
-      } else {
+        $("#gatePass").value="";
+        $("#gateMsg").textContent="";
+        openApp();
+      }).catch(function(err){
+        gateShowStep(1);
         var l=getLock(), fails=(l.fails||0)+1;
         $("#gateMsg").style.color="#ff9d9d";
         if(fails>=MAX_FAILS){ setLock({fails:0,until:Date.now()+LOCK_MS}); updateGateLockUI(); }
-        else { setLock({fails:fails}); $("#gateMsg").textContent="نام کاربری یا پسوردها اشتباه است. ("+toFa(MAX_FAILS-fails)+" تلاش باقی مانده)"; }
-        $("#gatePass").value=""; $("#gatePass2").value="";
-      }
-    };
-    $("#gateVerifyBtn").onclick=function(){
-      if(!pendingAdminCode) { gateShowStep(1); return; }
-      var entered=toEn(($("#gateCode").value||"").trim()).replace(/[^0-9]/g,"");
-      if(entered===String(pendingAdminCode)){ pendingAdminCode=null; pendingAdminDemo=false; $("#gateMsg").textContent=""; $("#gatePass").value=""; $("#gatePass2").value=""; $("#gateCode").value=""; openApp(); }
-      else {
-        $("#gateMsg").style.color="#ff9d9d";
-        $("#gateMsg").textContent=pendingAdminDemo
-          ? ("کود تایید اشتباه است. کود آزمایشی هنوز: "+pendingAdminCode)
-          : "کود تایید اشتباه است.";
-      }
-    };
-    $("#gateBackBtn").onclick=function(){ pendingAdminCode=null; pendingAdminDemo=false; gateShowStep(1); $("#gateMsg").textContent=""; };
-    $("#gateForgot").onclick=function(){ pendingRecoveryCode=null; if($("#recCode"))$("#recCode").hidden=true; if($("#recCodeBtn"))$("#recCodeBtn").hidden=true; gateShowStep(3); $("#gateMsg").textContent=""; };
-    $("#recBackBtn").onclick=function(){ pendingRecoveryCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
-    $("#recKeyBtn").onclick=function(){
-      var k=($("#recKey").value||"").trim();
-      if(k && k===adminRecovery()){ doAdminRecovery(); }
-      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کلید بازیابی اشتباه است."; }
-    };
-    $("#recEmailBtn").onclick=function(){
-      var em=adminEmail();
-      if(!em){ $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="ایمیل مدیر تنظیم نشده؛ از «کلید بازیابی» استفاده کنید (پیش‌فرض: maho-recovery)."; return; }
-      var code=genAdminCode(); pendingRecoveryCode=code;
-      $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ارسال کود بازیابی...";
-      sendAdminCode(code).then(function(res){
-        if($("#recCode")) $("#recCode").hidden=false; if($("#recCodeBtn")) $("#recCodeBtn").hidden=false; var rc=$("#recCode"); if(rc){rc.value="";rc.focus();}
-        if(res.sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود بازیابی به ایمیل مدیر ("+em+") فرستاده شد."; }
-        else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود بازیابی: "+code; }
+        else {
+          setLock({fails:fails});
+          $("#gateMsg").textContent=((err&&err.message)||"ورود ناموفق")+" ("+toFa(MAX_FAILS-fails)+" تلاش باقی مانده)";
+        }
+        $("#gatePass").value="";
       });
     };
-    $("#recCodeBtn").onclick=function(){
-      if(!pendingRecoveryCode) return;
-      var entered=toEn(($("#recCode").value||"").trim()).replace(/[^0-9]/g,"");
-      if(entered===pendingRecoveryCode){ doAdminRecovery(); }
-      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کود بازیابی اشتباه است."; }
-    };
-    $("#gatePass2").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
-    $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass2").focus()});
-    $("#gateUser").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass").focus()});
-    $("#gateCode").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateVerifyBtn").click()});
+    if($("#recBackBtn")) $("#recBackBtn").onclick=function(){ gateShowStep(1); $("#gateMsg").textContent=""; };
+    if($("#gatePass")) $("#gatePass").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#gateBtn").click(); });
     updateGateLockUI();
     if(sessionValid()) openApp(); else showGate();
 
@@ -770,7 +704,6 @@
       var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0); $("#cfg_delivery_max").value=(dl.maxKm!=null?dl.maxKm:0);
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||""; $("#cfg_ejs_welcome").value=ej.welcomeTemplateId||"";
       if($("#cfg_api_url")) $("#cfg_api_url").value=c.apiUrl||(window.MAHOApi?MAHOApi.configuredUrl():"")||"";
-      if($("#cfg_api_pass")){ try{ $("#cfg_api_pass").value=localStorage.getItem("maho_api_admin_pass")||""; }catch(e){ $("#cfg_api_pass").value=""; } }
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
       var bl=$("#brandLogo"); if(c.logo){ bl.innerHTML='<img src="'+c.logo+'" style="width:100%;height:100%;object-fit:cover">'; } else { bl.textContent="M"; }
       var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
@@ -793,7 +726,6 @@
         apiUrl:($("#cfg_api_url")&&$("#cfg_api_url").value.trim())||"",
         content:(state.config&&state.config.content)||{}
       };
-      try{ localStorage.setItem("maho_api_admin_pass",($("#cfg_api_pass")&&$("#cfg_api_pass").value)||""); }catch(e){}
       if(window.MAHOApi) MAHOApi.setConfiguredUrl(state.config.apiUrl||"");
     }
     var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
@@ -835,19 +767,25 @@
       if(filter==="return") return s.indexOf("برگشت")>=0||s==="return_requested";
       return true;
     }
-    function apiAdminPass(){ try{ return ($("#cfg_api_pass")&&$("#cfg_api_pass").value)||localStorage.getItem("maho_api_admin_pass")||pass()||"maho1234"; }catch(e){ return "maho1234"; } }
     function setApiNote(msg, ok){ var n=$("#apiStatusNote"); if(!n)return; n.style.color=ok?"#2e7d32":"#b26a00"; n.textContent=msg||""; }
-    function withApiOnline(fn, onFail){
-      if(!window.MAHOApi){ if(onFail) onFail(); return; }
+    function requireBackend(fn){
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){
+        setApiNote("ابتدا وارد سرور شوید", false);
+        showGate("نشست سرور منقضی شده. دوباره وارد شوید.");
+        return;
+      }
       collectConfig();
       MAHOApi.probe().then(function(res){
-        if(!res.ok){ if(onFail) onFail(); return; }
-        MAHOApi.ensureAdmin(apiAdminPass()).then(function(){ fn(); }).catch(function(err){ setApiNote("ورود API ناموفق: "+((err&&err.message)||err), false); if(onFail) onFail(); });
+        if(!res.ok){ setApiNote("سرور در دسترس نیست", false); alert("سرور در دسترس نیست. تغییرات فقط روی سرور ذخیره می‌شوند."); return; }
+        MAHOApi.adminState().then(function(){ fn(); }).catch(function(){
+          setApiNote("نشست منقضی شد", false);
+          showGate("نشست سرور منقضی شده. دوباره وارد شوید.");
+        });
       });
     }
     function statusLabelFa(code){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa"):code; }
-    function readOrders(){ try{return JSON.parse(localStorage.getItem("maho_orders"))||[];}catch(e){return[];} }
-    function writeOrders(orders){ try{ localStorage.setItem("maho_orders",JSON.stringify(orders||[])); }catch(e){} }
+    function readOrders(){ try{return JSON.parse(sessionStorage.getItem("maho_orders_cache")||"[]")||[];}catch(e){return[];} }
+    function writeOrders(orders){ try{ sessionStorage.setItem("maho_orders_cache",JSON.stringify(orders||[])); }catch(e){} }
     function renderOrdersAdmin(){
       var box=$("#ordersBody"); if(!box)return;
       var paint=function(orders){
@@ -891,9 +829,9 @@
         }).join("");
         if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
       };
-      withApiOnline(function(){
-        MAHOApi.adminOrders().then(function(res){ paint(res.orders||[]); setApiNote("سفارش‌ها از سرور ✓", true); }).catch(function(){ paint(readOrders()); });
-      }, function(){ paint(readOrders()); });
+      requireBackend(function(){
+        MAHOApi.adminOrders().then(function(res){ paint(res.orders||[]); setApiNote("سفارش‌ها از سرور ✓", true); }).catch(function(err){ setApiNote((err&&err.message)||"خطا", false); paint([]); });
+      });
     }
     function orderSummaryTextA(o){
       var lines=(o.items||[]).map(function(it){ var v=[]; if(it.size)v.push("سایز "+it.size); if(it.color)v.push("رنگ "+it.color); var vs=v.length?" ("+v.join("، ")+")":""; return "• "+(it.name||"")+vs+" × "+toFa(it.qty||1)+" = "+money((it.price||0)*(it.qty||1)); });
@@ -920,25 +858,20 @@
         if(code==="confirmed") emailed=sendApprovalEmail(o||local||{});
         renderOrdersAdmin(); toast(emailed?("سفارش تایید شد و ایمیل تایید (نمبر "+id+") فرستاده شد ✓"):"وضعیت سفارش به‌روزرسانی شد ✓");
       };
-      withApiOnline(function(){
-        MAHOApi.adminSetOrderStatus(id, code).then(function(res){ finish(res.order); }).catch(function(){
-          var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=code; writeOrders(orders); finish(o);
-        });
-      }, function(){
-        var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=code; writeOrders(orders); finish(o);
+      requireBackend(function(){
+        MAHOApi.adminSetOrderStatus(id, code).then(function(res){ finish(res.order); }).catch(function(err){ alert((err&&err.message)||"به‌روزرسانی ناموفق"); });
       });
     }
     function renderCustomers(){
       var b=$("#custBody"); if(!b)return;
       var paint=function(users){
-        try{ localStorage.setItem("maho_users",JSON.stringify(users||[])); }catch(e){}
         var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
         if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای ثبت‌نام نکرده است.</td></tr>'; return; }
         b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
       };
-      withApiOnline(function(){
-        MAHOApi.adminCustomers().then(function(res){ paint(res.customers||[]); }).catch(function(){ var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){} paint(users); });
-      }, function(){ var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){} paint(users); });
+      requireBackend(function(){
+        MAHOApi.adminCustomers().then(function(res){ paint(res.customers||[]); }).catch(function(){ paint([]); });
+      });
     }
     function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
     function saveReviews(r){ try{localStorage.setItem("maho_reviews",JSON.stringify(r));}catch(e){} }
@@ -1104,22 +1037,19 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
-    function loadInitial(){
-      var finishLocal=function(){
-        try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
-        fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
-      };
-      if(window.MAHOApi){
-        MAHOApi.probe().then(function(res){
-          if(!res.ok){ finishLocal(); return; }
-          MAHOApi.ensureAdmin(apiAdminPass()).then(function(){
-            return MAHOApi.adminState().then(function(d){ loadInto(d||{}); setApiNote("متصل به سرور ✓", true); });
-          }).catch(function(){ finishLocal(); });
-        });
-      } else finishLocal();
+    function loadInto(d){ var n=normalize(scrubLocalImages(d||{})); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
+    function loadFromServer(){
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){ showGate("برای مدیریت باید به سرور وارد شوید."); return; }
+      MAHOApi.adminState().then(function(d){
+        loadInto(d||{});
+        setApiNote("متصل به سرور ✓", true);
+        try{ localStorage.setItem(DATA_KEY, JSON.stringify(scrubLocalImages(state))); }catch(e){}
+      }).catch(function(err){
+        setApiNote((err&&err.message)||"بارگذاری ناموفق", false);
+        showGate("بارگذاری از سرور ناموفق بود. دوباره وارد شوید.");
+      });
     }
-    loadInitial();
+    /* no offline bootstrap — wait for authenticated openApp() */
 
     /* ---------- product modal ---------- */
     function openModal(i){
@@ -1147,8 +1077,13 @@
     $("#f_imgPreview").addEventListener("click",function(e){ var b=e.target.closest("[data-rm]"); if(!b)return; modalImages.splice(parseInt(b.getAttribute("data-rm"),10),1); updateImgPreview(); });
     $("#f_image").addEventListener("change",function(e){
       var files=Array.prototype.slice.call(e.target.files||[]); if(!files.length)return;
-      var pending=files.length;
-      files.forEach(function(f){ resizeImage(f,700,0.68,function(dataUrl){ if(dataUrl) modalImages.push(dataUrl); pending--; if(pending===0){ updateImgPreview(); e.target.value=""; } }); });
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){ alert("ابتدا وارد سرور شوید."); e.target.value=""; return; }
+      toast("در حال آپلود عکس…");
+      MAHOApi.adminUpload(files).then(function(res){
+        (res.urls||[]).forEach(function(u){ modalImages.push(u); });
+        updateImgPreview(); setDirty(true); toast("آپلود شد ✓");
+        e.target.value="";
+      }).catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); e.target.value=""; });
     });
     $("#f_badge").onchange=toggleBadgeText;
     $("#addBtn").onclick=function(){openModal()};
@@ -1231,7 +1166,7 @@
     };
 
     /* ---------- config field listeners + logo ---------- */
-    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_delivery_max","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order","cfg_ejs_welcome","cfg_api_url","cfg_api_pass"].forEach(function(id){
+    ["cfg_whatsapp","cfg_bank_holder","cfg_bank_name","cfg_bank_number","cfg_paylink","cfg_hesab_link","cfg_hesab_number","cfg_delivery_enabled","cfg_delivery_perkm","cfg_delivery_freekm","cfg_delivery_urgent","cfg_delivery_min","cfg_delivery_max","cfg_ejs_service","cfg_ejs_key","cfg_ejs_template","cfg_ejs_order","cfg_ejs_welcome","cfg_api_url"].forEach(function(id){
       var el=$("#"+id); if(el) el.addEventListener("input",function(){ setDirty(true); });
     });
     if($("#apiTestBtn")) $("#apiTestBtn").onclick=function(){
@@ -1240,32 +1175,31 @@
       setApiNote("در حال آزمایش...", true);
       MAHOApi.probe().then(function(res){
         if(!res.ok){ setApiNote("سرور در دسترس نیست", false); return; }
-        MAHOApi.ensureAdmin(apiAdminPass()).then(function(){
-          var d=res.data||{};
-          setApiNote("متصل ✓ — محصولات: "+(d.products||0)+"، سفارش‌ها: "+(d.orders||0)+"، مشتریان: "+(d.customers||0), true);
-        }).catch(function(err){ setApiNote("سرور هست ولی پسورد API اشتباه است: "+((err&&err.message)||err), false); });
+        if(!MAHOApi.getToken("admin")){ setApiNote("سرور هست؛ برای مدیریت دوباره وارد شوید", false); return; }
+        var d=res.data||{};
+        setApiNote("متصل ✓ — محصولات: "+(d.products||0)+"، سفارش‌ها: "+(d.orders||0)+"، مشتریان: "+(d.customers||0), true);
       });
     };
     if($("#apiPullBtn")) $("#apiPullBtn").onclick=function(){
-      withApiOnline(function(){
-        MAHOApi.adminState().then(function(d){ loadInto(d||{}); setDirty(true); toast("از سرور بارگذاری شد ✓"); setApiNote("از سرور بارگذاری شد ✓", true); }).catch(function(err){ alert("بارگذاری از سرور ناموفق: "+((err&&err.message)||err)); });
-      }, function(){ alert("سرور در دسترس نیست."); });
+      requireBackend(function(){
+        MAHOApi.adminState().then(function(d){ loadInto(d||{}); setDirty(false); toast("از سرور بارگذاری شد ✓"); setApiNote("از سرور بارگذاری شد ✓", true); }).catch(function(err){ alert("بارگذاری از سرور ناموفق: "+((err&&err.message)||err)); });
+      });
     };
-    function readImageFile(file,maxDim,quality,cb){
-      // SVG / GIF can't be reliably rasterized via canvas — keep them as-is (data URL)
-      if(/svg|gif/i.test(file.type)||/\.(svg|gif)$/i.test(file.name||"")){
-        var r=new FileReader(); r.onload=function(){ cb(r.result); }; r.onerror=function(){ cb(null); }; r.readAsDataURL(file); return;
-      }
-      resizeImage(file,maxDim,quality,cb);
+    function uploadImageFile(file, done){
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){ alert("ابتدا وارد سرور شوید."); done(null); return; }
+      MAHOApi.adminUpload([file]).then(function(res){ done((res.urls&&res.urls[0])||res.url||null); })
+        .catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); done(null); });
     }
     $("#cfg_logo").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
-      readImageFile(f,240,0.85,function(dataUrl){ if(dataUrl){ state.config.logo=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+      toast("آپلود لوگو…");
+      uploadImageFile(f, function(url){ if(url){ state.config.logo=url; fillConfig(); setDirty(true); toast("لوگو ذخیره شد ✓"); } e.target.value=""; });
     });
     $("#logoRemove").onclick=function(){ state.config.logo=""; fillConfig(); setDirty(true); };
     $("#cfg_hero").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
-      readImageFile(f,1200,0.68,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+      toast("آپلود هیرو…");
+      uploadImageFile(f, function(url){ if(url){ state.config.heroImage=url; fillConfig(); setDirty(true); toast("هیرو ذخیره شد ✓"); } e.target.value=""; });
     });
     $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 
@@ -1298,20 +1232,17 @@
       if(document.querySelector("#scRows .sc-row")) collectShowcase();
       if(document.querySelector("#tsRows .ts-row")) collectTs();
       collectConfig(); collectContent();
-      try{
-        var payload=JSON.stringify(state);
-        localStorage.setItem(DATA_KEY, payload);
-        setDirty(false); toast("تغییرات ذخیره شد ✓ ("+Math.round(payload.length/1024)+" کیلوبایت)");
-      }catch(e){
-        var quota=(e&&(e.name==="QuotaExceededError"||e.code===22||e.code===1014));
-        var sizeKB=Math.round(JSON.stringify(state).length/1024);
-        alert(quota
-          ? ("ذخیره نشد: حافظه‌ی مرورگر پر شده است (حجم فعلی حدود "+sizeKB+" کیلوبایت؛ سقف مرورگر حدود ۵۰۰۰ کیلوبایت است).\n\nعلت معمولاً عکس‌هاست. راه‌حل‌ها:\n۱) تعداد/حجم عکس‌های محصولات را کم کنید.\n۲) عکس پس‌زمینه‌ی سربرگ (هیدر) یا لوگو را حذف/کوچک‌تر کنید.\n۳) برای عکس‌های زیاد و سفارش‌های متمرکز، سرور (پوشه‌ی server) را فعال کنید.")
-          : ("ذخیره ناموفق بود: "+(e&&e.message?e.message:e)));
-        return;
-      }
-      withApiOnline(function(){
-        MAHOApi.adminSaveCatalog(state).then(function(){ setApiNote("روی سرور هم ذخیره شد ✓", true); toast("روی سرور هم ذخیره شد ✓"); }).catch(function(err){ setApiNote("ذخیره محلی شد؛ سرور خطا داد: "+((err&&err.message)||err), false); });
+      state=scrubLocalImages(state);
+      requireBackend(function(){
+        MAHOApi.adminSaveCatalog(state).then(function(){
+          try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)); }catch(e){}
+          setDirty(false);
+          setApiNote("روی سرور ذخیره شد ✓", true);
+          toast("روی سرور ذخیره شد ✓");
+        }).catch(function(err){
+          setApiNote("ذخیره ناموفق: "+((err&&err.message)||err), false);
+          alert("ذخیره روی سرور ناموفق بود: "+((err&&err.message)||err));
+        });
       });
     }
     $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
@@ -1359,9 +1290,8 @@
       rd.readAsText(f); e.target.value="";
     });
     $("#resetBtn").onclick=function(){
-      if(!confirm("همه‌ی تغییرات محلی پاک شود و به نسخه‌ی منتشرشده برگردد؟"))return;
-      try{ localStorage.removeItem(DATA_KEY); }catch(e){}
-      setDirty(false); loadInitial();
+      if(!confirm("از سرور دوباره بارگذاری شود و تغییرات ذخیره‌نشده کنار گذاشته شوند؟"))return;
+      setDirty(false); loadFromServer();
     };
 
     /* ---------- MAHO import (best effort) ---------- */
@@ -1382,25 +1312,6 @@
       renderTable(); setDirty(true); toast("اجناس MAHO اضافه شد ✓");
     };
 
-    /* ---------- admin username + two passwords + email ---------- */
-    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); var ne=$("#newEmail"); if(ne) ne.value=adminEmail(); var nr=$("#newRecovery"); if(nr) nr.value=adminRecovery(); })();
-    $("#passBtn").onclick=function(){
-      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim(), np2=$("#newPass2").value.trim(), ne=($("#newEmail").value||"").trim(), nr=($("#newRecovery").value||"").trim();
-      if(nu.length<3){ alert("نام کاربری باید حداقل ۳ نویسه باشد."); return; }
-      if(np && np.length<4){ alert("پسورد اول باید حداقل ۴ نویسه باشد."); return; }
-      if(np2 && np2.length<4){ alert("پسورد دوم باید حداقل ۴ نویسه باشد."); return; }
-      if(ne && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ne)){ alert("ایمیل مدیر معتبر نیست."); return; }
-      if(nr && nr.length<4){ alert("کلید بازیابی باید حداقل ۴ نویسه باشد."); return; }
-      try{
-        localStorage.setItem(USER_KEY,nu);
-        if(np){ localStorage.setItem(PASS_KEY,np); }
-        if(np2){ localStorage.setItem(PASS2_KEY,np2); }
-        localStorage.setItem(ADMIN_EMAIL_KEY,ne);
-        if(nr){ localStorage.setItem(RECOVERY_KEY,nr); }
-        $("#newPass").value=""; $("#newPass2").value="";
-        alert("تنظیمات ورود ذخیره شد ✓");
-      }catch(e){ alert("ذخیره نشد"); }
-    };
     $("#logoutBtn").onclick=function(){
       if(dirty && !confirm("تغییرات ذخیره‌نشده دارید. بدون ذخیره خارج شوید؟")) return;
       dirty=false; document.body.classList.remove("dirty"); var sb=$("#saveBar"); if(sb) sb.classList.remove("show");

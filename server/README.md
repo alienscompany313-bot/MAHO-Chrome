@@ -1,81 +1,73 @@
 # MAHO backend
 
-A small Node.js/Express API that makes the MAHO store **central and live**: one shared
-catalog, customer accounts with **real email verification**, and orders/customers the
-owner can see from anywhere (not just one browser).
+Production-hardened Node.js/Express API for the MAHO store: central catalog,
+email-verified accounts, orders, and **secure image uploads**. The same process
+serves `website/` so one deploy URL hosts shop + API.
 
-In production the same process also **serves the storefront** from `website/` — one
-URL for both the shop and the API.
+## Security requirements
 
-Data is stored in a JSON file (`data/db.json`) — no database server needed. For higher
-volume you can later swap the storage layer for a real database.
+| Rule | Behaviour |
+| --- | --- |
+| `ADMIN_PASSWORD` | **Required**. No default. Min 12 chars, letters + numbers, not a common password. Process exits otherwise. |
+| Production (`NODE_ENV=production`) | Requires configured SMTP (`SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`) and **forbids** `ALLOW_DEV_CODES=true`. Never returns `devCode`. |
+| Dev codes | Only when `NODE_ENV≠production` **and** `ALLOW_DEV_CODES=true`. |
+| Images | Upload via `POST /api/admin/upload`. Files land in persistent `UPLOAD_DIR` (default `data/uploads`). Catalog stores `/uploads/…` URLs only — Base64 is stripped. |
+| Admin panel | Backend login only. No localStorage password fallbacks. Saves go to the API. |
+| CORS | Set `ALLOWED_ORIGINS` (comma-separated). In production, missing/empty list blocks browser cross-origin calls. |
 
-## Run locally
+## Run locally (development)
 
 ```bash
 cd server
 npm install
-npm start           # http://localhost:4000
+ADMIN_PASSWORD='SecureTestPass1' \
+ALLOW_DEV_CODES=true \
+ALLOWED_ORIGINS='http://localhost:4000' \
+npm start
 ```
 
-Open:
-
 - Store: http://localhost:4000/
-- Admin: http://localhost:4000/admin.html
+- Admin: http://localhost:4000/admin.html (password = `ADMIN_PASSWORD`)
 - Health: http://localhost:4000/api/health
 
-## Configuration (environment variables)
+## Production example
+
+```bash
+NODE_ENV=production \
+ADMIN_PASSWORD='your-long-unique-password' \
+ALLOW_DEV_CODES=false \
+SMTP_HOST=smtp.example.com SMTP_PORT=587 \
+SMTP_USER=… SMTP_PASS=… SMTP_FROM='MAHO <orders@example.com>' \
+ALLOWED_ORIGINS='https://shop.example.com,https://maho-api.example.com' \
+DATA_DIR=/var/lib/maho \
+UPLOAD_DIR=/var/lib/maho/uploads \
+npm start
+```
+
+Mount a **persistent disk** on `DATA_DIR` / `UPLOAD_DIR` so `db.json` and uploaded images survive restarts (Render, Railway, VPS, etc.).
+
+## Environment variables
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `PORT` | Port to listen on | `4000` |
-| `ADMIN_PASSWORD` | Password for `/api/admin/*` | `maho1234` (change it!) |
-| `DATA_DIR` | Where `db.json` is stored | `server/data` |
-| `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM` | Email sending (verification + order confirmation) | empty |
-| `ALLOW_DEV_CODES` | If `true`, verification codes are returned in the API response (no email needed). Auto-enabled when SMTP is not set. | auto |
-
-When SMTP is **not** configured, the API runs in **dev mode**: registration/email-change
-responses include `devCode` so the flow works without an email provider. Set the SMTP
-variables (e.g. Gmail app password, or any provider) to send **real** emails and disable
-dev codes.
-
-## Production wiring (storefront ↔ API)
-
-1. Deploy this `server/` folder (it serves `website/` automatically).
-2. In **Admin → Site settings → سرور مرکزی**, leave API URL empty (same origin) or set
-   the public API URL if the static site is hosted separately.
-3. Set **پسورد API** to the same value as `ADMIN_PASSWORD`.
-4. Click **آزمایش اتصال سرور**, then **ذخیره تغییرات** — catalog saves both locally and
-   to the server. Customers/orders then sync across browsers.
-
-The storefront auto-detects `/api/health`. When the API is up it uses central catalog,
-accounts, and orders; when offline it falls back to `data.json` + localStorage.
-
-## Deploy (free / low-cost options)
-
-Any Node host works. Examples:
-
-- **Render.com** (free web service): New → Web Service → connect this repo → Root
-  Directory `server`, Build `npm install`, Start `npm start`. Add env vars (`ADMIN_PASSWORD`,
-  `SMTP_*`). Use a persistent disk mounted at `server/data` (or set `DATA_DIR`) so
-  orders/customers survive restarts.
-- **Railway.app / Fly.io**: similar — set root to `server`, start `npm start`.
-- **Your own VPS**: `npm install && ADMIN_PASSWORD=... SMTP_...=... node index.js`, behind
-  Nginx with HTTPS; keep it running with `pm2` or a systemd service.
-
-After deploy, open the service URL — the shop and admin are already there. Optional:
-host `website/` on GitHub Pages/Netlify and point the admin “API URL” at the Node service.
+| `PORT` | Listen port | `4000` |
+| `NODE_ENV` | `production` enables hard SMTP / no-devCode rules | `development` |
+| `ADMIN_PASSWORD` | Admin API password | **required** |
+| `ALLOW_DEV_CODES` | Return `devCode` in auth responses (dev only) | unset / false |
+| `ALLOWED_ORIGINS` | Comma-separated CORS allowlist | empty (open in dev, blocked in prod) |
+| `DATA_DIR` | JSON DB directory | `server/data` |
+| `UPLOAD_DIR` | Image storage | `$DATA_DIR/uploads` |
+| `SMTP_*` | Real email delivery | empty |
 
 ## API (summary)
 
 - `GET /api/health`, `GET /api/catalog`
-- `POST /api/admin/login` → token; `GET /api/admin/state`, `PUT /api/admin/catalog`,
-  `GET /api/admin/orders`, `GET /api/admin/customers`,
-  `POST /api/admin/orders/:id/status`
-- `POST /api/auth/register` → (email code) `POST /api/auth/verify` → token;
-  `POST /api/auth/login`
+- `POST /api/admin/login` → token
+- `GET /api/admin/state`, `PUT /api/admin/catalog`, `POST /api/admin/upload`
+- `GET /api/admin/orders`, `GET /api/admin/customers`, `POST /api/admin/orders/:id/status`
+- `POST /api/auth/register` → verify → token; `POST /api/auth/login`
 - `GET/PUT /api/me`, `POST /api/me/verify-email`
-- `POST /api/orders`, `GET /api/orders`, `POST /api/orders/:id/cancel`,
-  `POST /api/orders/:id/return`
+- `POST /api/orders`, `GET /api/orders`, cancel / return
 
 Admin/user endpoints expect `Authorization: Bearer <token>`.
+Uploads: `multipart/form-data` field `files` (jpeg/png/webp/gif, max 2 MB each).

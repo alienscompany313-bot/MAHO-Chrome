@@ -209,6 +209,37 @@
       token: getToken("admin"),
     });
   }
+  function adminUpload(files) {
+    var fd = new FormData();
+    var list = Array.isArray(files) ? files : [files];
+    list.forEach(function (f) {
+      if (f) fd.append("files", f);
+    });
+    var headers = { Accept: "application/json" };
+    var t = getToken("admin");
+    if (t) headers.Authorization = "Bearer " + t;
+    return fetch(url("/api/admin/upload"), {
+      method: "POST",
+      headers: headers,
+      body: fd,
+      cache: "no-store",
+    }).then(function (r) {
+      return r
+        .json()
+        .catch(function () {
+          return {};
+        })
+        .then(function (data) {
+          if (!r.ok) {
+            var err = new Error((data && data.error) || r.statusText || "upload failed");
+            err.status = r.status;
+            err.data = data;
+            throw err;
+          }
+          return data;
+        });
+    });
+  }
   function ensureAdmin(password) {
     if (getToken("admin")) {
       return adminState()
@@ -217,14 +248,19 @@
         })
         .catch(function () {
           setToken("admin", null);
+          if (!password) return Promise.reject(new Error("admin auth required"));
           return adminLogin(password).then(function () {
             return true;
           });
         });
     }
+    if (!password) return Promise.reject(new Error("admin auth required"));
     return adminLogin(password).then(function () {
       return true;
     });
+  }
+  function logoutAdmin() {
+    setToken("admin", null);
   }
 
   /* status label helpers (API uses English codes; UI may show FA) */
@@ -282,7 +318,9 @@
     adminOrders: adminOrders,
     adminCustomers: adminCustomers,
     adminSetOrderStatus: adminSetOrderStatus,
+    adminUpload: adminUpload,
     ensureAdmin: ensureAdmin,
+    logoutAdmin: logoutAdmin,
     statusLabel: statusLabel,
     statusCode: statusCode,
   };
