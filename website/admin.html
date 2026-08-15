@@ -18,6 +18,7 @@
   </script>
   <title>پنل مدیریت | MAHO</title>
   <meta name="robots" content="noindex">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link rel="icon" href="../icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,12 +119,21 @@
     <div class="box">
       <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
       <div style="margin:4px 0 2px">پنل مدیریت</div>
-      <p class="note" style="color:#b9b3a6">برای ورود، نام کاربری و پسورد را وارد کنید.</p>
-      <input type="text" id="gateUser" placeholder="نام کاربری" autocomplete="username" dir="ltr">
-      <input type="password" id="gatePass" placeholder="پسورد" autocomplete="current-password" dir="ltr">
-      <button class="btn btn-gold" style="width:100%" id="gateBtn">ورود</button>
+      <div id="gateStep1">
+        <p class="note" style="color:#b9b3a6">برای ورود، نام کاربری و هر دو پسورد را وارد کنید.</p>
+        <input type="text" id="gateUser" placeholder="نام کاربری" autocomplete="username" dir="ltr">
+        <input type="password" id="gatePass" placeholder="پسورد اول" autocomplete="current-password" dir="ltr">
+        <input type="password" id="gatePass2" placeholder="پسورد دوم" autocomplete="current-password" dir="ltr">
+        <button class="btn btn-gold" style="width:100%" id="gateBtn">ادامه</button>
+        <p class="note" style="color:#7d7768;margin-top:10px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد اول و دوم هر دو <b>maho1234</b></p>
+      </div>
+      <div id="gateStep2" hidden>
+        <p class="note" style="color:#b9b3a6">کود تایید به ایمیل مدیر فرستاده شد. آن را وارد کنید.</p>
+        <input type="text" id="gateCode" placeholder="کود تایید" inputmode="numeric" dir="ltr" autocomplete="one-time-code">
+        <button class="btn btn-gold" style="width:100%" id="gateVerifyBtn">تایید و ورود</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px" id="gateBackBtn">بازگشت</button>
+      </div>
       <p class="note" id="gateMsg" style="color:#ff9d9d;min-height:18px;margin:8px 0 0"></p>
-      <p class="note" style="color:#7d7768;margin-top:10px">پیش‌فرض: نام کاربری <b>admin</b> — پسورد <b>maho1234</b></p>
     </div>
   </div>
 
@@ -374,6 +384,12 @@
         <div class="field"><label>حداقل مبلغ سفارش برای دلیوری (افغانی)</label><input id="cfg_delivery_min" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
         <div class="field"><label>حداکثر فاصله‌ی دلیوری (کیلومتر) — خارج از شهر</label><input id="cfg_delivery_max" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
       </div>
+      <div style="margin-top:6px">
+        <label style="font-weight:700;font-size:13px">زمان‌های دریافت/تحویل (گزینه‌هایی که مشتری هنگام سفارش انتخاب می‌کند)</label>
+        <div class="sub">هر زمان را به فارسی و انگلیسی بنویسید. این‌ها در بخش دلیوری به مشتری نشان داده می‌شوند.</div>
+        <div id="tsRows"></div>
+        <button class="btn btn-outline btn-sm" id="addTsBtn" type="button">+ افزودن زمان</button>
+      </div>
 
       <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
       <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت نمبر/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
@@ -406,13 +422,15 @@
         <button class="btn btn-outline btn-sm" id="resetBtn">بازگردانی به نسخه‌ی منتشرشده</button>
       </div>
       <p class="note" style="margin-top:10px">اتصال با سیستم MAHO: اگر برنامه‌ی MAHO Enterprise را در همین مرورگر باز کرده باشید، دکمه‌ی «وارد کردن اجناس از سیستم MAHO» اجناس آن را (نام، کود، قیمت، موجودی) به سایت می‌آورد.</p>
-      <h3 style="margin:16px 0 6px;font-size:16px">ورود امن مدیر</h3>
+      <h3 style="margin:16px 0 6px;font-size:16px">ورود امن مدیر (دو پسورد + کود ایمیلی)</h3>
       <div class="grid2">
         <div class="field"><label>نام کاربری مدیر</label><input id="newUser" dir="ltr" placeholder="admin"></div>
-        <div class="field"><label>پسورد جدید پنل</label><input id="newPass" type="password" placeholder="پسورد جدید"></div>
-        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره نام کاربری و پسورد</button></div>
+        <div class="field"><label>ایمیل مدیر (کود ورود به اینجا فرستاده می‌شود)</label><input id="newEmail" dir="ltr" type="email" placeholder="admin@example.com"></div>
+        <div class="field"><label>پسورد اول جدید</label><input id="newPass" type="password" placeholder="خالی = بدون تغییر"></div>
+        <div class="field"><label>پسورد دوم جدید</label><input id="newPass2" type="password" placeholder="خالی = بدون تغییر"></div>
+        <div class="field" style="align-self:end"><button class="btn btn-outline btn-sm" id="passBtn">ذخیره تنظیمات ورود</button></div>
       </div>
-      <p class="note">پس از ۵ بار ورودِ نادرست، ورود برای مدتی قفل می‌شود؛ و پس از ۱۵ دقیقه بی‌فعالیتی به‌طور خودکار خارج می‌شوید. لینک این صفحه را خصوصی نگه دارید (برای امنیت کامل و چند‌کاربره، سرور MAHO را فعال کنید).</p>
+      <p class="note">هنگام هر ورود، پس از نام کاربری و دو پسورد، یک کود تایید به ایمیل مدیر فرستاده می‌شود و باید آن را وارد کنید. برای ارسال واقعی کود، ایمیل مدیر را وارد کنید و بخش «ایمیل (EmailJS)» را کامل کنید؛ در غیر این‌صورت کود در حالت آزمایشی روی صفحه نشان داده می‌شود. پس از ۵ ورودِ نادرست ورود موقتاً قفل و پس از ۱۵ دقیقه بی‌فعالیتی خروج خودکار می‌شود.</p>
     </div>
 
   </div>
@@ -525,6 +543,13 @@
       {key:"accessory",name:"اکسسوری",name_en:"Accessories",icon:"ring"}
     ];
     var CAT_ICON_OPTS=[["dress","پیراهن / لباس"],["coat","مانتو / پالتو"],["shirt","بلوز / شومیز"],["scarf","شال / روسری"],["bag","کیف"],["heel","کفش"],["ring","انگشتر / بدلیجات"],["watch","ساعت"],["sparkles","لوازم آرایش"],["perfume","عطر"],["gift","هدیه / سایر"]];
+    var DEFAULT_TIMESLOTS=[
+      {fa:"در اسرع وقت",en:"As soon as possible"},
+      {fa:"امروز صبح (۹ تا ۱۲)",en:"Today morning (9–12)"},
+      {fa:"امروز بعد از ظهر (۱۲ تا ۴)",en:"Today afternoon (12–4)"},
+      {fa:"امروز عصر (۴ تا ۸)",en:"Today evening (4–8)"},
+      {fa:"فردا",en:"Tomorrow"}
+    ];
     var DEFAULT_SHOWCASE=[
       {title:"لباس مجلسی",title_en:"Evening dresses",sub:"پیراهن و کالای شب",sub_en:"Dresses & eveningwear",icon:"dress",filter:"clothing"},
       {title:"مانتو و پالتو",title_en:"Manteaus & coats",sub:"روزمره و رسمی",sub_en:"Casual & formal",icon:"coat",filter:"clothing"},
@@ -566,10 +591,22 @@
 
     /* ---------- secure gate (username + password, lockout, idle logout) ---------- */
     var USER_KEY="maho_admin_user", DEFAULT_USER="admin";
+    var PASS2_KEY="maho_admin_pass2", DEFAULT_PASS2="maho1234", ADMIN_EMAIL_KEY="maho_admin_email";
     var LOCK_KEY="maho_admin_lock", SESS_KEY="maho_admin_ok", SESS_AT="maho_admin_ok_at";
     var MAX_FAILS=5, LOCK_MS=60000, IDLE_MS=15*60*1000;
     function adminUser(){ try{return localStorage.getItem(USER_KEY)||DEFAULT_USER}catch(e){return DEFAULT_USER} }
     function pass(){ try{return localStorage.getItem(PASS_KEY)||DEFAULT_PASS}catch(e){return DEFAULT_PASS} }
+    function pass2(){ try{return localStorage.getItem(PASS2_KEY)||DEFAULT_PASS2}catch(e){return DEFAULT_PASS2} }
+    function adminEmail(){ try{return localStorage.getItem(ADMIN_EMAIL_KEY)||""}catch(e){return ""} }
+    var pendingAdminCode=null;
+    function genAdminCode(){ return String(Math.floor(100000+Math.random()*900000)); }
+    function sendAdminCode(code){
+      var ej=(state.config&&state.config.emailjs)||{}; var em=adminEmail();
+      if(em && ej.serviceId && ej.templateId && ej.publicKey && typeof emailjs!=="undefined"){
+        return emailjs.send(ej.serviceId, ej.templateId, {to_email:em, email:em, to_name:"مدیر MAHO", passcode:code, code:code}, {publicKey:ej.publicKey}).then(function(){return {sent:true};}).catch(function(){return {sent:false, code:code};});
+      }
+      return Promise.resolve({sent:false, code:code});
+    }
     function getLock(){ try{return JSON.parse(localStorage.getItem(LOCK_KEY)||"{}")||{}}catch(e){return {}} }
     function setLock(o){ try{localStorage.setItem(LOCK_KEY,JSON.stringify(o||{}))}catch(e){} }
     function lockRemainingMs(){ var l=getLock(); return (l.until&&l.until>Date.now())?(l.until-Date.now()):0; }
@@ -578,7 +615,8 @@
     function sessionValid(){ try{ if(sessionStorage.getItem(SESS_KEY)!=="1")return false; var at=Number(sessionStorage.getItem(SESS_AT)||0); return (Date.now()-at)<IDLE_MS; }catch(e){return false} }
 
     var idleTimer=null, idleBound=false;
-    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} $("#app").style.display="none"; $("#gate").style.display="flex"; if(msg)$("#gateMsg").textContent=msg; }
+    function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); }
+    function showGate(msg){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} pendingAdminCode=null; gateShowStep(1); $("#app").style.display="none"; $("#gate").style.display="flex"; if(msg)$("#gateMsg").textContent=msg; }
     function startIdleWatch(){
       function reset(){ if($("#app").style.display==="none")return; touchSession(); clearTimeout(idleTimer); idleTimer=setTimeout(function(){ showGate("به‌دلیل نبود فعالیت، به‌طور خودکار خارج شدید. دوباره وارد شوید."); }, IDLE_MS); }
       if(!idleBound){ ["click","keydown","mousemove","touchstart","scroll"].forEach(function(ev){ document.addEventListener(ev,reset,{passive:true}); }); idleBound=true; }
@@ -604,17 +642,35 @@
     }
     $("#gateBtn").onclick=function(){
       if(lockRemainingMs()>0){ updateGateLockUI(); return; }
-      var u=($("#gateUser").value||"").trim(), p=$("#gatePass").value||"";
-      if(u===adminUser() && p===pass()){ setLock({}); $("#gateMsg").textContent=""; $("#gatePass").value=""; openApp(); }
-      else {
+      var u=($("#gateUser").value||"").trim(), p=$("#gatePass").value||"", p2=$("#gatePass2").value||"";
+      if(u===adminUser() && p===pass() && p2===pass2()){
+        setLock({});
+        var code=genAdminCode(); pendingAdminCode=code;
+        $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ارسال کود تایید...";
+        sendAdminCode(code).then(function(res){
+          gateShowStep(2); var ce=$("#gateCode"); if(ce){ce.value=""; ce.focus();}
+          if(res.sent){ $("#gateMsg").style.color="#9fd39f"; $("#gateMsg").textContent="کود تایید به ایمیل مدیر ("+adminEmail()+") فرستاده شد."; }
+          else { $("#gateMsg").style.color="#e5c07b"; $("#gateMsg").textContent="حالت آزمایشی — کود تایید شما: "+code+" (برای امنیت واقعی، ایمیل مدیر و EmailJS را در تنظیمات وارد کنید)"; }
+        });
+      } else {
         var l=getLock(), fails=(l.fails||0)+1;
+        $("#gateMsg").style.color="#ff9d9d";
         if(fails>=MAX_FAILS){ setLock({fails:0,until:Date.now()+LOCK_MS}); updateGateLockUI(); }
-        else { setLock({fails:fails}); $("#gateMsg").textContent="نام کاربری یا پسورد اشتباه است. ("+toFa(MAX_FAILS-fails)+" تلاش باقی مانده)"; }
-        $("#gatePass").value="";
+        else { setLock({fails:fails}); $("#gateMsg").textContent="نام کاربری یا پسوردها اشتباه است. ("+toFa(MAX_FAILS-fails)+" تلاش باقی مانده)"; }
+        $("#gatePass").value=""; $("#gatePass2").value="";
       }
     };
-    $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
+    $("#gateVerifyBtn").onclick=function(){
+      if(!pendingAdminCode) { gateShowStep(1); return; }
+      var entered=toEn(($("#gateCode").value||"").trim()).replace(/[^0-9]/g,"");
+      if(entered===pendingAdminCode){ pendingAdminCode=null; $("#gateMsg").textContent=""; $("#gatePass").value=""; $("#gatePass2").value=""; $("#gateCode").value=""; openApp(); }
+      else { $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="کود تایید اشتباه است."; }
+    };
+    $("#gateBackBtn").onclick=function(){ pendingAdminCode=null; gateShowStep(1); $("#gateMsg").textContent=""; };
+    $("#gatePass2").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateBtn").click()});
+    $("#gatePass").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass2").focus()});
     $("#gateUser").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gatePass").focus()});
+    $("#gateCode").addEventListener("keydown",function(e){if(e.key==="Enter")$("#gateVerifyBtn").click()});
     updateGateLockUI();
     if(sessionValid()) openApp(); else showGate();
 
@@ -660,7 +716,7 @@
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
-        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0},
+        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()}
       };
     }
@@ -744,10 +800,27 @@
       }).join("");
       if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
     }
+    function orderSummaryTextA(o){
+      var lines=(o.items||[]).map(function(it){ var v=[]; if(it.size)v.push("سایز "+it.size); if(it.color)v.push("رنگ "+it.color); var vs=v.length?" ("+v.join("، ")+")":""; return "• "+(it.name||"")+vs+" × "+toFa(it.qty||1)+" = "+money((it.price||0)*(it.qty||1)); });
+      var d=o.delivery||{}; var extra="";
+      extra+="\nروش تحویل: "+((d.method==="deliver")?("ارسال به آدرس"+(d.fee?(" — هزینه دلیوری: "+money(d.fee)):"")):"دریافت حضوری");
+      if(d.timeslot) extra+="\nزمان دریافت/تحویل: "+d.timeslot;
+      return lines.join("\n")+extra+"\nمجموع: "+money(o.total||o.itemsTotal||0);
+    }
+    function sendApprovalEmail(o){
+      var ej=(state.config&&state.config.emailjs)||{}; var email=(o.customer&&o.customer.email)||"";
+      if(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && ej.serviceId && ej.orderTemplateId && ej.publicKey && typeof emailjs!=="undefined"){
+        emailjs.send(ej.serviceId, ej.orderTemplateId, {to_email:email, email:email, to_name:(o.customer&&o.customer.name)||"", order_no:o.id, order_summary:orderSummaryTextA(o), order_total:money(o.total||0)}, {publicKey:ej.publicKey}).catch(function(){});
+        return true;
+      }
+      return false;
+    }
     function updateOrderStatus(id,status){
       var orders=readOrders(); var o=orders.find(function(x){return x.id===id}); if(!o)return; o.status=status;
       try{ localStorage.setItem("maho_orders",JSON.stringify(orders)); }catch(e){}
-      renderOrdersAdmin(); toast("وضعیت سفارش به‌روزرسانی شد ✓");
+      var emailed=false;
+      if(status==="تایید شده") emailed=sendApprovalEmail(o);
+      renderOrdersAdmin(); toast(emailed?("سفارش تایید شد و ایمیل تایید (نمبر "+o.id+") فرستاده شد ✓"):"وضعیت سفارش به‌روزرسانی شد ✓");
     }
     function renderCustomers(){
       var b=$("#custBody"); if(!b)return; var users=[]; try{users=JSON.parse(localStorage.getItem("maho_users"))||[];}catch(e){}
@@ -815,6 +888,24 @@
           +'<span class="note" dir="ltr">پس از تخفیف: <b>'+money(eff)+'</b></span>'
           +'</div>';
       }).join("");
+    }
+    function tsList(){ if(!state.config.delivery) state.config.delivery={}; if(!Array.isArray(state.config.delivery.timeslots)||!state.config.delivery.timeslots.length) state.config.delivery.timeslots=DEFAULT_TIMESLOTS.map(function(x){return {fa:x.fa,en:x.en};}); return state.config.delivery.timeslots; }
+    function renderTsAdmin(){
+      var wrap=$("#tsRows"); if(!wrap)return;
+      var arr=tsList();
+      wrap.innerHTML=arr.map(function(s,i){
+        return '<div class="ts-row" data-ti="'+i+'" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:6px">'
+          +'<div class="field" style="flex:1;min-width:150px;margin:0"><label style="font-size:12px">زمان (فارسی)</label><input class="ts-fa" value="'+esc(s.fa||"")+'"></div>'
+          +'<div class="field" style="flex:1;min-width:150px;margin:0"><label style="font-size:12px">زمان (English)</label><input class="ts-en" dir="ltr" value="'+esc(s.en||"")+'"></div>'
+          +'<button class="btn btn-danger btn-sm ts-del" type="button">حذف</button>'
+          +'</div>';
+      }).join("");
+    }
+    function collectTs(){
+      var rows=document.querySelectorAll("#tsRows .ts-row"); var arr=[];
+      Array.prototype.forEach.call(rows,function(row){ var fa=row.querySelector(".ts-fa").value.trim(), en=row.querySelector(".ts-en").value.trim(); if(fa||en) arr.push({fa:fa,en:en}); });
+      if(!state.config.delivery) state.config.delivery={};
+      state.config.delivery.timeslots=arr.length?arr:DEFAULT_TIMESLOTS.map(function(x){return {fa:x.fa,en:x.en};});
     }
     function renderStoreTable(){
       var b=$("#storeBody"); b.innerHTML="";
@@ -901,7 +992,7 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
+    function loadInto(d){ var n=normalize(d); state.products=n.products; state.stores=n.stores; state.config=n.config; catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
     function loadInitial(){
       try{ var raw=localStorage.getItem(DATA_KEY); if(raw){ loadInto(JSON.parse(raw)); return; } }catch(e){}
       fetch("data.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(d){ loadInto(d||{}); }).catch(function(){ loadInto({}); });
@@ -1066,6 +1157,7 @@
     function saveAll(){
       if(document.querySelector("#catRows .cat-row")) collectCats();
       if(document.querySelector("#scRows .sc-row")) collectShowcase();
+      if(document.querySelector("#tsRows .ts-row")) collectTs();
       collectConfig(); collectContent();
       try{
         localStorage.setItem(DATA_KEY, JSON.stringify(state));
@@ -1086,6 +1178,11 @@
     $("#discRows").addEventListener("input",function(e){ var inp=e.target.closest(".d-val"); if(!inp)return; var row=inp.closest(".disc-row"); var i=parseInt(row.getAttribute("data-di"),10); if(!(i>=0)||!state.products[i])return; var v=Number(toEn(inp.value))||0; v=Math.max(0,Math.min(95,v)); if(v>0) state.products[i].discount=v; else delete state.products[i].discount; setDirty(true); });
     $("#discRows").addEventListener("change",function(e){ if(e.target.closest(".d-val")){ renderDiscounts(); renderTable(); } });
     $("#saveBtnDisc").onclick=saveAll;
+
+    /* ---------- delivery time slots ---------- */
+    $("#addTsBtn").onclick=function(){ collectTs(); tsList().push({fa:"",en:""}); renderTsAdmin(); setDirty(true); };
+    $("#tsRows").addEventListener("click",function(e){ var del=e.target.closest(".ts-del"); if(!del)return; var row=del.closest(".ts-row"); collectTs(); var i=parseInt(row.getAttribute("data-ti"),10); var arr=tsList(); arr.splice(i,1); renderTsAdmin(); setDirty(true); });
+    $("#tsRows").addEventListener("input",function(){ collectTs(); setDirty(true); });
     $("#reviewsAdminBody").addEventListener("click",function(e){
       var ap=e.target.getAttribute("data-rev-approve"), ft=e.target.getAttribute("data-rev-feature"), dl=e.target.getAttribute("data-rev-del");
       var id=ap||ft||dl; if(!id)return;
@@ -1138,17 +1235,21 @@
       renderTable(); setDirty(true); toast("اجناس MAHO اضافه شد ✓");
     };
 
-    /* ---------- admin username + password ---------- */
-    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); })();
+    /* ---------- admin username + two passwords + email ---------- */
+    (function(){ var nu=$("#newUser"); if(nu) nu.value=adminUser(); var ne=$("#newEmail"); if(ne) ne.value=adminEmail(); })();
     $("#passBtn").onclick=function(){
-      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim();
+      var nu=($("#newUser").value||"").trim(), np=$("#newPass").value.trim(), np2=$("#newPass2").value.trim(), ne=($("#newEmail").value||"").trim();
       if(nu.length<3){ alert("نام کاربری باید حداقل ۳ نویسه باشد."); return; }
-      if(np && np.length<4){ alert("پسورد باید حداقل ۴ نویسه باشد."); return; }
+      if(np && np.length<4){ alert("پسورد اول باید حداقل ۴ نویسه باشد."); return; }
+      if(np2 && np2.length<4){ alert("پسورد دوم باید حداقل ۴ نویسه باشد."); return; }
+      if(ne && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ne)){ alert("ایمیل مدیر معتبر نیست."); return; }
       try{
         localStorage.setItem(USER_KEY,nu);
         if(np){ localStorage.setItem(PASS_KEY,np); }
-        $("#newPass").value="";
-        alert(np?"نام کاربری و پسورد ذخیره شد ✓":"نام کاربری ذخیره شد ✓ (پسورد تغییر نکرد)");
+        if(np2){ localStorage.setItem(PASS2_KEY,np2); }
+        localStorage.setItem(ADMIN_EMAIL_KEY,ne);
+        $("#newPass").value=""; $("#newPass2").value="";
+        alert("تنظیمات ورود ذخیره شد ✓");
       }catch(e){ alert("ذخیره نشد"); }
     };
     $("#logoutBtn").onclick=function(){ try{sessionStorage.removeItem(SESS_KEY);sessionStorage.removeItem(SESS_AT);}catch(e){} location.reload(); };

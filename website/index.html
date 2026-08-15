@@ -379,17 +379,6 @@
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="co_house" dir="ltr"></div>
           <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
 
-          <div class="field">
-            <label data-i18n="co.timeslot">زمان دریافت / تحویل</label>
-            <select id="co_timeslot" class="ctrl" style="width:100%">
-              <option value="0" data-i18n="co.ts0">در اسرع وقت</option>
-              <option value="1" data-i18n="co.ts1">امروز صبح (۹ تا ۱۲)</option>
-              <option value="2" data-i18n="co.ts2">امروز بعد از ظهر (۱۲ تا ۴)</option>
-              <option value="3" data-i18n="co.ts3">امروز عصر (۴ تا ۸)</option>
-              <option value="4" data-i18n="co.ts4">فردا</option>
-            </select>
-          </div>
-
           <div class="field" id="recvWrap">
             <label data-i18n="co.delivery">روش دریافت</label>
             <div class="pay-methods" id="recvMethods">
@@ -397,11 +386,13 @@
               <button type="button" class="pay-method" data-recv="deliver" data-i18n="co.deliver">ارسال به آدرس (دلیوری)</button>
             </div>
             <div id="deliverBox" hidden style="margin-top:10px">
-              <span class="qv-opt-label" data-i18n="co.deliverTime">زمان دلیوری</span>
+              <span class="qv-opt-label" data-i18n="co.deliverTime">نوع دلیوری</span>
               <div class="pay-methods" id="deliverTime">
                 <button type="button" class="pay-method active" data-time="normal" data-i18n="co.normal">عادی</button>
                 <button type="button" class="pay-method" data-time="urgent" data-i18n="co.urgent">عاجل (همان روز)</button>
               </div>
+              <span class="qv-opt-label" data-i18n="co.timeslot" style="display:block;margin-top:12px">زمان دریافت / تحویل</span>
+              <div class="pay-methods" id="deliverSlots"></div>
               <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
                 <button type="button" class="btn btn-outline" id="calcDistBtn" data-i18n="co.calcDist">محاسبه‌ی فاصله (موقعیت من)</button>
                 <input id="co_km" class="ctrl" type="text" inputmode="decimal" placeholder="km" style="width:90px;text-align:center;padding:9px">

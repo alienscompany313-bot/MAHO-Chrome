@@ -371,6 +371,13 @@
     { title: "اکسسوری و بدلیجات", title_en: "Accessories & jewelry", sub: "گردنبند، دستبند و ساعت", sub_en: "Necklaces, bracelets & watches", icon: "ring", filter: "accessory" },
     { title: "آرایشی و بهداشتی", title_en: "Beauty & care", sub: "لوازم آرایش و عطر", sub_en: "Makeup & perfume", icon: "sparkles", filter: "beauty" },
   ];
+  const DEFAULT_TIMESLOTS = [
+    { fa: "در اسرع وقت", en: "As soon as possible" },
+    { fa: "امروز صبح (۹ تا ۱۲)", en: "Today morning (9–12)" },
+    { fa: "امروز بعد از ظهر (۱۲ تا ۴)", en: "Today afternoon (12–4)" },
+    { fa: "امروز عصر (۴ تا ۸)", en: "Today evening (4–8)" },
+    { fa: "فردا", en: "Tomorrow" },
+  ];
 
   let STORES = [
     {
@@ -387,7 +394,7 @@
     whatsapp: "93791505454", logo: "", heroImage: "", orderApproval: "manual",
     bank: { holder: "", name: "", number: "" }, paymentLink: "",
     hesab: { link: "", number: "" },
-    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0 },
+    delivery: { enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0, timeslots: DEFAULT_TIMESLOTS.slice() },
     emailjs: { serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" },
   };
 
@@ -416,6 +423,8 @@
       CONFIG.bank = Object.assign({ holder: "", name: "", number: "" }, n.config.bank || CONFIG.bank);
       CONFIG.hesab = Object.assign({ link: "", number: "" }, n.config.hesab || CONFIG.hesab);
       CONFIG.delivery = Object.assign({ enabled: true, perKm: 10, freeKm: 0, urgentFee: 100, minOrder: 0, maxKm: 0 }, n.config.delivery || CONFIG.delivery);
+      const ts = (CONFIG.delivery.timeslots || []).filter((x) => x && (x.fa || x.en));
+      CONFIG.delivery.timeslots = ts.length ? ts : DEFAULT_TIMESLOTS.slice();
       CONFIG.emailjs = Object.assign({ serviceId: "", templateId: "", orderTemplateId: "", welcomeTemplateId: "", publicKey: "" }, n.config.emailjs || CONFIG.emailjs);
       const cats = (n.config.categories || []).filter((c) => c && c.key && (c.name || c.name_en));
       CONFIG.categories = cats.length ? cats : (CONFIG.categories && CONFIG.categories.length ? CONFIG.categories : DEFAULT_CATS.slice());
@@ -688,7 +697,15 @@
   function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("area", a.area); s("street", a.street); s("house", a.house); }
 
   /* -------------------- delivery -------------------- */
-  let recvMethod = "pickup", deliverTime = "normal", distanceKm = null;
+  let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
+  function getTimeslots() { const ts = (CONFIG.delivery && CONFIG.delivery.timeslots) || []; return (ts.length ? ts : DEFAULT_TIMESLOTS).filter((x) => x && (x.fa || x.en)); }
+  function timeslotLabel(i) { const ts = getTimeslots(); const s = ts[i] || ts[0]; return s ? (LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)) : ""; }
+  function renderTimeslots() {
+    const box = $("#deliverSlots"); if (!box) return;
+    const ts = getTimeslots();
+    if (deliverSlot >= ts.length) deliverSlot = 0;
+    box.innerHTML = ts.map((s, i) => `<button type="button" class="pay-method${i === deliverSlot ? " active" : ""}" data-slot="${i}">${LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)}</button>`).join("");
+  }
   function haversine(la1, lo1, la2, lo2) { const R = 6371, r = Math.PI / 180; const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r; const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dLo / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
   // Extract lat/lng from a Google Maps link/address (supports @lat,lng / !3d!4d / q=/ll= / bare pair)
   function parseLatLng(url) {
@@ -731,6 +748,8 @@
   if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; recvMethod = b.dataset.recv; $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver"); updateCheckoutTotals(); });
   const deliverTimeEl = $("#deliverTime");
   if (deliverTimeEl) deliverTimeEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverTime = b.dataset.time; $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); updateCheckoutTotals(); });
+  const deliverSlotsEl = $("#deliverSlots");
+  if (deliverSlotsEl) deliverSlotsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverSlot = parseInt(b.dataset.slot, 10) || 0; $$(".pay-method", deliverSlotsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); });
   const coKmEl = $("#co_km");
   if (coKmEl) coKmEl.addEventListener("input", () => { const n = parseFloat(toEnDigits(coKmEl.value)); distanceKm = isFinite(n) ? n : null; updateCheckoutTotals(); });
   const calcBtn = $("#calcDistBtn");
@@ -915,11 +934,7 @@
       "\n" + t("order.addr") + ": " + (c.address || "") + recvLine + timeLine + (c.note ? "\n" + t("order.note") + ": " + c.note : "") +
       "\n" + t("co.payment") + ": " + payLabel;
   }
-  function selectedTimeslot() {
-    const sel = $("#co_timeslot"); if (!sel) return { key: "", label: "" };
-    const opt = sel.options[sel.selectedIndex];
-    return { key: sel.value, label: opt ? opt.textContent : "" };
-  }
+  function selectedTimeslot() { return { key: String(deliverSlot), label: timeslotLabel(deliverSlot) }; }
   function sendAccountInfo(email, name, customerNo) {
     const cfg = CONFIG.emailjs || {};
     if (email && cfg.serviceId && cfg.welcomeTemplateId && cfg.publicKey && typeof emailjs !== "undefined") {
@@ -1738,6 +1753,7 @@
     renderProducts();
     renderStores();
     renderReviews();
+    renderTimeslots();
     renderCart();
     updateCartBadge();
     renderAccount();
