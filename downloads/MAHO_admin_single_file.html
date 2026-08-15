@@ -1074,7 +1074,7 @@
     $("#f_image").addEventListener("change",function(e){
       var files=Array.prototype.slice.call(e.target.files||[]); if(!files.length)return;
       var pending=files.length;
-      files.forEach(function(f){ resizeImage(f,800,0.72,function(dataUrl){ if(dataUrl) modalImages.push(dataUrl); pending--; if(pending===0){ updateImgPreview(); e.target.value=""; } }); });
+      files.forEach(function(f){ resizeImage(f,700,0.68,function(dataUrl){ if(dataUrl) modalImages.push(dataUrl); pending--; if(pending===0){ updateImgPreview(); e.target.value=""; } }); });
     });
     $("#f_badge").onchange=toggleBadgeText;
     $("#addBtn").onclick=function(){openModal()};
@@ -1174,7 +1174,7 @@
     $("#logoRemove").onclick=function(){ state.config.logo=""; fillConfig(); setDirty(true); };
     $("#cfg_hero").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
-      readImageFile(f,1600,0.78,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
+      readImageFile(f,1200,0.68,function(dataUrl){ if(dataUrl){ state.config.heroImage=dataUrl; fillConfig(); setDirty(true); } else alert("خواندن عکس ناموفق بود."); e.target.value=""; });
     });
     $("#heroRemove").onclick=function(){ state.config.heroImage=""; fillConfig(); setDirty(true); };
 
@@ -1208,11 +1208,15 @@
       if(document.querySelector("#tsRows .ts-row")) collectTs();
       collectConfig(); collectContent();
       try{
-        localStorage.setItem(DATA_KEY, JSON.stringify(state));
-        setDirty(false); toast("تغییرات ذخیره شد ✓");
+        var payload=JSON.stringify(state);
+        localStorage.setItem(DATA_KEY, payload);
+        setDirty(false); toast("تغییرات ذخیره شد ✓ ("+Math.round(payload.length/1024)+" کیلوبایت)");
       }catch(e){
         var quota=(e&&(e.name==="QuotaExceededError"||e.code===22||e.code===1014));
-        alert(quota?"حجم عکس‌ها زیاد است و جا نشد. عکس‌ها را کمتر کنید.":"ذخیره ناموفق بود: "+(e&&e.message?e.message:e));
+        var sizeKB=Math.round(JSON.stringify(state).length/1024);
+        alert(quota
+          ? ("ذخیره نشد: حافظه‌ی مرورگر پر شده است (حجم فعلی حدود "+sizeKB+" کیلوبایت؛ سقف مرورگر حدود ۵۰۰۰ کیلوبایت است).\n\nعلت معمولاً عکس‌هاست. راه‌حل‌ها:\n۱) تعداد/حجم عکس‌های محصولات را کم کنید.\n۲) عکس پس‌زمینه‌ی سربرگ (هیدر) یا لوگو را حذف/کوچک‌تر کنید.\n۳) برای عکس‌های زیاد و سفارش‌های متمرکز، سرور (پوشه‌ی server) را فعال کنید.")
+          : ("ذخیره ناموفق بود: "+(e&&e.message?e.message:e)));
       }
     }
     $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
