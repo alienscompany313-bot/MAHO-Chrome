@@ -163,7 +163,78 @@
 
   /* ---- orders ---- */
   function placeOrder(body) {
-    return request("/api/orders", { method: "POST", body: body, token: getToken("user") || undefined });
+    var headers = {};
+    if (body && body.idempotencyKey) headers["Idempotency-Key"] = body.idempotencyKey;
+    return request("/api/orders", { method: "POST", body: body, token: getToken("user") || undefined, headers: headers });
+  }
+  function getStock() {
+    return request("/api/stock");
+  }
+  function forgotPassword(body) {
+    return request("/api/auth/forgot-password", { method: "POST", body: body });
+  }
+  function resetPassword(body) {
+    return request("/api/auth/reset-password", { method: "POST", body: body });
+  }
+  function resendCode(body) {
+    return request("/api/auth/resend-code", { method: "POST", body: body });
+  }
+  function trackOrder(body) {
+    return request("/api/orders/track", { method: "POST", body: body });
+  }
+  function submitHesabReceipt(id, body) {
+    return request("/api/orders/" + encodeURIComponent(id) + "/hesab-receipt", {
+      method: "POST", body: body, token: getToken("user") || undefined,
+    });
+  }
+  function uploadHesabReceipt(id, file, meta) {
+    var fd = new FormData();
+    if (file) fd.append("file", file);
+    meta = meta || {};
+    if (meta.email) fd.append("email", meta.email);
+    if (meta.txnId) fd.append("txnId", meta.txnId);
+    if (meta.amount != null) fd.append("amount", String(meta.amount));
+    if (meta.note) fd.append("note", meta.note);
+    var headers = { Accept: "application/json" };
+    var t = getToken("user");
+    if (t) headers.Authorization = "Bearer " + t;
+    return fetch(url("/api/orders/" + encodeURIComponent(id) + "/hesab-receipt-upload"), {
+      method: "POST",
+      headers: headers,
+      body: fd,
+      cache: "no-store",
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) {
+          var err = new Error((data && data.error) || r.statusText || "upload failed");
+          err.status = r.status;
+          err.data = data;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+  function adminCustomersTable() {
+    return request("/api/admin/customers/table", { token: getToken("admin") });
+  }
+  function adminOrderDetail(id) {
+    return request("/api/admin/orders/" + encodeURIComponent(id), { token: getToken("admin") });
+  }
+  function adminDeliveryQr(id) {
+    return request("/api/admin/orders/" + encodeURIComponent(id) + "/delivery-qr", {
+      method: "POST", body: {}, token: getToken("admin"),
+    });
+  }
+  function adminRevokeDeliveryQr(id) {
+    return request("/api/admin/orders/" + encodeURIComponent(id) + "/delivery-qr/revoke", {
+      method: "POST", body: {}, token: getToken("admin"),
+    });
+  }
+  function adminSetPaymentStatus(id, paymentStatus, note) {
+    return request("/api/admin/orders/" + encodeURIComponent(id) + "/payment-status", {
+      method: "POST", body: { paymentStatus: paymentStatus, note: note || "" }, token: getToken("admin"),
+    });
   }
   function myOrders() {
     return request("/api/orders", { token: getToken("user") });
@@ -263,13 +334,19 @@
     setToken("admin", null);
   }
 
-  /* status label helpers (API uses English codes; UI may show FA) */
   var STATUS_FA = {
-    pending: "در انتظار تایید",
-    confirmed: "تایید شده",
+    new: "جدید",
+    pending: "جدید",
+    confirmed: "تأیید شد",
+    dispatched: "ارسال شد",
+    delivered: "تحویل شد",
     awaiting_payment: "در انتظار پرداخت",
-    cancelled: "لغو شده",
+    cancelled: "لغو شد",
     return_requested: "درخواست برگشت",
+    receipt_submitted: "رسید فرستاده شد",
+    under_review: "در حال بررسی",
+    payment_confirmed: "پرداخت تأیید شد",
+    payment_rejected: "پرداخت رد شد",
   };
   function statusLabel(code, lang) {
     var c = String(code || "");
@@ -279,12 +356,15 @@
   function statusCode(label) {
     var s = String(label || "");
     if (STATUS_FA[s]) return s;
-    if (s.indexOf("تایید شده") >= 0 || s.indexOf("تأیید شده") >= 0 || s === "confirmed") return "confirmed";
+    if (s === "new" || s.indexOf("جدید") >= 0) return "new";
+    if (s.indexOf("ارسال") >= 0 || s === "dispatched") return "dispatched";
+    if (s.indexOf("تحویل") >= 0 || s.indexOf("رسید") >= 0 || s === "delivered") return "delivered";
+    if (s.indexOf("تایید شده") >= 0 || s.indexOf("تأیید") >= 0 || s === "confirmed") return "confirmed";
     if (s.indexOf("لغو") >= 0 || s === "cancelled") return "cancelled";
     if (s.indexOf("انتظار پرداخت") >= 0 || s === "awaiting_payment") return "awaiting_payment";
     if (s.indexOf("برگشت") >= 0 || s === "return_requested") return "return_requested";
-    if (s.indexOf("انتظار") >= 0 || s === "pending") return "pending";
-    return s || "pending";
+    if (s.indexOf("انتظار") >= 0 || s === "pending") return "new";
+    return s || "new";
   }
 
   global.MAHOApi = {
@@ -301,15 +381,22 @@
     health: health,
     probe: probe,
     getCatalog: getCatalog,
+    getStock: getStock,
     register: register,
     verify: verify,
     login: login,
     logoutUser: logoutUser,
+    forgotPassword: forgotPassword,
+    resetPassword: resetPassword,
+    resendCode: resendCode,
     me: me,
     updateMe: updateMe,
     verifyEmailChange: verifyEmailChange,
     placeOrder: placeOrder,
     myOrders: myOrders,
+    trackOrder: trackOrder,
+    submitHesabReceipt: submitHesabReceipt,
+    uploadHesabReceipt: uploadHesabReceipt,
     cancelOrder: cancelOrder,
     returnOrder: returnOrder,
     adminLogin: adminLogin,
@@ -317,6 +404,11 @@
     adminSaveCatalog: adminSaveCatalog,
     adminOrders: adminOrders,
     adminCustomers: adminCustomers,
+    adminCustomersTable: adminCustomersTable,
+    adminOrderDetail: adminOrderDetail,
+    adminDeliveryQr: adminDeliveryQr,
+    adminRevokeDeliveryQr: adminRevokeDeliveryQr,
+    adminSetPaymentStatus: adminSetPaymentStatus,
     adminSetOrderStatus: adminSetOrderStatus,
     adminUpload: adminUpload,
     ensureAdmin: ensureAdmin,

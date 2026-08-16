@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دلیوری سفارش | MAHO Market</title>
+  <link rel="icon" href="../icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--black:#141414;--gold:#c8a35f;--cream:#fbf8f1;--ink:#23201a;--muted:#7a7368;--line:#e6e0d4}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Vazirmatn",Tahoma,sans-serif;background:#f3efe7;color:var(--ink);padding:16px}
+    .wrap{max-width:520px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 30px #0000000d}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .logo{width:42px;height:42px;border-radius:50%;background:var(--black);border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:800 18px Georgia,serif}
+    h1{margin:0;font-size:1.15rem}
+    .muted{color:var(--muted);font-size:.9rem}
+    .row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.95rem}
+    .badge{display:inline-block;background:#fff3d9;color:#8a6a2a;font-weight:800;padding:4px 10px;border-radius:999px;font-size:12px}
+    .badge.warn{background:#fdecec;color:#c62828}
+    ul{padding-inline-start:18px;margin:8px 0}
+    .btn{display:inline-block;margin-top:12px;background:var(--gold);color:#1a1509;font-weight:800;text-decoration:none;padding:11px 16px;border-radius:999px}
+    .err{color:#c62828;font-weight:700;padding:20px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <div class="brand"><div class="logo">M</div><div><h1>برگهٔ دلیوری MAHO</h1><div class="muted">فقط اطلاعات لازم برای تحویل</div></div></div>
+    <div id="body" class="muted">در حال بارگذاری…</div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+  (function(){
+    var q = new URLSearchParams(location.search);
+    var id = q.get("o") || "";
+    var t = q.get("t") || "";
+    var body = document.getElementById("body");
+    if (!id || !t) { body.innerHTML = '<p class="err">لینک نامعتبر است.</p>'; return; }
+    fetch((window.MAHOApi ? "" : "") + "/api/delivery/" + encodeURIComponent(id) + "?t=" + encodeURIComponent(t), { cache: "no-store" })
+      .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw d; return d; }); })
+      .then(function(d){
+        var c = d.customer || {};
+        var items = (d.items || []).map(function(it){
+          return "<li>" + (it.name||"") + " × " + (it.qty||1) + (it.size?" — سایز "+it.size:"") + "</li>";
+        }).join("");
+        var maps = d.mapsUrl ? '<a class="btn" target="_blank" rel="noopener" href="'+d.mapsUrl+'">بازکردن موقعیت در Google Maps</a>' : "";
+        body.innerHTML =
+          '<div class="row"><span>نمبر سفارش</span><b dir="ltr">'+d.id+'</b></div>'+
+          '<div class="row"><span>وضعیت</span><span class="badge'+(d.inactive?' warn':'')+'">'+(d.status||"")+'</span></div>'+
+          '<div class="row"><span>مشتری</span><b>'+(c.name||"")+'</b></div>'+
+          '<div class="row"><span>نمبر تماس</span><b dir="ltr">'+(c.phone||"")+'</b></div>'+
+          '<div class="row"><span>آدرس</span><span>'+(c.address||"—")+'</span></div>'+
+          '<div class="row"><span>پرداخت</span><span>'+(d.payment||"")+' / '+(d.paymentStatus||"—")+'</span></div>'+
+          '<div class="row"><span>مبلغ قابل دریافت</span><b>'+(Number(d.collectAmount||0).toLocaleString("en-US"))+' افغانی</b></div>'+
+          '<div><b>محصولات</b><ul>'+items+'</ul></div>'+
+          (d.deliveryNote ? '<p class="muted">یادداشت: '+d.deliveryNote+'</p>' : '')+
+          maps+
+          (d.inactive ? '<p class="err">این QR دیگر برای تحویل فعال نیست.</p>' : '');
+      })
+      .catch(function(){ body.innerHTML = '<p class="err">دسترسی مجاز نیست یا لینک منقضی شده است.</p>'; });
+  })();
+  </script>
+</body>
+</html>

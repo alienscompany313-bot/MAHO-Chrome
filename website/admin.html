@@ -41,7 +41,7 @@
     .btn-outline{background:#fff;color:var(--ink);border-color:var(--line)}.btn-outline:hover{border-color:var(--gold)}
     .btn-danger{background:#fdecec;color:var(--red);border-color:#f4c9c9}.btn-danger:hover{background:#f9dada}
     .btn-sm{padding:6px 12px;font-size:13px}
-    .wrap{max-width:1050px;margin:22px auto;padding:0 16px 96px}
+    .wrap{max-width:1050px;margin:22px auto;padding:0 16px 96px} /* legacy */
     .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:18px;box-shadow:0 2px 12px #0000000a}
     .card h2{margin:0 0 4px;font-size:20px}
     #app .card.has-acc > :first-child{cursor:pointer;user-select:none}
@@ -91,12 +91,23 @@
     .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
     .toast.show{transform:none;opacity:1}
     .ctrl{padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
-    .adm-order{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+    .adm-order{border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:12px;overflow:hidden}
+    .acc-head{width:100%;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:12px 14px;background:#fbf8f1;border:0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:right}
+    .acc-body{padding:12px 14px}
+    .acc-order:not(.open) .acc-caret{transform:rotate(-90deg)}
+    .acc-caret{transition:transform .15s;color:var(--gold)}
     .adm-items{margin:8px 0;padding-inline-start:18px;font-size:14px}
     .adm-items li{margin-bottom:8px}
     .adm-bc{max-width:150px;height:auto;background:#fff;border-radius:5px}
     .bc-code{font-size:11px;color:var(--muted)}
-    .icon-pick-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700}
+    @media print {
+      .topbar,.savebar,.gate,.tb-actions,button,.btn,.admin-sidebar,.sidebar-backdrop,.sidebar-toggle{display:none!important}
+      .acc-body{display:block!important}
+      .admin-panel{display:block!important}
+      .card{box-shadow:none;border:0}
+      .admin-shell{display:block!important}
+      .admin-main{margin:0!important;max-width:none!important}
+    }
     .icon-pick-btn .preview{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#f3efe7}
     .icon-pick-btn .preview .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
     .icon-pick-btn .preview img{width:22px;height:22px;object-fit:contain}
@@ -111,7 +122,35 @@
     .icon-tile .lbl{text-align:center;line-height:1.3;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cat-row .ord-btns{display:flex;flex-direction:column;gap:4px}
     .toggle-en{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap}
-    @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}}
+    .tb-start{display:flex;align-items:center;gap:8px}
+    .sidebar-toggle{font-size:20px;line-height:1;min-width:42px;min-height:42px}
+    .admin-shell{display:none;min-height:calc(100vh - 64px)}
+    .admin-shell.is-open{display:flex}
+    .admin-sidebar{width:250px;flex-shrink:0;background:#1a1612;color:#fff;padding:14px 10px 24px;position:sticky;top:64px;height:calc(100vh - 64px);overflow:auto;transition:width .2s ease,transform .2s ease;z-index:25}
+    .admin-sidebar.collapsed{width:72px}
+    .admin-sidebar.collapsed .side-link span,.admin-sidebar.collapsed .side-title{display:none}
+    .side-title{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.04em;padding:6px 10px 10px}
+    .side-nav{display:flex;flex-direction:column;gap:4px}
+    .side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 13px inherit;padding:11px 12px;border-radius:10px;cursor:pointer;min-height:44px}
+    .side-link:hover,.side-link:focus-visible{background:rgba(200,163,95,.18);outline:2px solid var(--gold);outline-offset:1px}
+    .side-link.active{background:var(--gold);color:#1a1509}
+    .side-link .si{width:22px;text-align:center;flex-shrink:0}
+    .side-collapse{width:100%;margin-top:14px;border-color:rgba(255,255,255,.25)}
+    .admin-main{flex:1;min-width:0;margin:22px auto;padding:0 16px 96px;max-width:1050px}
+    .admin-panel{display:none}
+    .admin-panel.active{display:block}
+    .sidebar-backdrop{display:none;position:fixed;inset:0;background:#0008;z-index:24}
+    .sidebar-backdrop.show{display:block}
+    @media(max-width:900px){
+      .admin-sidebar{position:fixed;inset-block:0;inset-inline-start:0;top:0;height:100vh;transform:translateX(110%);width:min(86vw,280px);padding-top:72px}
+      html[dir=ltr] .admin-sidebar{transform:translateX(-110%)}
+      .admin-shell.nav-open .admin-sidebar{transform:none}
+      .admin-sidebar.collapsed{width:min(86vw,280px)}
+      .admin-sidebar.collapsed .side-link span,.admin-sidebar.collapsed .side-title{display:inline}
+      .side-collapse{display:none}
+    }
+    @media(min-width:901px){.sidebar-toggle{display:none}}
+    @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}.acc-head{font-size:12px}}
   </style>
 </head>
 <body>
@@ -153,7 +192,10 @@
   </div>
 
   <div class="topbar">
-    <div class="brand"><span class="logo" id="brandLogo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
+    <div class="tb-start">
+      <button type="button" class="btn btn-ghost btn-sm sidebar-toggle" id="sidebarToggle" aria-label="بازکردن منو" aria-controls="adminSidebar" aria-expanded="false">☰</button>
+      <div class="brand"><span class="logo" id="brandLogo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
+    </div>
     <div class="tb-actions">
       <span class="dirty-badge" id="dirtyBadge">● تغییرات ذخیره‌نشده</span>
       <a class="btn btn-ghost btn-sm" href="index.html" target="_blank">مشاهده سایت ↗</a>
@@ -162,10 +204,30 @@
     </div>
   </div>
 
-  <div class="wrap" id="app" style="display:none">
+  <div class="admin-shell" id="app" style="display:none" aria-hidden="true">
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+    <aside class="admin-sidebar" id="adminSidebar" aria-label="منوی مدیریت">
+      <div class="side-title">بخش‌ها</div>
+      <nav class="side-nav" id="sideNav">
+        <button type="button" class="side-link active" data-panel="products"><span class="si">◆</span><span>محصولات</span></button>
+        <button type="button" class="side-link" data-panel="categories"><span class="si">▣</span><span>کتگوری‌ها</span></button>
+        <button type="button" class="side-link" data-panel="icons"><span class="si">◇</span><span>آیکن‌ها</span></button>
+        <button type="button" class="side-link" data-panel="discounts"><span class="si">%</span><span>تخفیف‌ها</span></button>
+        <button type="button" class="side-link" data-panel="showcase"><span class="si">▦</span><span>کارت‌های دسته</span></button>
+        <button type="button" class="side-link" data-panel="orders"><span class="si">☰</span><span>سفارش‌ها</span></button>
+        <button type="button" class="side-link" data-panel="customers"><span class="si">☺</span><span>مشتریان</span></button>
+        <button type="button" class="side-link" data-panel="reviews"><span class="si">★</span><span>نظرات</span></button>
+        <button type="button" class="side-link" data-panel="stores"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
+        <button type="button" class="side-link" data-panel="texts"><span class="si">Aa</span><span>متن‌های سایت</span></button>
+        <button type="button" class="side-link" data-panel="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
+        <button type="button" class="side-link" data-panel="publish"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
+      </nav>
+      <button type="button" class="btn btn-ghost btn-sm side-collapse" id="sidebarCollapse" aria-label="جمع‌کردن منو">« جمع‌کردن</button>
+    </aside>
+    <div class="wrap admin-main">
 
     <!-- PRODUCTS -->
-    <div class="card">
+    <div class="card admin-panel active" data-panel="products">
       <div class="row-between">
         <div><h2>محصولات</h2><div class="sub">افزودن، ویرایش یا حذف کالاها؛ همراه با کود کالا و تعداد موجودی. تغییرات پس از «ذخیره تغییرات» روی سایت شما دیده می‌شود.</div></div>
         <button class="btn btn-gold" id="addBtn">+ افزودن محصول</button>
@@ -179,7 +241,7 @@
     </div>
 
     <!-- CATEGORIES -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="categories">
       <div class="row-between">
         <div><h2>کتگوری‌ها</h2><div class="sub">افزودن، ویرایش نام دری/انگلیسی، ترتیب، فعال/غیرفعال، آیکن و حذف. شناسه‌ی کتگوری ثابت می‌ماند تا محصولات جدا نشوند.</div></div>
         <button class="btn btn-gold" id="addCatBtn">+ افزودن کتگوری</button>
@@ -190,7 +252,7 @@
     </div>
 
     <!-- ICONS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="icons">
       <div class="row-between">
         <div><h2>آیکن‌ها</h2><div class="sub">نام نمایشی آیکن‌ها قابل ویرایش است. می‌توانید ایموجی سفارشی یا تصویر PNG/WebP آپلود کنید. HTML یا SVG خام پذیرفته نمی‌شود.</div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -204,7 +266,7 @@
     </div>
 
     <!-- DISCOUNTS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="discounts">
       <div class="row-between">
         <div><h2>تخفیف‌ها</h2><div class="sub">برای همه‌ی محصولات، یا برای یک یا چند کالا تخفیف (درصد) بگذارید. قیمت تخفیف‌خورده هنگام افزودن به سبد به‌طور واقعی حساب می‌شود.</div></div>
       </div>
@@ -218,7 +280,7 @@
     </div>
 
     <!-- SHOWCASE CARDS (below hero) -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="showcase">
       <div class="row-between">
         <div><h2>کارت‌های دسته‌بندی (زیر هیدر)</h2><div class="sub">کارت‌های نمایشی زیر سربرگ صفحه‌ی اصلی. عنوان، زیرعنوان، آیکن و اینکه با کلیک به کدام کتگوری برود را تعیین کنید.</div></div>
         <button class="btn btn-gold" id="addScBtn">+ افزودن کارت</button>
@@ -228,7 +290,7 @@
     </div>
 
     <!-- ORDERS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="orders">
       <div class="row-between">
         <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه. هر سفارش هنگام ثبت به واتساپ شما هم می‌رود. (برای دیدن سفارش‌های همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -241,10 +303,12 @@
         <input id="ordersSearch" class="ctrl" style="flex:1;min-width:200px" placeholder="جستجو: نمبر سفارش، نام مشتری، نمبر تماس، نام/کود کالا">
         <select id="ordersFilter" class="ctrl">
           <option value="all">همه وضعیت‌ها</option>
-          <option value="pending">در انتظار تایید</option>
-          <option value="confirmed">تایید شده</option>
+          <option value="new">جدید</option>
+          <option value="confirmed">تأیید شد</option>
+          <option value="dispatched">ارسال شد</option>
+          <option value="delivered">تحویل شد</option>
           <option value="await">در انتظار پرداخت</option>
-          <option value="cancelled">لغو شده</option>
+          <option value="cancelled">لغو شد</option>
           <option value="return">درخواست برگشت</option>
         </select>
         <select id="ordersSort" class="ctrl">
@@ -258,18 +322,49 @@
     </div>
 
     <!-- CUSTOMERS -->
-    <div class="card">
+    <div class="card admin-panel" id="cardCustomers" data-panel="customers">
       <div class="row-between">
-        <div><h2 id="custTitle">مشتریان</h2><div class="sub">مشتریانی که روی همین دستگاه/مرورگر ثبت‌نام کرده‌اند. (برای شمارش همه‌ی مشتریان از همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
-        <button class="btn btn-outline btn-sm" id="refreshCust">بازخوانی</button>
+        <div><h2 id="custTitle">مشتریان</h2><div class="sub">جستجو، فیلتر، مرتب‌سازی و خروجی. رمز یا توکن امنیتی هرگز در جدول/خروجی نیست.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" id="refreshCust">بازخوانی</button>
+          <button class="btn btn-gold btn-sm" id="buildCustTableBtn">ساخت جدول مشتریان</button>
+          <button class="btn btn-outline btn-sm" id="exportCustCsv">خروجی CSV</button>
+          <button class="btn btn-outline btn-sm" id="exportCustXls">خروجی Excel</button>
+          <button class="btn btn-outline btn-sm" id="printCustTable">چاپ / PDF</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="custSearch" class="ctrl" style="flex:1;min-width:180px" placeholder="جستجو: نام، ایمیل، نمبر تماس، Customer ID">
+        <select id="custType" class="ctrl"><option value="all">همه</option><option value="member">عضو</option><option value="guest">مهمان</option></select>
+        <select id="custVerified" class="ctrl"><option value="all">تأیید ایمیل: همه</option><option value="yes">تأییدشده</option><option value="no">تأییدنشده</option></select>
       </div>
       <div style="overflow:auto">
-        <table><thead><tr><th>نمبر مشتری</th><th>نام</th><th class="hide-sm">ایمیل</th><th>نمبر تماس</th></tr></thead><tbody id="custBody"></tbody></table>
+        <table id="custTable">
+          <thead><tr>
+            <th data-sort="customerNo">نمبر مشتری</th>
+            <th data-sort="name">نام</th>
+            <th class="hide-sm" data-sort="email">ایمیل</th>
+            <th data-sort="phone">نمبر تماس</th>
+            <th data-sort="guest">نوع</th>
+            <th data-sort="verified">تأیید</th>
+            <th data-sort="orderCount">سفارش‌ها</th>
+            <th data-sort="totalSpent">مجموع خرید</th>
+            <th class="hide-sm" data-sort="createdAt">ثبت‌نام</th>
+          </tr></thead>
+          <tbody id="custBody"></tbody>
+        </table>
+      </div>
+      <div class="row-between" style="margin-top:8px">
+        <div class="note" id="custPageInfo"></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" id="custPrev" type="button">قبلی</button>
+          <button class="btn btn-outline btn-sm" id="custNext" type="button">بعدی</button>
+        </div>
       </div>
     </div>
 
     <!-- REVIEWS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="reviews">
       <div class="row-between">
         <div><h2>نظرات مشتریان</h2><div class="sub">نظرهایی که مشتریانِ دارای حساب نوشته‌اند. نظر را «نمایش» بدهید تا در سایت دیده شود، «بهترین» را برای نمایش در ابتدا علامت بزنید، یا حذف کنید.</div></div>
         <button class="btn btn-outline btn-sm" id="refreshReviews">بازخوانی</button>
@@ -278,7 +373,7 @@
     </div>
 
     <!-- STORES -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="stores">
       <div class="row-between">
         <div><h2>فروشگاه‌ها / شعبه‌ها</h2><div class="sub">فروشگاه‌ها و آدرس‌هایی که مشتری‌ها در سایت می‌بینند.</div></div>
         <button class="btn btn-gold" id="addStoreBtn">+ افزودن فروشگاه</button>
@@ -292,8 +387,19 @@
     </div>
 
     <!-- SITE TEXTS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="texts">
       <h2>متن‌های سایت</h2>
+      <div class="sub">متن‌های قابل ویرایش صفحهٔ اصلی و فوتر. بخش دسته‌بندی‌ها نیز از اینجا قابل تغییر است.</div>
+      <h3 style="font-size:15px;margin:12px 0 6px">بخش دسته‌بندی‌ها (صفحه اصلی)</h3>
+      <div class="grid2">
+        <div class="field"><label>Kicker (دری)</label><input id="scats_kicker" placeholder="دسته‌بندی‌ها"></div>
+        <div class="field"><label>Kicker (English)</label><input id="scats_kicker_en" dir="ltr"></div>
+        <div class="field"><label>عنوان (دری)</label><input id="scats_title"></div>
+        <div class="field"><label>عنوان (English)</label><input id="scats_title_en" dir="ltr"></div>
+        <div class="field"><label>توضیح (دری)</label><input id="scats_lead"></div>
+        <div class="field"><label>توضیح (English)</label><input id="scats_lead_en" dir="ltr"></div>
+      </div>
+      <h3 style="font-size:15px;margin:12px 0 6px">هیرو و برند</h3>
       <div class="sub">متن‌های دیده‌شده در سایت (سربرگ، صفحه‌ی اصلی و فوتر). هر خانه را خالی بگذارید تا متن پیش‌فرض بماند.</div>
       <div class="grid2">
         <div class="field"><label>زیرعنوان برند (فارسی)</label><input id="c_brandSub"></div>
@@ -370,7 +476,7 @@
     </div>
 
     <!-- SETTINGS -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="settings">
       <h2>تنظیمات سایت</h2>
       <div class="sub">لوگو، نمبر واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
 
@@ -420,11 +526,29 @@
         <button class="btn btn-outline btn-sm" id="addTsBtn" type="button">+ افزودن زمان</button>
       </div>
 
-      <h3 style="margin:14px 0 6px;font-size:16px">حساب پی (HesabPay)</h3>
-      <div class="sub">اگر لینک پرداخت حساب پی دارید در خانه‌ی اول بگذارید؛ در غیر این‌صورت نمبر/آی‌دی حساب پی را وارد کنید تا به مشتری نشان داده شود.</div>
+      <h3 style="margin:14px 0 6px;font-size:16px">حساب‌پی (HesabPay)</h3>
+      <div class="sub">QR و لینک پرداخت حساب‌پی جدا از QR دلیوری سفارش است. پرداخت فقط پس از بررسی مدیر تأیید می‌شود.</div>
       <div class="grid2">
-        <div class="field"><label>لینک پرداخت حساب پی</label><input id="cfg_hesab_link" dir="ltr" placeholder="https://..."></div>
-        <div class="field"><label>نمبر/آی‌دی حساب پی</label><input id="cfg_hesab_number" dir="ltr"></div>
+        <div class="field"><label>فعال باشد؟</label><select id="cfg_hesab_enabled" class="ctrl"><option value="yes">بله</option><option value="no">خیر</option></select></div>
+        <div class="field"><label>ترتیب نمایش</label><input id="cfg_hesab_order" type="number" dir="ltr" value="10"></div>
+        <div class="field"><label>عنوان (دری)</label><input id="cfg_hesab_title"></div>
+        <div class="field"><label>عنوان (English)</label><input id="cfg_hesab_title_en" dir="ltr"></div>
+        <div class="field"><label>توضیح (دری)</label><input id="cfg_hesab_desc" placeholder="ما پرداخت با حساب‌پی را می‌پذیریم"></div>
+        <div class="field"><label>توضیح (English)</label><input id="cfg_hesab_desc_en" dir="ltr"></div>
+        <div class="field"><label>راهنمای پرداخت (دری)</label><input id="cfg_hesab_guide"></div>
+        <div class="field"><label>راهنمای پرداخت (English)</label><input id="cfg_hesab_guide_en" dir="ltr"></div>
+        <div class="field"><label>متن دکمه (دری)</label><input id="cfg_hesab_btn"></div>
+        <div class="field"><label>متن دکمه (English)</label><input id="cfg_hesab_btn_en" dir="ltr"></div>
+        <div class="field"><label>نام صاحب حساب</label><input id="cfg_hesab_holder"></div>
+        <div class="field"><label>نمبر / شناسه حساب</label><input id="cfg_hesab_number" dir="ltr"></div>
+        <div class="field"><label>لینک پرداخت حساب‌پی</label><input id="cfg_hesab_link" dir="ltr" placeholder="https://..."></div>
+        <div class="field"><label>یادداشت / هشدار (دری)</label><input id="cfg_hesab_note"></div>
+        <div class="field"><label>یادداشت (English)</label><input id="cfg_hesab_note_en" dir="ltr"></div>
+        <div class="field"><label>QR حساب‌پی (PNG/JPG/WebP)</label><input type="file" id="cfg_hesab_qr" accept="image/png,image/jpeg,image/webp"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0">
+        <img id="hesabQrPreview" alt="" style="max-width:160px;border-radius:12px;border:1px solid var(--line);display:none">
+        <button type="button" class="btn btn-danger btn-sm" id="hesabQrRemove">حذف QR</button>
       </div>
 
       <h3 style="margin:16px 0 6px;font-size:16px">ایمیل (EmailJS)</h3>
@@ -452,7 +576,7 @@
     </div>
 
     <!-- PUBLISH / MAHO / BACKUP -->
-    <div class="card">
+    <div class="card admin-panel" data-panel="publish">
       <h2>انتشار، اتصال و پشتیبان</h2>
       <div class="sub">فایل <code>data.json</code> را دانلود کنید و روی هر هاستی (GitHub Pages، Netlify، هاست شخصی و…) کنار فایل‌های سایت بگذارید تا برای همه‌ی مشتری‌ها منتشر شود.</div>
       <div class="tb-actions" style="gap:10px">
@@ -475,6 +599,9 @@
     <span><span class="pulse">●</span> تغییرات ذخیره‌نشده دارید</span>
     <button class="btn btn-gold" id="saveBtnFloat">ذخیره تغییرات</button>
   </div>
+
+    </div><!-- /.admin-main -->
+  </div><!-- /#app admin-shell -->
 
   <!-- product editor modal -->
   <div class="overlay" id="overlay">
@@ -667,7 +794,7 @@
       try{ sessionStorage.removeItem(SESS_KEY); sessionStorage.removeItem(SESS_AT); }catch(e){}
       if(window.MAHOApi) MAHOApi.logoutAdmin();
       gateShowStep(1);
-      $("#app").style.display="none"; $("#gate").style.display="flex";
+      $("#app").style.display="none"; $("#app").classList.remove("is-open","nav-open"); $("#app").setAttribute("aria-hidden","true"); closeMobileNav(); $("#gate").style.display="flex";
       if($("#gateMsg")){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent=msg||""; }
     }
     function startIdleWatch(){
@@ -675,18 +802,51 @@
       if(!idleBound){ ["click","keydown","mousemove","touchstart","scroll"].forEach(function(ev){ document.addEventListener(ev,reset,{passive:true}); }); idleBound=true; }
       reset();
     }
-    function initAccordion(){
-      var cards=document.querySelectorAll("#app > .card");
-      Array.prototype.forEach.call(cards,function(card,idx){
-        if(card.dataset.acc)return; card.dataset.acc="1"; card.classList.add("has-acc");
-        var head=card.firstElementChild; if(!head)return;
-        var h2=head.matches&&head.matches("h2")?head:head.querySelector("h2");
-        if(h2 && !h2.querySelector(".acc-caret")){ var c=document.createElement("span"); c.className="acc-caret"; c.textContent="▾"; h2.appendChild(document.createTextNode(" ")); h2.appendChild(c); }
-        head.addEventListener("click",function(e){ if(e.target.closest("button,select,input,a,label,textarea"))return; card.classList.toggle("collapsed"); });
-        if(idx>0) card.classList.add("collapsed");
-      });
+    function closeMobileNav(){
+      var shell=$("#app"); if(!shell) return;
+      shell.classList.remove("nav-open");
+      var bd=$("#sidebarBackdrop"); if(bd){ bd.hidden=true; bd.classList.remove("show"); }
+      var tg=$("#sidebarToggle"); if(tg){ tg.setAttribute("aria-expanded","false"); tg.setAttribute("aria-label","بازکردن منو"); }
     }
-    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="block"; touchSession(); startIdleWatch(); initAccordion(); loadFromServer(); }
+    function openMobileNav(){
+      var shell=$("#app"); if(!shell) return;
+      shell.classList.add("nav-open");
+      var bd=$("#sidebarBackdrop"); if(bd){ bd.hidden=false; bd.classList.add("show"); }
+      var tg=$("#sidebarToggle"); if(tg){ tg.setAttribute("aria-expanded","true"); tg.setAttribute("aria-label","بستن منو"); }
+      var first=document.querySelector("#sideNav .side-link"); if(first) first.focus();
+    }
+    function showPanel(id){
+      var panels=document.querySelectorAll(".admin-panel");
+      Array.prototype.forEach.call(panels,function(p){ p.classList.toggle("active", p.getAttribute("data-panel")===id); });
+      var links=document.querySelectorAll("#sideNav .side-link");
+      Array.prototype.forEach.call(links,function(l){ l.classList.toggle("active", l.getAttribute("data-panel")===id); });
+      try{ sessionStorage.setItem("maho_admin_panel", id); }catch(e){}
+      closeMobileNav();
+      window.scrollTo(0,0);
+    }
+    function initSidebar(){
+      var nav=$("#sideNav"); if(!nav || nav.dataset.bound) return; nav.dataset.bound="1";
+      nav.addEventListener("click",function(e){
+        var btn=e.target.closest(".side-link"); if(!btn) return;
+        showPanel(btn.getAttribute("data-panel"));
+      });
+      if($("#sidebarToggle")) $("#sidebarToggle").onclick=function(){
+        if($("#app").classList.contains("nav-open")) closeMobileNav(); else openMobileNav();
+      };
+      if($("#sidebarBackdrop")) $("#sidebarBackdrop").onclick=closeMobileNav;
+      if($("#sidebarCollapse")) $("#sidebarCollapse").onclick=function(){
+        var sb=$("#adminSidebar"); if(!sb) return;
+        sb.classList.toggle("collapsed");
+        this.textContent=sb.classList.contains("collapsed")?"»":"« جمع‌کردن";
+      };
+      document.addEventListener("keydown",function(e){
+        if(e.key==="Escape") closeMobileNav();
+      });
+      var saved=null; try{ saved=sessionStorage.getItem("maho_admin_panel"); }catch(e){}
+      if(saved && document.querySelector('.admin-panel[data-panel="'+saved+'"]')) showPanel(saved);
+      else showPanel("products");
+    }
+    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="flex"; $("#app").classList.add("is-open"); $("#app").setAttribute("aria-hidden","false"); touchSession(); startIdleWatch(); initSidebar(); loadFromServer(); }
 
     function updateGateLockUI(){
       var rem=lockRemainingMs();
@@ -751,7 +911,25 @@
       $("#cfg_whatsapp").value=c.whatsapp||"";
       var bk=c.bank||{}; $("#cfg_bank_holder").value=bk.holder||""; $("#cfg_bank_name").value=bk.name||""; $("#cfg_bank_number").value=bk.number||"";
       $("#cfg_paylink").value=c.paymentLink||"";
-      var hs=c.hesab||{}; $("#cfg_hesab_link").value=hs.link||""; $("#cfg_hesab_number").value=hs.number||"";
+      var hs=c.hesab||{};
+      if($("#cfg_hesab_enabled")) $("#cfg_hesab_enabled").value=(hs.enabled===false?"no":"yes");
+      if($("#cfg_hesab_order")) $("#cfg_hesab_order").value=(hs.order!=null?hs.order:10);
+      if($("#cfg_hesab_title")) $("#cfg_hesab_title").value=hs.title||"";
+      if($("#cfg_hesab_title_en")) $("#cfg_hesab_title_en").value=hs.title_en||"";
+      if($("#cfg_hesab_desc")) $("#cfg_hesab_desc").value=hs.description||"";
+      if($("#cfg_hesab_desc_en")) $("#cfg_hesab_desc_en").value=hs.description_en||"";
+      if($("#cfg_hesab_guide")) $("#cfg_hesab_guide").value=hs.guide||"";
+      if($("#cfg_hesab_guide_en")) $("#cfg_hesab_guide_en").value=hs.guide_en||"";
+      if($("#cfg_hesab_btn")) $("#cfg_hesab_btn").value=hs.buttonText||"";
+      if($("#cfg_hesab_btn_en")) $("#cfg_hesab_btn_en").value=hs.buttonText_en||"";
+      if($("#cfg_hesab_holder")) $("#cfg_hesab_holder").value=hs.holder||"";
+      if($("#cfg_hesab_link")) $("#cfg_hesab_link").value=hs.link||"";
+      if($("#cfg_hesab_number")) $("#cfg_hesab_number").value=hs.number||"";
+      if($("#cfg_hesab_note")) $("#cfg_hesab_note").value=hs.note||"";
+      if($("#cfg_hesab_note_en")) $("#cfg_hesab_note_en").value=hs.note_en||"";
+      var hq=$("#hesabQrPreview"); if(hq){ if(hs.qrUrl){ hq.src=hs.qrUrl; hq.style.display="inline-block"; } else { hq.removeAttribute("src"); hq.style.display="none"; } }
+      var sc=c.sectionCats||{};
+      ["kicker","kicker_en","title","title_en","lead","lead_en"].forEach(function(k){ var el=$("#scats_"+k); if(el) el.value=sc[k]||""; });
       var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0); $("#cfg_delivery_max").value=(dl.maxKm!=null?dl.maxKm:0);
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||""; $("#cfg_ejs_welcome").value=ej.welcomeTemplateId||"";
       if($("#cfg_api_url")) $("#cfg_api_url").value=c.apiUrl||(window.MAHOApi?MAHOApi.configuredUrl():"")||"";
@@ -773,7 +951,33 @@
         orderApproval:$("#orderApprovalMode").value,
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
-        hesab:{link:$("#cfg_hesab_link").value.trim(),number:$("#cfg_hesab_number").value.trim()},
+        hesab:{
+          enabled:$("#cfg_hesab_enabled")?$("#cfg_hesab_enabled").value!=="no":true,
+          order:Number($("#cfg_hesab_order")&&$("#cfg_hesab_order").value)||10,
+          title:($("#cfg_hesab_title")&&$("#cfg_hesab_title").value.trim())||"",
+          title_en:($("#cfg_hesab_title_en")&&$("#cfg_hesab_title_en").value.trim())||"",
+          description:($("#cfg_hesab_desc")&&$("#cfg_hesab_desc").value.trim())||"",
+          description_en:($("#cfg_hesab_desc_en")&&$("#cfg_hesab_desc_en").value.trim())||"",
+          guide:($("#cfg_hesab_guide")&&$("#cfg_hesab_guide").value.trim())||"",
+          guide_en:($("#cfg_hesab_guide_en")&&$("#cfg_hesab_guide_en").value.trim())||"",
+          buttonText:($("#cfg_hesab_btn")&&$("#cfg_hesab_btn").value.trim())||"",
+          buttonText_en:($("#cfg_hesab_btn_en")&&$("#cfg_hesab_btn_en").value.trim())||"",
+          holder:($("#cfg_hesab_holder")&&$("#cfg_hesab_holder").value.trim())||"",
+          link:($("#cfg_hesab_link")&&$("#cfg_hesab_link").value.trim())||"",
+          number:($("#cfg_hesab_number")&&$("#cfg_hesab_number").value.trim())||"",
+          note:($("#cfg_hesab_note")&&$("#cfg_hesab_note").value.trim())||"",
+          note_en:($("#cfg_hesab_note_en")&&$("#cfg_hesab_note_en").value.trim())||"",
+          qrUrl:(state.config&&state.config.hesab&&state.config.hesab.qrUrl)||"",
+          showOnSite:true
+        },
+        sectionCats:{
+          kicker:($("#scats_kicker")&&$("#scats_kicker").value.trim())||"",
+          kicker_en:($("#scats_kicker_en")&&$("#scats_kicker_en").value.trim())||"",
+          title:($("#scats_title")&&$("#scats_title").value.trim())||"",
+          title_en:($("#scats_title_en")&&$("#scats_title_en").value.trim())||"",
+          lead:($("#scats_lead")&&$("#scats_lead").value.trim())||"",
+          lead_en:($("#scats_lead_en")&&$("#scats_lead_en").value.trim())||""
+        },
         delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()},
         apiUrl:($("#cfg_api_url")&&$("#cfg_api_url").value.trim())||"",
@@ -810,13 +1014,17 @@
     var barcodeSeqA=0;
     function payLabelFa(p){ return p==="bank"?"انتقال بانکی":p==="card"?"کارت آنلاین":p==="hesab"?"حساب پی":"واتساپ"; }
     function statusMatch(o,filter){
-      var s=o.status||"";
+      var s=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(o.status): (o.status||"");
+      var pay=o.paymentStatus||"";
       if(filter==="all") return true;
-      if(filter==="pending") return s.indexOf("انتظار تایید")>=0||s.indexOf("انتظار تأیید")>=0||s==="pending";
-      if(filter==="confirmed") return s.indexOf("تایید شده")>=0||s.indexOf("تأیید شده")>=0||s==="confirmed";
-      if(filter==="await") return s.indexOf("انتظار پرداخت")>=0||s==="awaiting_payment";
-      if(filter==="cancelled") return s.indexOf("لغو")>=0||s==="cancelled";
-      if(filter==="return") return s.indexOf("برگشت")>=0||s==="return_requested";
+      if(filter==="new") return s==="new"||s==="pending";
+      if(filter==="pending") return s==="new"||s==="pending";
+      if(filter==="confirmed") return s==="confirmed";
+      if(filter==="dispatched") return s==="dispatched";
+      if(filter==="delivered") return s==="delivered";
+      if(filter==="await") return pay==="awaiting_payment"||pay==="receipt_submitted"||pay==="under_review"||s==="awaiting_payment";
+      if(filter==="cancelled") return s==="cancelled";
+      if(filter==="return") return s==="return_requested";
       return true;
     }
     function setApiNote(msg, ok){ var n=$("#apiStatusNote"); if(!n)return; n.style.color=ok?"#2e7d32":"#b26a00"; n.textContent=msg||""; }
@@ -855,7 +1063,7 @@
         if(!orders.length){ box.innerHTML='<p class="note">هنوز سفارشی ثبت نشده است.</p>'; return; }
         if(!list.length){ box.innerHTML='<p class="note">سفارشی مطابق جستجو/فیلتر پیدا نشد.</p>'; return; }
         var pending=[];
-        box.innerHTML=list.map(function(o){
+        box.innerHTML=list.map(function(o,idx){
           var d=new Date(o.date); var c=o.customer||{};
           var items=(o.items||[]).map(function(it){
             var bc=""; if(it.code){ var bid="abc"+(++barcodeSeqA); pending.push({id:bid,code:it.code}); bc='<div class="bc-code" dir="ltr">کود کالا: '+it.code+'</div><svg id="'+bid+'" class="adm-bc"></svg>'; }
@@ -864,20 +1072,44 @@
           }).join("");
           var code=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(o.status):o.status;
           var s=statusLabelFa(code);
-          var isCancelled=code==="cancelled"; var isConfirmed=code==="confirmed";
-          var approveBtn=(!isCancelled&&!isConfirmed)?'<button class="btn btn-gold btn-sm" data-approve="'+o.id+'">تایید سفارش</button> ':'';
-          var cancelBtn=(!isCancelled)?'<button class="btn btn-danger btn-sm" data-cancelo="'+o.id+'">لغو</button>':'';
+          var actions=[];
+          if(code==="new"||code==="pending"){ actions.push('<button class="btn btn-gold btn-sm" data-st="confirmed" data-oid="'+o.id+'">تأیید سفارش</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
+          else if(code==="confirmed"){ actions.push('<button class="btn btn-gold btn-sm" data-st="dispatched" data-oid="'+o.id+'">ارسال شد</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
+          else if(code==="dispatched"){ actions.push('<button class="btn btn-gold btn-sm" data-st="delivered" data-oid="'+o.id+'">رسید / تحویل شد</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
+          if(o.payment==="hesab"){
+            actions.push('<button class="btn btn-outline btn-sm" data-pay="payment_confirmed" data-oid="'+o.id+'">تأیید پرداخت حساب‌پی</button>');
+            actions.push('<button class="btn btn-outline btn-sm" data-pay="payment_rejected" data-oid="'+o.id+'">رد پرداخت</button>');
+          }
+          actions.push('<button class="btn btn-outline btn-sm" data-qr="'+o.id+'">QR دلیوری</button>');
+          var maps="";
+          if(o.customerLocation&&o.customerLocation.lat!=null){
+            var mu="https://www.google.com/maps?q="+encodeURIComponent(o.customerLocation.lat+","+o.customerLocation.lng);
+            maps='<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+mu+'">موقعیت مشتری در Google Maps</a>';
+          }
+          var hist=(o.statusHistory||[]).slice(-6).map(function(h){ return '<li class="note">'+new Date(h.at||0).toLocaleString("fa-AF")+' — '+statusLabelFa(h.status)+(h.paymentStatus?(' / '+statusLabelFa(h.paymentStatus)):'')+(h.note?(' — '+esc(h.note)):'')+'</li>'; }).join("");
           var custNo=o.customerNo||(c.customerNo)||"";
           var dl=o.delivery||{};
           var delLine=(dl.method==="deliver")
             ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
             : 'دریافت حضوری';
-          return '<div class="adm-order"><div class="row-between"><b dir="ltr">'+(o.id||"")+'</b><span class="tag">'+s+'</span></div>'+
-            '<div class="note">'+d.toLocaleString("fa-AF")+' — '+(c.name||"")+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+' — <span dir="ltr">'+(c.phone||"")+'</span></div>'+
+          return '<div class="adm-order acc-order'+(idx===0?' open':'')+'" data-oid="'+esc(o.id)+'">'+
+            '<button type="button" class="acc-head" aria-expanded="'+(idx===0?'true':'false')+'">'+
+            '<span><b dir="ltr">'+(o.id||"")+'</b> — '+(c.name||"")+(o.guest?' <span class="tag">مهمان</span>':'')+'</span>'+
+            '<span class="tag">'+s+'</span>'+
+            '<span>'+money(o.total||0)+'</span>'+
+            '<span class="hide-sm">'+payLabelFa(o.payment)+'</span>'+
+            '<span class="hide-sm note">'+d.toLocaleString("fa-AF")+'</span>'+
+            '<span class="acc-caret">▼</span></button>'+
+            '<div class="acc-body" '+(idx===0?'':'hidden')+'>'+
+            '<div class="note">تماس: <span dir="ltr">'+(c.phone||"")+'</span>'+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+(c.email?(' — <span dir="ltr">'+c.email+'</span>'):'')+'</div>'+
             '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
-            '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+'</div>'+
+            '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+(o.paymentStatus?(' / '+statusLabelFa(o.paymentStatus)):'')+'</div>'+
+            (o.hesabReceipt?('<div class="note">رسید حساب‌پی: '+(o.hesabReceipt.txnId||"")+' — '+(o.hesabReceipt.amount||"")+(o.hesabReceipt.url?(' — <a href="'+esc(o.hesabReceipt.url)+'" target="_blank" rel="noopener">مشاهده</a>'):'')+'</div>'):'')+
             '<ul class="adm-items">'+items+'</ul>'+
-            '<div class="row-between"><b>مجموع: '+money(o.total||0)+'</b><span>'+approveBtn+cancelBtn+'</span></div></div>';
+            '<div><b>تاریخچه وضعیت</b><ul>'+(hist||'<li class="note">—</li>')+'</ul></div>'+
+            '<div class="row-between" style="flex-wrap:wrap;gap:8px"><b>مجموع: '+money(o.total||0)+'</b><span style="display:flex;flex-wrap:wrap;gap:6px">'+actions.join(" ")+maps+'</span></div>'+
+            '<div id="qrBox_'+esc(o.id)+'" class="note" style="margin-top:8px"></div>'+
+            '</div></div>';
         }).join("");
         if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
       };
@@ -917,15 +1149,75 @@
     function renderCustomers(){
       var b=$("#custBody"); if(!b)return;
       var paint=function(users){
-        var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(users.length)+")";
-        if(!users.length){ b.innerHTML='<tr><td colspan="4" class="note">هنوز مشتری‌ای ثبت‌نام نکرده است.</td></tr>'; return; }
-        b.innerHTML=users.map(function(u){ return '<tr><td dir="ltr">'+(u.customerNo||"—")+'</td><td>'+(u.name||"")+'</td><td class="hide-sm" dir="ltr">'+(u.email||"")+'</td><td dir="ltr">'+(u.phone||"")+'</td></tr>'; }).join("");
+        window._custRows=users||[];
+        paintCustPage();
       };
       requireBackend(function(){
-        MAHOApi.adminCustomers().then(function(res){ paint(res.customers||[]); }).catch(function(){ paint([]); });
+        var fn=(MAHOApi.adminCustomersTable||MAHOApi.adminCustomers);
+        fn.call(MAHOApi).then(function(res){ paint(res.customers||[]); }).catch(function(){ paint([]); });
       });
     }
-    function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
+    var custPage=0, custPageSize=20, custSort={key:"createdAt",dir:-1};
+    function paintCustPage(){
+      var b=$("#custBody"); if(!b)return;
+      var rows=(window._custRows||[]).slice();
+      var q=(($("#custSearch")&&$("#custSearch").value)||"").trim().toLowerCase();
+      var typ=($("#custType")&&$("#custType").value)||"all";
+      var ver=($("#custVerified")&&$("#custVerified").value)||"all";
+      rows=rows.filter(function(u){
+        if(typ==="member"&&u.guest) return false;
+        if(typ==="guest"&&!u.guest) return false;
+        if(ver==="yes"&&!u.verified) return false;
+        if(ver==="no"&&u.verified) return false;
+        if(!q) return true;
+        var hay=[u.name,u.email,u.phone,u.customerNo,u.id].join(" ").toLowerCase();
+        return hay.indexOf(q)>=0;
+      });
+      var k=custSort.key, dir=custSort.dir;
+      rows.sort(function(a,b){ var av=a[k], bv=b[k]; if(av==null)av=""; if(bv==null)bv=""; if(av<bv)return -1*dir; if(av>bv)return 1*dir; return 0; });
+      var pages=Math.max(1, Math.ceil(rows.length/custPageSize));
+      if(custPage>=pages) custPage=pages-1;
+      var slice=rows.slice(custPage*custPageSize,(custPage+1)*custPageSize);
+      var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(rows.length)+")";
+      if($("#custPageInfo")) $("#custPageInfo").textContent="صفحه "+toFa(custPage+1)+" از "+toFa(pages);
+      if(!slice.length){ b.innerHTML='<tr><td colspan="9" class="note">موردی یافت نشد.</td></tr>'; return; }
+      b.innerHTML=slice.map(function(u){
+        return '<tr>'+
+          '<td dir="ltr">'+(u.customerNo||"—")+'</td>'+
+          '<td>'+esc(u.name||"")+'</td>'+
+          '<td class="hide-sm" dir="ltr">'+esc(u.email||"")+'</td>'+
+          '<td dir="ltr">'+esc(u.phone||"")+'</td>'+
+          '<td>'+(u.guest?"مهمان":"عضو")+'</td>'+
+          '<td>'+(u.verified?"✔":"—")+'</td>'+
+          '<td>'+toFa(u.orderCount||0)+'</td>'+
+          '<td>'+money(u.totalSpent||0)+'</td>'+
+          '<td class="hide-sm">'+(u.createdAt?new Date(u.createdAt).toLocaleDateString("fa-AF"):"—")+'</td>'+
+          '</tr>';
+      }).join("");
+    }
+    function exportCustCsv(){
+      var rows=window._custRows||[];
+      var header=["customerNo","name","email","phone","type","verified","orderCount","totalSpent","createdAt"];
+      var lines=[header.join(",")];
+      rows.forEach(function(u){
+        lines.push([u.customerNo||"",u.name||"",u.email||"",u.phone||"",u.guest?"guest":"member",u.verified?"yes":"no",u.orderCount||0,u.totalSpent||0,u.createdAt?new Date(u.createdAt).toISOString():""].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(","));
+      });
+      var bom="\uFEFF";
+      var blob=new Blob([bom+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-customers.csv"; a.click();
+    }
+    
+    function exportCustXls(){
+      var rows=window._custRows||[];
+      var head=["نمبر مشتری","نام","ایمیل","نمبر تماس","نوع","تأیید ایمیل","تعداد سفارش","مجموع خرید","تاریخ ثبت"];
+      var body=rows.map(function(u){
+        return "<tr><td>"+[u.customerNo||"",u.name||"",u.email||"",u.phone||"",u.guest?"مهمان":"عضو",u.verified?"بله":"خیر",u.orderCount||0,u.totalSpent||0,u.createdAt?new Date(u.createdAt).toISOString():""].map(function(x){ return esc(x); }).join("</td><td>")+"</td></tr>";
+      }).join("");
+      var htmlDoc='<html><head><meta charset="utf-8"></head><body><table border="1"><thead><tr><th>'+head.join("</th><th>")+'</th></tr></thead><tbody>'+body+'</tbody></table></body></html>';
+      var blob=new Blob(["\uFEFF"+htmlDoc],{type:"application/vnd.ms-excel;charset=utf-8"});
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-customers.xls"; a.click();
+    }
+function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
     function saveReviews(r){ try{localStorage.setItem("maho_reviews",JSON.stringify(r));}catch(e){} }
     function starStrA(n){ n=Math.max(0,Math.min(5,parseInt(n,10)||0)); return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n); }
     function renderReviewsAdmin(){
@@ -1487,10 +1779,66 @@
     });
     ["ordersSearch","ordersFilter","ordersSort"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",renderOrdersAdmin); el.addEventListener("change",renderOrdersAdmin); } });
     $("#ordersBody").addEventListener("click",function(e){
-      var ap=e.target.getAttribute("data-approve"), cn=e.target.getAttribute("data-cancelo");
-      if(ap){ updateOrderStatus(ap,"تایید شده"); }
-      else if(cn){ if(confirm("این سفارش لغو شود؟")) updateOrderStatus(cn,"لغو شده"); }
+      var head=e.target.closest(".acc-head");
+      if(head){
+        var card=head.closest(".acc-order"); if(!card) return;
+        var open=card.classList.toggle("open");
+        var body=card.querySelector(".acc-body");
+        if(body) body.hidden=!open;
+        head.setAttribute("aria-expanded", open?"true":"false");
+        return;
+      }
+      var st=e.target.getAttribute("data-st");
+      var oid=e.target.getAttribute("data-oid");
+      if(st&&oid){
+        if(st==="cancelled"&&!confirm("این سفارش لغو شود؟")) return;
+        updateOrderStatus(oid, st);
+        return;
+      }
+      var pay=e.target.getAttribute("data-pay");
+      if(pay&&oid&&MAHOApi.adminSetPaymentStatus){
+        requireBackend(function(){
+          MAHOApi.adminSetPaymentStatus(oid, pay).then(function(){ renderOrdersAdmin(); toast("وضعیت پرداخت به‌روز شد ✓"); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+        return;
+      }
+      var qr=e.target.getAttribute("data-qr");
+      if(qr&&MAHOApi.adminDeliveryQr){
+        requireBackend(function(){
+          MAHOApi.adminDeliveryQr(qr).then(function(res){
+            var box=$("#qrBox_"+qr); if(!box) return;
+            box.innerHTML='<div>لینک دلیوری: <a dir="ltr" href="'+esc(res.url)+'" target="_blank" rel="noopener">'+esc(res.url)+'</a></div>'+
+              (res.qrDataUrl?('<img src="'+res.qrDataUrl+'" alt="QR" style="width:180px;height:180px;margin-top:8px"><div><a class="btn btn-outline btn-sm" download="maho-delivery-'+qr+'.png" href="'+res.qrDataUrl+'">دانلود PNG</a> <button class="btn btn-outline btn-sm" onclick="window.print()">چاپ</button></div>'):'');
+            toast("QR دلیوری ساخته شد ✓");
+          }).catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+      }
     });
+    if($("#buildCustTableBtn")) $("#buildCustTableBtn").onclick=function(){ custPage=0; renderCustomers(); toast("جدول مشتریان ساخته شد ✓"); };
+    if($("#exportCustCsv")) $("#exportCustCsv").onclick=exportCustCsv;
+    if($("#printCustTable")) $("#printCustTable").onclick=function(){ window.print(); };
+    if($("#custPrev")) $("#custPrev").onclick=function(){ if(custPage>0){ custPage--; paintCustPage(); } };
+    if($("#custNext")) $("#custNext").onclick=function(){ custPage++; paintCustPage(); };
+    ["custSearch","custType","custVerified"].forEach(function(id){ var el=$("#"+id); if(el){ el.addEventListener("input",function(){ custPage=0; paintCustPage(); }); el.addEventListener("change",function(){ custPage=0; paintCustPage(); }); } });
+    if($("#custTable")) $("#custTable").addEventListener("click",function(e){
+      var th=e.target.closest("th[data-sort]"); if(!th) return;
+      var key=th.getAttribute("data-sort");
+      if(custSort.key===key) custSort.dir*=-1; else { custSort.key=key; custSort.dir=1; }
+      paintCustPage();
+    });
+    if($("#cfg_hesab_qr")) $("#cfg_hesab_qr").addEventListener("change",function(e){
+      var f=e.target.files&&e.target.files[0]; e.target.value="";
+      if(!f) return;
+      if(!/^image\/(png|jpeg|jpg|webp)$/i.test(f.type)){ alert("فقط PNG/JPG/WebP"); return; }
+      uploadImageFile(f, function(url){
+        if(!url) return;
+        if(!state.config.hesab) state.config.hesab={};
+        state.config.hesab.qrUrl=url; fillConfig(); setDirty(true); toast("QR حساب‌پی ذخیره شد ✓");
+      });
+    });
+    if($("#hesabQrRemove")) $("#hesabQrRemove").onclick=function(){ if(state.config.hesab) state.config.hesab.qrUrl=""; fillConfig(); setDirty(true); };
+    if($("#exportCustXls")) $("#exportCustXls").onclick=exportCustXls;
     $("#orderApprovalMode").addEventListener("change",function(){ if(!state.config)state.config={}; state.config.orderApproval=this.value; setDirty(true); });
     $("#exportBtn").onclick=function(){
       collectConfig();
