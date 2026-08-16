@@ -18,12 +18,28 @@ function moneyAf(n) {
   return v.toLocaleString("en-US") + " افغانی";
 }
 
-function brandWrap({ title, preheader, bodyHtml, siteUrl, logoUrl }) {
+function supportContactHtml(storePhone) {
+  const phone = String(storePhone || "").trim();
+  const phonePart = phone
+    ? ` یا شماره تماس فروشگاه (<span dir="ltr">${escapeHtml(phone)}</span>)`
+    : " یا شماره تماس فروشگاه";
+  return `<p>سؤالی دارید؟ با ما از طریق <a href="mailto:support@mahomarket.com">support@mahomarket.com</a>${phonePart} ارتباط بگیرید.</p>`;
+}
+
+function supportContactText(storePhone) {
+  const phone = String(storePhone || "").trim();
+  return "سؤالی دارید؟ با ما از طریق support@mahomarket.com" + (phone ? " یا شماره تماس فروشگاه (" + phone + ")" : " یا شماره تماس فروشگاه") + " ارتباط بگیرید.";
+}
+
+function brandWrap({ title, preheader, bodyHtml, siteUrl, logoUrl, storePhone }) {
   const brand = "#c8a35f";
   const dark = "#141414";
   const logo = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="MAHO Market" width="72" height="72" style="border-radius:50%;border:2px solid ${brand};display:block;margin:0 auto 12px">`
     : `<div style="width:72px;height:72px;border-radius:50%;border:2px solid ${brand};color:${brand};font:700 28px Georgia,serif;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">M</div>`;
+  const phoneLine = storePhone
+    ? `<div>تماس فروشگاه: <span dir="ltr">${escapeHtml(storePhone)}</span></div>`
+    : "";
   return `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -46,6 +62,7 @@ ${logo}
 <tr><td style="padding:18px 24px;background:#fbf8f1;border-top:1px solid #e6e0d4;font-size:12px;color:#7a7368;text-align:center">
 <div>MAHO Market — لباس و لوازم بانوان</div>
 <div>پشتیبانی: <a href="mailto:support@mahomarket.com" style="color:${brand}">support@mahomarket.com</a></div>
+${phoneLine}
 ${siteUrl ? `<div style="margin-top:6px"><a href="${escapeHtml(siteUrl)}" style="color:${brand}">${escapeHtml(siteUrl)}</a></div>` : ""}
 </td></tr>
 </table>
@@ -122,6 +139,13 @@ function buildMailer(opts) {
   const {
     sendRaw, fromName, fromEmail, replyTo, siteUrl, logoUrl, ordersNotifyEmail,
   } = opts;
+  const getStorePhone = typeof opts.getStorePhone === "function"
+    ? opts.getStorePhone
+    : () => opts.storePhone || "";
+
+  function wrap(args) {
+    return brandWrap(Object.assign({ storePhone: getStorePhone() }, args));
+  }
 
   function send(to, subject, html, text) {
     return sendRaw({
@@ -135,7 +159,7 @@ function buildMailer(opts) {
   }
 
   function verificationCode(to, code, name) {
-    const html = brandWrap({
+    const html = wrap({
       title: "کود تأیید حساب",
       preheader: "کود تأیید MAHO Market",
       siteUrl, logoUrl,
@@ -143,13 +167,14 @@ function buildMailer(opts) {
 <p>برای تأیید حساب خود در MAHO Market از کود زیر استفاده کنید:</p>
 <p style="font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;direction:ltr;color:#141414">${escapeHtml(code)}</p>
 <p>این کود فقط <strong>۱۰ دقیقه</strong> اعتبار دارد. اگر شما این درخواست را نکرده‌اید، این پیام را نادیده بگیرید.</p>
-<p style="font-size:12px;color:#7a7368">هرگز رمز عبور خود را با کسی شریک نسازید. MAHO هرگز رمز شما را در ایمیل نمی‌فرستد.</p>`,
+<p style="font-size:12px;color:#7a7368">هرگز رمز عبور خود را با کسی شریک نسازید. MAHO هرگز رمز شما را در ایمیل نمی‌فرستد.</p>
+${supportContactHtml(getStorePhone())}`,
     });
-    return send(to, "MAHO Market — کود تأیید حساب", html, `کود تأیید: ${code}\nاعتبار: ۱۰ دقیقه`);
+    return send(to, "MAHO Market — کود تأیید حساب", html, `کود تأیید: ${code}\nاعتبار: ۱۰ دقیقه\n${supportContactText(getStorePhone())}`);
   }
 
   function welcome(to, { name, email }) {
-    const html = brandWrap({
+    const html = wrap({
       title: "به MAHO خوش آمدید",
       preheader: "حساب شما تأیید شد",
       siteUrl, logoUrl,
@@ -158,13 +183,14 @@ function buildMailer(opts) {
 <p>ایمیل ورود شما: <strong dir="ltr">${escapeHtml(email || to)}</strong></p>
 <p>رمز عبور شما با موفقیت تنظیم شد. برای امنیت، رمز را نزد خود نگه دارید — ما هرگز رمز را در ایمیل نمی‌فرستیم.</p>
 ${ctaBtn((siteUrl || "https://mahomarket.com") + "/#account", "ورود به حساب")}
-${ctaBtn((siteUrl || "https://mahomarket.com") + "/#products", "ادامهٔ خرید")}`,
+${ctaBtn((siteUrl || "https://mahomarket.com") + "/#products", "ادامهٔ خرید")}
+${supportContactHtml(getStorePhone())}`,
     });
     return send(to, "MAHO Market — خوش آمدید", html);
   }
 
   function passwordReset(to, { resetUrl, name }) {
-    const html = brandWrap({
+    const html = wrap({
       title: "بازیابی رمز عبور",
       preheader: "لینک بازیابی رمز MAHO",
       siteUrl, logoUrl,
@@ -172,14 +198,15 @@ ${ctaBtn((siteUrl || "https://mahomarket.com") + "/#products", "ادامهٔ خ�
 <p>درخواست بازیابی رمز برای حساب MAHO دریافت شد. روی دکمهٔ زیر کلیک کنید (لینک کوتاه‌مدت و یک‌بارمصرف است):</p>
 ${ctaBtn(resetUrl, "تنظیم رمز جدید")}
 <p style="font-size:12px;color:#7a7368">اگر شما این درخواست را نکرده‌اید، این ایمیل را نادیده بگیرید. رمز قبلی شما تغییر نمی‌کند.</p>
-<p style="font-size:12px;color:#7a7368">MAHO هرگز رمز عبور را در ایمیل نمی‌فرستد.</p>`,
+<p style="font-size:12px;color:#7a7368">MAHO هرگز رمز عبور را در ایمیل نمی‌فرستد.</p>
+${supportContactHtml(getStorePhone())}`,
     });
     return send(to, "MAHO Market — بازیابی رمز عبور", html);
   }
 
   function orderConfirmation(to, order, trackUrl) {
     const c = order.customer || {};
-    const html = brandWrap({
+    const html = wrap({
       title: "تأیید سفارش",
       preheader: "سفارش " + (order.id || ""),
       siteUrl, logoUrl,
@@ -195,24 +222,33 @@ ${orderTotalsBlock(order)}
 <p><strong>آدرس دلیوری:</strong> ${escapeHtml(c.address || "—")}<br>
 <strong>نمبر تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>
 ${trackUrl ? ctaBtn(trackUrl, "مشاهده / پیگیری سفارش") : ""}
-<p>سوال دارید؟ با <a href="mailto:support@mahomarket.com">support@mahomarket.com</a> به تماس شوید.</p>`,
+${supportContactHtml(getStorePhone())}`,
     });
-    return send(to, "MAHO Market — تأیید سفارش " + (order.id || ""), html);
+    return send(to, "MAHO Market — تأیید سفارش " + (order.id || ""), html, supportContactText(getStorePhone()));
   }
 
   function orderAdminNotify(order) {
     const to = ordersNotifyEmail || "orders@mahomarket.com";
     const c = order.customer || {};
-    const html = brandWrap({
+    const loc = order.customerLocation || {};
+    const maps = loc.mapsUrl || (loc.lat != null ? `https://www.google.com/maps?q=${encodeURIComponent(loc.lat + "," + loc.lng)}` : "");
+    const d = order.delivery || {};
+    const html = wrap({
       title: "سفارش جدید",
       preheader: order.id || "",
       siteUrl, logoUrl,
       bodyHtml: `<p>یک سفارش جدید ثبت شد.</p>
-<p><strong>نمبر:</strong> ${escapeHtml(order.id || "")}<br>
-<strong>مشتری:</strong> ${escapeHtml(c.name || "")} ${order.guest ? "(مهمان)" : ""}<br>
+<p><strong>نمبر:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>تاریخ:</strong> ${escapeHtml(new Date(order.date || Date.now()).toLocaleString("fa-AF"))}<br>
+<strong>مشتری:</strong> ${escapeHtml(c.name || "")}<br>
 <strong>ایمیل:</strong> <span dir="ltr">${escapeHtml(c.email || "")}</span><br>
 <strong>تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span><br>
-<strong>پرداخت:</strong> ${escapeHtml(payLabel(order.payment))}<br>
+<strong>پرداخت:</strong> ${escapeHtml(payLabel(order.payment))} / ${escapeHtml(statusLabelFa(order.paymentStatus || "—"))}<br>
+<strong>دریافت:</strong> ${escapeHtml(d.method === "deliver" ? "دلیوری" : "حضوری")}${d.time ? " — " + escapeHtml(d.time) : ""}<br>
+<strong>آدرس:</strong> ${escapeHtml(c.address || "—")}<br>
+${loc.lat != null ? `<strong>مختصات:</strong> <span dir="ltr">${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lng))}</span><br>` : ""}
+${maps ? `<strong>نقشه:</strong> <a href="${escapeHtml(maps)}">${escapeHtml(maps)}</a><br>` : ""}
+<strong>یادداشت:</strong> ${escapeHtml(c.note || order.deliveryNote || "—")}<br>
 <strong>مبلغ:</strong> ${moneyAf(order.total)}</p>
 ${orderItemsTable(order)}
 ${orderTotalsBlock(order)}
@@ -228,6 +264,10 @@ ${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن 
       dispatched: "سفارش ارسال شد",
       delivered: "سفارش تحویل شد",
       cancelled: "سفارش لغو شد",
+      return_requested: "درخواست برگشت ثبت شد",
+      return_approved: "برگشت تأیید شد",
+      return_rejected: "برگشت رد شد",
+      return_completed: "برگشت تکمیل شد",
       payment_confirmed: "پرداخت تأیید شد",
       payment_rejected: "پرداخت رد شد",
       awaiting_payment: "در انتظار پرداخت",
@@ -235,7 +275,7 @@ ${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن 
       under_review: "پرداخت در حال بررسی",
     };
     const title = titles[order.status] || titles[order.paymentStatus] || "به‌روزرسانی سفارش";
-    const html = brandWrap({
+    const html = wrap({
       title,
       preheader: order.id || "",
       siteUrl, logoUrl,
@@ -244,7 +284,7 @@ ${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن 
 <p style="font-size:18px;font-weight:800">${escapeHtml(statusLabelFa(order.status))}${order.paymentStatus ? " / پرداخت: " + escapeHtml(statusLabelFa(order.paymentStatus)) : ""}</p>
 ${note ? `<p>${escapeHtml(note)}</p>` : ""}
 ${orderTotalsBlock(order)}
-<p>پشتیبانی: <a href="mailto:support@mahomarket.com">support@mahomarket.com</a></p>`,
+${supportContactHtml(getStorePhone())}`,
     });
     return send(to, "MAHO Market — " + title + " (" + (order.id || "") + ")", html);
   }
@@ -264,16 +304,20 @@ ${orderTotalsBlock(order)}
     hesabPayStatus,
     statusLabelFa,
     payLabel,
+    supportContactHtml,
+    supportContactText,
   };
 }
 
-module.exports = { buildMailer, escapeHtml, moneyAf, statusLabelFa: function (s) {
+module.exports = { buildMailer, escapeHtml, moneyAf, supportContactHtml, supportContactText, statusLabelFa: function (s) {
   const m = {
-    new: "جدید", pending: "در انتظار تایید", confirmed: "تأیید شد",
-    dispatched: "ارسال شد", delivered: "تحویل شد", cancelled: "لغو شد",
-    awaiting_payment: "در انتظار پرداخت", receipt_submitted: "رسید فرستاده شد",
+    new: "منتظر تأیید", pending: "منتظر تأیید", confirmed: "تأییدشده",
+    dispatched: "ارسال‌شده", delivered: "تحویل‌شده", cancelled: "لغوشده",
+    awaiting_payment: "منتظر تأیید پرداخت حساب‌پی", receipt_submitted: "رسید فرستاده شد",
     under_review: "در حال بررسی", payment_confirmed: "پرداخت تأیید شد",
     payment_rejected: "پرداخت رد شد", return_requested: "درخواست برگشت",
+    return_approved: "برگشت تأییدشده", return_rejected: "برگشت ردشده",
+    return_completed: "برگشت تکمیل‌شده",
   };
   return m[s] || s || "—";
 } };

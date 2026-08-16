@@ -172,7 +172,7 @@ function mountExtra(app, ctx) {
 
   /* ---------- admin customers enriched + export-safe ---------- */
   app.get("/api/admin/customers/table", requireAdmin, (req, res) => {
-    const members = (ctx.db.users || []).map(publicCustomer);
+    const members = (ctx.db.users || []).filter((u) => !u.deletedAt && u.status !== "deleted").map(publicCustomer);
     /* guest orders as pseudo-rows */
     const guestMap = new Map();
     (ctx.db.orders || []).filter((o) => o.guest || !o.userId).forEach((o) => {
@@ -336,13 +336,17 @@ function mountExtra(app, ctx) {
       note: sanitizeText(b.note, 500),
       submittedAt: Date.now(),
     };
+    o.hesabReceipts = Array.isArray(o.hesabReceipts) ? o.hesabReceipts : [];
+    o.hesabReceipts.forEach((r) => { if (r) r.latest = false; });
+    o.hesabReceipts.push(Object.assign({}, o.hesabReceipt, { latest: true }));
     o.paymentStatus = "receipt_submitted";
     appendHistory(o, { status: o.status, paymentStatus: o.paymentStatus, by: "customer", note: "رسید حساب‌پی" });
     saveDb();
     if (mail() && o.customer && o.customer.email) {
-      mail().orderStatus(o.customer.email, o, "رسید پرداخت شما دریافت شد و در حال بررسی است.").catch(() => {});
+      mail().orderStatus(o.customer.email, o, "تشکر از ارسال رسید حساب‌پی. لطفاً منتظر تأیید بمانید و ایمیل خود را بررسی کنید.").catch(() => {});
     }
-    res.json({ order: o });
+    if (mail()) mail().orderAdminNotify(Object.assign({}, o, { paymentStatus: "receipt_submitted" })).catch(() => {});
+    res.json({ order: o, message: "receipt_received" });
   });
 
   app.post("/api/orders/:id/hesab-receipt-upload", (req, res) => {
@@ -373,13 +377,17 @@ function mountExtra(app, ctx) {
         note: sanitizeText((req.body && req.body.note) || "", 500),
         submittedAt: Date.now(),
       };
+      o.hesabReceipts = Array.isArray(o.hesabReceipts) ? o.hesabReceipts : [];
+      o.hesabReceipts.forEach((r) => { if (r) r.latest = false; });
+      o.hesabReceipts.push(Object.assign({}, o.hesabReceipt, { latest: true }));
       o.paymentStatus = "receipt_submitted";
       appendHistory(o, { status: o.status, paymentStatus: o.paymentStatus, by: "customer", note: "آپلود رسید حساب‌پی" });
       saveDb();
       if (mail() && o.customer && o.customer.email) {
-        mail().orderStatus(o.customer.email, o, "رسید پرداخت شما دریافت شد و در حال بررسی است.").catch(() => {});
+        mail().orderStatus(o.customer.email, o, "تشکر از ارسال رسید حساب‌پی. لطفاً منتظر تأیید بمانید و ایمیل خود را بررسی کنید.").catch(() => {});
       }
-      res.json({ order: o, url: receiptUrl });
+      if (mail()) mail().orderAdminNotify(Object.assign({}, o, { paymentStatus: "receipt_submitted" })).catch(() => {});
+      res.json({ order: o, url: receiptUrl, message: "receipt_received" });
     });
   });
 

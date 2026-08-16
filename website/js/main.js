@@ -165,6 +165,7 @@
       "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کود کالا",
       "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
       "orders.cancelMsg": "سفارش لغو شد", "orders.returnMsg": "درخواست برگشت کالا",
+      "orders.cancelCountdown": "مهلت لغو باقی‌مانده:", "orders.cancelWindowDone": "مهلت لغو به پایان رسید",
       "acct.custNo": "نمبر مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
       "acct.newPass": "پسورد جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
       "acct.saved": "تغییرات ذخیره شد ✓",
@@ -191,14 +192,25 @@
       "co.beyondMax": "دلیوری فقط تا {n} کیلومتری فروشگاه انجام می‌شود؛ آدرس شما دورتر است.",
       "co.timeslot": "زمان دریافت / تحویل",
       "co.ts0": "در اسرع وقت", "co.ts1": "امروز صبح (۹ تا ۱۲)", "co.ts2": "امروز بعد از ظهر (۱۲ تا ۴)", "co.ts3": "امروز عصر (۴ تا ۸)", "co.ts4": "فردا",
-      "co.makeAccount": "ساخت حساب (اختیاری)", "co.passPh": "پسورد برای حساب جدید",
-      "co.makeAccountHint": "اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.",
+      "co.makeAccount": "برای ثبت سفارش وارد حساب شوید", "co.passPh": "رمز برای حساب جدید",
+      "co.makeAccountHint": "برای تکمیل خرید باید وارد حساب شوید. اگر حساب ندارید، از بخش حساب کاربری بسازید. رمز هرگز در ایمیل فرستاده نمی‌شود.",
       "co.enterCode": "کود تایید (به ایمیل شما فرستاده شد)", "co.verifyPlace": "تایید کود و ثبت سفارش",
       "co.acctNeedEmail": "برای ساخت حساب، یک ایمیل معتبر وارد کنید.", "co.acctExists": "این ایمیل قبلاً حساب دارد؛ لطفاً وارد شوید.",
       "co.codeSentEmail": "کود تایید به ایمیل شما فرستاده شد. آن را وارد کنید.", "co.acctCreated": "حساب شما ساخته شد ✓ نمبر مشتری: {no}",
       "acct.welcomeMsg": "حساب شما در MAHO ساخته شد. نمبر مشتری شما: {no}. با همین ایمیل و پسورد می‌توانید وارد شوید.",
-      "co.free": "رایگان", "co.geoFail": "دسترسی به موقعیت ممکن نشد؛ لطفاً فاصله را دستی وارد کنید.",
-      "co.noStoreCoords": "مختصات فروشگاه ثبت نشده؛ فاصله دستی وارد شود.",
+      "co.free": "رایگان", "co.geoFail": "دسترسی به موقعیت ممکن نشد؛ لطفاً دوباره تلاش کنید.",
+      "co.noStoreCoords": "مختصات فروشگاه ثبت نشده است.",
+      "co.distBgNote": "فاصله و هزینه در پس‌زمینه محاسبه می‌شود.",
+      "co.loginRequired": "برای تکمیل سفارش باید وارد حساب شوید.",
+      "co.outOfRange": "آدرس شما خارج از محدوده دلیوری است ({km} کیلومتر؛ حداکثر {max} کیلومتر).",
+      "co.deliveryOk": "فاصله حدود {km} کیلومتر — دلیوری مجاز است.",
+      "co.deliveryDisabled": "دلیوری فعلاً غیرفعال است؛ لطفاً دریافت حضوری را انتخاب کنید.",
+      "pay.hesabThanks": "تشکر از ارسال رسید حساب‌پی. لطفاً منتظر تأیید بمانید و ایمیل خود را بررسی کنید.",
+      "pay.hesabResubmit": "ارسال دوباره رسید",
+      "pay.hesabHistory": "تاریخچه رسیدها",
+      "orders.returnReason": "دلیل برگشت", "orders.returnDetails": "جزئیات", "orders.returnMethod": "روش دریافت کالا",
+      "orders.returnPickupStore": "تحویل به فروشگاه", "orders.returnPickupCustomer": "جمع‌آوری از آدرس من",
+      "orders.returnSubmit": "ثبت درخواست برگشت", "orders.returnNeedReason": "دلیل برگشت لازم است.",
       "order.deliveryTo": "ارسال به آدرس", "order.pickupAt": "دریافت حضوری",
     },
     en: {
@@ -320,6 +332,7 @@
       "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
       "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
       "orders.cancelMsg": "Order cancelled", "orders.returnMsg": "Return request",
+      "orders.cancelCountdown": "Cancel window remaining:", "orders.cancelWindowDone": "Cancel window has ended",
       "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
       "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
       "acct.saved": "Changes saved ✓",
@@ -346,14 +359,25 @@
       "co.beyondMax": "Delivery is only available within {n} km of the store; your address is farther.",
       "co.timeslot": "Pickup / delivery time",
       "co.ts0": "As soon as possible", "co.ts1": "Today morning (9–12)", "co.ts2": "Today afternoon (12–4)", "co.ts3": "Today evening (4–8)", "co.ts4": "Tomorrow",
-      "co.makeAccount": "Create an account (optional)", "co.passPh": "Password for your new account",
-      "co.makeAccountHint": "If you set a password, a verification code is emailed to you when you place the order; after verifying, your account is created and its details are emailed to you.",
+      "co.makeAccount": "Sign in required to checkout", "co.passPh": "Password for your new account",
+      "co.makeAccountHint": "You must sign in to complete checkout. Create an account from the Account menu if you don’t have one. Passwords are never emailed.",
       "co.enterCode": "Verification code (sent to your email)", "co.verifyPlace": "Verify code & place order",
       "co.acctNeedEmail": "Enter a valid email to create an account.", "co.acctExists": "This email already has an account; please sign in.",
       "co.codeSentEmail": "A verification code was sent to your email. Enter it below.", "co.acctCreated": "Your account was created ✓ Customer no: {no}",
       "acct.welcomeMsg": "Your MAHO account has been created. Your customer number: {no}. You can sign in with this email and password.",
-      "co.free": "Free", "co.geoFail": "Couldn't get your location; please enter the distance manually.",
-      "co.noStoreCoords": "Store coordinates not set; enter distance manually.",
+      "co.free": "Free", "co.geoFail": "Couldn't get your location; please try again.",
+      "co.noStoreCoords": "Store coordinates are not set.",
+      "co.distBgNote": "Distance and fee are calculated in the background.",
+      "co.loginRequired": "Please sign in to complete checkout.",
+      "co.outOfRange": "Your location is outside the delivery range ({km} km; max {max} km).",
+      "co.deliveryOk": "About {km} km away — delivery is available.",
+      "co.deliveryDisabled": "Delivery is currently disabled; please choose store pickup.",
+      "pay.hesabThanks": "Thank you for submitting your HesabPay receipt. Please wait for confirmation and check your email.",
+      "pay.hesabResubmit": "Submit receipt again",
+      "pay.hesabHistory": "Receipt history",
+      "orders.returnReason": "Return reason", "orders.returnDetails": "Details", "orders.returnMethod": "Return method",
+      "orders.returnPickupStore": "Drop off at store", "orders.returnPickupCustomer": "Pickup from my address",
+      "orders.returnSubmit": "Submit return request", "orders.returnNeedReason": "A return reason is required.",
       "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
     },
   };
@@ -747,6 +771,8 @@
 
   /* -------------------- delivery -------------------- */
   let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
+  let customerLocation = null;
+  let deliveryAllowed = true;
   function getTimeslots() { const ts = (CONFIG.delivery && CONFIG.delivery.timeslots) || []; return (ts.length ? ts : DEFAULT_TIMESLOTS).filter((x) => x && (x.fa || x.en)); }
   function timeslotLabel(i) { const ts = getTimeslots(); const s = ts[i] || ts[0]; return s ? (LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)) : ""; }
   function renderTimeslots() {
@@ -763,7 +789,7 @@
     return null;
   }
   function nearestStoreKm(lat, lng) { let best = null; STORES.forEach((s) => { const c = storeCoords(s); if (c) { const d = haversine(lat, lng, c[0], c[1]); if (best === null || d < best) best = d; } }); return best; }
-  function currentKm() { let km = parseFloat(toEnDigits(($("#co_km") && $("#co_km").value) || "")); if (!isFinite(km) || km < 0) km = (distanceKm != null ? distanceKm : 0); return km; }
+  function currentKm() { return (distanceKm != null && isFinite(distanceKm) && distanceKm >= 0) ? distanceKm : 0; }
   function deliveryFee() { const cfg = CONFIG.delivery || {}; if (recvMethod !== "deliver" || !cfg.enabled) return 0; const km = currentKm(); let fee = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0); if (deliverTime === "urgent") fee += (cfg.urgentFee || 0); return fee; }
   function deliveryMinOrder() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.minOrder) ? cfg.minOrder : 0; }
   function deliveryMaxKm() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.maxKm) ? cfg.maxKm : 0; }
@@ -772,8 +798,23 @@
   function deliveryBlockMsg() {
     if (recvMethod !== "deliver") return "";
     if (belowDeliveryMin()) return t("co.belowMin").replace("{n}", money(deliveryMinOrder()));
-    if (beyondDeliveryMax()) return t("co.beyondMax").replace("{n}", toDigits(deliveryMaxKm()));
+    if (!deliveryAllowed || beyondDeliveryMax()) {
+      const mx = deliveryMaxKm();
+      return t("co.outOfRange").replace("{km}", toDigits(Math.round(currentKm() * 10) / 10)).replace("{max}", toDigits(mx || 0));
+    }
     return "";
+  }
+  function deliveryEnabled() { return !!(CONFIG.delivery && CONFIG.delivery.enabled !== false); }
+  function applyDeliveryAvailability() {
+    const on = deliveryEnabled();
+    const deliverBtn = recvMethodsEl && recvMethodsEl.querySelector('[data-recv="deliver"]');
+    if (deliverBtn) deliverBtn.hidden = !on;
+    if (!on) {
+      recvMethod = "pickup";
+      if (recvMethodsEl) $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.recv === "pickup"));
+      if ($("#deliverBox")) $("#deliverBox").hidden = true;
+    }
+    updateCheckoutTotals();
   }
   function updateCheckoutTotals() {
     const items = cartPriceTotal(), fee = deliveryFee(), grand = items + fee;
@@ -785,53 +826,56 @@
     if (warn) { const msg = deliveryBlockMsg(); if (msg) { warn.hidden = false; warn.textContent = msg; } else { warn.hidden = true; warn.textContent = ""; } }
   }
   const recvMethodsEl = $("#recvMethods");
-  if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; recvMethod = b.dataset.recv; $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver"); updateCheckoutTotals(); });
+  if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => {
+    const b = e.target.closest(".pay-method"); if (!b) return;
+    if (b.dataset.recv === "deliver" && !deliveryEnabled()) { showToast(t("co.deliveryDisabled")); return; }
+    recvMethod = b.dataset.recv;
+    $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver");
+    updateCheckoutTotals();
+  });
   const deliverTimeEl = $("#deliverTime");
   if (deliverTimeEl) deliverTimeEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverTime = b.dataset.time; $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); updateCheckoutTotals(); });
   const deliverSlotsEl = $("#deliverSlots");
   if (deliverSlotsEl) deliverSlotsEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverSlot = parseInt(b.dataset.slot, 10) || 0; $$(".pay-method", deliverSlotsEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); });
-  const coKmEl = $("#co_km");
-  if (coKmEl) coKmEl.addEventListener("input", () => { const n = parseFloat(toEnDigits(coKmEl.value)); distanceKm = isFinite(n) ? n : null; updateCheckoutTotals(); });
-  const calcBtn = $("#calcDistBtn");
-  if (calcBtn) calcBtn.addEventListener("click", () => {
-    const di = $("#distInfo");
-    if (!navigator.geolocation) { if (di) { di.hidden = false; di.textContent = t("co.geoFail"); } return; }
-    calcBtn.disabled = true;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      calcBtn.disabled = false;
-      const km = nearestStoreKm(pos.coords.latitude, pos.coords.longitude);
-      if (km == null) { if (di) { di.hidden = false; di.textContent = t("co.noStoreCoords"); } return; }
-      distanceKm = km; if (coKmEl) coKmEl.value = toDigits(Math.round(km * 10) / 10);
-      if (di) { di.hidden = false; di.textContent = t("co.distKm") + ": " + toDigits(Math.round(km * 10) / 10) + " " + t("co.km"); }
-      updateCheckoutTotals();
-    }, () => { calcBtn.disabled = false; if (di) { di.hidden = false; di.textContent = t("co.geoFail"); } }, { timeout: 8000 });
-  });
+
+  function requireCheckoutLogin() {
+    const s = getSession();
+    const needApi = apiOnline && window.MAHOApi;
+    const hasToken = needApi ? !!MAHOApi.getToken("user") : true;
+    return !!(s && hasToken);
+  }
 
   const toCheckoutBtn = $("#toCheckout");
   if (toCheckoutBtn) toCheckoutBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
-    const s = getSession();
-    if (s) {
-      if ($("#co_name")) $("#co_name").value = $("#co_name").value || s.name || "";
-      if ($("#co_phone")) $("#co_phone").value = $("#co_phone").value || s.phone || "";
-      if ($("#co_email")) $("#co_email").value = $("#co_email").value || s.email || "";
+    if (!requireCheckoutLogin()) {
+      closeCart();
+      openAcct();
+      showToast(t("co.loginRequired"));
+      return;
     }
+    const s = getSession();
+    if ($("#co_name")) $("#co_name").value = (s && s.name) || $("#co_name").value || "";
+    if ($("#co_phone")) $("#co_phone").value = (s && s.phone) || $("#co_phone").value || "";
+    if ($("#co_email")) $("#co_email").value = (s && s.email) || $("#co_email").value || "";
     fillAddr("co", (s && s.addr) || null);
-    // Guest account block only for not-logged-in customers
-    const gaw = $("#guestAcctWrap"); if (gaw) gaw.hidden = !!s;
+    const gaw = $("#guestAcctWrap"); if (gaw) gaw.hidden = true;
     const cvb = $("#coVerifyBox"); if (cvb) cvb.hidden = true;
+    if ($("#co_pass")) { $("#co_pass").hidden = true; $("#co_pass").value = ""; }
     pendingCheckoutAccount = null;
-    if ($("#co_pass")) $("#co_pass").value = "";
     if ($("#coMsg")) $("#coMsg").textContent = "";
     payMethod = "whatsapp";
     if (payMethodsEl) $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
     updatePayInfo();
-    // reset delivery
-    recvMethod = "pickup"; deliverTime = "normal"; distanceKm = null;
-    if (recvMethodsEl) $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.recv === "pickup"));
+    recvMethod = "pickup"; deliverTime = "normal"; distanceKm = null; deliveryAllowed = true; customerLocation = null;
+    applyDeliveryAvailability();
     if (deliverTimeEl) $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.toggle("active", x.dataset.time === "normal"));
     if ($("#deliverBox")) $("#deliverBox").hidden = true;
-    if (coKmEl) coKmEl.value = ""; if ($("#distInfo")) $("#distInfo").hidden = true;
+    if ($("#distInfo")) { $("#distInfo").hidden = true; $("#distInfo").textContent = ""; }
+    if ($("#locInfo")) { $("#locInfo").hidden = true; $("#locInfo").textContent = ""; }
+    if ($("#locPreview")) $("#locPreview").hidden = true;
     updateCheckoutTotals();
     showScreen("checkout");
   });
@@ -884,7 +928,12 @@
           else { hesabImg.removeAttribute("src"); hesabImg.style.display = "none"; }
         }
         if (hesabLinkBtn) {
-          if (h.link) { hesabLinkBtn.href = h.link; hesabLinkBtn.hidden = false; hesabLinkBtn.textContent = btn || t("pay.hesabOpen"); }
+          if (h.link) {
+            const href = (window.MAHOApi && MAHOApi.ensureHttps) ? MAHOApi.ensureHttps(h.link) : h.link;
+            hesabLinkBtn.href = href;
+            hesabLinkBtn.hidden = false;
+            hesabLinkBtn.textContent = btn || t("pay.hesabOpen");
+          }
           else { hesabLinkBtn.hidden = true; }
         }
       }
@@ -974,6 +1023,31 @@
     const code = (window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(order.status) : order.status;
     return Object.assign({}, order, { status: orderStatusText(code), statusCode: code });
   }
+  function isNormalDeliveryOrder(o) {
+    const d = (o && o.delivery) || {};
+    return d.method === "deliver" && String(d.time || "normal") !== "urgent";
+  }
+  /** Client mirror of server cancel window (approvedAt + 2h for normal delivery). */
+  function orderCancelUi(o) {
+    const code = (o && (o.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status))) || "";
+    if (code === "new") return { canCancel: true, remainingMs: null, deadline: null };
+    if (code === "dispatched" || code === "delivered") return { canCancel: false, remainingMs: 0, deadline: o.cancelDeadline || null };
+    if (code !== "confirmed" || !isNormalDeliveryOrder(o)) return { canCancel: false, remainingMs: 0, deadline: null };
+    let deadline = Number(o.cancelDeadline) || 0;
+    if (!deadline && o.approvedAt) deadline = Number(o.approvedAt) + 2 * 60 * 60 * 1000;
+    if (!deadline) return { canCancel: false, remainingMs: 0, deadline: null };
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) return { canCancel: false, remainingMs: 0, deadline: deadline };
+    return { canCancel: true, remainingMs: remainingMs, deadline: deadline };
+  }
+  function formatCancelCountdown(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return pad(h) + ":" + pad(m) + ":" + pad(sec);
+  }
   function orderSummaryText(order) {
     const lines = order.items.map((it) => {
       const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
@@ -1059,8 +1133,23 @@
     closeCart(); openOrders();
   }
   // Actually place the order using the currently selected payment method.
-  let customerLocation = null;
   function finalizeOrder(customer, delivery) {
+    if (!requireCheckoutLogin()) {
+      closeCart();
+      openAcct();
+      showToast(t("co.loginRequired"));
+      return null;
+    }
+    if (apiOnline && window.MAHOApi && !MAHOApi.getToken("user")) {
+      closeCart();
+      openAcct();
+      showToast(t("co.loginRequired"));
+      return null;
+    }
+    if (recvMethod === "deliver" && (!deliveryAllowed || beyondDeliveryMax())) {
+      if ($("#coMsg")) $("#coMsg").textContent = deliveryBlockMsg() || t("co.outOfRange").replace("{km}", toDigits(currentKm())).replace("{max}", toDigits(deliveryMaxKm()));
+      return null;
+    }
     if (payMethod === "hesab") {
       const h = hesabInfo();
       if (h.enabled === false) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
@@ -1088,7 +1177,6 @@
           customer: customer,
           payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
           delivery: delivery,
-          guest: !!( $("#co_guest") && $("#co_guest").checked && !getSession() ),
           customerLocation: customerLocation,
           deliveryNote: customer.note || "",
           idempotencyKey: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10),
@@ -1136,81 +1224,63 @@
   const placeOrderBtn = $("#placeOrder");
   if (placeOrderBtn) placeOrderBtn.addEventListener("click", () => {
     if (!CART.length) { showToast(t("cart.emptyToast")); return; }
+    if (!requireCheckoutLogin()) {
+      closeCart();
+      openAcct();
+      showToast(t("co.loginRequired"));
+      return;
+    }
     const f = readCheckout();
     if (!f.nm || !f.ph || (recvMethod === "deliver" && !f.ad)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.err"); return; }
+    if (recvMethod === "deliver" && !deliveryEnabled()) { if ($("#coMsg")) $("#coMsg").textContent = t("co.deliveryDisabled"); return; }
     const delBlock = deliveryBlockMsg(); if (delBlock) { if ($("#coMsg")) $("#coMsg").textContent = delBlock; return; }
     if ($("#coMsg")) $("#coMsg").textContent = "";
     const s = getSession();
     const customer = { name: f.nm, phone: f.ph, address: f.ad, addr: f.addrParts, note: f.note, email: f.email, customerNo: (s && s.customerNo) || "" };
     const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee(), timeslot: f.ts.label, timeslotKey: f.ts.key };
-
-    // Guest wants to create an account (password provided, not logged in) -> verify by email code first.
-    const guestMode = $("#co_guest") ? $("#co_guest").checked : true;
-    const pass = ($("#co_pass") && $("#co_pass").value.trim()) || "";
-    if (!s && pass && !guestMode) {
-      if (!emailOk(f.email)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctNeedEmail"); return; }
-      if (apiOnline && window.MAHOApi) {
-        pendingCheckoutAccount = { name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery, viaApi: true };
-        const box = $("#coVerifyBox"); if (box) box.hidden = false;
-        const vm = $("#coVerifyMsg");
-        MAHOApi.register({ name: f.nm, phone: f.ph, email: f.email, address: f.ad, addr: f.addrParts, password: pass }).then((res) => {
-          pendingCheckoutAccount.devCode = res.devCode || "";
-          if (vm) { vm.className = "qv-msg ok"; vm.textContent = res.devCode ? t("acct.demoNote").replace("{code}", res.devCode) : t("co.codeSentEmail"); }
-          const ce = $("#co_acct_code"); if (ce) ce.focus();
-        }).catch((err) => {
-          if (vm) { vm.className = "qv-msg"; vm.textContent = (err && err.status === 409) ? t("co.acctExists") : ((err && err.message) || t("acct.sendFail")); }
-        });
-        return;
-      }
-      if (getUsers().some((u) => (u.email || u.id || "").toLowerCase() === f.email.toLowerCase())) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctExists"); return; }
-      const code = genCode();
-      pendingCheckoutAccount = { code: code, name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery };
-      const box = $("#coVerifyBox"); if (box) box.hidden = false;
-      const vm = $("#coVerifyMsg");
-      sendCode(f.email, f.nm, code).then((res) => {
-        if (vm) { vm.className = "qv-msg ok"; vm.textContent = res.sent ? t("co.codeSentEmail") : t("acct.demoNote").replace("{code}", code); }
-        const ce = $("#co_acct_code"); if (ce) ce.focus();
-      }).catch(() => { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.sendFail"); } });
-      return;
-    }
     finalizeOrder(customer, delivery);
   });
   const coVerifyBtn = $("#coVerifyBtn");
   if (coVerifyBtn) coVerifyBtn.addEventListener("click", () => {
-    if (!pendingCheckoutAccount) return;
-    const entered = toEnDigits(($("#co_acct_code") && $("#co_acct_code").value || "").trim()).replace(/[^0-9]/g, "");
-    const vm = $("#coVerifyMsg");
-    const p = pendingCheckoutAccount;
-    const finishLocal = (customerNo) => {
-      const customer = Object.assign({}, p.customer, { customerNo: customerNo });
-      pendingCheckoutAccount = null;
-      if ($("#co_acct_code")) $("#co_acct_code").value = "";
-      if ($("#co_pass")) $("#co_pass").value = "";
-      const box = $("#coVerifyBox"); if (box) box.hidden = true;
-      renderAccount();
-      showToast(t("co.acctCreated").replace("{no}", customerNo));
-      finalizeOrder(customer, p.delivery);
-    };
-    if (p.viaApi && window.MAHOApi) {
-      MAHOApi.verify({ email: p.email, code: entered }).then((res) => {
-        const u = res.user || {};
-        setSession(sessionFromApiUser(u, res.token));
-        finishLocal(u.customerNo || "");
-      }).catch(() => { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } });
-      return;
-    }
-    if (entered !== pendingCheckoutAccount.code) { if (vm) { vm.className = "qv-msg"; vm.textContent = t("acct.badCode"); } return; }
-    const customerNo = createGuestAccount(p);
-    finishLocal(customerNo);
+    /* Account creation during checkout removed — login required before checkout */
+    if ($("#coVerifyMsg")) { $("#coVerifyMsg").className = "qv-msg"; $("#coVerifyMsg").textContent = t("co.loginRequired"); }
   });
 
   /* My Orders */
   const ordersOverlay = $("#ordersOverlay");
   let barcodeSeq = 0;
+  let cancelCountdownTimer = null;
+  function stopCancelCountdown() {
+    if (cancelCountdownTimer) { clearInterval(cancelCountdownTimer); cancelCountdownTimer = null; }
+  }
+  function tickCancelCountdowns() {
+    const list = $("#ordersList"); if (!list) return;
+    list.querySelectorAll("[data-cancel-deadline]").forEach((el) => {
+      const deadline = Number(el.getAttribute("data-cancel-deadline")) || 0;
+      const left = deadline - Date.now();
+      const timeEl = el.querySelector(".cancel-countdown-time");
+      const btn = el.querySelector("[data-cancel]");
+      if (left <= 0) {
+        if (timeEl) timeEl.textContent = t("orders.cancelWindowDone");
+        if (btn) { btn.disabled = true; btn.setAttribute("hidden", ""); btn.removeAttribute("data-cancel"); }
+        el.removeAttribute("data-cancel-deadline");
+        return;
+      }
+      if (timeEl) timeEl.textContent = formatCancelCountdown(left);
+    });
+    if (!list.querySelector("[data-cancel-deadline]")) stopCancelCountdown();
+  }
+  function startCancelCountdown() {
+    stopCancelCountdown();
+    tickCancelCountdowns();
+    if ($("#ordersList") && $("#ordersList").querySelector("[data-cancel-deadline]")) {
+      cancelCountdownTimer = setInterval(tickCancelCountdowns, 1000);
+    }
+  }
   function renderOrders() {
     const list = $("#ordersList"); if (!list) return;
     const paint = (orders) => {
-      if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+      if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; stopCancelCountdown(); return; }
       const pending = [];
       list.innerHTML = orders.map((o) => {
         const display = withApiOrderStatus(o);
@@ -1232,13 +1302,28 @@
         const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
         const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
-        const closed = code === "cancelled" || code === "return_requested" || o.status === t("status.cancelled") || o.status === t("status.returnReq");
-        const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
+        const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
+        const canCancel = !!cancelUi.canCancel;
+        const canReturn = code === "delivered";
+        let cancelMeta = "";
+        if (canCancel && cancelUi.deadline) {
+          cancelMeta = `<div class="cancel-countdown note" style="margin-top:6px">${t("orders.cancelCountdown")} <span class="cancel-countdown-time" dir="ltr">${formatCancelCountdown(cancelUi.remainingMs)}</span></div>`;
+        }
+        let actions = "";
+        if (canCancel || canReturn || cancelMeta) {
+          actions = `<div class="order-actions"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>${cancelMeta}${canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : ""}${canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : ""}</div>`;
+        }
         let hesabForm = "";
         if (o.payment === "hesab" && o.paymentStatus !== "payment_confirmed") {
           const ps = (window.MAHOApi && MAHOApi.statusLabel) ? MAHOApi.statusLabel(o.paymentStatus || "awaiting_payment", LANG) : (o.paymentStatus || "");
-          hesabForm = `<div class="hesab-receipt" data-oid="${o.id}" style="margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--cream,#fbf8f1)">
-            <div class="note" style="font-weight:800;margin-bottom:6px">${t("pay.hesab")} — ${ps}</div>
+          const submitted = !!(o.hesabReceipt || (o.hesabReceipts && o.hesabReceipts.length) || o.paymentStatus === "receipt_submitted" || o.paymentStatus === "under_review");
+          const hist = Array.isArray(o.hesabReceipts) ? o.hesabReceipts : (o.hesabReceipt ? [o.hesabReceipt] : []);
+          const histHtml = hist.length ? `<div class="note" style="margin-top:8px;text-align:start"><b>${t("pay.hesabHistory")}</b><ul style="margin:6px 0 0;padding-inline-start:18px">${hist.map((r) => {
+            const when = r.submittedAt || r.at || r.date || "";
+            const whenStr = when ? new Date(when).toLocaleString(LANG === "en" ? "en-US" : "fa-AF") : "";
+            return `<li>${escHtml(r.txnId || "—")}${r.amount != null && r.amount !== "" ? " · " + escHtml(String(r.amount)) : ""}${whenStr ? " · " + whenStr : ""}</li>`;
+          }).join("")}</ul></div>` : "";
+          const formInner = `<div class="hr-form" ${submitted ? "hidden" : ""}>
             <label class="note">${t("pay.txnId") || "نمبر تراکنش"}</label>
             <input class="ctrl hr-txn" dir="ltr" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
             <label class="note">${t("pay.paidAmount") || "مبلغ پرداخت‌شده"}</label>
@@ -1248,6 +1333,16 @@
             <label class="note">${t("pay.noteOpt") || "یادداشت (اختیاری)"}</label>
             <input class="ctrl hr-note" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
             <button type="button" class="btn btn-gold btn-sm" data-hesab-submit="${o.id}">${t("pay.submitReceipt") || "ارسال رسید پرداخت"}</button>
+          </div>`;
+          const thanks = submitted ? `<div class="hr-thanks">
+            <p class="note" style="font-weight:700;margin:8px 0">${t("pay.hesabThanks")}</p>
+            <button type="button" class="btn btn-outline btn-sm" data-hesab-resubmit="${o.id}">${t("pay.hesabResubmit")}</button>
+          </div>` : "";
+          hesabForm = `<div class="hesab-receipt" data-oid="${o.id}" style="margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--cream,#fbf8f1)">
+            <div class="note" style="font-weight:800;margin-bottom:6px">${t("pay.hesab")} — ${ps}</div>
+            ${thanks}
+            ${formInner}
+            ${histHtml}
             <p class="qv-msg hr-msg" style="min-height:18px"></p>
           </div>`;
         }
@@ -1269,6 +1364,7 @@
       if (typeof JsBarcode !== "undefined") {
         pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
       }
+      startCancelCountdown();
     };
     if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
       MAHOApi.myOrders().then((res) => {
@@ -1281,13 +1377,23 @@
     paint(getOrders());
   }
   function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
-  function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
+  function closeOrders() { stopCancelCountdown(); if (ordersOverlay) ordersOverlay.classList.remove("show"); }
   const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersBtnAll = $("#ordersBtnAll"); if (ordersBtnAll) ordersBtnAll.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
   if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
   const ordersListEl = $("#ordersList");
   if (ordersListEl) ordersListEl.addEventListener("click", (e) => {
+    const resubmitBtn = e.target.closest("[data-hesab-resubmit]");
+    if (resubmitBtn) {
+      const box = resubmitBtn.closest(".hesab-receipt");
+      if (!box) return;
+      const thanks = box.querySelector(".hr-thanks");
+      const form = box.querySelector(".hr-form");
+      if (thanks) thanks.hidden = true;
+      if (form) form.hidden = false;
+      return;
+    }
     const hesabBtn = e.target.closest("[data-hesab-submit]");
     if (hesabBtn) {
       const id = hesabBtn.getAttribute("data-hesab-submit");
@@ -1310,8 +1416,8 @@
         if (i >= 0) list[i] = Object.assign({}, list[i], ord);
         else list.unshift(ord);
         saveOrders(list);
-        if (msg) { msg.className = "qv-msg ok"; msg.textContent = t("pay.receiptOk"); }
-        showToast(t("pay.receiptOk"));
+        if (msg) { msg.className = "qv-msg ok"; msg.textContent = t("pay.hesabThanks"); }
+        showToast(t("pay.hesabThanks"));
         setTimeout(renderOrders, 600);
       };
       const fail = (err) => { if (msg) { msg.className = "qv-msg"; msg.textContent = (err && err.message) || t("acct.sendFail"); } };
@@ -1342,14 +1448,35 @@
       applyLocal(o);
     } else if (returnBtn) {
       const id = returnBtn.getAttribute("data-return");
-      if (!confirm(t("orders.confirmReturn"))) return;
+      const reason = prompt(t("orders.returnReason"));
+      if (reason == null) return;
+      if (!String(reason).trim()) { showToast(t("orders.returnNeedReason")); return; }
+      const details = prompt(t("orders.returnDetails")) || "";
+      const methodChoice = prompt(t("orders.returnMethod") + "\n1 = " + t("orders.returnPickupStore") + "\n2 = " + t("orders.returnPickupCustomer"), "1");
+      if (methodChoice == null) return;
+      const method = String(methodChoice).trim() === "2" ? "pickup_customer" : "pickup_store";
+      const body = { reason: String(reason).trim(), details: String(details).trim(), method: method };
+      if (method === "pickup_customer" && customerLocation) {
+        body.lat = customerLocation.lat;
+        body.lng = customerLocation.lng;
+      }
       const applyLocal = () => {
-        const orders = getOrders(); const o = orders.find((x) => x.id === id); if (o) { o.status = t("status.returnReq"); saveOrders(orders); }
-        window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(t("orders.returnMsg") + " — " + t("order.number") + ": " + id), "_blank");
+        const orders = getOrders(); const o = orders.find((x) => x.id === id); if (o) { o.status = t("status.returnReq"); o.returnRequest = body; saveOrders(orders); }
+        showToast(t("orders.returnMsg"));
         renderOrders();
       };
-      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
-        MAHOApi.returnOrder(id).then(() => applyLocal()).catch(() => applyLocal());
+      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user") && MAHOApi.returnRequest) {
+        MAHOApi.returnRequest(id, body).then((res) => {
+          const ord = res.order || res;
+          const list = getOrders();
+          const i = list.findIndex((x) => x.id === id);
+          if (i >= 0) list[i] = Object.assign({}, list[i], ord);
+          saveOrders(list);
+          showToast(t("orders.returnMsg"));
+          renderOrders();
+        }).catch((err) => {
+          showToast((err && err.message) || t("acct.sendFail"));
+        });
         return;
       }
       applyLocal();
@@ -2127,6 +2254,7 @@
     applyHero();
     applyContent();
     formatCounters();
+    applyDeliveryAvailability();
   }
 
   function loadPublishedCatalog() {
@@ -2181,38 +2309,83 @@
   const useMyLocBtn = $("#useMyLocBtn");
   if (useMyLocBtn) useMyLocBtn.addEventListener("click", () => {
     const info = $("#locInfo");
+    const di = $("#distInfo");
     if (!navigator.geolocation) {
-      if (info) { info.hidden = false; info.textContent = "موقعیت‌یاب در این دستگاه موجود نیست — آدرس را دستی وارد کنید."; }
+      if (info) { info.hidden = false; info.textContent = t("co.geoFail"); }
       return;
     }
-    if (info) { info.hidden = false; info.textContent = "در حال دریافت موقعیت…"; }
+    if (info) { info.hidden = false; info.textContent = LANG === "en" ? "Getting location…" : "در حال دریافت موقعیت…"; }
+    useMyLocBtn.disabled = true;
     navigator.geolocation.getCurrentPosition((pos) => {
       customerLocation = {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
         accuracy: pos.coords.accuracy,
       };
-      const url = "https://www.google.com/maps?q=" + encodeURIComponent(customerLocation.lat + "," + customerLocation.lng);
-      if (info) info.textContent = "موقعیت ذخیره شد (دقت ≈ " + Math.round(customerLocation.accuracy || 0) + "m)";
+      const mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(customerLocation.lat + "," + customerLocation.lng);
+      if (info) info.textContent = (LANG === "en" ? "Location saved (accuracy ≈ " : "موقعیت ذخیره شد (دقت ≈ ") + Math.round(customerLocation.accuracy || 0) + "m)";
       const prev = $("#locPreview"); if (prev) prev.hidden = false;
-      const a = $("#locMapsLink"); if (a) a.href = url;
-      /* also fill distance if store coords exist */
-      const km = nearestStoreKm(customerLocation.lat, customerLocation.lng);
-      if (km != null && $("#co_km")) { $("#co_km").value = String(Math.round(km * 10) / 10); distanceKm = km; updateCheckoutTotals(); }
+      const a = $("#locMapsLink"); if (a) a.href = mapsUrl;
+      const applyCheck = (res) => {
+        useMyLocBtn.disabled = false;
+        if (!res) return;
+        if (res.km != null) distanceKm = res.km;
+        deliveryAllowed = !(res.error === "out_of_range" || res.ok === false);
+        if (di) {
+          di.hidden = false;
+          if (res.error === "out_of_range" || res.ok === false) {
+            di.textContent = t("co.outOfRange").replace("{km}", toDigits(res.km != null ? res.km : currentKm())).replace("{max}", toDigits(res.maxKm != null ? res.maxKm : deliveryMaxKm()));
+          } else if (res.km != null) {
+            di.textContent = t("co.deliveryOk").replace("{km}", toDigits(res.km));
+          } else {
+            di.textContent = t("co.distKm") + ": " + toDigits(currentKm()) + " " + t("co.km");
+          }
+        }
+        updateCheckoutTotals();
+      };
+      if (window.MAHOApi && MAHOApi.checkDelivery) {
+        MAHOApi.checkDelivery({ lat: customerLocation.lat, lng: customerLocation.lng }).then(applyCheck).catch((err) => {
+          useMyLocBtn.disabled = false;
+          const km = nearestStoreKm(customerLocation.lat, customerLocation.lng);
+          if (km != null) {
+            distanceKm = km;
+            const mx = deliveryMaxKm();
+            deliveryAllowed = !(mx > 0 && km > mx);
+            applyCheck({ ok: deliveryAllowed, km: Math.round(km * 100) / 100, maxKm: mx, error: deliveryAllowed ? null : "out_of_range" });
+          } else if (di) {
+            di.hidden = false;
+            di.textContent = (err && err.message) || t("co.noStoreCoords");
+          }
+          updateCheckoutTotals();
+        });
+      } else {
+        const km = nearestStoreKm(customerLocation.lat, customerLocation.lng);
+        if (km != null) {
+          distanceKm = km;
+          const mx = deliveryMaxKm();
+          deliveryAllowed = !(mx > 0 && km > mx);
+          applyCheck({ ok: deliveryAllowed, km: Math.round(km * 100) / 100, maxKm: mx, error: deliveryAllowed ? null : "out_of_range" });
+        } else {
+          useMyLocBtn.disabled = false;
+          if (di) { di.hidden = false; di.textContent = t("co.noStoreCoords"); }
+        }
+      }
     }, () => {
-      if (info) { info.hidden = false; info.textContent = "اجازهٔ موقعیت داده نشد — می‌توانید آدرس را دستی وارد کنید."; }
+      useMyLocBtn.disabled = false;
+      if (info) { info.hidden = false; info.textContent = t("co.geoFail"); }
       customerLocation = null;
+      deliveryAllowed = true;
     }, { enableHighAccuracy: true, timeout: 12000 });
   });
   if ($("#locClearBtn")) $("#locClearBtn").onclick = () => {
     customerLocation = null;
+    distanceKm = null;
+    deliveryAllowed = true;
     if ($("#locPreview")) $("#locPreview").hidden = true;
     if ($("#locInfo")) { $("#locInfo").hidden = true; $("#locInfo").textContent = ""; }
+    if ($("#distInfo")) { $("#distInfo").hidden = true; $("#distInfo").textContent = ""; }
+    updateCheckoutTotals();
   };
-  if ($("#co_guest")) $("#co_guest").addEventListener("change", () => {
-    const wrap = $("#guestAcctWrap");
-    if (wrap) wrap.hidden = $("#co_guest").checked;
-  });
 
   if (window.MAHOApi) {
     MAHOApi.probe().then((res) => {
@@ -2220,6 +2393,7 @@
       if (!apiOnline) return loadPublishedCatalog();
       return MAHOApi.getCatalog().then((d) => {
         if (d && Array.isArray(d.products)) refreshFromCatalog(d);
+        applyDeliveryAvailability();
         startStockPolling();
         syncStockFromApi();
       }).catch(() => loadPublishedCatalog());

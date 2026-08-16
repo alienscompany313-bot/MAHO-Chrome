@@ -2,6 +2,8 @@
 /**
  * Extra additive migrate steps — never wipes products/orders/users/uploads.
  */
+const { ensurePos } = require("./pos");
+
 function extendMigrate(data) {
   if (!data || typeof data !== "object") return false;
   let changed = false;
@@ -10,6 +12,8 @@ function extendMigrate(data) {
   data.passwordResets = data.passwordResets || [];
   data.pendingSignups = data.pendingSignups || [];
   data.idempotencyKeys = data.idempotencyKeys || {};
+  if (!Array.isArray(data.staff)) { data.staff = []; changed = true; }
+  if (ensurePos(data)) changed = true;
 
   /* category section texts (homepage) */
   if (!data.config.sectionCats || typeof data.config.sectionCats !== "object") {
@@ -49,11 +53,22 @@ function extendMigrate(data) {
   data.config.hesab = Object.assign({}, hesabDefaults, h);
   if (JSON.stringify(data.config.hesab) !== before) changed = true;
 
+  /* delivery defaults */
+  if (!data.config.delivery || typeof data.config.delivery !== "object") {
+    data.config.delivery = { enabled: true, perKm: 20, freeKm: 0, urgentFee: 50, minOrder: 0, maxKm: 0, timeslots: [] };
+    changed = true;
+  }
+
   /* normalize legacy orders */
   if (Array.isArray(data.orders)) {
     data.orders.forEach((o) => {
       if (!o || typeof o !== "object") return;
       if (!o.statusHistory) { o.statusHistory = []; changed = true; }
+      if (!Array.isArray(o.hesabReceipts)) {
+        o.hesabReceipts = [];
+        if (o.hesabReceipt) { o.hesabReceipts.push(Object.assign({}, o.hesabReceipt, { latest: true })); }
+        changed = true;
+      }
       if (o.guest == null && !o.userId) { o.guest = true; changed = true; }
       if (o.status === "pending") { o.status = "new"; changed = true; }
       if (o.status === "awaiting_payment") {
@@ -61,14 +76,19 @@ function extendMigrate(data) {
         if (!o.paymentStatus) o.paymentStatus = "awaiting_payment";
         changed = true;
       }
+      if (o.status === "returned") { o.status = "return_completed"; changed = true; }
       if (!o.paymentStatus && (o.payment === "hesab" || o.payment === "bank" || o.payment === "card")) {
         o.paymentStatus = "awaiting_payment";
+        changed = true;
+      }
+      if (o.returnRequest && !o.returnRequest.method) {
+        o.returnRequest.method = "pickup_store";
         changed = true;
       }
     });
   }
 
-  /* users: status field */
+  /* users: status + soft delete fields */
   if (Array.isArray(data.users)) {
     data.users.forEach((u) => {
       if (!u) return;
@@ -76,6 +96,7 @@ function extendMigrate(data) {
         u.status = u.verified === false ? "pending" : "active";
         changed = true;
       }
+      if (u.deletedAt === undefined) { u.deletedAt = null; changed = true; }
     });
   }
 
