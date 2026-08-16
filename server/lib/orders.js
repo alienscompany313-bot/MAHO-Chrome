@@ -6,6 +6,12 @@
 const ORDER_FLOW = ["new", "confirmed", "dispatched", "delivered"];
 const RETURN_FLOW = ["return_requested", "return_approved", "return_rejected", "return_completed"];
 const TERMINAL = new Set(["delivered", "cancelled", "return_completed", "return_rejected"]);
+/** Normal delivery: customer may cancel for 2h after admin approval (overridable for tests). */
+const CUSTOMER_CANCEL_WINDOW_MS = (() => {
+  const n = parseInt(process.env.CUSTOMER_CANCEL_WINDOW_MS || "", 10);
+  if (Number.isFinite(n) && n > 0) return n;
+  return 2 * 60 * 60 * 1000;
+})();
 
 const LEGACY_MAP = {
   pending: "new",
@@ -33,17 +39,72 @@ function normalizeOrderStatus(s) {
   return v;
 }
 
+/** Delivery عادی = method deliver and not urgent */
+function isNormalDeliveryOrder(order) {
+  const d = (order && order.delivery) || {};
+  if (d.method !== "deliver") return false;
+  return String(d.time || "normal") !== "urgent";
+}
+
+/**
+ * On admin confirm: store approvedAt + cancelDeadline (approvedAt + 2h) for normal delivery.
+ */
+function applyApprovedCancelWindow(order, at) {
+  if (!order || typeof order !== "object") return;
+  const ts = typeof at === "number" ? at : Date.now();
+  order.approvedAt = ts;
+  if (isNormalDeliveryOrder(order)) {
+    order.cancelDeadline = ts + CUSTOMER_CANCEL_WINDOW_MS;
+  } else {
+    order.cancelDeadline = null;
+  }
+}
+
+/**
+ * Server-side cancel eligibility for customers (also drives UI countdown).
+ * @returns {{ ok: boolean, error?: string, remainingMs?: number|null, cancelDeadline?: number|null }}
+ */
+function customerCancelInfo(order, now) {
+  if (!order || typeof order !== "object") {
+    return { ok: false, error: "not_found" };
+  }
+  const t = typeof now === "number" ? now : Date.now();
+  const st = normalizeOrderStatus(order.status);
+  if (st === "new") {
+    return { ok: true, remainingMs: null, cancelDeadline: order.cancelDeadline || null };
+  }
+  if (st === "dispatched" || st === "delivered") {
+    return { ok: false, error: "customer_cannot_cancel_shipped", remainingMs: 0, cancelDeadline: order.cancelDeadline || null };
+  }
+  if (st !== "confirmed") {
+    return { ok: false, error: "customer_cannot_cancel", remainingMs: 0, cancelDeadline: order.cancelDeadline || null };
+  }
+  if (!isNormalDeliveryOrder(order)) {
+    return { ok: false, error: "customer_cannot_cancel_after_confirm", remainingMs: 0, cancelDeadline: null };
+  }
+  const approvedAt = Number(order.approvedAt) || 0;
+  let deadline = Number(order.cancelDeadline) || 0;
+  if (!deadline && approvedAt) deadline = approvedAt + CUSTOMER_CANCEL_WINDOW_MS;
+  if (!deadline) {
+    return { ok: false, error: "customer_cannot_cancel_after_confirm", remainingMs: 0, cancelDeadline: null };
+  }
+  if (t >= deadline) {
+    return { ok: false, error: "cancel_window_expired", remainingMs: 0, cancelDeadline: deadline };
+  }
+  return { ok: true, remainingMs: deadline - t, cancelDeadline: deadline };
+}
+
 function canTransition(from, to, { force, actor } = {}) {
   const a = normalizeOrderStatus(from);
   const b = normalizeOrderStatus(to);
   if (a === b) return { ok: true, noop: true };
   if (force) return { ok: true };
 
-  /* customer cancel: only before confirmed */
+  /* customer cancel: new always; confirmed allowed here — window checked via customerCancelInfo */
   if (b === "cancelled") {
     if (actor === "customer") {
-      if (a === "new") return { ok: true };
-      return { ok: false, error: "customer_cannot_cancel_after_confirm" };
+      if (a === "new" || a === "confirmed") return { ok: true };
+      return { ok: false, error: "customer_cannot_cancel_shipped" };
     }
     if (a === "delivered" || a === "return_completed") return { ok: false, error: "cannot_cancel_delivered" };
     if (RETURN_FLOW.indexOf(a) >= 0 && a !== "return_requested") return { ok: false, error: "cannot_cancel_return" };
@@ -107,8 +168,12 @@ function allowedAdminActions(status) {
   return actions;
 }
 
-function customerCanCancel(status) {
-  return normalizeOrderStatus(status) === "new";
+/** @deprecated Prefer customerCancelInfo(order). Accepts order object or legacy status string. */
+function customerCanCancel(orderOrStatus, now) {
+  if (orderOrStatus && typeof orderOrStatus === "object") {
+    return customerCancelInfo(orderOrStatus, now).ok;
+  }
+  return normalizeOrderStatus(orderOrStatus) === "new";
 }
 
 function customerCanReturn(status) {
@@ -139,10 +204,14 @@ function statusLabelFa(code) {
 module.exports = {
   ORDER_FLOW,
   RETURN_FLOW,
+  CUSTOMER_CANCEL_WINDOW_MS,
   normalizeOrderStatus,
   canTransition,
   appendHistory,
   allowedAdminActions,
+  isNormalDeliveryOrder,
+  applyApprovedCancelWindow,
+  customerCancelInfo,
   customerCanCancel,
   customerCanReturn,
   statusLabelFa,

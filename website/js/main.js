@@ -165,6 +165,7 @@
       "orders.cancel": "لغو سفارش", "orders.return": "درخواست برگشت", "orders.code": "کود کالا",
       "orders.confirmCancel": "این سفارش لغو شود؟", "orders.confirmReturn": "درخواست برگشت این سفارش ثبت شود؟",
       "orders.cancelMsg": "سفارش لغو شد", "orders.returnMsg": "درخواست برگشت کالا",
+      "orders.cancelCountdown": "مهلت لغو باقی‌مانده:", "orders.cancelWindowDone": "مهلت لغو به پایان رسید",
       "acct.custNo": "نمبر مشتری", "acct.profile": "مشخصات من", "acct.savedInfo": "معلومات پرداخت",
       "acct.newPass": "پسورد جدید (برای تغییر پر کنید)", "acct.saveProfile": "ذخیره تغییرات",
       "acct.saved": "تغییرات ذخیره شد ✓",
@@ -331,6 +332,7 @@
       "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
       "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
       "orders.cancelMsg": "Order cancelled", "orders.returnMsg": "Return request",
+      "orders.cancelCountdown": "Cancel window remaining:", "orders.cancelWindowDone": "Cancel window has ended",
       "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
       "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
       "acct.saved": "Changes saved ✓",
@@ -1021,6 +1023,31 @@
     const code = (window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(order.status) : order.status;
     return Object.assign({}, order, { status: orderStatusText(code), statusCode: code });
   }
+  function isNormalDeliveryOrder(o) {
+    const d = (o && o.delivery) || {};
+    return d.method === "deliver" && String(d.time || "normal") !== "urgent";
+  }
+  /** Client mirror of server cancel window (approvedAt + 2h for normal delivery). */
+  function orderCancelUi(o) {
+    const code = (o && (o.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status))) || "";
+    if (code === "new") return { canCancel: true, remainingMs: null, deadline: null };
+    if (code === "dispatched" || code === "delivered") return { canCancel: false, remainingMs: 0, deadline: o.cancelDeadline || null };
+    if (code !== "confirmed" || !isNormalDeliveryOrder(o)) return { canCancel: false, remainingMs: 0, deadline: null };
+    let deadline = Number(o.cancelDeadline) || 0;
+    if (!deadline && o.approvedAt) deadline = Number(o.approvedAt) + 2 * 60 * 60 * 1000;
+    if (!deadline) return { canCancel: false, remainingMs: 0, deadline: null };
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) return { canCancel: false, remainingMs: 0, deadline: deadline };
+    return { canCancel: true, remainingMs: remainingMs, deadline: deadline };
+  }
+  function formatCancelCountdown(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return pad(h) + ":" + pad(m) + ":" + pad(sec);
+  }
   function orderSummaryText(order) {
     const lines = order.items.map((it) => {
       const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
@@ -1222,10 +1249,38 @@
   /* My Orders */
   const ordersOverlay = $("#ordersOverlay");
   let barcodeSeq = 0;
+  let cancelCountdownTimer = null;
+  function stopCancelCountdown() {
+    if (cancelCountdownTimer) { clearInterval(cancelCountdownTimer); cancelCountdownTimer = null; }
+  }
+  function tickCancelCountdowns() {
+    const list = $("#ordersList"); if (!list) return;
+    list.querySelectorAll("[data-cancel-deadline]").forEach((el) => {
+      const deadline = Number(el.getAttribute("data-cancel-deadline")) || 0;
+      const left = deadline - Date.now();
+      const timeEl = el.querySelector(".cancel-countdown-time");
+      const btn = el.querySelector("[data-cancel]");
+      if (left <= 0) {
+        if (timeEl) timeEl.textContent = t("orders.cancelWindowDone");
+        if (btn) { btn.disabled = true; btn.setAttribute("hidden", ""); btn.removeAttribute("data-cancel"); }
+        el.removeAttribute("data-cancel-deadline");
+        return;
+      }
+      if (timeEl) timeEl.textContent = formatCancelCountdown(left);
+    });
+    if (!list.querySelector("[data-cancel-deadline]")) stopCancelCountdown();
+  }
+  function startCancelCountdown() {
+    stopCancelCountdown();
+    tickCancelCountdowns();
+    if ($("#ordersList") && $("#ordersList").querySelector("[data-cancel-deadline]")) {
+      cancelCountdownTimer = setInterval(tickCancelCountdowns, 1000);
+    }
+  }
   function renderOrders() {
     const list = $("#ordersList"); if (!list) return;
     const paint = (orders) => {
-      if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; return; }
+      if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; stopCancelCountdown(); return; }
       const pending = [];
       list.innerHTML = orders.map((o) => {
         const display = withApiOrderStatus(o);
@@ -1247,11 +1302,16 @@
         const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
         const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
-        const canCancel = code === "new";
+        const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
+        const canCancel = !!cancelUi.canCancel;
         const canReturn = code === "delivered";
+        let cancelMeta = "";
+        if (canCancel && cancelUi.deadline) {
+          cancelMeta = `<div class="cancel-countdown note" style="margin-top:6px">${t("orders.cancelCountdown")} <span class="cancel-countdown-time" dir="ltr">${formatCancelCountdown(cancelUi.remainingMs)}</span></div>`;
+        }
         let actions = "";
-        if (canCancel || canReturn) {
-          actions = `<div class="order-actions">${canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : ""}${canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : ""}</div>`;
+        if (canCancel || canReturn || cancelMeta) {
+          actions = `<div class="order-actions"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>${cancelMeta}${canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : ""}${canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : ""}</div>`;
         }
         let hesabForm = "";
         if (o.payment === "hesab" && o.paymentStatus !== "payment_confirmed") {
@@ -1304,6 +1364,7 @@
       if (typeof JsBarcode !== "undefined") {
         pending.forEach((b) => { try { JsBarcode("#" + b.id, b.code, { format: "CODE128", width: 1.6, height: 38, fontSize: 12, margin: 4 }); } catch (_) {} });
       }
+      startCancelCountdown();
     };
     if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
       MAHOApi.myOrders().then((res) => {
@@ -1316,7 +1377,7 @@
     paint(getOrders());
   }
   function openOrders() { renderOrders(); if (ordersOverlay) ordersOverlay.classList.add("show"); }
-  function closeOrders() { if (ordersOverlay) ordersOverlay.classList.remove("show"); }
+  function closeOrders() { stopCancelCountdown(); if (ordersOverlay) ordersOverlay.classList.remove("show"); }
   const ordersBtn = $("#ordersBtn"); if (ordersBtn) ordersBtn.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersBtnAll = $("#ordersBtnAll"); if (ordersBtnAll) ordersBtnAll.addEventListener("click", () => { closeAcct(); openOrders(); });
   const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);

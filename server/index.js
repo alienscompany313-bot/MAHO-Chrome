@@ -20,7 +20,10 @@ const {
   createRateLimiter, clientIp, sanitizeText,
 } = require("./lib/security");
 const { buildMailer } = require("./lib/email");
-const { normalizeOrderStatus, canTransition, appendHistory, allowedAdminActions, customerCanCancel, customerCanReturn } = require("./lib/orders");
+const {
+  normalizeOrderStatus, canTransition, appendHistory, allowedAdminActions,
+  customerCanCancel, customerCanReturn, customerCancelInfo, applyApprovedCancelWindow,
+} = require("./lib/orders");
 const { pushAudit } = require("./lib/audit");
 const { extendMigrate } = require("./lib/migrate-extra");
 const { mountExtra } = require("./lib/api-extra");
@@ -598,6 +601,9 @@ app.post("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
   if (check.noop) return res.json({ order: o, actions: allowedAdminActions(o.status) });
   if (prev !== "cancelled" && next === "cancelled") decStock(o.items, 1);
   o.status = next;
+  if (next === "confirmed" && prev !== "confirmed") {
+    applyApprovedCancelWindow(o);
+  }
   appendHistory(o, {
     status: next,
     paymentStatus: o.paymentStatus || null,
@@ -928,6 +934,7 @@ app.post("/api/orders", (req, res) => {
     hesabReceipts: [],
     deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
   };
+  if (order.status === "confirmed") applyApprovedCancelWindow(order);
   appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: "user", note: "ثبت سفارش" });
 
   /* decrement stock after building order */
@@ -981,8 +988,15 @@ app.post("/api/orders/:id/cancel", (req, res) => {
   const check = canTransition(o.status, "cancelled", { actor });
   if (!check.ok) return res.status(400).json({ error: check.error || "cannot_cancel" });
   if (check.noop) return res.json({ order: o });
-  if (!customerCanCancel(o.status) && actor === "customer") {
-    return res.status(400).json({ error: "customer_cannot_cancel_after_confirm" });
+  if (actor === "customer") {
+    const info = customerCancelInfo(o);
+    if (!info.ok) {
+      return res.status(400).json({
+        error: info.error || "cannot_cancel",
+        cancelDeadline: info.cancelDeadline || null,
+        remainingMs: info.remainingMs != null ? info.remainingMs : 0,
+      });
+    }
   }
   o.status = "cancelled";
   decStock(o.items, 1);
