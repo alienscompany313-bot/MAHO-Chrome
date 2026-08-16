@@ -299,7 +299,16 @@ function mountV2(app, ctx) {
   });
 
   app.get("/api/pos/sales", guard("pos"), (req, res) => {
-    res.json({ sales: (ctx.db.posSales || []).slice(0, 200) });
+    res.setHeader("Cache-Control", "no-store");
+    let list = (ctx.db.posSales || []).slice();
+    const staffId = String(req.query.staffId || "").trim();
+    const fromTs = req.query.from ? (Date.parse(req.query.from) || Number(req.query.from) || 0) : 0;
+    const toTs = req.query.to ? (Date.parse(req.query.to) || Number(req.query.to) || Date.now()) : 0;
+    if (staffId) list = list.filter((s) => s.staffId === staffId);
+    if (fromTs) list = list.filter((s) => (s.date || 0) >= fromTs);
+    if (toTs) list = list.filter((s) => (s.date || 0) <= toTs);
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
+    res.json({ sales: list.slice(0, limit) });
   });
 
   app.post("/api/pos/shift/open", guard("pos"), (req, res) => {

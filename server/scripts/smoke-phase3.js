@@ -139,7 +139,10 @@ async function main() {
       body: { items: [{ code: "T100", qty: 1 }], payment: "cash", idempotencyKey: "p3sale2" },
     });
     assert(sale2.status === 200 && sale2.data.sale.receiptNo === "POS-MAHO-000002", "serial unique");
-    ok("POS serial + staff name + oversell");
+    const filtered = await req("GET", "/api/pos/sales?staffId=" + encodeURIComponent(stOk.data.staff.id), { token: posLogin.data.token });
+    assert(filtered.status === 200 && filtered.data.sales.every((s) => s.staffId === stOk.data.staff.id), "sales filter by staff");
+    assert(filtered.data.sales.some((s) => s.receiptNo === "POS-MAHO-000001"), "filtered includes serial");
+    ok("POS serial + staff name + oversell + staff filter");
 
     /* customer + EN/FA emails */
     let captured = [];
@@ -270,7 +273,10 @@ async function main() {
       token: dLogin.data.token, body: { status: "delivered", note: "OK" },
     });
     assert(delivered.status === 200 && delivered.data.order.driverStatus === "delivered", "delivered");
-    ok("driver login, assign, status, fail reason");
+    /* proof upload without file rejected */
+    const noProof = await req("POST", "/api/driver/orders/" + did + "/proof", { token: dLogin.data.token, body: {} });
+    assert(noProof.status >= 400, "proof requires file");
+    ok("driver login, assign, status, fail reason, proof gate");
 
     const pub = await req("GET", "/api/catalog");
     assert(pub.status === 200 && Array.isArray(pub.data.config.heroSlides) && pub.data.config.heroSlides.length >= 2, "hero slides public");

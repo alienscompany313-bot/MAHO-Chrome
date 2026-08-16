@@ -442,6 +442,11 @@
       if(!lastReport){ alert("ابتدا گزارش را بارگذاری کنید"); return; }
       var r=lastReport;
       var lines=["metric,value","posSalesTotal,"+r.posSalesTotal,"posSalesCount,"+r.posSalesCount,"onlineSalesTotal,"+r.onlineSalesTotal,"posReturnsTotal,"+r.posReturnsTotal,"inventoryValue,"+r.inventoryValue];
+      lines.push("","staff,sales,count");
+      Object.keys(r.byStaff||{}).forEach(function(k){
+        var row=r.byStaff[k];
+        lines.push([JSON.stringify(k),row.sales,row.count].join(","));
+      });
       var blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
       var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-pos-report.csv"; a.click();
     };
