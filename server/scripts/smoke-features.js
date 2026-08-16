@@ -150,26 +150,79 @@ async function main() {
     assert(JSON.stringify(fg.data) === JSON.stringify(fg2.data) || (fg.data.ok && fg2.data.ok), "forgot generic");
     ok("forgot password generic");
 
-    /* guest order + location + idempotency */
+    /* guest checkout must be rejected */
+    const guestTry = await req("POST", "/api/orders", {
+      body: {
+        items: [{ name: "شال تست", qty: 1 }],
+        customer: { name: "مهمان", phone: "0700333444", email: "guest_" + Date.now() + "@example.com", address: "کابل" },
+        payment: "whatsapp",
+        delivery: { method: "pickup" },
+        guest: true,
+        idempotencyKey: "guest_" + Date.now(),
+      },
+    });
+    assert(guestTry.status === 401, "guest order rejected");
+    ok("no guest checkout");
+
+    /* member order + location + idempotency */
     const idem = "smoke_" + Date.now();
     const orderBody = {
       items: [{ name: "شال تست", qty: 1 }],
-      customer: { name: "مهمان", phone: "0700333444", email: "guest_" + Date.now() + "@example.com", address: "کابل ناحیه ۱" },
+      customer: { name: "آیدا", phone: "0700111222", email, address: "کابل ناحیه ۱" },
       payment: "hesab",
-      delivery: { method: "deliver", fee: 50 },
-      guest: true,
+      delivery: { method: "deliver", time: "normal" },
       customerLocation: { lat: 34.52, lng: 69.18, accuracy: 25 },
       idempotencyKey: idem,
     };
-    const o1 = await req("POST", "/api/orders", { body: orderBody });
-    assert(o1.status === 200 || o1.status === 201, "guest order " + o1.status + " " + JSON.stringify(o1.data));
-    assert(o1.data.order && o1.data.order.guest === true, "guest flag");
+    const o1 = await req("POST", "/api/orders", { body: orderBody, token: ulogin.data.token });
+    assert(o1.status === 200 || o1.status === 201, "member order " + o1.status + " " + JSON.stringify(o1.data));
+    assert(o1.data.order && o1.data.order.guest === false, "not guest");
     assert(o1.data.order.customerLocation && o1.data.order.customerLocation.lat === 34.52, "customer location");
     assert(o1.data.order.status === "new", "status new");
     assert(o1.data.order.paymentStatus === "awaiting_payment", "awaiting payment");
-    const o2 = await req("POST", "/api/orders", { body: orderBody });
+    const o2 = await req("POST", "/api/orders", { body: orderBody, token: ulogin.data.token });
     assert(o2.data.order.id === o1.data.order.id, "idempotency");
-    ok("guest order location idempotency");
+    ok("member order location idempotency");
+
+    /* delivery disabled */
+    await req("PUT", "/api/admin/catalog", {
+      token: adminTok,
+      body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: false, maxKm: 5, perKm: 20, freeKm: 0 } }) },
+    });
+    const delOff = await req("POST", "/api/orders", {
+      token: ulogin.data.token,
+      body: {
+        items: [{ name: "شال تست", qty: 1 }],
+        customer: { name: "آیدا", phone: "0700111222", email, address: "کابل" },
+        payment: "whatsapp",
+        delivery: { method: "deliver" },
+        customerLocation: { lat: 34.52, lng: 69.18 },
+        idempotencyKey: "deloff_" + Date.now(),
+      },
+    });
+    assert(delOff.status === 400 && delOff.data.error === "delivery_disabled", "delivery disabled rejected");
+    /* re-enable with maxKm */
+    await req("PUT", "/api/admin/catalog", {
+      token: adminTok,
+      body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 1, perKm: 20, freeKm: 0 }, hesab: catalog.config.hesab }) },
+    });
+    const far = await req("POST", "/api/orders", {
+      token: ulogin.data.token,
+      body: {
+        items: [{ name: "شال تست", qty: 1 }],
+        customer: { name: "آیدا", phone: "0700111222", email, address: "دور" },
+        payment: "whatsapp",
+        delivery: { method: "deliver" },
+        customerLocation: { lat: 35.5, lng: 70.5 },
+        idempotencyKey: "far_" + Date.now(),
+      },
+    });
+    assert(far.status === 400 && far.data.error === "out_of_delivery_range", "out of range rejected");
+    ok("delivery disabled + out of range");
+
+    /* restock product for further tests */
+    catalog.products[0].stock = 5;
+    await req("PUT", "/api/admin/catalog", { token: adminTok, body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 50, perKm: 10, freeKm: 0 } }) } });
 
     /* member order + oversell */
     const memOrder = await req("POST", "/api/orders", {
@@ -179,15 +232,14 @@ async function main() {
         customer: { name: "آیدا", phone: "0700111222", email, address: "کابل" },
         payment: "whatsapp",
         delivery: { method: "pickup" },
-        guest: false,
         idempotencyKey: "mem_" + Date.now(),
       },
     });
-    assert(memOrder.status === 200 || memOrder.status === 201, "member order");
+    assert(memOrder.status === 200 || memOrder.status === 201, "member order pickup");
     const over = await req("POST", "/api/orders", {
       token: ulogin.data.token,
       body: {
-        items: [{ name: "شال تست", qty: 5 }],
+        items: [{ name: "شال تست", qty: 99 }],
         customer: { name: "آیدا", phone: "0700111222", email, address: "کابل" },
         payment: "whatsapp",
         delivery: { method: "pickup" },
@@ -260,7 +312,66 @@ async function main() {
     assert(/افغانی/.test(captured.html) && /MAHO/.test(captured.html), "order email");
     await mail.welcome(email, { name: "آیدا", email });
     assert(!/رمز عبور شما:/.test(captured.html || "") && !/password is/i.test(captured.html || ""), "welcome no password");
+    assert(/سؤالی دارید؟/.test(captured.html || "") || /support@mahomarket.com/.test(captured.html || ""), "support contact");
     ok("email templates");
+
+    /* badges + POS + soft delete + return flow */
+    const badges = await req("GET", "/api/admin/badges/orders", { token: adminTok });
+    assert(badges.status === 200 && typeof badges.data.awaitingConfirm === "number", "badges got=" + badges.status + " " + JSON.stringify(badges.data));
+    ok("order badges");
+
+    const posSale = await req("POST", "/api/pos/sale", {
+      token: adminTok,
+      body: {
+        items: [{ name: "شال تست", code: "T100", qty: 1 }],
+        payment: "cash",
+        idempotencyKey: "possale_" + Date.now(),
+      },
+    });
+    assert(posSale.status === 200 && posSale.data.sale, "pos sale " + JSON.stringify(posSale.data));
+    const posSale2 = await req("POST", "/api/pos/sale", {
+      token: adminTok,
+      body: {
+        items: [{ name: "شال تست", code: "T100", qty: 1 }],
+        payment: "cash",
+        idempotencyKey: posSale.data.sale ? ("replay_" + Date.now()) : "x",
+      },
+    });
+    /* oversell eventually */
+    const posOver = await req("POST", "/api/pos/sale", {
+      token: adminTok,
+      body: { items: [{ name: "شال تست", code: "T100", qty: 999 }], payment: "cash", idempotencyKey: "posover_" + Date.now() },
+    });
+    assert(posOver.status === 409 || posOver.status === 400, "pos oversell blocked");
+    ok("POS sale + oversell");
+
+    /* deliver mem order and request return */
+    const mid = memOrder.data.order.id;
+    await req("POST", "/api/admin/orders/" + mid + "/status", { token: adminTok, body: { status: "confirmed" } });
+    await req("POST", "/api/admin/orders/" + mid + "/status", { token: adminTok, body: { status: "dispatched" } });
+    await req("POST", "/api/admin/orders/" + mid + "/status", { token: adminTok, body: { status: "delivered" } });
+    const earlyRet = await req("POST", "/api/orders/" + o1.data.order.id + "/return-request", {
+      token: ulogin.data.token,
+      body: { reason: "test", method: "pickup_store" },
+    });
+    assert(earlyRet.status >= 400, "return before delivered blocked");
+    const ret = await req("POST", "/api/orders/" + mid + "/return-request", {
+      token: ulogin.data.token,
+      body: { reason: "سایز نادرست", details: "کوچک بود", method: "pickup_store" },
+    });
+    assert(ret.status === 200 && ret.data.order.status === "return_requested", "return request");
+    ok("return only after delivered");
+
+    /* soft delete */
+    const me = await req("GET", "/api/me", { token: ulogin.data.token });
+    const uid = me.data.user.id;
+    const soft = await req("POST", "/api/admin/customers/" + uid + "/soft-delete", {
+      token: adminTok, body: { confirm: "DELETE" },
+    });
+    assert(soft.status === 200, "soft delete");
+    const loginDel = await req("POST", "/api/auth/login", { body: { id: email, password: "BuyerPass99" } });
+    assert(loginDel.status === 403 || loginDel.status === 401, "deleted cannot login");
+    ok("soft delete customer");
 
     console.log("\nAll smoke tests passed (" + results.length + "). TMP=" + TMP);
   } catch (err) {

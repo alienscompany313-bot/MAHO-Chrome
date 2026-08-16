@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>POS | MAHO</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="js/api.js"></script>
+  <style>
+    :root{--black:#141414;--gold:#c8a35f;--cream:#fbf8f1;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--radius:14px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Vazirmatn",Tahoma,sans-serif;background:#f3efe7;color:var(--ink)}
+    .top{background:var(--black);color:#fff;padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .brand{font-weight:800}.brand small{color:var(--gold);display:block;font-size:11px}
+    .btn{font:700 13px inherit;border-radius:999px;border:1.5px solid transparent;padding:9px 14px;cursor:pointer;min-height:42px}
+    .btn-gold{background:var(--gold);color:#1a1509}.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+    .btn-outline{background:#fff;border-color:var(--line);color:var(--ink)}.btn-danger{background:#fdecec;color:var(--red);border-color:#f4c9c9}
+    .btn-sm{padding:6px 10px;min-height:36px;font-size:12px}
+    .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;padding:14px;max-width:1400px;margin:0 auto}
+    @media(max-width:960px){.wrap{grid-template-columns:1fr}}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+    .card h2{margin:0 0 10px;font-size:18px}
+    .scan{display:flex;gap:8px;flex-wrap:wrap}
+    .scan input,.field input,.field select{flex:1;min-width:160px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit}
+    table{width:100%;border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid var(--line);font-size:13px;text-align:right}
+    .muted{color:var(--muted);font-size:13px}.ok{color:var(--green);font-weight:700}.err{color:var(--red);font-weight:700}
+    .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font:700 12px inherit;cursor:pointer;min-height:40px}
+    .tab.active{background:var(--gold);border-color:var(--gold)}
+    .panel{display:none}.panel.active{display:block}
+    .tot{font-size:22px;font-weight:800;margin:10px 0}
+    .hit{display:flex;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer}
+    .hit:hover{border-color:var(--gold);background:#fff8ea}
+    .gate{position:fixed;inset:0;background:#141414;display:flex;align-items:center;justify-content:center;z-index:50;color:#fff;padding:20px}
+    .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:16px;padding:24px;max-width:360px;width:100%}
+    .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;margin:10px 0;font:inherit}
+    @media print{
+      body *{visibility:hidden}
+      .print-label,.print-label *{visibility:visible}
+      .print-label{position:absolute;inset:0;padding:8mm}
+      .no-print{display:none!important}
+    }
+    .print-label{display:none}
+    .print-label.show{display:block}
+    .label-58{width:58mm}.label-80{width:80mm}.label-a4{width:190mm}
+  </style>
+</head>
+<body>
+  <div class="gate" id="gate">
+    <div class="box">
+      <div style="font-size:24px;font-weight:800;color:var(--gold)">MAHO POS</div>
+      <p class="muted" style="color:#b9b3a6">ورود مدیر / کارمند با دسترسی POS</p>
+      <input id="posLoginId" placeholder="ایمیل کارمند (اختیاری برای مدیر اصلی)" dir="ltr">
+      <input id="posPass" type="password" placeholder="رمز" dir="ltr">
+      <button class="btn btn-gold" style="width:100%" id="posLoginBtn">ورود</button>
+      <p class="err" id="gateMsg"></p>
+      <a class="btn btn-ghost btn-sm" href="admin.html" style="display:inline-block;margin-top:8px">بازگشت به پنل</a>
+    </div>
+  </div>
+
+  <div class="top no-print" id="appTop" hidden>
+    <div class="brand">MAHO POS <small id="who">—</small></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="muted" style="color:#ccc" id="shiftInfo">شیفت: —</span>
+      <a class="btn btn-ghost btn-sm" href="admin.html">پنل مدیریت</a>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج</button>
+    </div>
+  </div>
+
+  <div class="wrap no-print" id="app" hidden>
+    <div class="card">
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="sale">فروش</button>
+        <button type="button" class="tab" data-tab="return">برگشت</button>
+        <button type="button" class="tab" data-tab="shift">صندوق</button>
+        <button type="button" class="tab" data-tab="labels">بارکد / لیبل</button>
+        <button type="button" class="tab" data-tab="reports">گزارش‌ها</button>
+      </div>
+
+      <div class="panel active" id="panel-sale">
+        <h2>فروش حضوری</h2>
+        <div class="scan">
+          <input id="scanInput" dir="ltr" placeholder="اسکن بارکد یا جستجوی نام / SKU" autocomplete="off">
+          <button class="btn btn-outline" type="button" id="searchBtn">جستجو</button>
+        </div>
+        <div id="hits" style="margin-top:8px"></div>
+        <table><thead><tr><th>کالا</th><th>تعداد</th><th>قیمت</th><th></th></tr></thead><tbody id="cartBody"></tbody></table>
+        <div class="field" style="margin-top:8px"><label class="muted">تخفیف مبلغی</label><input id="saleDisc" type="number" min="0" value="0" dir="ltr"></div>
+        <div class="field"><label class="muted">روش پرداخت</label>
+          <select id="salePay"><option value="cash">نقدی</option><option value="card">کارت</option><option value="hesab">حساب‌پی</option><option value="other">سایر</option></select>
+        </div>
+        <div class="field"><label class="muted">مشتری (اختیاری)</label><input id="saleCust" placeholder="نام / نمبر"></div>
+        <div class="tot" id="saleTotal">۰ افغانی</div>
+        <button class="btn btn-gold" id="checkoutBtn" type="button">ثبت فروش</button>
+        <p class="muted" id="saleMsg"></p>
+      </div>
+
+      <div class="panel" id="panel-return">
+        <h2>برگشت / تعویض حضوری</h2>
+        <div class="scan">
+          <input id="retSaleId" dir="ltr" placeholder="نمبر فاکتور POS-...">
+          <button class="btn btn-outline" type="button" id="loadSaleBtn">بارگذاری</button>
+        </div>
+        <div id="retItems"></div>
+        <div class="field"><label class="muted">دلیل</label><input id="retReason"></div>
+        <div class="field"><label class="muted">حالت</label>
+          <select id="retMode"><option value="refund">Refund</option><option value="exchange">Exchange</option></select>
+        </div>
+        <button class="btn btn-gold" id="retSubmit" type="button">ثبت برگشت</button>
+        <p class="muted" id="retMsg"></p>
+      </div>
+
+      <div class="panel" id="panel-shift">
+        <h2>صندوق و Shift</h2>
+        <div class="field"><label class="muted">موجودی آغاز</label><input id="openCash" type="number" dir="ltr" value="0"></div>
+        <button class="btn btn-gold" id="openShiftBtn" type="button">بازکردن Shift</button>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+        <div class="field"><label class="muted">Cash In / Out (+/-)</label><input id="cashAmt" type="number" dir="ltr"></div>
+        <div class="field"><label class="muted">یادداشت</label><input id="cashNote"></div>
+        <button class="btn btn-outline" id="cashMoveBtn" type="button">ثبت حرکت نقد</button>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+        <div class="field"><label class="muted">مبلغ واقعی بستن</label><input id="closeCash" type="number" dir="ltr"></div>
+        <button class="btn btn-danger" id="closeShiftBtn" type="button">بستن Shift</button>
+        <p class="muted" id="shiftMsg"></p>
+      </div>
+
+      <div class="panel" id="panel-labels">
+        <h2>چاپ بارکد کالا</h2>
+        <div class="scan">
+          <input id="labelQ" placeholder="جستجوی کالا برای لیبل">
+          <button class="btn btn-outline" type="button" id="labelSearch">جستجو</button>
+        </div>
+        <div id="labelHits"></div>
+        <div class="field"><label class="muted">اندازه لیبل</label>
+          <select id="labelSize"><option value="58">۵۸mm</option><option value="80">۸۰mm</option><option value="a4">A4</option></select>
+        </div>
+        <button class="btn btn-gold" type="button" id="printLabelsBtn">چاپ لیبل‌های انتخاب‌شده</button>
+      </div>
+
+      <div class="panel" id="panel-reports">
+        <h2>گزارش‌ها</h2>
+        <button class="btn btn-outline" type="button" id="loadReportBtn">بارگذاری گزارش</button>
+        <button class="btn btn-outline" type="button" id="exportReportCsv">خروجی CSV</button>
+        <pre id="reportBox" style="white-space:pre-wrap;background:#fbf8f1;padding:12px;border-radius:12px;font-size:12px;overflow:auto;max-height:60vh"></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>سبد فعال</h2>
+      <p class="muted">اسکنر USB/Bluetooth مانند کیبورد: فوکوس روی فیلد اسکن، سپس بارکد + Enter.</p>
+      <div id="liveCart" class="muted">خالی</div>
+      <div id="recentSales" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="print-label" id="printArea"></div>
+
+  <script>
+  (function(){
+    var cart=[], shiftId=null, selectedLabels=[], loadedSale=null;
+    function $(s){return document.querySelector(s)}
+    function money(n){return (Number(n)||0).toLocaleString("en-US")+" افغانی"}
+    function toast(el,msg,ok){ if(!el)return; el.className=ok?"ok":"err"; el.textContent=msg||""; }
+
+    function requirePos(){
+      if(!MAHOApi.getToken("admin")) return Promise.reject(new Error("login"));
+      return MAHOApi.adminMe ? MAHOApi.adminMe().then(function(me){
+        var perms=me.permissions||[];
+        if(!me.owner && perms.indexOf("pos")<0 && perms.indexOf("reports")<0) throw new Error("no pos permission");
+        $("#who").textContent=(me.name||"")+(me.owner?" · Owner":"");
+        return me;
+      }) : Promise.resolve({});
+    }
+
+    function openApp(){
+      $("#gate").style.display="none";
+      $("#appTop").hidden=false; $("#app").hidden=false;
+      requirePos().then(function(){ refreshSales(); $("#scanInput").focus(); }).catch(function(e){
+        $("#gate").style.display="flex"; $("#appTop").hidden=true; $("#app").hidden=true;
+        $("#gateMsg").textContent=e.message||"دسترسی ندارید";
+      });
+    }
+
+    $("#posLoginBtn").onclick=function(){
+      var pass=$("#posPass").value, id=$("#posLoginId").value.trim();
+      var p = id && MAHOApi.staffLogin
+        ? MAHOApi.staffLogin({ id:id, password:pass })
+        : MAHOApi.adminLogin(pass);
+      p.then(function(){ openApp(); }).catch(function(err){ $("#gateMsg").textContent=(err&&err.message)||"ورود ناموفق"; });
+    };
+    if(MAHOApi.getToken("admin")) openApp();
+
+    document.querySelectorAll("#tabs .tab").forEach(function(t){
+      t.onclick=function(){
+        document.querySelectorAll("#tabs .tab").forEach(function(x){x.classList.remove("active")});
+        document.querySelectorAll(".panel").forEach(function(x){x.classList.remove("active")});
+        t.classList.add("active");
+        $("#panel-"+t.getAttribute("data-tab")).classList.add("active");
+      };
+    });
+
+    function renderCart(){
+      var body=$("#cartBody"), live=$("#liveCart");
+      if(!cart.length){ body.innerHTML=""; live.textContent="خالی"; $("#saleTotal").textContent=money(0); return; }
+      body.innerHTML=cart.map(function(it,i){
+        return "<tr><td>"+it.name+"<div class='muted' dir='ltr'>"+(it.code||"")+"</div></td>"+
+          "<td><input data-i='"+i+"' class='qty' type='number' min='1' value='"+it.qty+"' style='width:64px' dir='ltr'></td>"+
+          "<td>"+money(it.price*it.qty)+"</td>"+
+          "<td><button class='btn btn-danger btn-sm' data-rm='"+i+"'>حذف</button></td></tr>";
+      }).join("");
+      live.innerHTML=cart.map(function(it){return it.name+" × "+it.qty}).join("<br>");
+      var disc=Number($("#saleDisc").value)||0;
+      var tot=cart.reduce(function(s,it){return s+it.price*it.qty},0)-disc;
+      $("#saleTotal").textContent=money(Math.max(0,tot));
+    }
+
+    function addProduct(p){
+      if(p.stock!=null && Number(p.stock)<=0){ toast($("#saleMsg"),"ناموجود",false); return; }
+      var ex=cart.find(function(x){return (x.code&&p.code&&x.code===p.code)||x.name===p.name});
+      if(ex){
+        if(p.stock!=null && ex.qty+1>Number(p.stock)){ toast($("#saleMsg"),"بیش از موجودی",false); return; }
+        ex.qty+=1;
+      } else {
+        var disc=Math.min(95,Number(p.discount)||0);
+        var unit=disc>0?Math.round((p.price||0)*(1-disc/100)):(p.price||0);
+        cart.push({name:p.name,name_en:p.name_en,code:p.code||"",qty:1,price:unit,discount:disc,stock:p.stock});
+      }
+      renderCart(); toast($("#saleMsg"),"افزوده شد",true);
+    }
+
+    function search(q){
+      return MAHOApi.posSearch(q).then(function(res){
+        var hits=res.products||[];
+        $("#hits").innerHTML=hits.map(function(p,i){
+          return "<div class='hit' data-hi='"+i+"'><div><b>"+p.name+"</b><div class='muted' dir='ltr'>"+(p.code||"")+" · موجودی: "+(p.stock==null?"—":p.stock)+"</div></div><div>"+money(p.price)+"</div></div>";
+        }).join("")||"<p class='muted'>موردی یافت نشد</p>";
+        $("#hits")._hits=hits;
+      });
+    }
+
+    $("#searchBtn").onclick=function(){ search($("#scanInput").value.trim()); };
+    $("#scanInput").addEventListener("keydown",function(e){
+      if(e.key==="Enter"){
+        e.preventDefault();
+        var q=this.value.trim(); if(!q) return;
+        MAHOApi.posSearch(q).then(function(res){
+          var hits=res.products||[];
+          var exact=hits.find(function(p){return String(p.code||"").toLowerCase()===q.toLowerCase()});
+          if(exact){ addProduct(exact); $("#scanInput").value=""; }
+          else if(hits.length===1){ addProduct(hits[0]); $("#scanInput").value=""; }
+          else { $("#hits")._hits=hits; $("#hits").innerHTML=hits.map(function(p,i){return "<div class='hit' data-hi='"+i+"'><b>"+p.name+"</b></div>"}).join("")||"<p class='err'>بارکد پیدا نشد</p>"; }
+        });
+      }
+    });
+    $("#hits").addEventListener("click",function(e){
+      var h=e.target.closest("[data-hi]"); if(!h) return;
+      var p=($("#hits")._hits||[])[parseInt(h.getAttribute("data-hi"),10)]; if(p) addProduct(p);
+    });
+    $("#cartBody").addEventListener("click",function(e){
+      var rm=e.target.getAttribute("data-rm"); if(rm!=null){ cart.splice(parseInt(rm,10),1); renderCart(); }
+    });
+    $("#cartBody").addEventListener("change",function(e){
+      if(!e.target.classList.contains("qty")) return;
+      var i=parseInt(e.target.getAttribute("data-i"),10); var q=Math.max(1,parseInt(e.target.value,10)||1);
+      if(cart[i].stock!=null && q>Number(cart[i].stock)){ toast($("#saleMsg"),"بیش از موجودی",false); e.target.value=cart[i].qty; return; }
+      cart[i].qty=q; renderCart();
+    });
+    $("#saleDisc").addEventListener("input",renderCart);
+
+    $("#checkoutBtn").onclick=function(){
+      if(!cart.length){ toast($("#saleMsg"),"سبد خالی است",false); return; }
+      if(!navigator.onLine){ toast($("#saleMsg"),"اینترنت قطع است — فروش ثبت نشد",false); return; }
+      var idem="pos_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+      MAHOApi.posSale({
+        items: cart.map(function(it){return {name:it.name,code:it.code,qty:it.qty,discount:it.discount}}),
+        discount: Number($("#saleDisc").value)||0,
+        payment: $("#salePay").value,
+        customer: { name: $("#saleCust").value.trim() },
+        shiftId: shiftId,
+        idempotencyKey: idem
+      }).then(function(res){
+        toast($("#saleMsg"),"فروش ثبت شد: "+res.sale.id,true);
+        cart=[]; $("#saleDisc").value=0; renderCart(); refreshSales();
+      }).catch(function(err){ toast($("#saleMsg"),(err&&err.message)||"خطا",false); });
+    };
+
+    function refreshSales(){
+      MAHOApi.posSales().then(function(res){
+        var list=(res.sales||[]).slice(0,8);
+        $("#recentSales").innerHTML="<h3>آخرین فروش‌ها</h3>"+list.map(function(s){
+          return "<div class='hit'><div><b dir='ltr'>"+s.id+"</b><div class='muted'>"+(s.type||"sale")+" · "+money(s.total)+"</div></div></div>";
+        }).join("");
+      }).catch(function(){});
+    }
+
+    $("#loadSaleBtn").onclick=function(){
+      var id=$("#retSaleId").value.trim();
+      MAHOApi.posSales().then(function(res){
+        loadedSale=(res.sales||[]).find(function(s){return s.id===id && s.type==="sale"});
+        if(!loadedSale){ toast($("#retMsg"),"فاکتور یافت نشد",false); return; }
+        $("#retItems").innerHTML=(loadedSale.items||[]).map(function(it,i){
+          return "<label style='display:block;margin:6px 0'><input type='checkbox' class='ret-it' data-i='"+i+"' checked> "+it.name+" × "+it.qty+" — تعداد برگشت: <input class='ret-qty' data-i='"+i+"' type='number' min='1' max='"+it.qty+"' value='"+it.qty+"' style='width:64px' dir='ltr'></label>";
+        }).join("");
+        toast($("#retMsg"),"فاکتور بارگذاری شد",true);
+      });
+    };
+    $("#retSubmit").onclick=function(){
+      if(!loadedSale){ toast($("#retMsg"),"فاکتور را بارگذاری کنید",false); return; }
+      var items=[];
+      document.querySelectorAll(".ret-it:checked").forEach(function(cb){
+        var i=parseInt(cb.getAttribute("data-i"),10); var it=loadedSale.items[i];
+        var q=parseInt(document.querySelector('.ret-qty[data-i="'+i+'"]').value,10)||1;
+        items.push({name:it.name,code:it.code,qty:q});
+      });
+      MAHOApi.posReturn({ saleId: loadedSale.id, items: items, reason: $("#retReason").value, mode: $("#retMode").value, shiftId: shiftId })
+        .then(function(res){ toast($("#retMsg"),"برگشت ثبت شد: "+res.return.id,true); refreshSales(); })
+        .catch(function(err){ toast($("#retMsg"),(err&&err.message)||"خطا",false); });
+    };
+
+    $("#openShiftBtn").onclick=function(){
+      MAHOApi.posShiftOpen({ openingCash: Number($("#openCash").value)||0 }).then(function(res){
+        shiftId=res.shift.id; $("#shiftInfo").textContent="شیفت باز: "+shiftId;
+        toast($("#shiftMsg"),"شیفت باز شد",true);
+      }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+    };
+    $("#cashMoveBtn").onclick=function(){
+      MAHOApi.posShiftCash({ shiftId: shiftId, amount: Number($("#cashAmt").value), note: $("#cashNote").value })
+        .then(function(){ toast($("#shiftMsg"),"حرکت نقد ثبت شد",true); })
+        .catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+    };
+    $("#closeShiftBtn").onclick=function(){
+      MAHOApi.posShiftClose({ shiftId: shiftId, closingCash: Number($("#closeCash").value) })
+        .then(function(res){
+          toast($("#shiftMsg"),"بسته شد — اختلاف: "+(res.shift.difference),true);
+          shiftId=null; $("#shiftInfo").textContent="شیفت: —";
+        }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+    };
+
+    $("#labelSearch").onclick=function(){
+      MAHOApi.posSearch($("#labelQ").value.trim()).then(function(res){
+        var hits=res.products||[];
+        $("#labelHits").innerHTML=hits.map(function(p,i){
+          return "<label style='display:flex;gap:8px;align-items:center;margin:6px 0'><input type='checkbox' class='lab' data-i='"+i+"'> <span>"+p.name+" <span class='muted' dir='ltr'>"+(p.code||"")+"</span></span></label>";
+        }).join("");
+        $("#labelHits")._hits=hits;
+      });
+    };
+    $("#printLabelsBtn").onclick=function(){
+      var hits=$("#labelHits")._hits||[];
+      var selected=[];
+      document.querySelectorAll(".lab:checked").forEach(function(cb){ selected.push(hits[parseInt(cb.getAttribute("data-i"),10)]); });
+      if(!selected.length){ alert("کالایی انتخاب نشده"); return; }
+      var size=$("#labelSize").value;
+      var cls=size==="a4"?"label-a4":("label-"+size);
+      var html=selected.map(function(p,idx){
+        var code=p.code||("SKU"+idx);
+        return "<div class='"+cls+"' style='padding:6px;border:1px dashed #ccc;margin-bottom:8px;page-break-inside:avoid'>"+
+          "<div style='font-weight:800'>"+p.name+"</div>"+
+          "<div>"+money(p.price)+"</div>"+
+          "<div dir='ltr'>"+code+"</div>"+
+          "<svg class='bc' data-code='"+code+"'></svg></div>";
+      }).join("");
+      var area=$("#printArea"); area.className="print-label show"; area.innerHTML=html;
+      if(window.JsBarcode){ area.querySelectorAll(".bc").forEach(function(svg){ try{ JsBarcode(svg, svg.getAttribute("data-code"), {format:"CODE128",width:1.4,height:40,displayValue:true,fontSize:12,margin:2}); }catch(e){} }); }
+      window.print();
+      setTimeout(function(){ area.className="print-label"; area.innerHTML=""; }, 500);
+    };
+
+    var lastReport=null;
+    $("#loadReportBtn").onclick=function(){
+      MAHOApi.posReports({}).then(function(res){
+        lastReport=res.report;
+        $("#reportBox").textContent=JSON.stringify(res.report,null,2);
+      }).catch(function(err){ $("#reportBox").textContent=(err&&err.message)||"خطا"; });
+    };
+    $("#exportReportCsv").onclick=function(){
+      if(!lastReport){ alert("ابتدا گزارش را بارگذاری کنید"); return; }
+      var r=lastReport;
+      var lines=["metric,value","posSalesTotal,"+r.posSalesTotal,"posSalesCount,"+r.posSalesCount,"onlineSalesTotal,"+r.onlineSalesTotal,"posReturnsTotal,"+r.posReturnsTotal,"inventoryValue,"+r.inventoryValue];
+      var blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-pos-report.csv"; a.click();
+    };
+
+    $("#logoutBtn").onclick=function(){ MAHOApi.logoutAdmin(); location.reload(); };
+  })();
+  </script>
+</body>
+</html>

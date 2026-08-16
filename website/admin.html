@@ -101,13 +101,19 @@
     .adm-bc{max-width:150px;height:auto;background:#fff;border-radius:5px}
     .bc-code{font-size:11px;color:var(--muted)}
     @media print {
-      .topbar,.savebar,.gate,.tb-actions,button,.btn,.admin-sidebar,.sidebar-backdrop,.sidebar-toggle{display:none!important}
-      .acc-body{display:block!important}
-      .admin-panel{display:block!important}
-      .card{box-shadow:none;border:0}
-      .admin-shell{display:block!important}
-      .admin-main{margin:0!important;max-width:none!important}
+      body *{visibility:hidden!important}
+      .print-sheet,.print-sheet *{visibility:visible!important}
+      .print-sheet{position:absolute;inset:0;background:#fff;padding:8mm;color:#000}
+      .topbar,.savebar,.gate,.tb-actions,.admin-sidebar,.sidebar-backdrop,.sidebar-toggle,.side-nav,.no-print{display:none!important}
     }
+    .print-sheet{display:none}
+    body.printing .print-sheet{display:block}
+    .print-sheet.label-58{width:58mm;font-size:11px}
+    .print-sheet.label-80{width:80mm;font-size:12px}
+    .print-sheet.label-a4{width:190mm}
+    .badge-pill{display:inline-block;min-width:22px;padding:2px 8px;border-radius:999px;background:var(--gold);color:#1a1509;font-size:12px;font-weight:800;margin-inline-start:6px}
+    .badge-pill.warn{background:#fff3d9}
+    .badge-pill.hot{background:#fdecec;color:var(--red)}
     .icon-pick-btn .preview{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#f3efe7}
     .icon-pick-btn .preview .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
     .icon-pick-btn .preview img{width:22px;height:22px;object-fit:contain}
@@ -214,8 +220,11 @@
         <button type="button" class="side-link" data-panel="icons"><span class="si">◇</span><span>آیکن‌ها</span></button>
         <button type="button" class="side-link" data-panel="discounts"><span class="si">%</span><span>تخفیف‌ها</span></button>
         <button type="button" class="side-link" data-panel="showcase"><span class="si">▦</span><span>کارت‌های دسته</span></button>
-        <button type="button" class="side-link" data-panel="orders"><span class="si">☰</span><span>سفارش‌ها</span></button>
+        <button type="button" class="side-link" data-panel="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
+        <button type="button" class="side-link" data-panel="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
         <button type="button" class="side-link" data-panel="customers"><span class="si">☺</span><span>مشتریان</span></button>
+        <button type="button" class="side-link" data-panel="staff"><span class="si">👤</span><span>کارمندان</span></button>
+        <button type="button" class="side-link" data-panel="poslink"><span class="si">▣</span><span>POS فروش</span></button>
         <button type="button" class="side-link" data-panel="reviews"><span class="si">★</span><span>نظرات</span></button>
         <button type="button" class="side-link" data-panel="stores"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
         <button type="button" class="side-link" data-panel="texts"><span class="si">Aa</span><span>متن‌های سایت</span></button>
@@ -292,7 +301,13 @@
     <!-- ORDERS -->
     <div class="card admin-panel" data-panel="orders">
       <div class="row-between">
-        <div><h2>سفارش‌ها</h2><div class="sub">سفارش‌های ثبت‌شده روی همین دستگاه. هر سفارش هنگام ثبت به واتساپ شما هم می‌رود. (برای دیدن سفارش‌های همه‌ی دستگاه‌ها به سرور نیاز است.)</div></div>
+        <div><h2>سفارش‌ها</h2>
+          <div class="sub">Accordion فشرده — کلیک برای جزئیات. شمارنده‌ها خودکار به‌روز می‌شوند.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+            <button type="button" class="btn btn-outline btn-sm" id="filterAwaitConfirm">منتظر تأیید سفارش <span class="badge-pill" id="badgeAwaitConfirm">0</span></button>
+            <button type="button" class="btn btn-outline btn-sm" id="filterAwaitHesab">منتظر تأیید پرداخت حساب‌پی <span class="badge-pill warn" id="badgeAwaitHesab">0</span></button>
+          </div>
+        </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <label style="font-size:13px;font-weight:700">حالت تایید:</label>
           <select id="orderApprovalMode" class="ctrl"><option value="manual">دستی</option><option value="auto">خودکار</option></select>
@@ -331,6 +346,7 @@
           <button class="btn btn-outline btn-sm" id="exportCustCsv">خروجی CSV</button>
           <button class="btn btn-outline btn-sm" id="exportCustXls">خروجی Excel</button>
           <button class="btn btn-outline btn-sm" id="printCustTable">چاپ / PDF</button>
+          <span class="note">حذف مشتری از ردیف جدول (دو مرحله‌ای)</span>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -350,6 +366,7 @@
             <th data-sort="orderCount">سفارش‌ها</th>
             <th data-sort="totalSpent">مجموع خرید</th>
             <th class="hide-sm" data-sort="createdAt">ثبت‌نام</th>
+            <th>حذف</th>
           </tr></thead>
           <tbody id="custBody"></tbody>
         </table>
@@ -361,6 +378,33 @@
           <button class="btn btn-outline btn-sm" id="custNext" type="button">بعدی</button>
         </div>
       </div>
+    </div>
+
+    <!-- RETURNS -->
+    <div class="card admin-panel" data-panel="returns">
+      <div class="row-between">
+        <div><h2>برگشتی‌ها</h2><div class="sub">درخواست‌های برگشت مشتریان — تأیید، رد یا تکمیل. سفارش‌ها و موجودی فقط با عملیات مجاز تغییر می‌کنند.</div></div>
+        <button class="btn btn-outline btn-sm" id="refreshReturns" type="button">بازخوانی</button>
+      </div>
+      <div id="returnsBody"></div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="card admin-panel" data-panel="staff">
+      <div class="row-between">
+        <div><h2>کارمندان و صلاحیت‌ها</h2><div class="sub">فقط مدیر اصلی می‌تواند کارمند بسازد. پیش‌فرض بدون دسترسی است. کارمند نمی‌تواند صلاحیت خود را افزایش دهد.</div></div>
+        <button class="btn btn-gold btn-sm" id="addStaffBtn" type="button">+ کارمند</button>
+      </div>
+      <div id="staffBody"></div>
+      <p class="note">دسترسی‌ها: orders, delivery, pos, products, customers, returns, reports, settings, staff</p>
+    </div>
+
+    <!-- POS LINK -->
+    <div class="card admin-panel" data-panel="poslink">
+      <h2>Point of Sale</h2>
+      <div class="sub">Workspace جداگانهٔ فروش حضوری، برگشت، صندوق، بارکد و گزارش.</div>
+      <a class="btn btn-gold" href="pos.html" target="_blank" rel="noopener">بازکردن POS ↗</a>
+      <p class="note">موجودی POS با فروشگاه آنلاین مشترک است و Atomic کم می‌شود.</p>
     </div>
 
     <!-- REVIEWS -->
@@ -816,6 +860,11 @@
       var first=document.querySelector("#sideNav .side-link"); if(first) first.focus();
     }
     function showPanel(id){
+      if(id==="poslink"){
+        window.open("pos.html","_blank","noopener");
+        closeMobileNav();
+        return;
+      }
       var panels=document.querySelectorAll(".admin-panel");
       Array.prototype.forEach.call(panels,function(p){ p.classList.toggle("active", p.getAttribute("data-panel")===id); });
       var links=document.querySelectorAll("#sideNav .side-link");
@@ -823,6 +872,9 @@
       try{ sessionStorage.setItem("maho_admin_panel", id); }catch(e){}
       closeMobileNav();
       window.scrollTo(0,0);
+      if(id==="returns") renderReturnsAdmin();
+      if(id==="staff") renderStaffAdmin();
+      if(id==="orders") refreshBadges();
     }
     function initSidebar(){
       var nav=$("#sideNav"); if(!nav || nav.dataset.bound) return; nav.dataset.bound="1";
@@ -846,7 +898,113 @@
       if(saved && document.querySelector('.admin-panel[data-panel="'+saved+'"]')) showPanel(saved);
       else showPanel("products");
     }
-    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="flex"; $("#app").classList.add("is-open"); $("#app").setAttribute("aria-hidden","false"); touchSession(); startIdleWatch(); initSidebar(); loadFromServer(); }
+    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="flex"; $("#app").classList.add("is-open"); $("#app").setAttribute("aria-hidden","false"); touchSession(); startIdleWatch(); initSidebar(); loadFromServer(); startBadgePoll(); }
+
+    function setBadge(id,n){ var el=$(id); if(el) el.textContent=toFa(n||0); }
+    function refreshBadges(){
+      if(!window.MAHOApi||!MAHOApi.getToken("admin")||!MAHOApi.adminOrderBadges) return;
+      MAHOApi.adminOrderBadges().then(function(b){
+        setBadge("#badgeAwaitConfirm", b.awaitingConfirm);
+        setBadge("#badgeAwaitHesab", b.awaitingHesab);
+        setBadge("#badgeOrdersSide", (b.awaitingConfirm||0)+(b.awaitingHesab||0));
+        setBadge("#badgeReturnsSide", b.awaitingReturns);
+      }).catch(function(){});
+    }
+    var badgeTimer=null;
+    function startBadgePoll(){
+      refreshBadges();
+      clearInterval(badgeTimer);
+      badgeTimer=setInterval(function(){ if(document.visibilityState==="visible") refreshBadges(); }, 15000);
+      document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") refreshBadges(); });
+    }
+
+    function renderReturnsAdmin(){
+      var box=$("#returnsBody"); if(!box) return;
+      requireBackend(function(){
+        MAHOApi.adminReturns().then(function(res){
+          var list=res.returns||[];
+          if(!list.length){ box.innerHTML='<p class="note">درخواست برگشتی نیست.</p>'; return; }
+          box.innerHTML=list.map(function(o){
+            var rr=o.returnRequest||{};
+            var pk=rr.pickup||{};
+            var st=(MAHOApi.statusLabel?MAHOApi.statusLabel(o.status):o.status);
+            var acts="";
+            if(o.status==="return_requested"){
+              acts='<button class="btn btn-gold btn-sm" data-ret-st="return_approved" data-oid="'+esc(o.id)+'">تأیید برگشت</button> '+
+                   '<button class="btn btn-danger btn-sm" data-ret-st="return_rejected" data-oid="'+esc(o.id)+'">رد برگشت</button>';
+            } else if(o.status==="return_approved"){
+              acts='<button class="btn btn-gold btn-sm" data-ret-st="return_completed" data-oid="'+esc(o.id)+'">تکمیل / دریافت</button>';
+            }
+            return '<div class="adm-order" style="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:12px">'+
+              '<div class="row-between"><b dir="ltr">'+esc(o.id)+'</b><span class="tag">'+esc(st)+'</span></div>'+
+              '<div class="note">مشتری: '+esc((o.customer&&o.customer.name)||"")+' · <span dir="ltr">'+esc((o.customer&&o.customer.phone)||"")+'</span></div>'+
+              '<div class="note">روش: '+(rr.method==="pickup_customer"?"تحویل از آدرس مشتری":"بازگشت به فروشگاه")+'</div>'+
+              '<div class="note">دلیل: '+esc(rr.reason||"")+'</div>'+
+              '<div class="note">توضیح: '+esc(rr.details||"")+'</div>'+
+              '<div class="note">زمان: '+(rr.requestedAt?new Date(rr.requestedAt).toLocaleString("fa-AF"):"—")+'</div>'+
+              '<div class="note">آدرس: '+esc(pk.address||"")+'</div>'+
+              (pk.mapsUrl?('<div><a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+esc(pk.mapsUrl)+'">Google Maps</a></div>'):'')+
+              '<ul class="adm-items">'+(o.items||[]).map(function(it){return '<li>'+esc(it.name)+' × '+toFa(it.qty)+'</li>';}).join("")+'</ul>'+
+              '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+acts+'</div></div>';
+          }).join("");
+        }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"خطا")+'</p>'; });
+      });
+    }
+
+    function renderStaffAdmin(){
+      var box=$("#staffBody"); if(!box) return;
+      requireBackend(function(){
+        if(!MAHOApi.listStaff){ box.innerHTML='<p class="note">API کارمندان در دسترس نیست</p>'; return; }
+        MAHOApi.listStaff().then(function(res){
+          var perms=res.permissions||[];
+          var list=res.staff||[];
+          box.innerHTML=(list.length?list.map(function(s){
+            return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'+
+              '<div class="row-between"><b>'+esc(s.name)+'</b><span class="note">'+(s.active===false?"غیرفعال":"فعال")+'</span></div>'+
+              '<div class="note" dir="ltr">'+esc(s.email||"")+' · '+esc(s.phone||"")+'</div>'+
+              '<div class="note">دسترسی: '+esc((s.permissions||[]).join(", ")||"—")+'</div>'+
+              '<button type="button" class="btn btn-outline btn-sm" data-edit-staff="'+esc(s.id)+'">ویرایش</button> '+
+              '<button type="button" class="btn btn-danger btn-sm" data-disable-staff="'+esc(s.id)+'">غیرفعال</button></div>';
+          }).join(""):'<p class="note">هنوز کارمندی ثبت نشده.</p>')+
+          '<div id="staffForm" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">'+
+          '<h3 style="font-size:15px">کارمند جدید / ویرایش</h3>'+
+          '<input type="hidden" id="st_id">'+
+          '<div class="grid2">'+
+          '<div class="field"><label>نام</label><input id="st_name"></div>'+
+          '<div class="field"><label>ایمیل</label><input id="st_email" dir="ltr"></div>'+
+          '<div class="field"><label>نمبر</label><input id="st_phone" dir="ltr"></div>'+
+          '<div class="field"><label>رمز (حداقل ۸)</label><input id="st_pass" type="password" dir="ltr"></div></div>'+
+          '<div class="field"><label>دسترسی‌ها</label><div id="st_perms">'+perms.map(function(p){return '<label style="margin-inline-end:10px;font-weight:700"><input type="checkbox" value="'+p+'"> '+p+'</label>';}).join("")+'</div></div>'+
+          '<button type="button" class="btn btn-gold" id="stSaveBtn">ذخیره کارمند</button></div>';
+          window._staffList=list;
+        }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"فقط مدیر اصلی")+'</p>'; });
+      });
+    }
+
+    function printDeliveryLabel(o, size){
+      var sheet=$("#printSheet"); if(!sheet||!o) return;
+      sheet.className="print-sheet label-"+(size||"a4");
+      var c=o.customer||{};
+      var store=(state.stores&&state.stores[0])||{};
+      var loc=o.customerLocation||{};
+      var maps=loc.mapsUrl||(loc.lat!=null?("https://www.google.com/maps?q="+encodeURIComponent(loc.lat+","+loc.lng)):"");
+      var items=(o.items||[]).map(function(it){return esc(it.name)+" × "+toFa(it.qty);}).join("<br>");
+      sheet.innerHTML='<div style="font-family:Tahoma,sans-serif;direction:rtl">'+
+        '<div style="font-weight:800;font-size:18px">MAHO Delivery</div>'+
+        '<div>نمبر سفارش: <b dir="ltr">'+esc(o.id)+'</b></div>'+
+        '<div>مشتری: '+esc(c.name||"")+' · <span dir="ltr">'+esc(c.phone||"")+'</span></div>'+
+        '<div>آدرس: '+esc(c.address||"")+'</div>'+
+        '<div style="margin:8px 0">'+items+'</div>'+
+        '<div>مبلغ: '+money(o.total)+' · پرداخت: '+payLabelFa(o.payment)+'</div>'+
+        (maps?('<div dir="ltr" style="font-size:11px;word-break:break-all">'+esc(maps)+'</div>'):'')+
+        '<div style="margin-top:10px">فروشگاه: '+esc(store.name||"MAHO")+' · <span dir="ltr">'+esc(store.phone||"")+'</span></div>'+
+        '<div id="printQrSlot" style="margin-top:10px"></div></div>';
+      document.body.classList.add("printing");
+      var qrBox=sheet.querySelector("#printQrSlot");
+      if(qrBox && o._qrDataUrl) qrBox.innerHTML='<img src="'+o._qrDataUrl+'" alt="QR" style="width:140px;height:140px">';
+      window.print();
+      setTimeout(function(){ document.body.classList.remove("printing"); sheet.innerHTML=""; }, 400);
+    }
 
     function updateGateLockUI(){
       var rem=lockRemainingMs();
@@ -1024,7 +1182,9 @@
       if(filter==="delivered") return s==="delivered";
       if(filter==="await") return pay==="awaiting_payment"||pay==="receipt_submitted"||pay==="under_review"||s==="awaiting_payment";
       if(filter==="cancelled") return s==="cancelled";
-      if(filter==="return") return s==="return_requested";
+      if(filter==="return") return s==="return_requested"||s==="return_approved"||s==="return_rejected"||s==="return_completed";
+      if(filter==="await_confirm") return s==="new"||s==="pending";
+      if(filter==="await_hesab") return pay==="awaiting_payment"||pay==="receipt_submitted"||pay==="under_review";
       return true;
     }
     function setApiNote(msg, ok){ var n=$("#apiStatusNote"); if(!n)return; n.style.color=ok?"#2e7d32":"#b26a00"; n.textContent=msg||""; }
@@ -1180,7 +1340,7 @@
       var slice=rows.slice(custPage*custPageSize,(custPage+1)*custPageSize);
       var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(rows.length)+")";
       if($("#custPageInfo")) $("#custPageInfo").textContent="صفحه "+toFa(custPage+1)+" از "+toFa(pages);
-      if(!slice.length){ b.innerHTML='<tr><td colspan="9" class="note">موردی یافت نشد.</td></tr>'; return; }
+      if(!slice.length){ b.innerHTML='<tr><td colspan="10" class="note">موردی یافت نشد.</td></tr>'; return; }
       b.innerHTML=slice.map(function(u){
         return '<tr>'+
           '<td dir="ltr">'+(u.customerNo||"—")+'</td>'+
@@ -1192,6 +1352,7 @@
           '<td>'+toFa(u.orderCount||0)+'</td>'+
           '<td>'+money(u.totalSpent||0)+'</td>'+
           '<td class="hide-sm">'+(u.createdAt?new Date(u.createdAt).toLocaleDateString("fa-AF"):"—")+'</td>'+
+          '<td>'+(u.guest||!u.id?'—':'<button type="button" class="btn btn-danger btn-sm" data-del-cust="'+esc(u.id)+'">حذف</button>')+'</td>'+
           '</tr>';
       }).join("");
     }
@@ -1217,7 +1378,7 @@
       var blob=new Blob(["\uFEFF"+htmlDoc],{type:"application/vnd.ms-excel;charset=utf-8"});
       var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-customers.xls"; a.click();
     }
-function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
+    function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews"))||[];}catch(e){return[];} }
     function saveReviews(r){ try{localStorage.setItem("maho_reviews",JSON.stringify(r));}catch(e){} }
     function starStrA(n){ n=Math.max(0,Math.min(5,parseInt(n,10)||0)); return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n); }
     function renderReviewsAdmin(){
@@ -1808,11 +1969,24 @@ function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews
         requireBackend(function(){
           MAHOApi.adminDeliveryQr(qr).then(function(res){
             var box=$("#qrBox_"+qr); if(!box) return;
+            var o=(readOrders()||[]).filter(function(x){return x.id===qr;})[0]||{id:qr};
+            o._qrDataUrl=res.qrDataUrl||"";
             box.innerHTML='<div>لینک دلیوری: <a dir="ltr" href="'+esc(res.url)+'" target="_blank" rel="noopener">'+esc(res.url)+'</a></div>'+
-              (res.qrDataUrl?('<img src="'+res.qrDataUrl+'" alt="QR" style="width:180px;height:180px;margin-top:8px"><div><a class="btn btn-outline btn-sm" download="maho-delivery-'+qr+'.png" href="'+res.qrDataUrl+'">دانلود PNG</a> <button class="btn btn-outline btn-sm" onclick="window.print()">چاپ</button></div>'):'');
+              (res.qrDataUrl?('<img src="'+res.qrDataUrl+'" alt="QR" style="width:180px;height:180px;margin-top:8px"><div class="no-print">'+
+                '<a class="btn btn-outline btn-sm" download="maho-delivery-'+qr+'.png" href="'+res.qrDataUrl+'">دانلود PNG</a> '+
+                '<button type="button" class="btn btn-outline btn-sm" data-print-label="'+qr+'" data-size="80">چاپ لیبل ۸۰mm</button> '+
+                '<button type="button" class="btn btn-outline btn-sm" data-print-label="'+qr+'" data-size="58">چاپ ۵۸mm</button> '+
+                '<button type="button" class="btn btn-outline btn-sm" data-print-label="'+qr+'" data-size="a4">چاپ A4</button></div>'):'');
+            window._printOrders=window._printOrders||{}; window._printOrders[qr]=o;
             toast("QR دلیوری ساخته شد ✓");
           }).catch(function(err){ alert((err&&err.message)||"خطا"); });
         });
+      }
+      var pl=e.target.getAttribute("data-print-label");
+      if(pl){
+        var size=e.target.getAttribute("data-size")||"a4";
+        var ord=(window._printOrders&&window._printOrders[pl])||(readOrders()||[]).filter(function(x){return x.id===pl;})[0];
+        if(ord) printDeliveryLabel(ord, size);
       }
     });
     if($("#buildCustTableBtn")) $("#buildCustTableBtn").onclick=function(){ custPage=0; renderCustomers(); toast("جدول مشتریان ساخته شد ✓"); };
@@ -1839,6 +2013,58 @@ function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews
     });
     if($("#hesabQrRemove")) $("#hesabQrRemove").onclick=function(){ if(state.config.hesab) state.config.hesab.qrUrl=""; fillConfig(); setDirty(true); };
     if($("#exportCustXls")) $("#exportCustXls").onclick=exportCustXls;
+    if($("#filterAwaitConfirm")) $("#filterAwaitConfirm").onclick=function(){ if($("#ordersFilter")) $("#ordersFilter").value="await_confirm"; renderOrdersAdmin(); };
+    if($("#filterAwaitHesab")) $("#filterAwaitHesab").onclick=function(){ if($("#ordersFilter")) $("#ordersFilter").value="await_hesab"; renderOrdersAdmin(); };
+    if($("#refreshReturns")) $("#refreshReturns").onclick=renderReturnsAdmin;
+    if($("#addStaffBtn")) $("#addStaffBtn").onclick=function(){ showPanel("staff"); renderStaffAdmin(); };
+    if($("#returnsBody")) $("#returnsBody").addEventListener("click",function(e){
+      var st=e.target.getAttribute("data-ret-st"); var oid=e.target.getAttribute("data-oid");
+      if(!st||!oid||!MAHOApi.adminReturnResolve) return;
+      requireBackend(function(){
+        MAHOApi.adminReturnResolve(oid,{status:st}).then(function(){ renderReturnsAdmin(); refreshBadges(); toast("برگشت به‌روز شد ✓"); })
+          .catch(function(err){ alert((err&&err.message)||"خطا"); });
+      });
+    });
+    if($("#staffBody")) $("#staffBody").addEventListener("click",function(e){
+      if(e.target.id==="stSaveBtn"){
+        var id=($("#st_id")&&$("#st_id").value)||"";
+        var perms=[]; document.querySelectorAll("#st_perms input:checked").forEach(function(c){perms.push(c.value);});
+        var body={ name:($("#st_name")&&$("#st_name").value)||"", email:($("#st_email")&&$("#st_email").value)||"", phone:($("#st_phone")&&$("#st_phone").value)||"", password:($("#st_pass")&&$("#st_pass").value)||"", permissions:perms };
+        requireBackend(function(){
+          MAHOApi.saveStaff(body, id||null).then(function(){ toast("کارمند ذخیره شد ✓"); renderStaffAdmin(); })
+            .catch(function(err){ alert((err&&err.message)||"خطا — فقط Owner"); });
+        });
+        return;
+      }
+      var ed=e.target.getAttribute("data-edit-staff");
+      if(ed){
+        var s=(window._staffList||[]).filter(function(x){return x.id===ed;})[0];
+        if(!s) return;
+        if($("#st_id")) $("#st_id").value=s.id;
+        if($("#st_name")) $("#st_name").value=s.name||"";
+        if($("#st_email")) $("#st_email").value=s.email||"";
+        if($("#st_phone")) $("#st_phone").value=s.phone||"";
+        document.querySelectorAll("#st_perms input").forEach(function(c){ c.checked=(s.permissions||[]).indexOf(c.value)>=0; });
+        return;
+      }
+      var dis=e.target.getAttribute("data-disable-staff");
+      if(dis){
+        if(!confirm("کارمند غیرفعال شود؟")) return;
+        requireBackend(function(){
+          MAHOApi.saveStaff({active:false}, dis).then(function(){ renderStaffAdmin(); toast("غیرفعال شد"); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+      }
+    });
+    if($("#custBody")) $("#custBody").addEventListener("click",function(e){
+      var id=e.target.getAttribute("data-del-cust"); if(!id) return;
+      if(!confirm("حذف امن مشتری؟ سفارش‌ها و گزارش‌ها حفظ می‌شوند.")) return;
+      if(!confirm("تأیید دوم: این عمل برگشت‌ناپذیر است (Soft Delete). ادامه؟")) return;
+      requireBackend(function(){
+        MAHOApi.adminSoftDeleteCustomer(id).then(function(){ toast("مشتری حذف امن شد ✓"); renderCustomers(); })
+          .catch(function(err){ alert((err&&err.message)||"خطا"); });
+      });
+    });
     $("#orderApprovalMode").addEventListener("change",function(){ if(!state.config)state.config={}; state.config.orderApproval=this.value; setDirty(true); });
     $("#exportBtn").onclick=function(){
       collectConfig();
@@ -1886,5 +2112,6 @@ function readReviews(){ try{return JSON.parse(localStorage.getItem("maho_reviews
     window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
   })();
   </script>
+  <div class="print-sheet label-a4" id="printSheet" aria-hidden="true"></div>
 </body>
 </html>

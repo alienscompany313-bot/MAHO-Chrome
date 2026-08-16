@@ -394,18 +394,26 @@
 
   /* ---- admin extras / staff / POS stubs ---- */
   function adminOrderBadges() {
-    return request("/api/admin/orders/badges", { token: getToken("admin") });
+    return request("/api/admin/badges/orders", { token: getToken("admin") });
   }
   function adminReturns() {
     return request("/api/admin/returns", { token: getToken("admin") });
   }
   function adminSoftDeleteCustomer(id) {
     return request("/api/admin/customers/" + encodeURIComponent(id) + "/soft-delete", {
-      method: "POST", body: {}, token: getToken("admin"),
+      method: "POST", body: { confirm: "DELETE" }, token: getToken("admin"),
     });
   }
   function softDeleteCustomer(id) {
     return adminSoftDeleteCustomer(id);
+  }
+  function adminMe() {
+    return request("/api/admin/me", { token: getToken("admin") });
+  }
+  function adminReturnResolve(id, body) {
+    return request("/api/admin/orders/" + encodeURIComponent(id) + "/return-resolve", {
+      method: "POST", body: body || {}, token: getToken("admin"),
+    });
   }
   function staffLogin(body) {
     return request("/api/admin/staff-login", { method: "POST", body: body || {} }).then(function (d) {
@@ -491,6 +499,8 @@
     adminSoftDeleteCustomer: adminSoftDeleteCustomer,
     adminOrderBadges: adminOrderBadges,
     adminReturns: adminReturns,
+    adminMe: adminMe,
+    adminReturnResolve: adminReturnResolve,
     staffLogin: staffLogin,
     listStaff: listStaff,
     saveStaff: saveStaff,

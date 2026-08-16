@@ -20,10 +20,13 @@ const {
   createRateLimiter, clientIp, sanitizeText,
 } = require("./lib/security");
 const { buildMailer } = require("./lib/email");
-const { normalizeOrderStatus, canTransition, appendHistory, allowedAdminActions } = require("./lib/orders");
+const { normalizeOrderStatus, canTransition, appendHistory, allowedAdminActions, customerCanCancel, customerCanReturn } = require("./lib/orders");
 const { pushAudit } = require("./lib/audit");
 const { extendMigrate } = require("./lib/migrate-extra");
 const { mountExtra } = require("./lib/api-extra");
+const { mountV2 } = require("./lib/api-v2");
+const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
+const { ALL_PERMS } = require("./lib/staff");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -121,6 +124,10 @@ function initMail(siteFallback) {
     siteUrl: SITE_URL || siteFallback || "https://mahomarket.com",
     logoUrl: "",
     ordersNotifyEmail: SMTP.ordersEmail,
+    getStorePhone: () => {
+      const s = (db.stores && db.stores[0]) || {};
+      return s.phone || (db.config && db.config.footerPhone) || (db.config && db.config.content && db.config.content.footerPhone) || "";
+    },
   });
 }
 
@@ -496,9 +503,10 @@ app.get("/api/health", (req, res) => res.json({
   customers: db.users.length,
 }));
 
-app.get("/api/catalog", (req, res) =>
-  res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config) })
-);
+app.get("/api/catalog", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config) });
+});
 
 /* public uploads */
 app.use("/uploads", express.static(UPLOAD_DIR, {
@@ -515,8 +523,8 @@ app.post("/api/admin/login", (req, res) => {
     return res.status(401).json({ error: "wrong password" });
   }
   const t = token();
-  sessions.set(t, { type: "admin" });
-  res.json({ token: t });
+  sessions.set(t, { type: "admin", owner: true, role: "owner", name: "Owner", permissions: ALL_PERMS.slice() });
+  res.json({ token: t, owner: true, permissions: ALL_PERMS.slice(), name: "Owner" });
 });
 
 app.get("/api/admin/state", requireAdmin, (req, res) =>
@@ -585,7 +593,7 @@ app.post("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
   const prev = normalizeStatus(o.status);
   const next = normalizeStatus((req.body || {}).status);
   const force = !!(req.body || {}).force;
-  const check = canTransition(prev, next, { force });
+  const check = canTransition(prev, next, { force, actor: "admin" });
   if (!check.ok) return res.status(400).json({ error: check.error || "invalid_transition" });
   if (check.noop) return res.json({ order: o, actions: allowedAdminActions(o.status) });
   if (prev !== "cancelled" && next === "cancelled") decStock(o.items, 1);
@@ -703,6 +711,7 @@ app.post("/api/auth/login", (req, res) => {
     [x.email, x.phone, x.id].some((v) => v && String(v).toLowerCase() === id)
   );
   if (!u || !verifyPw(password, u.pass)) return res.status(401).json({ error: "bad credentials" });
+  if (u.deletedAt || u.status === "deleted") return res.status(403).json({ error: "account_deleted" });
   if (u.verified === false || u.status === "pending") {
     return res.status(403).json({ error: "unverified", message: "حساب هنوز تأیید نشده است." });
   }
@@ -754,7 +763,13 @@ app.post("/api/me/verify-email", requireUser, (req, res) => {
 });
 
 /* -------------------- orders -------------------- */
-function findProduct(name) { return db.products.find((p) => p.name === name); }
+function findProduct(name, code) {
+  if (code) {
+    const byCode = db.products.find((p) => p && (p.code === code || p.barcode === code || p.sku === code));
+    if (byCode) return byCode;
+  }
+  return db.products.find((p) => p && p.name === name);
+}
 function decStock(items, sign) {
   (items || []).forEach((it) => {
     const p = findProduct(it.name);
@@ -781,11 +796,21 @@ app.post("/api/orders", (req, res) => {
   const rawItems = Array.isArray(b.items) ? b.items : [];
   if (!rawItems.length) return res.status(400).json({ error: "empty order" });
   const customer = b.customer || {};
-  const isGuest = !!(b.guest || !(auth(req) && auth(req).type === "user"));
+  const sAuth = auth(req);
+  if (!(sAuth && sAuth.type === "user")) {
+    return res.status(401).json({ error: "login_required", message: "برای ثبت سفارش ابتدا وارد حساب تأییدشده شوید." });
+  }
+  const userRow = db.users.find((u) => u.id === sAuth.userId);
+  if (!userRow || userRow.deletedAt || userRow.status === "deleted") {
+    return res.status(403).json({ error: "account_deleted" });
+  }
+  if (userRow.verified === false || userRow.status === "pending") {
+    return res.status(403).json({ error: "unverified" });
+  }
   if (!customer.name || !customer.phone || !customer.address) {
     return res.status(400).json({ error: "missing customer" });
   }
-  if (isGuest && customer.email && !emailOk(customer.email)) {
+  if (customer.email && !emailOk(customer.email)) {
     return res.status(400).json({ error: "bad email" });
   }
 
@@ -813,23 +838,21 @@ app.post("/api/orders", (req, res) => {
   }
 
   const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
-  const s = auth(req);
+  const s = sAuth;
   const payment = sanitizeText(b.payment || "whatsapp", 40) || "whatsapp";
   const hesabCfg = (db.config && db.config.hesab) || {};
   if (payment === "hesab" && hesabCfg.enabled === false) {
     return res.status(400).json({ error: "hesab_disabled" });
   }
+  if (payment === "hesab" && hesabCfg.link) {
+    hesabCfg.link = ensureHttpsUrl(hesabCfg.link);
+  }
   const needsPay = (payment === "bank" || payment === "card" || payment === "hesab");
   const autoApprove = ((db.config && db.config.orderApproval) || "manual") === "auto";
-  let deliveryFee = 0;
-  if (b.delivery && b.delivery.fee != null) {
-    /* clamp delivery fee using config */
-    const cfg = (db.config && db.config.delivery) || {};
-    const km = Math.max(0, Number(b.delivery.km) || 0);
-    const expected = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0);
-    const urgent = b.delivery.urgent ? (cfg.urgentFee || 0) : 0;
-    deliveryFee = Math.min(Number(b.delivery.fee) || 0, expected + urgent + 500); /* small slack */
-    if (!isFinite(deliveryFee) || deliveryFee < 0) deliveryFee = expected + urgent;
+  const delCfg = (db.config && db.config.delivery) || {};
+  const wantsDeliver = b.delivery && (b.delivery.method === "deliver" || b.delivery.method === "delivery");
+  if (wantsDeliver && delCfg.enabled === false) {
+    return res.status(400).json({ error: "delivery_disabled" });
   }
 
   let customerLocation = null;
@@ -840,8 +863,44 @@ app.post("/api/orders", (req, res) => {
         lat: la, lng: lo,
         accuracy: b.customerLocation.accuracy != null ? Number(b.customerLocation.accuracy) : null,
         at: Date.now(),
+        mapsUrl: mapsLink(la, lo),
       };
     }
+  }
+
+  let deliveryFee = 0;
+  let deliveryKm = null;
+  if (wantsDeliver) {
+    const sc = storeCoords(db.stores);
+    if (customerLocation && sc) {
+      deliveryKm = haversineKm(sc.lat, sc.lng, customerLocation.lat, customerLocation.lng);
+      const maxKm = Number(delCfg.maxKm) || 0;
+      if (maxKm > 0 && deliveryKm > maxKm) {
+        return res.status(400).json({
+          error: "out_of_delivery_range",
+          km: Math.round(deliveryKm * 100) / 100,
+          maxKm,
+          message: "آدرس شما خارج از محدوده دلیوری است.",
+        });
+      }
+      const expected = (deliveryKm <= (delCfg.freeKm || 0)) ? 0 : Math.round(deliveryKm) * (delCfg.perKm || 0);
+      const urgent = (b.delivery.time === "urgent" || b.delivery.urgent) ? (delCfg.urgentFee || 0) : 0;
+      deliveryFee = expected + urgent;
+    } else if (b.delivery && b.delivery.fee != null) {
+      /* no coords — reject delivery that needs distance when maxKm set */
+      if ((Number(delCfg.maxKm) || 0) > 0) {
+        return res.status(400).json({ error: "location_required", message: "برای دلیوری موقعیت شما لازم است." });
+      }
+      deliveryFee = Math.max(0, Number(b.delivery.fee) || 0);
+    }
+    if (delCfg.minOrder && itemsTotal < Number(delCfg.minOrder)) {
+      return res.status(400).json({ error: "min_order", minOrder: delCfg.minOrder });
+    }
+  }
+
+  if (b.delivery) {
+    b.delivery.km = deliveryKm != null ? Math.round(deliveryKm * 100) / 100 : b.delivery.km;
+    b.delivery.fee = deliveryFee;
   }
 
   const order = {
@@ -851,23 +910,25 @@ app.post("/api/orders", (req, res) => {
     total: itemsTotal + deliveryFee,
     delivery: b.delivery || null,
     customerLocation: customerLocation,
-    customerNo: (s && s.type === "user" ? (db.users.find((u) => u.id === s.userId) || {}).customerNo : "") || "",
+    customerNo: userRow.customerNo || "",
     customer: {
-      name: sanitizeText(customer.name, 80),
-      phone: sanitizeText(customer.phone, 40),
-      email: sanitizeText(customer.email, 120),
-      address: sanitizeText(customer.address, 400),
-      customerNo: customer.customerNo || "",
+      name: sanitizeText(customer.name || userRow.name, 80),
+      phone: sanitizeText(customer.phone || userRow.phone, 40),
+      email: sanitizeText(customer.email || userRow.email, 120),
+      address: sanitizeText(customer.address || userRow.address, 400),
+      note: sanitizeText(customer.note, 500),
+      customerNo: userRow.customerNo || "",
     },
     payment: payment,
     paymentStatus: needsPay ? "awaiting_payment" : null,
     status: autoApprove && !needsPay ? "confirmed" : "new",
-    userId: s && s.type === "user" ? s.userId : null,
-    guest: !(s && s.type === "user"),
+    userId: userRow.id,
+    guest: false,
     statusHistory: [],
-    deliveryNote: sanitizeText(b.deliveryNote, 500),
+    hesabReceipts: [],
+    deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
   };
-  appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: order.guest ? "guest" : "user", note: "ثبت سفارش" });
+  appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: "user", note: "ثبت سفارش" });
 
   /* decrement stock after building order */
   for (const it of items) {
@@ -915,16 +976,30 @@ function findOrderForReq(req) {
 app.post("/api/orders/:id/cancel", (req, res) => {
   const o = findOrderForReq(req);
   if (!o) return res.status(404).json({ error: "not found" });
-  if (normalizeStatus(o.status) !== "cancelled") {
-    o.status = "cancelled"; decStock(o.items, 1); saveDb();
+  const s = auth(req);
+  const actor = s && s.type === "admin" ? "admin" : "customer";
+  const check = canTransition(o.status, "cancelled", { actor });
+  if (!check.ok) return res.status(400).json({ error: check.error || "cannot_cancel" });
+  if (check.noop) return res.json({ order: o });
+  if (!customerCanCancel(o.status) && actor === "customer") {
+    return res.status(400).json({ error: "customer_cannot_cancel_after_confirm" });
+  }
+  o.status = "cancelled";
+  decStock(o.items, 1);
+  appendHistory(o, { status: "cancelled", by: actor });
+  if (o.deliveryQr) o.deliveryQr.revoked = true;
+  saveDb();
+  if (o.customer && o.customer.email && emailOk(o.customer.email) && mail) {
+    mail.orderStatus(o.customer.email, o, "").catch(() => {});
   }
   res.json({ order: o });
 });
 app.post("/api/orders/:id/return", (req, res) => {
+  /* Legacy endpoint — redirect semantics to delivered-only return request */
   const o = findOrderForReq(req);
   if (!o) return res.status(404).json({ error: "not found" });
-  o.status = "return_requested"; saveDb();
-  res.json({ order: o });
+  if (!customerCanReturn(o.status)) return res.status(400).json({ error: "return_only_after_delivered" });
+  return res.status(400).json({ error: "use_return_request", message: "از /api/orders/:id/return-request با method استفاده کنید." });
 });
 
 /* -------------------- static website -------------------- */
@@ -934,6 +1009,13 @@ mountExtra(app, {
   get mail() { return mail; },
   TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
   UPLOAD_DIR, ALLOW_DEV_CODES, sessions, findProduct, scrubImageFields, isAllowedImageUrl, isDataUrl,
+});
+mountV2(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  get mail() { return mail; },
+  sessions, findProduct, isAllowedImageUrl,
+  ADMIN_PASSWORD,
 });
 
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));

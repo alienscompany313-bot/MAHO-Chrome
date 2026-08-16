@@ -769,6 +769,8 @@
 
   /* -------------------- delivery -------------------- */
   let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
+  let customerLocation = null;
+  let deliveryAllowed = true;
   function getTimeslots() { const ts = (CONFIG.delivery && CONFIG.delivery.timeslots) || []; return (ts.length ? ts : DEFAULT_TIMESLOTS).filter((x) => x && (x.fa || x.en)); }
   function timeslotLabel(i) { const ts = getTimeslots(); const s = ts[i] || ts[0]; return s ? (LANG === "en" ? (s.en || s.fa) : (s.fa || s.en)) : ""; }
   function renderTimeslots() {
@@ -791,7 +793,6 @@
   function deliveryMaxKm() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.maxKm) ? cfg.maxKm : 0; }
   function belowDeliveryMin() { return recvMethod === "deliver" && deliveryMinOrder() > 0 && cartPriceTotal() < deliveryMinOrder(); }
   function beyondDeliveryMax() { const mx = deliveryMaxKm(); return recvMethod === "deliver" && mx > 0 && currentKm() > mx; }
-  let deliveryAllowed = true;
   function deliveryBlockMsg() {
     if (recvMethod !== "deliver") return "";
     if (belowDeliveryMin()) return t("co.belowMin").replace("{n}", money(deliveryMinOrder()));
@@ -1105,7 +1106,6 @@
     closeCart(); openOrders();
   }
   // Actually place the order using the currently selected payment method.
-  let customerLocation = null;
   function finalizeOrder(customer, delivery) {
     if (!requireCheckoutLogin()) {
       closeCart();
