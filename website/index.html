@@ -382,10 +382,9 @@
               <span class="qv-opt-label" data-i18n="co.timeslot" style="display:block;margin-top:12px">زمان دریافت / تحویل</span>
               <div class="pay-methods" id="deliverSlots"></div>
               <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
-                <button type="button" class="btn btn-outline" id="calcDistBtn" data-i18n="co.calcDist">محاسبه‌ی فاصله (موقعیت من)</button>
                 <button type="button" class="btn btn-outline" id="useMyLocBtn">استفاده از موقعیت فعلی من برای دلیوری</button>
-                <input id="co_km" class="ctrl" type="text" inputmode="decimal" placeholder="km" style="width:90px;text-align:center;padding:9px">
               </div>
+              <p class="note" style="margin:6px 0 0;font-size:12px" data-i18n="co.distBgNote">فاصله و هزینه در پس‌زمینه محاسبه می‌شود.</p>
               <p class="pay-info" id="distInfo" hidden></p>
               <p class="pay-info" id="locInfo" hidden></p>
               <div id="locPreview" hidden style="margin-top:8px">
@@ -411,18 +410,10 @@
             </div>
           </div>
 
-          <div class="field" id="guestModeWrap">
-            <label class="toggle-en" style="display:flex;gap:8px;align-items:center;font-weight:800">
-              <input type="checkbox" id="co_guest" checked>
-              ادامه به‌عنوان مهمان (بدون ساخت حساب)
-            </label>
-            <p class="note">مهمان می‌تواند بدون رمز سفارش بدهد. ساخت حساب اختیاری است.</p>
-          </div>
-
           <div class="field" id="guestAcctWrap">
-            <label data-i18n="co.makeAccount">ساخت حساب (اختیاری)</label>
-            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="رمز برای حساب جدید">
-            <p class="note" data-i18n="co.makeAccountHint">اگر رمز بگذارید، هنگام ثبت سفارش یک کود تأیید به ایمیل شما می‌رود و پس از تأیید، حساب ساخته می‌شود. رمز هرگز در ایمیل فرستاده نمی‌شود.</p>
+            <label data-i18n="co.makeAccount">برای ثبت سفارش وارد حساب شوید</label>
+            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="رمز برای حساب جدید" hidden>
+            <p class="note" data-i18n="co.makeAccountHint">برای تکمیل خرید باید وارد حساب شوید. اگر حساب ندارید، از بخش حساب کاربری بسازید. رمز هرگز در ایمیل فرستاده نمی‌شود.</p>
           </div>
           <div class="field" id="coVerifyBox" hidden>
             <label data-i18n="co.enterCode">کود تایید (به ایمیل شما فرستاده شد)</label>
