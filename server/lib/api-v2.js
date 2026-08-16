@@ -29,7 +29,15 @@ function mountV2(app, ctx) {
   function guard(perm) {
     return (req, res, next) => {
       const s = adminSession(req);
-      if (!s || s.type !== "admin") return res.status(401).json({ error: "admin required" });
+      if (!s) return res.status(401).json({ error: "admin required" });
+      if (s.type === "pos") {
+        if (perm !== "pos" && perm !== "reports") {
+          return res.status(403).json({ error: "forbidden", need: perm });
+        }
+        req.adminSession = s;
+        return next();
+      }
+      if (s.type !== "admin") return res.status(401).json({ error: "admin required" });
       if (!hasPerm(s, perm)) return res.status(403).json({ error: "forbidden", need: perm });
       req.adminSession = s;
       next();
@@ -124,8 +132,13 @@ function mountV2(app, ctx) {
       const address = sanitizeText(b.address || (o.customer && o.customer.address), 400);
       const phone = sanitizeText(b.phone || (o.customer && o.customer.phone), 40);
       if (!address || !phone) return res.status(400).json({ error: "address_phone_required" });
-      if (lat == null || lng == null) return res.status(400).json({ error: "location_required" });
-      pickup = { address, phone, lat, lng, mapsUrl: mapsLink(lat, lng) };
+      /* GPS optional — order delivery address/phone are enough */
+      pickup = {
+        address, phone,
+        lat: lat != null ? lat : null,
+        lng: lng != null ? lng : null,
+        mapsUrl: (lat != null && lng != null) ? mapsLink(lat, lng) : (o.customerLocation && o.customerLocation.mapsUrl) || null,
+      };
     } else {
       const sc = storeCoords(ctx.db.stores);
       pickup = sc ? {
@@ -265,7 +278,9 @@ function mountV2(app, ctx) {
   app.post("/api/pos/sale", guard("pos"), (req, res) => {
     if (rateOr429(res, rlPos(clientIp(req) + ":sale"))) return;
     const out = pos.createSale(ctx.db, req.body || {}, {
-      staffId: req.adminSession.staffId, name: req.adminSession.name || "admin",
+      staffId: req.adminSession.staffId,
+      name: req.adminSession.name || "admin",
+      owner: !!req.adminSession.owner,
     });
     if (out.error) return res.status(out.status || 400).json(out);
     pushAudit(ctx.db, { actor: req.adminSession.staffId || "admin", action: "pos_sale", entityType: "pos_sale", entityId: out.sale.id });

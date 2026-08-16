@@ -51,12 +51,13 @@
   <div class="gate" id="gate">
     <div class="box">
       <div style="font-size:24px;font-weight:800;color:var(--gold)">MAHO POS</div>
-      <p class="muted" style="color:#b9b3a6">ورود مدیر / کارمند با دسترسی POS</p>
-      <input id="posLoginId" placeholder="ایمیل کارمند (اختیاری برای مدیر اصلی)" dir="ltr">
-      <input id="posPass" type="password" placeholder="رمز" dir="ltr">
-      <button class="btn btn-gold" style="width:100%" id="posLoginBtn">ورود</button>
+      <p class="muted" style="color:#b9b3a6">ورود مستقیم کارمند فروش — بدون نیاز به پنل مدیریت</p>
+      <input id="posLoginId" placeholder="ایمیل / نام کاربری کارمند" dir="ltr">
+      <input id="posPass" type="password" placeholder="رمز عبور" dir="ltr">
+      <button class="btn btn-gold" style="width:100%" id="posLoginBtn">ورود به POS</button>
       <p class="err" id="gateMsg"></p>
-      <a class="btn btn-ghost btn-sm" href="admin.html" style="display:inline-block;margin-top:8px">بازگشت به پنل</a>
+      <p class="muted" style="color:#b9b3a6;font-size:12px;margin-top:10px">مدیر اصلی: ایمیل را خالی بگذارید یا Owner بنویسید و رمز ADMIN را وارد کنید.</p>
+      <a class="btn btn-ghost btn-sm" href="index.html" style="display:inline-block;margin-top:8px">بازگشت به سایت</a>
     </div>
   </div>
 
@@ -64,8 +65,7 @@
     <div class="brand">MAHO POS <small id="who">—</small></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <span class="muted" style="color:#ccc" id="shiftInfo">شیفت: —</span>
-      <a class="btn btn-ghost btn-sm" href="admin.html">پنل مدیریت</a>
-      <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج</button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج از POS</button>
     </div>
   </div>
 
@@ -85,6 +85,17 @@
           <input id="scanInput" dir="ltr" placeholder="اسکن بارکد یا جستجوی نام / SKU" autocomplete="off">
           <button class="btn btn-outline" type="button" id="searchBtn">جستجو</button>
         </div>
+        <div class="scan" style="margin-top:8px">
+          <select id="prodCat" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1.5px solid var(--line)"><option value="">همه دسته‌ها</option></select>
+          <select id="prodStock" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1.5px solid var(--line)">
+            <option value="">همه موجودی‌ها</option>
+            <option value="in">موجود</option>
+            <option value="low">کم‌موجودی</option>
+            <option value="out">ناموجود</option>
+          </select>
+          <button class="btn btn-outline" type="button" id="reloadCatalogBtn">بارگذاری محصولات</button>
+        </div>
+        <div id="prodGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0;max-height:280px;overflow:auto"></div>
         <div id="hits" style="margin-top:8px"></div>
         <table><thead><tr><th>کالا</th><th>تعداد</th><th>قیمت</th><th></th></tr></thead><tbody id="cartBody"></tbody></table>
         <div class="field" style="margin-top:8px"><label class="muted">تخفیف مبلغی</label><input id="saleDisc" type="number" min="0" value="0" dir="ltr"></div>
@@ -92,6 +103,7 @@
           <select id="salePay"><option value="cash">نقدی</option><option value="card">کارت</option><option value="hesab">حساب‌پی</option><option value="other">سایر</option></select>
         </div>
         <div class="field"><label class="muted">مشتری (اختیاری)</label><input id="saleCust" placeholder="نام / نمبر"></div>
+        <div class="muted" id="cashierLine">فروشنده: —</div>
         <div class="tot" id="saleTotal">۰ افغانی</div>
         <button class="btn btn-gold" id="checkoutBtn" type="button">ثبت فروش</button>
         <p class="muted" id="saleMsg"></p>
@@ -165,7 +177,15 @@
     function toast(el,msg,ok){ if(!el)return; el.className=ok?"ok":"err"; el.textContent=msg||""; }
 
     function requirePos(){
-      if(!MAHOApi.getToken("admin")) return Promise.reject(new Error("login"));
+      var tok = MAHOApi.getToken("pos") || MAHOApi.getToken("admin");
+      if(!tok) return Promise.reject(new Error("login"));
+      if(MAHOApi.posMe) {
+        return MAHOApi.posMe().then(function(me){
+          $("#who").textContent=(me.name||"")+(me.owner?" · Owner":"");
+          if($("#cashierLine")) $("#cashierLine").textContent="فروشنده: "+(me.name||"—");
+          return me;
+        });
+      }
       return MAHOApi.adminMe ? MAHOApi.adminMe().then(function(me){
         var perms=me.permissions||[];
         if(!me.owner && perms.indexOf("pos")<0 && perms.indexOf("reports")<0) throw new Error("no pos permission");
@@ -177,7 +197,7 @@
     function openApp(){
       $("#gate").style.display="none";
       $("#appTop").hidden=false; $("#app").hidden=false;
-      requirePos().then(function(){ refreshSales(); $("#scanInput").focus(); }).catch(function(e){
+      requirePos().then(function(){ refreshSales(); loadCatalog(); $("#scanInput").focus(); }).catch(function(e){
         $("#gate").style.display="flex"; $("#appTop").hidden=true; $("#app").hidden=true;
         $("#gateMsg").textContent=e.message||"دسترسی ندارید";
       });
@@ -185,12 +205,55 @@
 
     $("#posLoginBtn").onclick=function(){
       var pass=$("#posPass").value, id=$("#posLoginId").value.trim();
-      var p = id && MAHOApi.staffLogin
-        ? MAHOApi.staffLogin({ id:id, password:pass })
-        : MAHOApi.adminLogin(pass);
-      p.then(function(){ openApp(); }).catch(function(err){ $("#gateMsg").textContent=(err&&err.message)||"ورود ناموفق"; });
+      if(!pass){ $("#gateMsg").textContent="رمز لازم است"; return; }
+      var p = MAHOApi.posLogin
+        ? MAHOApi.posLogin({ id: id || "owner", password: pass })
+        : (id && MAHOApi.staffLogin ? MAHOApi.staffLogin({ id:id, password:pass }) : MAHOApi.adminLogin(pass));
+      p.then(function(res){
+        if(res && res.name) $("#who").textContent=res.name+(res.staffId?" · "+res.staffId.slice(0,8):" · Owner");
+        if($("#cashierLine")) $("#cashierLine").textContent="فروشنده: "+((res&&res.name)||"—");
+        openApp();
+      }).catch(function(err){
+        var msg=(err&&err.message)||"ورود ناموفق";
+        if(/no_pos|forbidden|403/i.test(msg)) msg="دسترسی POS ندارید یا حساب غیرفعال است";
+        $("#gateMsg").textContent=msg;
+      });
     };
-    if(MAHOApi.getToken("admin")) openApp();
+    if(MAHOApi.getToken("pos")||MAHOApi.getToken("admin")) openApp();
+
+    function loadCatalog(){
+      if(!MAHOApi.posProducts) return Promise.resolve();
+      return MAHOApi.posProducts({
+        q: ($("#scanInput").value||"").trim(),
+        cat: $("#prodCat").value,
+        stock: $("#prodStock").value
+      }).then(function(res){
+        var list=res.products||[];
+        var cats=res.categories||[];
+        var sel=$("#prodCat"), cur=sel.value;
+        sel.innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>'}).join("");
+        sel.value=cur;
+        $("#prodGrid").innerHTML=list.map(function(p,i){
+          var st=p.stockStatus||"unknown";
+          var badge=st==="out"?"ناموجود":(st==="low"?"کم‌موجودی":(p.stock!=null?("موجود: "+p.stock):"—"));
+          var bg=st==="out"?"#fdecec":(st==="low"?"#fff4e0":"#fff");
+          var img=p.image?('<img src="'+p.image+'" alt="" style="width:100%;height:90px;object-fit:cover;border-radius:8px">'):"";
+          return '<button type="button" class="hit" data-pi="'+i+'" style="display:block;text-align:right;background:'+bg+';width:100%;border:1px solid var(--line)">'+
+            img+'<b>'+p.name+'</b><div class="muted">'+(p.name_en||"")+'</div>'+
+            '<div class="muted" dir="ltr">'+(p.code||p.sku||"")+(p.barcode?" · "+p.barcode:"")+'</div>'+
+            '<div>'+money(p.price)+' · <span class="'+(st==="out"?"err":(st==="low"?"err":"ok"))+'">'+badge+'</span></div></button>';
+        }).join("")||"<p class='muted'>محصولی نیست</p>";
+        $("#prodGrid")._list=list;
+      });
+    }
+    $("#prodGrid").addEventListener("click",function(e){
+      var b=e.target.closest("[data-pi]"); if(!b) return;
+      var p=($("#prodGrid")._list||[])[parseInt(b.getAttribute("data-pi"),10)];
+      if(p) addProduct(p);
+    });
+    $("#reloadCatalogBtn").onclick=function(){ loadCatalog(); };
+    $("#prodCat").onchange=function(){ loadCatalog(); };
+    $("#prodStock").onchange=function(){ loadCatalog(); };
 
     document.querySelectorAll("#tabs .tab").forEach(function(t){
       t.onclick=function(){
@@ -281,8 +344,8 @@
         shiftId: shiftId,
         idempotencyKey: idem
       }).then(function(res){
-        toast($("#saleMsg"),"فروش ثبت شد: "+res.sale.id,true);
-        cart=[]; $("#saleDisc").value=0; renderCart(); refreshSales();
+        toast($("#saleMsg"),"فروش ثبت شد: "+(res.sale.receiptNo||res.sale.id)+" · فروشنده: "+(res.sale.staffName||""),true);
+        cart=[]; $("#saleDisc").value=0; renderCart(); refreshSales(); loadCatalog();
       }).catch(function(err){ toast($("#saleMsg"),(err&&err.message)||"خطا",false); });
     };
 
@@ -290,7 +353,7 @@
       MAHOApi.posSales().then(function(res){
         var list=(res.sales||[]).slice(0,8);
         $("#recentSales").innerHTML="<h3>آخرین فروش‌ها</h3>"+list.map(function(s){
-          return "<div class='hit'><div><b dir='ltr'>"+s.id+"</b><div class='muted'>"+(s.type||"sale")+" · "+money(s.total)+"</div></div></div>";
+          return "<div class='hit'><div><b dir='ltr'>"+(s.receiptNo||s.id)+"</b><div class='muted'>"+(s.type||"sale")+" · "+money(s.total)+" · "+(s.staffName||"")+"</div></div></div>";
         }).join("");
       }).catch(function(){});
     }
@@ -383,7 +446,11 @@
       var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="maho-pos-report.csv"; a.click();
     };
 
-    $("#logoutBtn").onclick=function(){ MAHOApi.logoutAdmin(); location.reload(); };
+    $("#logoutBtn").onclick=function(){
+      var done=function(){ location.href="pos.html"; };
+      if(MAHOApi.posLogout) MAHOApi.posLogout().then(done).catch(done);
+      else { MAHOApi.logoutAdmin(); done(); }
+    };
   })();
   </script>
 </body>

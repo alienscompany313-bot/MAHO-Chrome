@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delivery Driver | MAHO</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="js/api.js"></script>
+  <style>
+    :root{--black:#141414;--gold:#c8a35f;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32}
+    *{box-sizing:border-box} body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#f3efe7;color:var(--ink)}
+    .top{background:var(--black);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+    .btn{font:700 13px inherit;border-radius:999px;border:1.5px solid transparent;padding:9px 14px;cursor:pointer;min-height:42px}
+    .btn-gold{background:var(--gold);color:#1a1509}.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+    .btn-outline{background:#fff;border-color:var(--line)}.btn-danger{background:#fdecec;color:var(--red)}
+    .wrap{max-width:720px;margin:0 auto;padding:14px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+    .gate{position:fixed;inset:0;background:#141414;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+    .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:16px;padding:24px;max-width:360px;width:100%;color:#fff}
+    .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;margin:10px 0;font:inherit}
+    .muted{color:var(--muted);font-size:13px}.err{color:#ff8a80}.ok{color:var(--green);font-weight:700}
+    .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="gate" id="gate">
+    <div class="box">
+      <div style="font-size:22px;font-weight:800;color:var(--gold)">MAHO Delivery</div>
+      <p class="muted" style="color:#b9b3a6">ورود راننده</p>
+      <input id="loginId" placeholder="ایمیل / نام کاربری" dir="ltr">
+      <input id="loginPass" type="password" placeholder="رمز" dir="ltr">
+      <button class="btn btn-gold" style="width:100%" id="loginBtn">ورود</button>
+      <p class="err" id="gateMsg"></p>
+    </div>
+  </div>
+  <div class="top" id="top" hidden>
+    <div><b>MAHO Driver</b><div class="muted" style="color:#ccc" id="who">—</div></div>
+    <button class="btn btn-ghost" id="logoutBtn">خروج</button>
+  </div>
+  <div class="wrap" id="app" hidden>
+    <div id="list"></div>
+  </div>
+  <script>
+  (function(){
+    function $(s){return document.querySelector(s)}
+    function openApp(){
+      $("#gate").style.display="none"; $("#top").hidden=false; $("#app").hidden=false;
+      MAHOApi.driverOrders().then(render).catch(function(e){ $("#list").innerHTML="<p class='err'>"+(e.message||"خطا")+"</p>"; });
+    }
+    function render(res){
+      var orders=res.orders||[];
+      if(!orders.length){ $("#list").innerHTML="<p class='muted'>سفارش Assign‌شده‌ای نیست.</p>"; return; }
+      $("#list").innerHTML=orders.map(function(o){
+        var loc=o.customerLocation||{};
+        var maps=loc.mapsUrl?('<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه</a>'):"";
+        var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join("، ");
+        return '<div class="card" data-oid="'+o.id+'"><div><b dir="ltr">#'+o.id+'</b> · وضعیت راننده: <b>'+(o.driverStatus||"")+'</b></div>'+
+          '<div>'+(o.customer&&o.customer.name||"")+' · <span dir="ltr">'+(o.customer&&o.customer.phone||"")+'</span></div>'+
+          '<div class="muted">'+(o.customer&&o.customer.address||"")+'</div>'+
+          '<div class="muted">اقلام: '+items+'</div>'+
+          '<div>مبلغ قابل دریافت: '+(o.collectAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+          '<div class="acts">'+maps+
+          '<button class="btn btn-outline" data-st="picked_up">دریافت‌شده</button>'+
+          '<button class="btn btn-outline" data-st="in_transit">در مسیر</button>'+
+          '<button class="btn btn-gold" data-st="delivered">تحویل‌شده</button>'+
+          '<button class="btn btn-danger" data-st="failed">ناموفق</button></div>'+
+          '<div style="margin-top:8px"><label class="muted">یادداشت / دلیل</label><input class="note" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line)" placeholder="برای ناموفق اجباری">' +
+          '<label class="muted">عکس اثبات (اختیاری)</label><input type="file" class="proof" accept="image/*" capture="environment"></div>'+
+          '<p class="muted msg"></p></div>';
+      }).join("");
+    }
+    $("#loginBtn").onclick=function(){
+      MAHOApi.driverLogin({ id: $("#loginId").value.trim(), password: $("#loginPass").value })
+        .then(function(d){ $("#who").textContent=d.name||""; openApp(); })
+        .catch(function(e){ $("#gateMsg").textContent=e.message||"ورود ناموفق"; });
+    };
+    $("#logoutBtn").onclick=function(){ MAHOApi.driverLogout().then(function(){ location.reload(); }); };
+    $("#list").addEventListener("click",function(e){
+      var btn=e.target.closest("[data-st]"); if(!btn) return;
+      var card=btn.closest(".card"); var id=card.getAttribute("data-oid");
+      var st=btn.getAttribute("data-st");
+      var note=(card.querySelector(".note").value||"").trim();
+      var msg=card.querySelector(".msg");
+      if(st==="failed" && !note){ msg.className="err"; msg.textContent="دلیل تحویل ناموفق لازم است"; return; }
+      var file=card.querySelector(".proof").files[0];
+      var go=function(){
+        return MAHOApi.driverSetStatus(id,{ status:st, note:note, reason:note }).then(function(){
+          msg.className="ok"; msg.textContent="ثبت شد"; openApp();
+        });
+      };
+      var chain = (st==="delivered" && file && MAHOApi.driverUploadProof)
+        ? MAHOApi.driverUploadProof(id, file).then(go)
+        : go();
+      chain.catch(function(err){ msg.className="err"; msg.textContent=err.message||"خطا"; });
+    });
+    if(MAHOApi.getToken("driver")) openApp();
+  })();
+  </script>
+</body>
+</html>

@@ -3,6 +3,8 @@
  * Extra additive migrate steps — never wipes products/orders/users/uploads.
  */
 const { ensurePos } = require("./pos");
+const { ensurePaymentMethods } = require("./payments");
+const { ensureDrivers } = require("./driver");
 
 function extendMigrate(data) {
   if (!data || typeof data !== "object") return false;
@@ -14,6 +16,7 @@ function extendMigrate(data) {
   data.idempotencyKeys = data.idempotencyKeys || {};
   if (!Array.isArray(data.staff)) { data.staff = []; changed = true; }
   if (ensurePos(data)) changed = true;
+  if (ensureDrivers(data)) changed = true;
 
   /* category section texts (homepage) */
   if (!data.config.sectionCats || typeof data.config.sectionCats !== "object") {
@@ -53,9 +56,60 @@ function extendMigrate(data) {
   data.config.hesab = Object.assign({}, hesabDefaults, h);
   if (JSON.stringify(data.config.hesab) !== before) changed = true;
 
+  /* public HesabPay promotional banner (separate from checkout QR) */
+  if (!data.config.hesabBanner || typeof data.config.hesabBanner !== "object") {
+    data.config.hesabBanner = {
+      enabled: false,
+      imageUrl: "",
+      text: "ما پرداخت با حساب‌پی را می‌پذیریم",
+      text_en: "We accept HesabPay",
+      link: "",
+      order: 20,
+      placement: "after_categories",
+    };
+    changed = true;
+  }
+
+  /* hero slider — migrate legacy single heroImage into slides once */
+  if (!Array.isArray(data.config.heroSlides)) {
+    data.config.heroSlides = [];
+    if (data.config.heroImage) {
+      data.config.heroSlides.push({
+        id: "legacy-hero",
+        url: data.config.heroImage,
+        enabled: true,
+        order: 0,
+        alt: "MAHO",
+        text: "",
+        text_en: "",
+        link: "",
+      });
+    }
+    changed = true;
+  }
+  if (data.config.heroSliderIntervalSec == null) {
+    data.config.heroSliderIntervalSec = 5;
+    changed = true;
+  }
+
+  /* payment method toggles */
+  if (ensurePaymentMethods(data.config)) changed = true;
+
   /* delivery defaults */
   if (!data.config.delivery || typeof data.config.delivery !== "object") {
     data.config.delivery = { enabled: true, perKm: 20, freeKm: 0, urgentFee: 50, minOrder: 0, maxKm: 0, timeslots: [] };
+    changed = true;
+  }
+  if (data.config.delivery.gpsRequired === undefined) {
+    data.config.delivery.gpsRequired = false;
+    changed = true;
+  }
+  if (!data.config.delivery.outOfRangePolicy) {
+    data.config.delivery.outOfRangePolicy = "warn";
+    changed = true;
+  }
+  if (data.config.delivery.proofPhotoRequired === undefined) {
+    data.config.delivery.proofPhotoRequired = false;
     changed = true;
   }
 
@@ -85,6 +139,7 @@ function extendMigrate(data) {
         o.returnRequest.method = "pickup_store";
         changed = true;
       }
+      if (o.lang == null) { o.lang = "fa"; changed = true; }
     });
   }
 

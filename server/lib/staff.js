@@ -6,7 +6,7 @@
 const { hashPassword, verifyPassword, sanitizeText } = require("./security");
 
 const ALL_PERMS = [
-  "orders", "delivery", "pos", "products", "customers", "returns", "reports", "settings", "staff",
+  "orders", "delivery", "pos", "products", "customers", "returns", "reports", "settings", "staff", "drivers",
 ];
 
 function normalizePerms(list) {
@@ -33,7 +33,15 @@ function publicStaff(s) {
 }
 
 function hasPerm(session, perm) {
-  if (!session || session.type !== "admin") return false;
+  if (!session) return false;
+  if (session.type === "pos") {
+    const p = String(perm || "").toLowerCase();
+    return p === "pos" || p === "reports" || p === "any";
+  }
+  if (session.type === "driver") {
+    return String(perm || "").toLowerCase() === "delivery" || perm === "any";
+  }
+  if (session.type !== "admin") return false;
   if (session.owner) return true; /* bootstrap ADMIN_PASSWORD */
   if (session.role === "owner") return true;
   const perms = normalizePerms(session.permissions);

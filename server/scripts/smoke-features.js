@@ -204,7 +204,7 @@ async function main() {
     /* re-enable with maxKm */
     await req("PUT", "/api/admin/catalog", {
       token: adminTok,
-      body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 1, perKm: 20, freeKm: 0 }, hesab: catalog.config.hesab }) },
+      body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 1, perKm: 20, freeKm: 0, outOfRangePolicy: "block" }, hesab: catalog.config.hesab }) },
     });
     const far = await req("POST", "/api/orders", {
       token: ulogin.data.token,
@@ -222,7 +222,22 @@ async function main() {
 
     /* restock product for further tests */
     catalog.products[0].stock = 5;
-    await req("PUT", "/api/admin/catalog", { token: adminTok, body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 50, perKm: 10, freeKm: 0 } }) } });
+    await req("PUT", "/api/admin/catalog", { token: adminTok, body: { products: catalog.products, stores: catalog.stores, config: Object.assign({}, catalog.config, { delivery: { enabled: true, maxKm: 50, perKm: 10, freeKm: 0, outOfRangePolicy: "warn", gpsRequired: false } }) } });
+
+    /* delivery without GPS must be allowed */
+    const noGps = await req("POST", "/api/orders", {
+      token: ulogin.data.token,
+      body: {
+        items: [{ name: "شال تست", qty: 1 }],
+        customer: { name: "آیدا", phone: "0700111222", email, address: "کابل شهر نو" },
+        payment: "whatsapp",
+        delivery: { method: "deliver", time: "normal", fee: 20 },
+        idempotencyKey: "nogps_" + Date.now(),
+      },
+    });
+    assert(noGps.status === 200 || noGps.status === 201, "delivery without GPS " + JSON.stringify(noGps.data));
+    assert(!noGps.data.order.customerLocation, "no gps stored");
+    ok("optional GPS delivery");
 
     /* member order + oversell */
     const memOrder = await req("POST", "/api/orders", {
@@ -329,6 +344,8 @@ async function main() {
       },
     });
     assert(posSale.status === 200 && posSale.data.sale, "pos sale " + JSON.stringify(posSale.data));
+    assert(/^POS-MAHO-\d{6}$/.test(posSale.data.sale.receiptNo || posSale.data.sale.id), "pos serial " + (posSale.data.sale.receiptNo || posSale.data.sale.id));
+    assert(posSale.data.sale.staffName, "staff name on sale");
     const posSale2 = await req("POST", "/api/pos/sale", {
       token: adminTok,
       body: {

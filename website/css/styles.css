@@ -314,6 +314,18 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   opacity: .5; pointer-events: none;
 }
 .hero .container { position: relative; z-index: 2; display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+.hero-slider-ui { position: absolute; inset: auto 0 18px 0; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
+.hero-prev, .hero-next {
+  pointer-events: auto; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35);
+  background: rgba(0,0,0,.35); color: #fff; font-size: 22px; cursor: pointer; line-height: 1;
+}
+.hero-slider-dots { pointer-events: auto; display: flex; gap: 6px; }
+.hero-dot { width: 9px; height: 9px; border-radius: 50%; border: 0; background: rgba(255,255,255,.4); cursor: pointer; padding: 0; }
+.hero-dot.active { background: var(--gold, #c8a35f); }
+.hero-slide-caption { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); z-index: 3; max-width: min(90%, 520px); text-align: center; color: #fff; font-weight: 700; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+@media (max-width: 720px) {
+  .hero-slide-caption { bottom: 56px; font-size: 13px; }
+}
 
 .hero-eyebrow {
   display: inline-flex; align-items: center; gap: 8px;

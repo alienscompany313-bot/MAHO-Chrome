@@ -28,6 +28,8 @@ const { pushAudit } = require("./lib/audit");
 const { extendMigrate } = require("./lib/migrate-extra");
 const { mountExtra } = require("./lib/api-extra");
 const { mountV2 } = require("./lib/api-v2");
+const { mountV3 } = require("./lib/api-v3");
+const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS } = require("./lib/staff");
 
@@ -539,10 +541,22 @@ app.put("/api/admin/catalog", requireAdmin, (req, res) => {
   if (Array.isArray(b.products)) db.products = b.products;
   if (Array.isArray(b.stores)) db.stores = clampStoreCoords(b.stores);
   if (b.config && typeof b.config === "object") {
-    /* Preserve keys not sent; merge carefully without wiping unrelated data */
+    if (b.config.paymentMethods) {
+      const next = normalizePaymentMethods({ paymentMethods: b.config.paymentMethods, hesab: b.config.hesab || db.config.hesab });
+      if (!assertAtLeastOneEnabled(next)) {
+        return res.status(400).json({ error: "at_least_one_payment_required" });
+      }
+      b.config.paymentMethods = next;
+      if (b.config.hesab) b.config.hesab.enabled = !!next.hesab.enabled;
+    }
+    if (b.config.hesabBanner && b.config.hesabBanner.link) {
+      const { ensureHttpsUrl: httpsU } = require("./lib/geo");
+      b.config.hesabBanner.link = httpsU(b.config.hesabBanner.link);
+    }
     db.config = Object.assign({}, db.config, b.config);
   }
   migrateDb(db);
+  ensurePaymentMethods(db.config);
   saveDb();
   res.json({ ok: true, products: db.products.length });
 });
@@ -846,10 +860,11 @@ app.post("/api/orders", (req, res) => {
   const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const s = sAuth;
   const payment = sanitizeText(b.payment || "whatsapp", 40) || "whatsapp";
-  const hesabCfg = (db.config && db.config.hesab) || {};
-  if (payment === "hesab" && hesabCfg.enabled === false) {
-    return res.status(400).json({ error: "hesab_disabled" });
+  const payCheck = assertPaymentAllowed(db.config, payment);
+  if (!payCheck.ok) {
+    return res.status(400).json({ error: payCheck.error || "payment_disabled", payment: payCheck.payment || payment });
   }
+  const hesabCfg = (db.config && db.config.hesab) || {};
   if (payment === "hesab" && hesabCfg.link) {
     hesabCfg.link = ensureHttpsUrl(hesabCfg.link);
   }
@@ -859,6 +874,13 @@ app.post("/api/orders", (req, res) => {
   const wantsDeliver = b.delivery && (b.delivery.method === "deliver" || b.delivery.method === "delivery");
   if (wantsDeliver && delCfg.enabled === false) {
     return res.status(400).json({ error: "delivery_disabled" });
+  }
+  if (wantsDeliver) {
+    const phoneOk = sanitizeText(customer.phone || userRow.phone, 40);
+    const addrOk = sanitizeText(customer.address || userRow.address, 400);
+    if (!phoneOk || !addrOk) {
+      return res.status(400).json({ error: "address_phone_required", message: "برای دلیوری آدرس و شماره تماس لازم است." });
+    }
   }
 
   let customerLocation = null;
@@ -876,27 +898,34 @@ app.post("/api/orders", (req, res) => {
 
   let deliveryFee = 0;
   let deliveryKm = null;
+  let deliveryWarning = null;
   if (wantsDeliver) {
     const sc = storeCoords(db.stores);
     if (customerLocation && sc) {
       deliveryKm = haversineKm(sc.lat, sc.lng, customerLocation.lat, customerLocation.lng);
       const maxKm = Number(delCfg.maxKm) || 0;
       if (maxKm > 0 && deliveryKm > maxKm) {
-        return res.status(400).json({
-          error: "out_of_delivery_range",
+        const policy = String(delCfg.outOfRangePolicy || "warn");
+        if (policy === "block") {
+          return res.status(400).json({
+            error: "out_of_delivery_range",
+            km: Math.round(deliveryKm * 100) / 100,
+            maxKm,
+            message: "آدرس شما خارج از محدوده دلیوری است.",
+          });
+        }
+        deliveryWarning = {
+          error: "out_of_delivery_range_warn",
           km: Math.round(deliveryKm * 100) / 100,
           maxKm,
-          message: "آدرس شما خارج از محدوده دلیوری است.",
-        });
+          message: "موقعیت شما خارج از محدوده دلیوری است؛ سفارش با آدرس نوشتاری ثبت می‌شود.",
+        };
       }
       const expected = (deliveryKm <= (delCfg.freeKm || 0)) ? 0 : Math.round(deliveryKm) * (delCfg.perKm || 0);
       const urgent = (b.delivery.time === "urgent" || b.delivery.urgent) ? (delCfg.urgentFee || 0) : 0;
       deliveryFee = expected + urgent;
     } else if (b.delivery && b.delivery.fee != null) {
-      /* no coords — reject delivery that needs distance when maxKm set */
-      if ((Number(delCfg.maxKm) || 0) > 0) {
-        return res.status(400).json({ error: "location_required", message: "برای دلیوری موقعیت شما لازم است." });
-      }
+      /* GPS optional — allow written-address delivery without coords */
       deliveryFee = Math.max(0, Number(b.delivery.fee) || 0);
     }
     if (delCfg.minOrder && itemsTotal < Number(delCfg.minOrder)) {
@@ -909,6 +938,7 @@ app.post("/api/orders", (req, res) => {
     b.delivery.fee = deliveryFee;
   }
 
+  const orderLang = String(b.lang || b.locale || "fa").toLowerCase().indexOf("en") === 0 ? "en" : "fa";
   const order = {
     id: nextOrderNo(), date: Date.now(),
     items: items,
@@ -924,12 +954,15 @@ app.post("/api/orders", (req, res) => {
       address: sanitizeText(customer.address || userRow.address, 400),
       note: sanitizeText(customer.note, 500),
       customerNo: userRow.customerNo || "",
+      city: sanitizeText(customer.city || (customer.addr && customer.addr.city), 80),
+      addr: customer.addr && typeof customer.addr === "object" ? customer.addr : (userRow.addr || {}),
     },
     payment: payment,
     paymentStatus: needsPay ? "awaiting_payment" : null,
     status: autoApprove && !needsPay ? "confirmed" : "new",
     userId: userRow.id,
     guest: false,
+    lang: orderLang,
     statusHistory: [],
     hesabReceipts: [],
     deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
@@ -963,11 +996,19 @@ app.post("/api/orders", (req, res) => {
 
   const trackUrl = (SITE_URL || "https://mahomarket.com") + "/#orders";
   if (order.customer.email && emailOk(order.customer.email) && mail) {
-    mail.orderConfirmation(order.customer.email, order, trackUrl).catch(() => {});
+    mail.orderConfirmation(order.customer.email, order, trackUrl, order.lang).catch((err) => {
+      pushAudit(db, { actor: "system", action: "email_failed", entityType: "order", entityId: order.id, meta: { kind: "orderConfirmation", message: String((err && err.message) || err).slice(0, 120) } });
+      try { saveDb(); } catch (_) {}
+    });
   }
-  if (mail) mail.orderAdminNotify(order).catch(() => {});
+  if (mail) {
+    mail.orderAdminNotify(order).catch((err) => {
+      pushAudit(db, { actor: "system", action: "email_failed", entityType: "order", entityId: order.id, meta: { kind: "orderAdminNotify", message: String((err && err.message) || err).slice(0, 120) } });
+      try { saveDb(); } catch (_) {}
+    });
+  }
 
-  res.json({ order: order });
+  res.json({ order: order, warning: deliveryWarning || undefined });
 });
 app.get("/api/orders", requireUser, (req, res) =>
   res.json({ orders: db.orders.filter((o) => o.userId === req.user.id) })
@@ -1030,6 +1071,12 @@ mountV2(app, {
   get mail() { return mail; },
   sessions, findProduct, isAllowedImageUrl,
   ADMIN_PASSWORD,
+});
+mountV3(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  get mail() { return mail; },
+  sessions, UPLOAD_DIR, ADMIN_PASSWORD,
 });
 
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
