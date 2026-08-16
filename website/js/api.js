@@ -253,6 +253,16 @@
       token: getToken("user") || undefined,
     });
   }
+  function returnRequest(id, body) {
+    return request("/api/orders/" + encodeURIComponent(id) + "/return-request", {
+      method: "POST",
+      body: body || {},
+      token: getToken("user") || undefined,
+    });
+  }
+  function checkDelivery(body) {
+    return request("/api/delivery/check", { method: "POST", body: body || {} });
+  }
 
   /* ---- admin ---- */
   function adminLogin(password) {
@@ -343,6 +353,9 @@
     awaiting_payment: "در انتظار پرداخت",
     cancelled: "لغو شد",
     return_requested: "درخواست برگشت",
+    return_approved: "برگشت تأیید شد",
+    return_rejected: "برگشت رد شد",
+    return_completed: "برگشت تکمیل شد",
     receipt_submitted: "رسید فرستاده شد",
     under_review: "در حال بررسی",
     payment_confirmed: "پرداخت تأیید شد",
@@ -358,13 +371,86 @@
     if (STATUS_FA[s]) return s;
     if (s === "new" || s.indexOf("جدید") >= 0) return "new";
     if (s.indexOf("ارسال") >= 0 || s === "dispatched") return "dispatched";
-    if (s.indexOf("تحویل") >= 0 || s.indexOf("رسید") >= 0 || s === "delivered") return "delivered";
+    if (s.indexOf("تحویل") >= 0 || s === "delivered") return "delivered";
     if (s.indexOf("تایید شده") >= 0 || s.indexOf("تأیید") >= 0 || s === "confirmed") return "confirmed";
     if (s.indexOf("لغو") >= 0 || s === "cancelled") return "cancelled";
     if (s.indexOf("انتظار پرداخت") >= 0 || s === "awaiting_payment") return "awaiting_payment";
+    if (s.indexOf("برگشت") >= 0 && (s.indexOf("تکمیل") >= 0 || s === "return_completed")) return "return_completed";
+    if (s.indexOf("برگشت") >= 0 && (s.indexOf("رد") >= 0 || s === "return_rejected")) return "return_rejected";
+    if (s.indexOf("برگشت") >= 0 && (s.indexOf("تأیید") >= 0 || s.indexOf("تایید") >= 0 || s === "return_approved")) return "return_approved";
     if (s.indexOf("برگشت") >= 0 || s === "return_requested") return "return_requested";
     if (s.indexOf("انتظار") >= 0 || s === "pending") return "new";
     return s || "new";
+  }
+
+  function ensureHttps(u) {
+    var s = String(u || "").trim();
+    if (!s) return "";
+    if (/^https:\/\//i.test(s)) return s;
+    if (/^http:\/\//i.test(s)) return "https://" + s.slice(7);
+    if (/^\/\//.test(s)) return "https:" + s;
+    return "https://" + s.replace(/^\/+/, "");
+  }
+
+  /* ---- admin extras / staff / POS stubs ---- */
+  function adminOrderBadges() {
+    return request("/api/admin/orders/badges", { token: getToken("admin") });
+  }
+  function adminReturns() {
+    return request("/api/admin/returns", { token: getToken("admin") });
+  }
+  function adminSoftDeleteCustomer(id) {
+    return request("/api/admin/customers/" + encodeURIComponent(id) + "/soft-delete", {
+      method: "POST", body: {}, token: getToken("admin"),
+    });
+  }
+  function softDeleteCustomer(id) {
+    return adminSoftDeleteCustomer(id);
+  }
+  function staffLogin(body) {
+    return request("/api/admin/staff-login", { method: "POST", body: body || {} }).then(function (d) {
+      if (d.token) setToken("admin", d.token);
+      return d;
+    });
+  }
+  function listStaff() {
+    return request("/api/admin/staff", { token: getToken("admin") });
+  }
+  function saveStaff(body, id) {
+    if (id) {
+      return request("/api/admin/staff/" + encodeURIComponent(id), {
+        method: "PUT", body: body || {}, token: getToken("admin"),
+      });
+    }
+    return request("/api/admin/staff", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posSearch(q) {
+    return request("/api/pos/products/search?q=" + encodeURIComponent(q || ""), { token: getToken("admin") });
+  }
+  function posSale(body) {
+    return request("/api/pos/sale", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posReturn(body) {
+    return request("/api/pos/return", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posShiftOpen(body) {
+    return request("/api/pos/shift/open", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posShiftClose(body) {
+    return request("/api/pos/shift/close", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posShiftCash(body) {
+    return request("/api/pos/shift/cash", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function posReports(params) {
+    var qs = [];
+    params = params || {};
+    if (params.from) qs.push("from=" + encodeURIComponent(params.from));
+    if (params.to) qs.push("to=" + encodeURIComponent(params.to));
+    return request("/api/pos/reports" + (qs.length ? "?" + qs.join("&") : ""), { token: getToken("admin") });
+  }
+  function posSales() {
+    return request("/api/pos/sales", { token: getToken("admin") });
   }
 
   global.MAHOApi = {
@@ -399,6 +485,23 @@
     uploadHesabReceipt: uploadHesabReceipt,
     cancelOrder: cancelOrder,
     returnOrder: returnOrder,
+    returnRequest: returnRequest,
+    checkDelivery: checkDelivery,
+    softDeleteCustomer: softDeleteCustomer,
+    adminSoftDeleteCustomer: adminSoftDeleteCustomer,
+    adminOrderBadges: adminOrderBadges,
+    adminReturns: adminReturns,
+    staffLogin: staffLogin,
+    listStaff: listStaff,
+    saveStaff: saveStaff,
+    posSearch: posSearch,
+    posSale: posSale,
+    posReturn: posReturn,
+    posShiftOpen: posShiftOpen,
+    posShiftClose: posShiftClose,
+    posShiftCash: posShiftCash,
+    posReports: posReports,
+    posSales: posSales,
     adminLogin: adminLogin,
     adminState: adminState,
     adminSaveCatalog: adminSaveCatalog,
@@ -413,6 +516,7 @@
     adminUpload: adminUpload,
     ensureAdmin: ensureAdmin,
     logoutAdmin: logoutAdmin,
+    ensureHttps: ensureHttps,
     statusLabel: statusLabel,
     statusCode: statusCode,
   };
