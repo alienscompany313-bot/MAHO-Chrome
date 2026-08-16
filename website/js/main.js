@@ -149,8 +149,12 @@
       "pay.noCard": "درگاه پرداخت آنلاین هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "pay.placeWhatsapp": "ثبت سفارش (واتساپ)", "pay.payCard": "پرداخت با کارت ←", "pay.placeBank": "ثبت سفارش و نمایش حساب",
       "pay.hesab": "پرداخت با حساب پی (HesabPay)",
-      "pay.hesabInfo": "با حساب پی پرداخت کنید و رسید را در واتساپ بفرستید:",
+      "pay.hesabInfo": "با حساب پی پرداخت کنید و رسید را از بخش سفارشات بفرستید:",
       "pay.hesabNumber": "نمبر/آی‌دی حساب پی", "pay.hesabOpen": "پرداخت با حساب پی ←",
+      "pay.txnId": "نمبر تراکنش", "pay.paidAmount": "مبلغ پرداخت‌شده",
+      "pay.receiptShot": "اسکرین‌شات / رسید", "pay.noteOpt": "یادداشت (اختیاری)",
+      "pay.submitReceipt": "ارسال رسید پرداخت", "pay.receiptOk": "رسید دریافت شد و در حال بررسی است",
+      "pay.receiptNeed": "نمبر تراکنش یا فایل رسید لازم است",
       "pay.noHesab": "پرداخت با حساب پی هنوز تنظیم نشده است. لطفاً از واتساپ یا انتقال بانکی استفاده کنید.",
       "order.placed": "سفارش شما ثبت شد ✓",
       "orders.title": "سفارشات من", "orders.empty": "هنوز سفارشی ثبت نکرده‌اید.",
@@ -300,8 +304,12 @@
       "pay.noCard": "Online payment is not set up yet. Please use WhatsApp or bank transfer.",
       "pay.placeWhatsapp": "Place order (WhatsApp)", "pay.payCard": "Pay by card →", "pay.placeBank": "Place order & show account",
       "pay.hesab": "Pay with HesabPay",
-      "pay.hesabInfo": "Pay via HesabPay and send the receipt on WhatsApp:",
+      "pay.hesabInfo": "Pay via HesabPay, then submit your receipt from My Orders:",
       "pay.hesabNumber": "HesabPay number/ID", "pay.hesabOpen": "Pay with HesabPay →",
+      "pay.txnId": "Transaction ID", "pay.paidAmount": "Amount paid",
+      "pay.receiptShot": "Screenshot / receipt", "pay.noteOpt": "Note (optional)",
+      "pay.submitReceipt": "Submit payment receipt", "pay.receiptOk": "Receipt received and under review",
+      "pay.receiptNeed": "Transaction ID or receipt file is required",
       "pay.noHesab": "HesabPay is not set up yet. Please use WhatsApp or bank transfer.",
       "order.placed": "Your order has been placed ✓",
       "orders.title": "My orders", "orders.empty": "You have no orders yet.",
@@ -847,14 +855,42 @@
   function updatePayInfo() {
     if (!payInfoEl) return;
     const placeBtn = $("#placeOrder");
+    const hesabBox = $("#hesabBox");
+    const hesabImg = $("#hesabQrImg");
+    const hesabText = $("#hesabText");
+    const hesabLinkBtn = $("#hesabLinkBtn");
+    /* hide hesab methods if disabled */
+    if (payMethodsEl) {
+      const hb = payMethodsEl.querySelector('[data-method="hesab"]');
+      const hcfg = hesabInfo();
+      if (hb) hb.hidden = (hcfg.enabled === false);
+      if (hcfg.enabled === false && payMethod === "hesab") {
+        payMethod = "whatsapp";
+        $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
+      }
+    }
+    if (hesabBox) hesabBox.hidden = true;
     if (payMethod === "hesab") {
       const h = hesabInfo();
-      if (h.link || h.number) {
-        payInfoEl.hidden = false;
-        payInfoEl.innerHTML = `${t("pay.hesabInfo")}<br>` +
-          (h.number ? `<b>${t("pay.hesabNumber")}:</b> <a href="#" class="copy-num" data-copy="${String(h.number).replace(/"/g, "&quot;")}" dir="ltr">${h.number}</a>` : "");
-      } else { payInfoEl.hidden = false; payInfoEl.textContent = t("pay.noHesab"); }
-      if (placeBtn) placeBtn.textContent = h.link ? t("pay.hesabOpen") : t("pay.placeBank");
+      if (hesabBox) {
+        hesabBox.hidden = false;
+        const title = LANG === "en" ? (h.title_en || h.title) : (h.title || h.title_en);
+        const desc = LANG === "en" ? (h.description_en || h.description) : (h.description || h.description_en);
+        const guide = LANG === "en" ? (h.guide_en || h.guide) : (h.guide || h.guide_en);
+        const btn = LANG === "en" ? (h.buttonText_en || h.buttonText) : (h.buttonText || h.buttonText_en);
+        if (hesabText) hesabText.innerHTML = [title, desc, guide, h.holder ? ("صاحب حساب: " + h.holder) : "", h.number ? ("نمبر: <span dir=\"ltr\">" + h.number + "</span>") : ""].filter(Boolean).join("<br>");
+        if (hesabImg) {
+          if (h.qrUrl) { hesabImg.src = h.qrUrl; hesabImg.style.display = "inline-block"; }
+          else { hesabImg.removeAttribute("src"); hesabImg.style.display = "none"; }
+        }
+        if (hesabLinkBtn) {
+          if (h.link) { hesabLinkBtn.href = h.link; hesabLinkBtn.hidden = false; hesabLinkBtn.textContent = btn || t("pay.hesabOpen"); }
+          else { hesabLinkBtn.hidden = true; }
+        }
+      }
+      payInfoEl.hidden = !(h.link || h.number || h.qrUrl);
+      payInfoEl.textContent = (h.link || h.number || h.qrUrl) ? "" : t("pay.noHesab");
+      if (placeBtn) placeBtn.textContent = t("pay.placeBank");
     } else if (payMethod === "bank") {
       const b = bankInfo();
       if (b.holder || b.number || b.name) {
@@ -1023,28 +1059,48 @@
     closeCart(); openOrders();
   }
   // Actually place the order using the currently selected payment method.
+  let customerLocation = null;
   function finalizeOrder(customer, delivery) {
     if (payMethod === "hesab") {
       const h = hesabInfo();
-      if (!h.link && !h.number) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
+      if (h.enabled === false) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
+      if (!h.link && !h.number && !h.qrUrl) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noHesab"); return null; }
     } else if (payMethod === "card") {
       const link = paymentLink();
       if (!link) { if ($("#coMsg")) $("#coMsg").textContent = t("pay.noCard"); return null; }
     }
 
     if (apiOnline && window.MAHOApi) {
-      const payload = {
-        items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", price: it.price, qty: it.qty, size: it.size, color: it.color })),
-        customer: customer,
-        payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
-        delivery: delivery,
-      };
-      MAHOApi.placeOrder(payload).then((res) => {
-        const order = withApiOrderStatus(res.order);
-        const local = getOrders();
-        local.unshift(order);
-        saveOrders(local);
-        afterOrderPlaced(order, customer);
+      /* re-check stock before place */
+      MAHOApi.getStock().then((st) => {
+        const map = {};
+        (st.products || []).forEach((p) => { map[p.name] = p; });
+        for (const it of CART) {
+          const row = map[it.name];
+          if (row && row.stock != null && row.stock < it.qty) {
+            if ($("#coMsg")) $("#coMsg").textContent = t("stock.max");
+            syncStockFromApi(st);
+            return;
+          }
+        }
+        const payload = {
+          items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", qty: it.qty, size: it.size, color: it.color })),
+          customer: customer,
+          payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
+          delivery: delivery,
+          guest: !!( $("#co_guest") && $("#co_guest").checked && !getSession() ),
+          customerLocation: customerLocation,
+          deliveryNote: customer.note || "",
+          idempotencyKey: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10),
+        };
+        return MAHOApi.placeOrder(payload).then((res) => {
+          const order = withApiOrderStatus(res.order);
+          const local = getOrders();
+          local.unshift(order);
+          saveOrders(local);
+          afterOrderPlaced(order, customer);
+          syncStockFromApi();
+        });
       }).catch((err) => {
         if ($("#coMsg")) $("#coMsg").textContent = (err && err.message) || t("acct.sendFail");
       });
@@ -1089,8 +1145,9 @@
     const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee(), timeslot: f.ts.label, timeslotKey: f.ts.key };
 
     // Guest wants to create an account (password provided, not logged in) -> verify by email code first.
+    const guestMode = $("#co_guest") ? $("#co_guest").checked : true;
     const pass = ($("#co_pass") && $("#co_pass").value.trim()) || "";
-    if (!s && pass) {
+    if (!s && pass && !guestMode) {
       if (!emailOk(f.email)) { if ($("#coMsg")) $("#coMsg").textContent = t("co.acctNeedEmail"); return; }
       if (apiOnline && window.MAHOApi) {
         pendingCheckoutAccount = { name: f.nm, phone: f.ph, email: f.email, pass: pass, addr: f.addrParts, address: f.ad, customer: customer, delivery: delivery, viaApi: true };
@@ -1177,6 +1234,23 @@
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
         const closed = code === "cancelled" || code === "return_requested" || o.status === t("status.cancelled") || o.status === t("status.returnReq");
         const actions = closed ? "" : `<div class="order-actions"><button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button><button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button></div>`;
+        let hesabForm = "";
+        if (o.payment === "hesab" && o.paymentStatus !== "payment_confirmed") {
+          const ps = (window.MAHOApi && MAHOApi.statusLabel) ? MAHOApi.statusLabel(o.paymentStatus || "awaiting_payment", LANG) : (o.paymentStatus || "");
+          hesabForm = `<div class="hesab-receipt" data-oid="${o.id}" style="margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--cream,#fbf8f1)">
+            <div class="note" style="font-weight:800;margin-bottom:6px">${t("pay.hesab")} — ${ps}</div>
+            <label class="note">${t("pay.txnId") || "نمبر تراکنش"}</label>
+            <input class="ctrl hr-txn" dir="ltr" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+            <label class="note">${t("pay.paidAmount") || "مبلغ پرداخت‌شده"}</label>
+            <input class="ctrl hr-amt" dir="ltr" inputmode="decimal" value="${o.total || ""}" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+            <label class="note">${t("pay.receiptShot") || "اسکرین‌شات / رسید"}</label>
+            <input type="file" class="hr-file" accept="image/png,image/jpeg,image/webp" style="width:100%;margin:4px 0 8px">
+            <label class="note">${t("pay.noteOpt") || "یادداشت (اختیاری)"}</label>
+            <input class="ctrl hr-note" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+            <button type="button" class="btn btn-gold btn-sm" data-hesab-submit="${o.id}">${t("pay.submitReceipt") || "ارسال رسید پرداخت"}</button>
+            <p class="qv-msg hr-msg" style="min-height:18px"></p>
+          </div>`;
+        }
         return `
           <div class="order-card">
             <div class="order-top">
@@ -1188,6 +1262,7 @@
               <span>${t("orders.pay")}: ${payLabel}</span>
               <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
             </div>
+            ${hesabForm}
             ${actions}
           </div>`;
       }).join("");
@@ -1213,6 +1288,40 @@
   if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
   const ordersListEl = $("#ordersList");
   if (ordersListEl) ordersListEl.addEventListener("click", (e) => {
+    const hesabBtn = e.target.closest("[data-hesab-submit]");
+    if (hesabBtn) {
+      const id = hesabBtn.getAttribute("data-hesab-submit");
+      const box = hesabBtn.closest(".hesab-receipt");
+      if (!box || !window.MAHOApi) return;
+      const txn = (box.querySelector(".hr-txn") && box.querySelector(".hr-txn").value.trim()) || "";
+      const amt = (box.querySelector(".hr-amt") && box.querySelector(".hr-amt").value.trim()) || "";
+      const note = (box.querySelector(".hr-note") && box.querySelector(".hr-note").value.trim()) || "";
+      const fileEl = box.querySelector(".hr-file");
+      const file = fileEl && fileEl.files && fileEl.files[0];
+      const msg = box.querySelector(".hr-msg");
+      if (!txn && !file) { if (msg) { msg.className = "qv-msg"; msg.textContent = t("pay.receiptNeed"); } return; }
+      const orders = getOrders();
+      const o = orders.find((x) => x.id === id) || {};
+      const email = (o.customer && o.customer.email) || (($("#co_email") && $("#co_email").value) || "") || ((getSession() && getSession().email) || "");
+      const done = (res) => {
+        const ord = res.order || res;
+        const list = getOrders();
+        const i = list.findIndex((x) => x.id === id);
+        if (i >= 0) list[i] = Object.assign({}, list[i], ord);
+        else list.unshift(ord);
+        saveOrders(list);
+        if (msg) { msg.className = "qv-msg ok"; msg.textContent = t("pay.receiptOk"); }
+        showToast(t("pay.receiptOk"));
+        setTimeout(renderOrders, 600);
+      };
+      const fail = (err) => { if (msg) { msg.className = "qv-msg"; msg.textContent = (err && err.message) || t("acct.sendFail"); } };
+      if (file && MAHOApi.uploadHesabReceipt) {
+        MAHOApi.uploadHesabReceipt(id, file, { email: email, txnId: txn, amount: amt, note: note }).then(done).catch(fail);
+      } else {
+        MAHOApi.submitHesabReceipt(id, { email: email, txnId: txn, amount: amt, note: note }).then(done).catch(fail);
+      }
+      return;
+    }
     const cancelBtn = e.target.closest("[data-cancel]"), returnBtn = e.target.closest("[data-return]");
     if (cancelBtn) {
       const id = cancelBtn.getAttribute("data-cancel");
@@ -1476,10 +1585,11 @@
       MAHOApi.verify({ email: pendingSignup.email, code: entered }).then((res) => {
         const u = res.user || {};
         setSession(sessionFromApiUser(u, res.token));
-        const nm = pendingSignup.name; pendingSignup = null;
+        const nm = pendingSignup.name; const em = pendingSignup.email; pendingSignup = null;
         if ($("#vf_code")) $("#vf_code").value = "";
-        renderAccount(); acctMsg(t("acct.created"), true); showToast(t("acct.hi") + "، " + nm);
-      }).catch(() => acctMsg(t("acct.badCode")));
+        const url = (res.welcomeUrl) || ("/welcome.html?name=" + encodeURIComponent(nm || "") + "&email=" + encodeURIComponent(em || ""));
+        location.href = url;
+      }).catch((err) => acctMsg((err && err.message === "too_many_attempts") ? "تلاش بیش از حد — بعداً دوباره امتحان کنید." : t("acct.badCode")));
       return;
     }
     if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
@@ -1546,8 +1656,16 @@
   if (resetSendBtn) resetSendBtn.addEventListener("click", () => {
     const email = ($("#rs_email").value || "").trim();
     if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
+    if (apiOnline && window.MAHOApi && MAHOApi.forgotPassword) {
+      acctMsg(t("acct.sending"), true);
+      MAHOApi.forgotPassword({ email: email }).then(() => {
+        acctMsg("اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true);
+      }).catch(() => acctMsg(t("acct.sendFail")));
+      return;
+    }
     const u = getUsers().find((x) => (x.email || "").toLowerCase() === email.toLowerCase());
-    if (!u) { acctMsg(t("acct.noEmail")); return; }
+    /* same message whether or not user exists */
+    if (!u) { acctMsg("اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true); return; }
     const code = genCode(); pendingReset = { email: email, code: code };
     acctMsg(t("acct.sending"), true);
     sendCode(email, u.name, code).then((res) => {
@@ -1727,6 +1845,15 @@
     setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
     setSel('[data-i18n="footer.phone"]', c.footerPhone || "");
     setSel('[data-i18n="footer.email"]', c.footerEmail || "");
+    /* editable category section texts */
+    const sc = CONFIG.sectionCats || {};
+    const scPick = (k) => (LANG === "en" ? (sc[k + "_en"] || sc[k] || "") : (sc[k] || sc[k + "_en"] || ""));
+    const catSec = $("#categories");
+    if (catSec) {
+      const kicker = scPick("kicker"); if (kicker) setSel('#categories .kicker', kicker);
+      const title = scPick("title"); if (title) setSel('#categories h2', title);
+      const lead = scPick("lead"); if (lead) setSel('#categories .section-head p', lead);
+    }
     // Social links (instagram, telegram, whatsapp, facebook, tiktok) — show only those that have a URL
     const socialUrls = [c.instagram, c.telegram, c.whatsappLink, c.facebook, c.tiktok];
     const socials = $$(".socials a");
@@ -2015,12 +2142,86 @@
   }
 
   /* Prefer live API catalog when the backend is up; fall back to data.json / local draft. */
+  function syncStockFromApi(st) {
+    const apply = (data) => {
+      const rows = (data && data.products) || [];
+      let changed = false;
+      rows.forEach((row) => {
+        const p = PRODUCTS.find((x) => x.name === row.name || (row.code && x.code === row.code));
+        if (!p) return;
+        if (row.stock != null && p.stock !== row.stock) { p.stock = row.stock; changed = true; }
+        if (row.price != null && p.price !== row.price) { p.price = row.price; changed = true; }
+        if (row.discount != null) p.discount = row.discount;
+      });
+      /* prune cart items over stock */
+      CART = CART.filter((it) => {
+        const p = PRODUCTS.find((x) => x.name === it.name);
+        if (!p) return true;
+        const stock = productStock(p);
+        if (stock <= 0) return false;
+        if (it.qty > stock) it.qty = stock;
+        return true;
+      });
+      saveCart(); updateCartBadge();
+      if (changed) { renderProducts(); renderCart(); }
+    };
+    if (st) { apply(st); return Promise.resolve(); }
+    if (!window.MAHOApi) return Promise.resolve();
+    return MAHOApi.getStock().then(apply).catch(() => {});
+  }
+  function startStockPolling() {
+    if (!window.MAHOApi) return;
+    const tick = () => { if (document.visibilityState === "visible") syncStockFromApi(); };
+    setInterval(tick, 45000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+  }
+
+  /* delivery customer location (separate from store coords) */
+  const useMyLocBtn = $("#useMyLocBtn");
+  if (useMyLocBtn) useMyLocBtn.addEventListener("click", () => {
+    const info = $("#locInfo");
+    if (!navigator.geolocation) {
+      if (info) { info.hidden = false; info.textContent = "موقعیت‌یاب در این دستگاه موجود نیست — آدرس را دستی وارد کنید."; }
+      return;
+    }
+    if (info) { info.hidden = false; info.textContent = "در حال دریافت موقعیت…"; }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      customerLocation = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+      };
+      const url = "https://www.google.com/maps?q=" + encodeURIComponent(customerLocation.lat + "," + customerLocation.lng);
+      if (info) info.textContent = "موقعیت ذخیره شد (دقت ≈ " + Math.round(customerLocation.accuracy || 0) + "m)";
+      const prev = $("#locPreview"); if (prev) prev.hidden = false;
+      const a = $("#locMapsLink"); if (a) a.href = url;
+      /* also fill distance if store coords exist */
+      const km = nearestStoreKm(customerLocation.lat, customerLocation.lng);
+      if (km != null && $("#co_km")) { $("#co_km").value = String(Math.round(km * 10) / 10); distanceKm = km; updateCheckoutTotals(); }
+    }, () => {
+      if (info) { info.hidden = false; info.textContent = "اجازهٔ موقعیت داده نشد — می‌توانید آدرس را دستی وارد کنید."; }
+      customerLocation = null;
+    }, { enableHighAccuracy: true, timeout: 12000 });
+  });
+  if ($("#locClearBtn")) $("#locClearBtn").onclick = () => {
+    customerLocation = null;
+    if ($("#locPreview")) $("#locPreview").hidden = true;
+    if ($("#locInfo")) { $("#locInfo").hidden = true; $("#locInfo").textContent = ""; }
+  };
+  if ($("#co_guest")) $("#co_guest").addEventListener("change", () => {
+    const wrap = $("#guestAcctWrap");
+    if (wrap) wrap.hidden = $("#co_guest").checked;
+  });
+
   if (window.MAHOApi) {
     MAHOApi.probe().then((res) => {
       apiOnline = !!(res && res.ok);
       if (!apiOnline) return loadPublishedCatalog();
       return MAHOApi.getCatalog().then((d) => {
         if (d && Array.isArray(d.products)) refreshFromCatalog(d);
+        startStockPolling();
+        syncStockFromApi();
       }).catch(() => loadPublishedCatalog());
     });
   } else {

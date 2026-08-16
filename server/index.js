@@ -14,6 +14,17 @@ const multer = require("multer");
 let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (_) { /* optional until production check */ }
 
+const {
+  hashPassword, verifyPassword, needsPasswordRehash,
+  hashOpaque, verifyOpaque, randomCode6, randomToken, sessionToken,
+  createRateLimiter, clientIp, sanitizeText,
+} = require("./lib/security");
+const { buildMailer } = require("./lib/email");
+const { normalizeOrderStatus, canTransition, appendHistory, allowedAdminActions } = require("./lib/orders");
+const { pushAudit } = require("./lib/audit");
+const { extendMigrate } = require("./lib/migrate-extra");
+const { mountExtra } = require("./lib/api-extra");
+
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const IS_PROD = NODE_ENV === "production";
@@ -57,8 +68,13 @@ const SMTP = {
   port: parseInt(process.env.SMTP_PORT || "587", 10),
   user: process.env.SMTP_USER || "",
   pass: process.env.SMTP_PASS || "",
-  from: process.env.SMTP_FROM || process.env.SMTP_USER || "MAHO <no-reply@maho.local>",
+  fromEmail: process.env.SMTP_FROM_EMAIL || "info@mahomarket.com",
+  fromName: process.env.SMTP_FROM_NAME || "MAHO Market",
+  replyTo: process.env.SMTP_REPLY_TO || "support@mahomarket.com",
+  ordersEmail: process.env.ORDERS_NOTIFY_EMAIL || "orders@mahomarket.com",
 };
+const SITE_URL = String(process.env.SITE_URL || process.env.PUBLIC_URL || "").replace(/\/+$/, "") || "";
+const TOKEN_PEPPER = process.env.TOKEN_PEPPER || ADMIN_PASSWORD;
 const EMAIL_ENABLED = !!(nodemailer && SMTP.host && SMTP.user && SMTP.pass);
 
 /* Dev codes only when explicitly enabled AND not production. Never in production. */
@@ -75,18 +91,42 @@ if (IS_PROD) {
   }
 }
 
-let mailer = null;
+let mailTransport = null;
 if (EMAIL_ENABLED) {
-  mailer = nodemailer.createTransport({
+  mailTransport = nodemailer.createTransport({
     host: SMTP.host, port: SMTP.port, secure: SMTP.port === 465,
     auth: { user: SMTP.user, pass: SMTP.pass },
   });
 }
+
+function sendRawMail({ to, subject, html, text, from, replyTo }) {
+  if (!EMAIL_ENABLED || !mailTransport) return Promise.resolve(false);
+  return mailTransport.sendMail({
+    from: from || (`"${SMTP.fromName}" <${SMTP.fromEmail}>`),
+    to, subject, html, text,
+    replyTo: replyTo || SMTP.replyTo,
+  }).then(() => true).catch((e) => {
+    console.error("mail error", (e && e.message) ? String(e.message).slice(0, 160) : "send_failed");
+    return false;
+  });
+}
+
+let mail = null;
+function initMail(siteFallback) {
+  mail = buildMailer({
+    sendRaw: sendRawMail,
+    fromName: SMTP.fromName,
+    fromEmail: SMTP.fromEmail,
+    replyTo: SMTP.replyTo,
+    siteUrl: SITE_URL || siteFallback || "https://mahomarket.com",
+    logoUrl: "",
+    ordersNotifyEmail: SMTP.ordersEmail,
+  });
+}
+
+/* legacy plain helper kept for any leftover callers */
 function sendMail(to, subject, text) {
-  if (!EMAIL_ENABLED) return Promise.resolve(false);
-  return mailer.sendMail({ from: SMTP.from, to: to, subject: subject, text: text })
-    .then(() => true)
-    .catch((e) => { console.error("mail error", e.message); return false; });
+  return sendRawMail({ to, subject, text, html: `<pre style="font-family:Tahoma">${String(text || "").replace(/</g, "&lt;")}</pre>` });
 }
 
 /* -------------------- CORS -------------------- */
@@ -94,6 +134,7 @@ const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+initMail(ALLOWED_ORIGINS[0] || "");
 
 function corsOrigin(origin, cb) {
   /* Non-browser / same-origin requests may omit Origin */
@@ -222,6 +263,7 @@ function migrateDb(data) {
       }
     });
   }
+  if (extendMigrate(data)) changed = true;
   return changed;
 }
 
@@ -239,6 +281,10 @@ function loadDb() {
   db.products = db.products || []; db.stores = db.stores || []; db.config = db.config || {};
   db.users = db.users || []; db.orders = db.orders || [];
   db.seqCustomer = db.seqCustomer || 0; db.seqOrder = db.seqOrder || 0;
+  db.auditLog = db.auditLog || [];
+  db.passwordResets = db.passwordResets || [];
+  db.pendingSignups = db.pendingSignups || [];
+  db.idempotencyKeys = db.idempotencyKeys || {};
   if (migrateDb(db)) saveDb();
   if (!existed) { /* unreachable after catch, kept for clarity */ }
 }
@@ -248,19 +294,10 @@ function saveDb() {
 }
 
 /* -------------------- helpers -------------------- */
-function hashPw(pw, salt) {
-  salt = salt || crypto.randomBytes(16).toString("hex");
-  const h = crypto.scryptSync(String(pw), salt, 32).toString("hex");
-  return salt + ":" + h;
-}
-function verifyPw(pw, stored) {
-  try {
-    const [salt, h] = String(stored).split(":");
-    return crypto.scryptSync(String(pw), salt, 32).toString("hex") === h;
-  } catch (_) { return false; }
-}
-function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
-function token() { return crypto.randomBytes(24).toString("hex"); }
+function hashPw(pw) { return hashPassword(pw); }
+function verifyPw(pw, stored) { return verifyPassword(pw, stored); }
+function genCode() { return randomCode6(); }
+function token() { return sessionToken(); }
 function nextCustomerNo() { db.seqCustomer += 1; return "MO" + String(db.seqCustomer).padStart(6, "0"); }
 function nextOrderNo() { db.seqOrder += 1; return "MAHO-" + String(100000 + db.seqOrder); }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ""));
@@ -268,19 +305,15 @@ function publicUser(u) {
   return u ? {
     id: u.id, name: u.name, phone: u.phone, email: u.email,
     address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: u.payments || [],
+    status: u.status || (u.verified ? "active" : "pending"), verified: !!u.verified,
   } : null;
 }
-function publicConfig(c) { return Object.assign({}, c || {}); }
-
-function normalizeStatus(s) {
-  const v = String(s || "");
-  if (v === "confirmed" || v.indexOf("تایید شده") >= 0 || v.indexOf("تأیید شده") >= 0) return "confirmed";
-  if (v === "cancelled" || v.indexOf("لغو") >= 0) return "cancelled";
-  if (v === "awaiting_payment" || v.indexOf("انتظار پرداخت") >= 0) return "awaiting_payment";
-  if (v === "return_requested" || v.indexOf("برگشت") >= 0) return "return_requested";
-  if (v === "pending" || v.indexOf("انتظار") >= 0) return "pending";
-  return v || "pending";
+function publicConfig(c) {
+  const out = Object.assign({}, c || {});
+  return out;
 }
+
+function normalizeStatus(s) { return normalizeOrderStatus(s); }
 function orderEmailBody(order) {
   const lines = (order.items || []).map((it) =>
     "• " + it.name + (it.size ? " " + it.size : "") + (it.color ? " " + it.color : "") +
@@ -400,15 +433,32 @@ const upload = multer({
       cb(null, crypto.randomBytes(16).toString("hex") + ext);
     },
   }),
-  limits: { fileSize: 2 * 1024 * 1024, files: 8 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 8 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME[file.mimetype]) return cb(new Error("only jpeg/png/webp/gif allowed"));
     cb(null, true);
   },
 });
 
+function sniffImage(buf) {
+  if (!buf || buf.length < 12) return null;
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return "image/jpeg";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return "image/png";
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 && buf[8] === 0x57 && buf[9] === 0x45) return "image/webp";
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return "image/gif";
+  return null;
+}
+
 /* -------------------- app -------------------- */
 const app = express();
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(self)");
+  next();
+});
 app.use(cors({
   origin: corsOrigin,
   credentials: true,
@@ -422,6 +472,19 @@ app.use((err, req, res, next) => {
 app.use(express.json({ limit: "1mb" })); /* catalog JSON only — images go through /upload */
 
 loadDb();
+/* refresh mail logo from config if present */
+if (mail && db.config && db.config.logo && String(db.config.logo).startsWith("/uploads/")) {
+  initMail(ALLOWED_ORIGINS[0] || "");
+  mail = buildMailer({
+    sendRaw: sendRawMail,
+    fromName: SMTP.fromName,
+    fromEmail: SMTP.fromEmail,
+    replyTo: SMTP.replyTo,
+    siteUrl: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+    logoUrl: (SITE_URL || "") + db.config.logo,
+    ordersNotifyEmail: SMTP.ordersEmail,
+  });
+}
 
 app.get("/api/health", (req, res) => res.json({
   ok: true,
@@ -482,7 +545,32 @@ app.post("/api/admin/upload", requireAdmin, (req, res) => {
     }
     const files = req.files || [];
     if (!files.length) return res.status(400).json({ error: "no files" });
-    const urls = files.map((f) => "/uploads/" + f.filename);
+    const urls = [];
+    for (const f of files) {
+      try {
+        const buf = fs.readFileSync(f.path);
+        const sniffed = sniffImage(buf);
+        if (!sniffed || !ALLOWED_MIME[sniffed]) {
+          try { fs.unlinkSync(f.path); } catch (_) {}
+          return res.status(400).json({ error: "invalid_image_signature" });
+        }
+        /* rewrite extension if needed */
+        const wantExt = ALLOWED_MIME[sniffed];
+        if (!f.filename.endsWith(wantExt)) {
+          const neu = f.filename.replace(/\.[^.]+$/, "") + wantExt;
+          const neuPath = path.join(UPLOAD_DIR, neu);
+          fs.renameSync(f.path, neuPath);
+          urls.push("/uploads/" + neu);
+        } else {
+          urls.push("/uploads/" + f.filename);
+        }
+      } catch (e) {
+        try { fs.unlinkSync(f.path); } catch (_) {}
+        return res.status(400).json({ error: "upload_validation_failed" });
+      }
+    }
+    pushAudit(db, { actor: "admin", action: "upload", entityType: "file", entityId: urls[0] || "" });
+    saveDb();
     res.json({ urls: urls, url: urls[0] });
   });
 });
@@ -496,69 +584,132 @@ app.post("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
   if (!o) return res.status(404).json({ error: "not found" });
   const prev = normalizeStatus(o.status);
   const next = normalizeStatus((req.body || {}).status);
+  const force = !!(req.body || {}).force;
+  const check = canTransition(prev, next, { force });
+  if (!check.ok) return res.status(400).json({ error: check.error || "invalid_transition" });
+  if (check.noop) return res.json({ order: o, actions: allowedAdminActions(o.status) });
   if (prev !== "cancelled" && next === "cancelled") decStock(o.items, 1);
   o.status = next;
-  saveDb();
-  if (next === "confirmed" && o.customer && o.customer.email && emailOk(o.customer.email)) {
-    sendMail(o.customer.email, "MAHO — تایید سفارش " + o.id, orderEmailBody(o));
+  appendHistory(o, {
+    status: next,
+    paymentStatus: o.paymentStatus || null,
+    by: "admin",
+    note: sanitizeText((req.body || {}).note, 500),
+  });
+  if (o.deliveryQr && (next === "cancelled" || next === "delivered")) {
+    o.deliveryQr.revoked = true;
   }
-  res.json({ order: o });
+  pushAudit(db, { actor: "admin", action: "order_status", entityType: "order", entityId: o.id, meta: { from: prev, to: next } });
+  saveDb();
+  if (o.customer && o.customer.email && emailOk(o.customer.email) && mail) {
+    mail.orderStatus(o.customer.email, o, sanitizeText((req.body || {}).note, 500)).catch(() => {});
+  }
+  res.json({ order: o, actions: allowedAdminActions(o.status) });
 });
 
 /* -------------------- auth -------------------- */
+const rlRegister = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 12 });
+const rlVerify = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
+const rlLogin = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 40 });
+const rlOrderHit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 25 });
+
 app.post("/api/auth/register", (req, res) => {
+  const ip = clientIp(req);
+  const hit = rlRegister(ip + ":reg");
+  if (!hit.ok) {
+    res.setHeader("Retry-After", String(Math.ceil((hit.retryAfterMs || 60000) / 1000)));
+    return res.status(429).json({ error: "rate_limited" });
+  }
   const b = req.body || {};
-  const name = String(b.name || "").trim(), phone = String(b.phone || "").trim();
-  const email = String(b.email || "").trim(), address = String(b.address || "").trim();
+  const name = sanitizeText(b.name, 80), phone = sanitizeText(b.phone, 40);
+  const email = String(b.email || "").trim().toLowerCase(), address = sanitizeText(b.address, 300);
   const password = String(b.password || "");
   const addr = b.addr && typeof b.addr === "object" ? b.addr : {};
   if (!name || !phone || !email || !password) return res.status(400).json({ error: "missing fields" });
+  if (password.length < 8) return res.status(400).json({ error: "weak_password" });
   if (!emailOk(email)) return res.status(400).json({ error: "bad email" });
-  if (db.users.some((u) => (u.email || "").toLowerCase() === email.toLowerCase())) {
+  if (db.users.some((u) => (u.email || "").toLowerCase() === email && u.verified !== false && u.status !== "pending")) {
     return res.status(409).json({ error: "email exists" });
   }
   if (!EMAIL_ENABLED && !ALLOW_DEV_CODES) {
     return res.status(503).json({ error: "email not configured" });
   }
   const code = genCode();
-  pendingReg.set(email.toLowerCase(), {
-    code: code, exp: Date.now() + 15 * 60000,
-    data: { name, phone, email, address, addr, password },
+  db.pendingSignups = (db.pendingSignups || []).filter((p) => p.email !== email);
+  db.pendingSignups.push({
+    email, name, phone, address, addr,
+    passHash: hashPw(password),
+    codeHash: hashOpaque(code, TOKEN_PEPPER),
+    exp: Date.now() + 10 * 60 * 1000,
+    attempts: 0,
+    lastSent: Date.now(),
+    ip,
   });
-  sendMail(email, "MAHO — کد تأیید / verification code",
-    "کد تأیید حساب شما در MAHO: " + code + "\nMAHO verification code: " + code);
-  const out = { pending: true };
+  /* also keep memory map for backward compat during roll-out — no plaintext password */
+  pendingReg.set(email, { exp: Date.now() + 10 * 60 * 1000 });
+  saveDb();
+  if (mail) mail.verificationCode(email, code, name).catch(() => {});
+  else sendMail(email, "MAHO Market — کود تأیید", "کود تأیید: " + code);
+  const out = { pending: true, status: "pending" };
   if (ALLOW_DEV_CODES) out.devCode = code;
   res.json(out);
 });
 
 app.post("/api/auth/verify", (req, res) => {
+  const ip = clientIp(req);
+  const hit = rlVerify(ip + ":verify");
+  if (!hit.ok) return res.status(429).json({ error: "rate_limited" });
   const b = req.body || {};
   const email = String(b.email || "").trim().toLowerCase();
   const code = String(b.code || "").trim();
-  const p = pendingReg.get(email);
-  if (!p || p.exp < Date.now()) return res.status(400).json({ error: "no pending or expired" });
-  if (p.code !== code) return res.status(400).json({ error: "bad code" });
+  const pending = (db.pendingSignups || []).find((p) => p.email === email);
+  if (!pending || pending.exp < Date.now()) return res.status(400).json({ error: "no pending or expired" });
+  pending.attempts = (pending.attempts || 0) + 1;
+  if (pending.attempts > 5) {
+    saveDb();
+    return res.status(429).json({ error: "too_many_attempts" });
+  }
+  if (!verifyOpaque(code, pending.codeHash, TOKEN_PEPPER)) {
+    saveDb();
+    return res.status(400).json({ error: "bad code" });
+  }
+  db.pendingSignups = db.pendingSignups.filter((p) => p.email !== email);
   pendingReg.delete(email);
-  const d = p.data;
+  /* replace unverified duplicate if any */
+  db.users = db.users.filter((u) => (u.email || "").toLowerCase() !== email || u.verified);
   const user = {
-    id: crypto.randomUUID(), name: d.name, phone: d.phone, email: d.email,
-    address: d.address, addr: d.addr || {}, pass: hashPw(d.password), verified: true,
+    id: crypto.randomUUID(), name: pending.name, phone: pending.phone, email: pending.email,
+    address: pending.address, addr: pending.addr || {}, pass: pending.passHash, verified: true,
+    status: "active",
     customerNo: nextCustomerNo(), payments: [], createdAt: Date.now(),
   };
   db.users.push(user); saveDb();
   const t = token(); sessions.set(t, { type: "user", userId: user.id });
-  res.json({ token: t, user: publicUser(user) });
+  if (mail) mail.welcome(user.email, { name: user.name, email: user.email }).catch(() => {});
+  res.json({
+    token: t, user: publicUser(user),
+    welcomeUrl: "/welcome.html?name=" + encodeURIComponent(user.name || "") + "&email=" + encodeURIComponent(user.email || ""),
+  });
 });
 
 app.post("/api/auth/login", (req, res) => {
+  const ip = clientIp(req);
+  const hit = rlLogin(ip + ":login");
+  if (!hit.ok) return res.status(429).json({ error: "rate_limited" });
   const b = req.body || {};
-  const id = String(b.id || "").trim().toLowerCase();
+  const id = String(b.id || b.email || b.phone || "").trim().toLowerCase();
   const password = String(b.password || "");
   const u = db.users.find((x) =>
-    [x.email, x.phone, x.id].some((v) => v && String(v).toLowerCase() === id) && verifyPw(password, x.pass)
+    [x.email, x.phone, x.id].some((v) => v && String(v).toLowerCase() === id)
   );
-  if (!u) return res.status(401).json({ error: "bad credentials" });
+  if (!u || !verifyPw(password, u.pass)) return res.status(401).json({ error: "bad credentials" });
+  if (u.verified === false || u.status === "pending") {
+    return res.status(403).json({ error: "unverified", message: "حساب هنوز تأیید نشده است." });
+  }
+  if (needsPasswordRehash(u.pass)) {
+    u.pass = hashPw(password);
+    saveDb();
+  }
   const t = token(); sessions.set(t, { type: "user", userId: u.id });
   res.json({ token: t, user: publicUser(u) });
 });
@@ -614,44 +765,140 @@ function decStock(items, sign) {
   });
 }
 app.post("/api/orders", (req, res) => {
+  const ip = clientIp(req);
+  const hit = rlOrderHit(ip);
+  if (!hit.ok) {
+    res.setHeader("Retry-After", String(Math.ceil((hit.retryAfterMs || 60000) / 1000)));
+    return res.status(429).json({ error: "rate_limited" });
+  }
   const b = req.body || {};
-  const items = Array.isArray(b.items) ? b.items : [];
-  if (!items.length) return res.status(400).json({ error: "empty order" });
+  const idem = String(b.idempotencyKey || req.headers["idempotency-key"] || "").trim();
+  if (idem && db.idempotencyKeys && db.idempotencyKeys[idem]) {
+    const prevId = db.idempotencyKeys[idem];
+    const prev = db.orders.find((x) => x.id === prevId);
+    if (prev) return res.json({ order: prev, idempotent: true });
+  }
+  const rawItems = Array.isArray(b.items) ? b.items : [];
+  if (!rawItems.length) return res.status(400).json({ error: "empty order" });
   const customer = b.customer || {};
+  const isGuest = !!(b.guest || !(auth(req) && auth(req).type === "user"));
   if (!customer.name || !customer.phone || !customer.address) {
     return res.status(400).json({ error: "missing customer" });
   }
+  if (isGuest && customer.email && !emailOk(customer.email)) {
+    return res.status(400).json({ error: "bad email" });
+  }
+
+  /* Server-side price & stock validation (atomic-ish via single-threaded event loop + immediate save) */
+  const items = [];
+  for (const it of rawItems) {
+    const p = findProduct(it.name) || (it.code && db.products.find((x) => x.code === it.code));
+    if (!p) return res.status(400).json({ error: "unknown_item", item: it.name });
+    const qty = Math.max(1, parseInt(it.qty, 10) || 1);
+    if (p.stock != null && p.stock !== "") {
+      const stock = parseInt(p.stock, 10);
+      if (!isNaN(stock) && stock < qty) {
+        return res.status(409).json({ error: "insufficient stock", item: p.name, stock: stock });
+      }
+    }
+    const disc = Math.min(95, Math.max(0, parseFloat(p.discount) || 0));
+    const unit = disc > 0 ? Math.round((p.price || 0) * (1 - disc / 100)) : (p.price || 0);
+    const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
+    items.push({
+      name: p.name, name_en: p.name_en || "", code: p.code || "",
+      price: unit, listPrice: p.price || 0, discount: disc,
+      qty: qty, size: sanitizeText(it.size, 40), color: sanitizeText(it.color, 40),
+      image: imgs[0] || "",
+    });
+  }
+
+  const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  const s = auth(req);
+  const payment = sanitizeText(b.payment || "whatsapp", 40) || "whatsapp";
+  const hesabCfg = (db.config && db.config.hesab) || {};
+  if (payment === "hesab" && hesabCfg.enabled === false) {
+    return res.status(400).json({ error: "hesab_disabled" });
+  }
+  const needsPay = (payment === "bank" || payment === "card" || payment === "hesab");
+  const autoApprove = ((db.config && db.config.orderApproval) || "manual") === "auto";
+  let deliveryFee = 0;
+  if (b.delivery && b.delivery.fee != null) {
+    /* clamp delivery fee using config */
+    const cfg = (db.config && db.config.delivery) || {};
+    const km = Math.max(0, Number(b.delivery.km) || 0);
+    const expected = (km <= (cfg.freeKm || 0)) ? 0 : Math.round(km) * (cfg.perKm || 0);
+    const urgent = b.delivery.urgent ? (cfg.urgentFee || 0) : 0;
+    deliveryFee = Math.min(Number(b.delivery.fee) || 0, expected + urgent + 500); /* small slack */
+    if (!isFinite(deliveryFee) || deliveryFee < 0) deliveryFee = expected + urgent;
+  }
+
+  let customerLocation = null;
+  if (b.customerLocation && b.customerLocation.lat != null && b.customerLocation.lng != null) {
+    const la = parseFloat(b.customerLocation.lat), lo = parseFloat(b.customerLocation.lng);
+    if (isFinite(la) && isFinite(lo) && la >= -90 && la <= 90 && lo >= -180 && lo <= 180) {
+      customerLocation = {
+        lat: la, lng: lo,
+        accuracy: b.customerLocation.accuracy != null ? Number(b.customerLocation.accuracy) : null,
+        at: Date.now(),
+      };
+    }
+  }
+
+  const order = {
+    id: nextOrderNo(), date: Date.now(),
+    items: items,
+    itemsTotal: itemsTotal, deliveryFee: deliveryFee, discountTotal: 0,
+    total: itemsTotal + deliveryFee,
+    delivery: b.delivery || null,
+    customerLocation: customerLocation,
+    customerNo: (s && s.type === "user" ? (db.users.find((u) => u.id === s.userId) || {}).customerNo : "") || "",
+    customer: {
+      name: sanitizeText(customer.name, 80),
+      phone: sanitizeText(customer.phone, 40),
+      email: sanitizeText(customer.email, 120),
+      address: sanitizeText(customer.address, 400),
+      customerNo: customer.customerNo || "",
+    },
+    payment: payment,
+    paymentStatus: needsPay ? "awaiting_payment" : null,
+    status: autoApprove && !needsPay ? "confirmed" : "new",
+    userId: s && s.type === "user" ? s.userId : null,
+    guest: !(s && s.type === "user"),
+    statusHistory: [],
+    deliveryNote: sanitizeText(b.deliveryNote, 500),
+  };
+  appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: order.guest ? "guest" : "user", note: "ثبت سفارش" });
+
+  /* decrement stock after building order */
   for (const it of items) {
     const p = findProduct(it.name);
     if (p && p.stock != null && p.stock !== "") {
-      if (parseInt(p.stock, 10) < (it.qty || 1)) {
-        return res.status(409).json({ error: "insufficient stock", item: it.name });
+      const n = parseInt(p.stock, 10);
+      if (!isNaN(n)) {
+        if (n < it.qty) return res.status(409).json({ error: "insufficient stock", item: it.name, stock: n });
+        p.stock = n - it.qty;
       }
     }
   }
-  const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
-  const s = auth(req);
-  const needsPay = (b.payment === "bank" || b.payment === "card" || b.payment === "hesab");
-  const autoApprove = ((db.config && db.config.orderApproval) || "manual") === "auto";
-  const deliveryFee = (b.delivery && Number(b.delivery.fee)) || 0;
-  const order = {
-    id: nextOrderNo(), date: Date.now(),
-    items: items.map((it) => ({
-      name: it.name, name_en: it.name_en || "", code: it.code || "",
-      price: it.price || 0, qty: it.qty || 1, size: it.size || "", color: it.color || "",
-    })),
-    itemsTotal: itemsTotal, deliveryFee: deliveryFee, total: itemsTotal + deliveryFee,
-    delivery: b.delivery || null, customerNo: (customer && customer.customerNo) || "",
-    customer: customer, payment: b.payment || "whatsapp",
-    status: needsPay ? "awaiting_payment" : (autoApprove ? "confirmed" : "pending"),
-    userId: s && s.type === "user" ? s.userId : null,
-  };
+
   db.orders.unshift(order);
-  decStock(order.items, -1);
-  saveDb();
-  if (customer.email && emailOk(customer.email)) {
-    sendMail(customer.email, "MAHO — تأیید سفارش " + order.id, orderEmailBody(order));
+  if (idem) {
+    db.idempotencyKeys = db.idempotencyKeys || {};
+    db.idempotencyKeys[idem] = order.id;
+    /* prune old keys opportunistically */
+    const keys = Object.keys(db.idempotencyKeys);
+    if (keys.length > 500) {
+      keys.slice(0, keys.length - 400).forEach((k) => { delete db.idempotencyKeys[k]; });
+    }
   }
+  saveDb();
+
+  const trackUrl = (SITE_URL || "https://mahomarket.com") + "/#orders";
+  if (order.customer.email && emailOk(order.customer.email) && mail) {
+    mail.orderConfirmation(order.customer.email, order, trackUrl).catch(() => {});
+  }
+  if (mail) mail.orderAdminNotify(order).catch(() => {});
+
   res.json({ order: order });
 });
 app.get("/api/orders", requireUser, (req, res) =>
@@ -681,6 +928,14 @@ app.post("/api/orders/:id/return", (req, res) => {
 });
 
 /* -------------------- static website -------------------- */
+mountExtra(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  get mail() { return mail; },
+  TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+  UPLOAD_DIR, ALLOW_DEV_CODES, sessions, findProduct, scrubImageFields, isAllowedImageUrl, isDataUrl,
+});
+
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
 app.use("/downloads", express.static(path.join(ROOT_DIR, "downloads")));
 app.get("/icon-192.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-192.png")));

@@ -383,9 +383,15 @@
               <div class="pay-methods" id="deliverSlots"></div>
               <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
                 <button type="button" class="btn btn-outline" id="calcDistBtn" data-i18n="co.calcDist">محاسبه‌ی فاصله (موقعیت من)</button>
+                <button type="button" class="btn btn-outline" id="useMyLocBtn">استفاده از موقعیت فعلی من برای دلیوری</button>
                 <input id="co_km" class="ctrl" type="text" inputmode="decimal" placeholder="km" style="width:90px;text-align:center;padding:9px">
               </div>
               <p class="pay-info" id="distInfo" hidden></p>
+              <p class="pay-info" id="locInfo" hidden></p>
+              <div id="locPreview" hidden style="margin-top:8px">
+                <a class="btn btn-outline btn-sm" id="locMapsLink" target="_blank" rel="noopener" href="#">پیش‌نمایش موقعیت روی نقشه</a>
+                <button type="button" class="btn btn-outline btn-sm" id="locClearBtn">حذف موقعیت / ورود دستی آدرس</button>
+              </div>
             </div>
           </div>
 
@@ -393,17 +399,30 @@
             <label data-i18n="co.payment">روش پرداخت</label>
             <div class="pay-methods" id="payMethods">
               <button type="button" class="pay-method active" data-method="whatsapp" data-i18n="pay.whatsapp">سفارش از طریق واتساپ (پرداخت هنگام تحویل)</button>
-              <button type="button" class="pay-method" data-method="hesab" data-i18n="pay.hesab">پرداخت با حساب پی (HesabPay)</button>
+              <button type="button" class="pay-method" data-method="hesab" data-i18n="pay.hesab">پرداخت با حساب‌پی (HesabPay)</button>
               <button type="button" class="pay-method" data-method="bank" data-i18n="pay.bank">انتقال / پرداخت بانکی</button>
               <button type="button" class="pay-method" data-method="card" data-i18n="pay.card">پرداخت آنلاین با کارت</button>
             </div>
             <div class="pay-info" id="payInfo" hidden></div>
+            <div id="hesabBox" hidden style="margin-top:10px;text-align:center">
+              <img id="hesabQrImg" alt="HesabPay QR" style="max-width:220px;width:100%;border-radius:12px;border:1px solid var(--line);display:none">
+              <p id="hesabText" class="note"></p>
+              <a class="btn btn-gold" id="hesabLinkBtn" target="_blank" rel="noopener" href="#" hidden>بازکردن لینک پرداخت</a>
+            </div>
+          </div>
+
+          <div class="field" id="guestModeWrap">
+            <label class="toggle-en" style="display:flex;gap:8px;align-items:center;font-weight:800">
+              <input type="checkbox" id="co_guest" checked>
+              ادامه به‌عنوان مهمان (بدون ساخت حساب)
+            </label>
+            <p class="note">مهمان می‌تواند بدون رمز سفارش بدهد. ساخت حساب اختیاری است.</p>
           </div>
 
           <div class="field" id="guestAcctWrap">
             <label data-i18n="co.makeAccount">ساخت حساب (اختیاری)</label>
-            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="پسورد برای حساب جدید">
-            <p class="note" data-i18n="co.makeAccountHint">اگر پسورد بگذارید، هنگام ثبت سفارش یک کود تایید به ایمیل شما می‌رود و پس از تایید، حساب شما ساخته می‌شود و مشخصاتش به ایمیل‌تان فرستاده می‌شود.</p>
+            <input id="co_pass" type="password" data-i18n-ph="co.passPh" placeholder="رمز برای حساب جدید">
+            <p class="note" data-i18n="co.makeAccountHint">اگر رمز بگذارید، هنگام ثبت سفارش یک کود تأیید به ایمیل شما می‌رود و پس از تأیید، حساب ساخته می‌شود. رمز هرگز در ایمیل فرستاده نمی‌شود.</p>
           </div>
           <div class="field" id="coVerifyBox" hidden>
             <label data-i18n="co.enterCode">کود تایید (به ایمیل شما فرستاده شد)</label>
