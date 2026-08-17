@@ -10,7 +10,7 @@ const {
 const { pushAudit } = require("./audit");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl, parseCoord } = require("./geo");
 const {
-  ALL_PERMS, publicStaff, hasPerm, createStaff, updateStaff, authenticateStaff,
+  ALL_PERMS, publicStaff, hasPerm, createStaff, updateStaff, authenticateStaff, normalizePerms,
 } = require("./staff");
 const pos = require("./pos");
 
@@ -28,7 +28,7 @@ function mountV2(app, ctx) {
 
   function guard(perm) {
     return (req, res, next) => {
-      const s = adminSession(req);
+      let s = adminSession(req);
       if (!s) return res.status(401).json({ error: "admin required" });
       if (s.type === "pos") {
         if (perm !== "pos" && perm !== "reports") {
@@ -38,6 +38,17 @@ function mountV2(app, ctx) {
         return next();
       }
       if (s.type !== "admin") return res.status(401).json({ error: "admin required" });
+      /* live-refresh staff permissions from DB */
+      if (!s.owner && s.staffId) {
+        const row = (ctx.db.staff || []).find((x) => x.id === s.staffId);
+        if (!row || row.active === false) {
+          const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+          if (t) sessions.delete(t);
+          return res.status(401).json({ error: "admin required" });
+        }
+        s.permissions = row.permissions || [];
+        s.name = row.name || s.name;
+      }
       if (!hasPerm(s, perm)) return res.status(403).json({ error: "forbidden", need: perm });
       req.adminSession = s;
       next();
@@ -247,7 +258,18 @@ function mountV2(app, ctx) {
   });
 
   app.get("/api/admin/me", requireAdmin, (req, res) => {
-    const s = auth(req);
+    let s = auth(req);
+    if (s && !s.owner && s.staffId) {
+      const row = (ctx.db.staff || []).find((x) => x.id === s.staffId);
+      if (!row || row.active === false) {
+        const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+        if (t) sessions.delete(t);
+        return res.status(401).json({ error: "admin auth required" });
+      }
+      s.permissions = normalizePerms ? normalizePerms(row.permissions) : (row.permissions || []);
+      s.name = row.name || s.name;
+    }
+    res.setHeader("Cache-Control", "no-store");
     res.json({
       owner: !!s.owner,
       role: s.role || (s.owner ? "owner" : "staff"),

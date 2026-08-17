@@ -181,10 +181,11 @@
       <div style="font-size:26px;font-weight:800;color:var(--gold)">MAHO</div>
       <div style="margin:4px 0 2px">پنل مدیریت</div>
       <div id="gateStep1">
-        <p class="note" style="color:#b9b3a6">ورود فقط از طریق سرور. پسورد همان <code>ADMIN_PASSWORD</code> محیطی بک‌اند است.</p>
-        <input type="password" id="gatePass" placeholder="پسورد مدیر (ADMIN_PASSWORD)" autocomplete="current-password" dir="ltr">
+        <p class="note" style="color:#b9b3a6">مدیر اصلی: فقط پسورد. کارمند: ایمیل + پسورد (صلاحیت‌ها از سرور).</p>
+        <input type="text" id="gateId" placeholder="ایمیل / نام کاربری کارمند (اختیاری برای Owner)" autocomplete="username" dir="ltr">
+        <input type="password" id="gatePass" placeholder="رمز عبور" autocomplete="current-password" dir="ltr">
         <button class="btn btn-gold" style="width:100%" id="gateBtn">ورود</button>
-        <p class="note" style="color:#7d7768;margin-top:6px">هیچ پسورد پیش‌فرضی وجود ندارد. اگر سرور در دسترس نباشد، پنل باز نمی‌شود.</p>
+        <p class="note" style="color:#7d7768;margin-top:6px">کارمند فقط بخش‌های مجاز را می‌بیند. Owner دسترسی کامل دارد.</p>
       </div>
       <div id="gateStep3" hidden>
         <p class="note" style="color:#b9b3a6">بازیابی پسورد فقط از طریق تنظیم مجدد <code>ADMIN_PASSWORD</code> روی سرور ممکن است. با پشتیبانی یا میزبان خود تماس بگیرید.</p>
@@ -215,24 +216,24 @@
     <aside class="admin-sidebar" id="adminSidebar" aria-label="منوی مدیریت">
       <div class="side-title">بخش‌ها</div>
       <nav class="side-nav" id="sideNav">
-        <button type="button" class="side-link active" data-panel="products"><span class="si">◆</span><span>محصولات</span></button>
-        <button type="button" class="side-link" data-panel="categories"><span class="si">▣</span><span>کتگوری‌ها</span></button>
-        <button type="button" class="side-link" data-panel="icons"><span class="si">◇</span><span>آیکن‌ها</span></button>
-        <button type="button" class="side-link" data-panel="discounts"><span class="si">%</span><span>تخفیف‌ها</span></button>
-        <button type="button" class="side-link" data-panel="showcase"><span class="si">▦</span><span>کارت‌های دسته</span></button>
-        <button type="button" class="side-link" data-panel="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
-        <button type="button" class="side-link" data-panel="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
-        <button type="button" class="side-link" data-panel="customers"><span class="si">☺</span><span>مشتریان</span></button>
-        <button type="button" class="side-link" data-panel="staff"><span class="si">👤</span><span>کارمندان</span></button>
-        <button type="button" class="side-link" data-panel="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
-        <a class="side-link" href="pos.html" target="_blank" rel="noopener"><span class="si">🖥</span><span>POS (ورود مستقل)</span></a>
-        <a class="side-link" href="driver.html" target="_blank" rel="noopener"><span class="si">🗺</span><span>صفحه راننده</span></a>
-        <button type="button" class="side-link" data-panel="poslink"><span class="si">▣</span><span>POS فروش</span></button>
-        <button type="button" class="side-link" data-panel="reviews"><span class="si">★</span><span>نظرات</span></button>
-        <button type="button" class="side-link" data-panel="stores"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
-        <button type="button" class="side-link" data-panel="texts"><span class="si">Aa</span><span>متن‌های سایت</span></button>
-        <button type="button" class="side-link" data-panel="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
-        <button type="button" class="side-link" data-panel="publish"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
+        <button type="button" class="side-link active" data-panel="products" data-perm="products"><span class="si">◆</span><span>محصولات</span></button>
+        <button type="button" class="side-link" data-panel="categories" data-perm="products"><span class="si">▣</span><span>کتگوری‌ها</span></button>
+        <button type="button" class="side-link" data-panel="icons" data-perm="products"><span class="si">◇</span><span>آیکن‌ها</span></button>
+        <button type="button" class="side-link" data-panel="discounts" data-perm="products"><span class="si">%</span><span>تخفیف‌ها</span></button>
+        <button type="button" class="side-link" data-panel="showcase" data-perm="products"><span class="si">▦</span><span>کارت‌های دسته</span></button>
+        <button type="button" class="side-link" data-panel="orders" data-perm="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
+        <button type="button" class="side-link" data-panel="returns" data-perm="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
+        <button type="button" class="side-link" data-panel="customers" data-perm="customers"><span class="si">☺</span><span>مشتریان</span></button>
+        <button type="button" class="side-link" data-panel="staff" data-perm="staff"><span class="si">👤</span><span>کارمندان</span></button>
+        <button type="button" class="side-link" data-panel="drivers" data-perm="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
+        <a class="side-link" href="pos.html" target="_blank" rel="noopener" data-perm="pos"><span class="si">🖥</span><span>POS (ورود مستقل)</span></a>
+        <a class="side-link" href="driver.html" target="_blank" rel="noopener" data-perm="delivery"><span class="si">🗺</span><span>صفحه راننده</span></a>
+        <button type="button" class="side-link" data-panel="poslink" data-perm="pos"><span class="si">▣</span><span>POS فروش</span></button>
+        <button type="button" class="side-link" data-panel="reviews" data-perm="products"><span class="si">★</span><span>نظرات</span></button>
+        <button type="button" class="side-link" data-panel="stores" data-perm="settings"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
+        <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si">Aa</span><span>متن‌های سایت</span></button>
+        <button type="button" class="side-link" data-panel="settings" data-perm="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
+        <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
       </nav>
       <button type="button" class="btn btn-ghost btn-sm side-collapse" id="sidebarCollapse" aria-label="جمع‌کردن منو">« جمع‌کردن</button>
     </aside>
@@ -882,6 +883,53 @@
       }catch(e){ return false; }
     }
     var idleTimer=null, idleBound=false;
+    var adminMe={ owner:false, permissions:[], name:"" };
+    var PANEL_PERM={
+      products:"products", categories:"products", icons:"products", discounts:"products", showcase:"products",
+      orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
+      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings"
+    };
+    function hasUiPerm(p){
+      if(!p) return true;
+      if(adminMe.owner) return true;
+      var list=adminMe.permissions||[];
+      return list.indexOf(p)>=0;
+    }
+    function applyNavPermissions(){
+      var links=document.querySelectorAll("#sideNav .side-link");
+      var firstVisible=null;
+      links.forEach(function(el){
+        var need=el.getAttribute("data-perm");
+        var ok=hasUiPerm(need);
+        el.style.display=ok?"":"none";
+        el.setAttribute("aria-hidden", ok?"false":"true");
+        if(ok && !firstVisible && el.getAttribute("data-panel")) firstVisible=el;
+      });
+      document.querySelectorAll(".admin-panel[data-panel]").forEach(function(panel){
+        var id=panel.getAttribute("data-panel");
+        var need=PANEL_PERM[id];
+        if(need && !hasUiPerm(need)) panel.style.display="none";
+        else panel.style.display="";
+      });
+      var who=$("#brandLogo");
+      if(who && who.nextElementSibling){ /* keep brand */ }
+      var brandSmall=document.querySelector(".topbar .brand small");
+      if(brandSmall) brandSmall.textContent=adminMe.owner?"مالک":(adminMe.name||"کارمند");
+      return firstVisible;
+    }
+    function refreshAdminMe(){
+      if(!MAHOApi.adminMe) return Promise.resolve(adminMe);
+      return MAHOApi.adminMe().then(function(me){
+        adminMe={
+          owner:!!me.owner,
+          permissions:Array.isArray(me.permissions)?me.permissions.slice():[],
+          name:me.name||"",
+          staffId:me.staffId||null
+        };
+        applyNavPermissions();
+        return adminMe;
+      });
+    }
     function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); }
     function showGate(msg){
       try{ sessionStorage.removeItem(SESS_KEY); sessionStorage.removeItem(SESS_AT); }catch(e){}
@@ -909,9 +957,9 @@
       var first=document.querySelector("#sideNav .side-link"); if(first) first.focus();
     }
     function showPanel(id){
-      if(id==="poslink"){
-        window.open("pos.html","_blank","noopener");
-        closeMobileNav();
+      var need=PANEL_PERM[id];
+      if(need && !hasUiPerm(need)){
+        toast("دسترسی به این بخش ندارید");
         return;
       }
       var panels=document.querySelectorAll(".admin-panel");
@@ -925,7 +973,9 @@
       if(id==="staff") renderStaffAdmin();
       if(id==="drivers") renderDriversAdmin();
       if(id==="poslink") renderPosSalesAdmin();
-      if(id==="orders") refreshBadges();
+      if(id==="orders"){ renderOrdersAdmin(); refreshBadges(); }
+      if(id==="customers") renderCustomers();
+      if(id==="reviews") renderReviewsAdmin();
     }
     function initSidebar(){
       var nav=$("#sideNav"); if(!nav || nav.dataset.bound) return; nav.dataset.bound="1";
@@ -946,10 +996,35 @@
         if(e.key==="Escape") closeMobileNav();
       });
       var saved=null; try{ saved=sessionStorage.getItem("maho_admin_panel"); }catch(e){}
-      if(saved && document.querySelector('.admin-panel[data-panel="'+saved+'"]')) showPanel(saved);
-      else showPanel("products");
+      var first=applyNavPermissions();
+      var startId=null;
+      if(saved && hasUiPerm(PANEL_PERM[saved]||"") && document.querySelector('.admin-panel[data-panel="'+saved+'"]')) startId=saved;
+      else if(first) startId=first.getAttribute("data-panel");
+      if(startId) showPanel(startId);
+      else toast("هیچ بخشی برای شما فعال نیست");
     }
-    function openApp(){ $("#gate").style.display="none"; $("#app").style.display="flex"; $("#app").classList.add("is-open"); $("#app").setAttribute("aria-hidden","false"); touchSession(); startIdleWatch(); initSidebar(); loadFromServer(); startBadgePoll(); }
+    function openApp(){
+      $("#gate").style.display="none"; $("#app").style.display="flex"; $("#app").classList.add("is-open"); $("#app").setAttribute("aria-hidden","false");
+      touchSession(); startIdleWatch();
+      refreshAdminMe().then(function(){
+        initSidebar();
+        loadFromServer();
+        startBadgePoll();
+        startPermPoll();
+      }).catch(function(){
+        showGate("نشست نامعتبر — دوباره وارد شوید.");
+      });
+    }
+    var permTimer=null;
+    function startPermPoll(){
+      clearInterval(permTimer);
+      permTimer=setInterval(function(){
+        if(document.visibilityState==="visible" && MAHOApi.getToken("admin")) refreshAdminMe().catch(function(){});
+      }, 20000);
+      document.addEventListener("visibilitychange", function(){
+        if(document.visibilityState==="visible") refreshAdminMe().catch(function(){});
+      });
+    }
 
     function setBadge(id,n){ var el=$(id); if(el) el.textContent=toFa(n||0); }
     function refreshBadges(){
@@ -1156,16 +1231,28 @@
       if(lockRemainingMs()>0){ updateGateLockUI(); return; }
       if(!requireApiClient()) return;
       var p=($("#gatePass").value||"");
-      if(!p){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="پسورد سرور را وارد کنید."; return; }
+      var id=($("#gateId")&&$("#gateId").value.trim())||"";
+      if(!p){ $("#gateMsg").style.color="#ff9d9d"; $("#gateMsg").textContent="رمز عبور لازم است."; return; }
       $("#gateMsg").style.color="#b9b3a6"; $("#gateMsg").textContent="در حال ورود به سرور…";
       gateShowStep(2);
       MAHOApi.probe().then(function(res){
         if(!res.ok) throw new Error("سرور در دسترس نیست");
+        /* Prefer staff login when email/id provided; Owner uses password only */
+        if(id && MAHOApi.staffLogin) return MAHOApi.staffLogin({ id:id, password:p });
         return MAHOApi.adminLogin(p);
-      }).then(function(){
+      }).then(function(me){
         setLock({});
         $("#gatePass").value="";
+        if($("#gateId")) $("#gateId").value="";
         $("#gateMsg").textContent="";
+        if(me){
+          adminMe={
+            owner:!!me.owner,
+            permissions:Array.isArray(me.permissions)?me.permissions.slice():[],
+            name:me.name||"",
+            staffId:me.staffId||null
+          };
+        }
         openApp();
       }).catch(function(err){
         gateShowStep(1);

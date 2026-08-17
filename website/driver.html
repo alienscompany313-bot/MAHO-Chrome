@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Delivery Driver | MAHO</title>
-  <meta name="robots" content="noindex">
+  <meta name="robots" content="noindex, nofollow">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="js/api.js"></script>
   <style>
@@ -12,6 +12,7 @@
     *{box-sizing:border-box} body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#f3efe7;color:var(--ink)}
     .top{background:var(--black);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
     .btn{font:700 13px inherit;border-radius:999px;border:1.5px solid transparent;padding:9px 14px;cursor:pointer;min-height:42px}
+    .btn:disabled{opacity:.55;cursor:wait}
     .btn-gold{background:var(--gold);color:#1a1509}.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
     .btn-outline{background:#fff;border-color:var(--line)}.btn-danger{background:#fdecec;color:var(--red)}
     .wrap{max-width:720px;margin:0 auto;padding:14px}
@@ -21,6 +22,9 @@
     .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;margin:10px 0;font:inherit}
     .muted{color:var(--muted);font-size:13px}.err{color:#ff8a80}.ok{color:var(--green);font-weight:700}
     .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;background:#efe6d4;font-size:12px;font-weight:800}
+    .badge.done{background:#e4f5e8;color:var(--green)}.badge.fail{background:#fdecec;color:var(--red)}
+    .sec-title{font-size:15px;font-weight:800;margin:18px 0 8px}
   </style>
 </head>
 <body>
@@ -39,36 +43,70 @@
     <button class="btn btn-ghost" id="logoutBtn">خروج</button>
   </div>
   <div class="wrap" id="app" hidden>
-    <div id="list"></div>
+    <div id="activeList"></div>
+    <div class="sec-title" id="doneTitle" hidden>تحویل‌شده / ناموفق</div>
+    <div id="doneList"></div>
   </div>
   <script>
   (function(){
     function $(s){return document.querySelector(s)}
+    var busy=false;
+    var STATUS_FA={ assigned:"Assign‌شده", picked_up:"دریافت‌شده", in_transit:"در مسیر", delivered:"تحویل‌شده", failed:"تحویل ناموفق" };
+    function statusLabel(st){ return STATUS_FA[st]||st||"—"; }
     function openApp(){
       $("#gate").style.display="none"; $("#top").hidden=false; $("#app").hidden=false;
-      MAHOApi.driverOrders().then(render).catch(function(e){ $("#list").innerHTML="<p class='err'>"+(e.message||"خطا")+"</p>"; });
+      reloadOrders();
     }
-    function render(res){
-      var orders=res.orders||[];
-      if(!orders.length){ $("#list").innerHTML="<p class='muted'>سفارش Assign‌شده‌ای نیست.</p>"; return; }
-      $("#list").innerHTML=orders.map(function(o){
-        var loc=o.customerLocation||{};
-        var maps=loc.mapsUrl?('<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه</a>'):"";
-        var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join("، ");
-        return '<div class="card" data-oid="'+o.id+'"><div><b dir="ltr">#'+o.id+'</b> · وضعیت راننده: <b>'+(o.driverStatus||"")+'</b></div>'+
-          '<div>'+(o.customer&&o.customer.name||"")+' · <span dir="ltr">'+(o.customer&&o.customer.phone||"")+'</span></div>'+
-          '<div class="muted">'+(o.customer&&o.customer.address||"")+'</div>'+
-          '<div class="muted">اقلام: '+items+'</div>'+
-          '<div>مبلغ قابل دریافت: '+(o.collectAmount||0).toLocaleString("en-US")+' افغانی</div>'+
-          '<div class="acts">'+maps+
+    function reloadOrders(){
+      return MAHOApi.driverOrders().then(render).catch(function(e){
+        $("#activeList").innerHTML="<p class='err'>"+(e.message||"خطا")+"</p>";
+      });
+    }
+    function cardHtml(o, done){
+      var loc=o.customerLocation||{};
+      var maps=loc.mapsUrl?('<a class="btn btn-outline" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه</a>'):"";
+      var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join("، ");
+      var st=o.driverStatus||"assigned";
+      var badgeCls=st==="delivered"?"done":(st==="failed"?"fail":"");
+      var acts="";
+      if(!done){
+        acts='<div class="acts">'+maps+
           '<button class="btn btn-outline" data-st="picked_up">دریافت‌شده</button>'+
           '<button class="btn btn-outline" data-st="in_transit">در مسیر</button>'+
           '<button class="btn btn-gold" data-st="delivered">تحویل‌شده</button>'+
           '<button class="btn btn-danger" data-st="failed">ناموفق</button></div>'+
-          '<div style="margin-top:8px"><label class="muted">یادداشت / دلیل</label><input class="note" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line)" placeholder="برای ناموفق اجباری">' +
-          '<label class="muted">عکس اثبات (اختیاری)</label><input type="file" class="proof" accept="image/*" capture="environment"></div>'+
-          '<p class="muted msg"></p></div>';
-      }).join("");
+          '<div style="margin-top:8px"><label class="muted">یادداشت / دلیل</label><input class="note" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line)" placeholder="برای ناموفق اجباری">'+
+          '<label class="muted">عکس اثبات (اختیاری)</label><input type="file" class="proof" accept="image/*" capture="environment"></div>';
+      } else {
+        acts=maps?'<div class="acts">'+maps+'</div>':"";
+      }
+      return '<div class="card" data-oid="'+o.id+'"><div><b dir="ltr">#'+o.id+'</b> · <span class="badge '+badgeCls+'" data-status-badge>'+statusLabel(st)+'</span></div>'+
+        '<div>'+(o.customer&&o.customer.name||"")+' · <span dir="ltr">'+(o.customer&&o.customer.phone||"")+'</span></div>'+
+        '<div class="muted">'+(o.customer&&o.customer.address||"")+'</div>'+
+        '<div class="muted">اقلام: '+items+'</div>'+
+        '<div>مبلغ قابل دریافت: '+(o.collectAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+        acts+'<p class="muted msg"></p></div>';
+    }
+    function render(res){
+      var orders=res.orders||[];
+      var active=[], done=[];
+      orders.forEach(function(o){
+        var st=o.driverStatus||"";
+        if(st==="delivered"||st==="failed") done.push(o); else active.push(o);
+      });
+      $("#activeList").innerHTML=active.length?active.map(function(o){return cardHtml(o,false);}).join(""):"<p class='muted'>سفارش فعالی نیست.</p>";
+      $("#doneTitle").hidden=!done.length;
+      $("#doneList").innerHTML=done.map(function(o){return cardHtml(o,true);}).join("");
+    }
+    function setCardBusy(card, on, label){
+      card.querySelectorAll("button[data-st]").forEach(function(b){ b.disabled=!!on; if(on&&b.getAttribute("data-st")==="delivered") b.textContent=label||"در حال ثبت…"; });
+    }
+    function applyLocalStatus(card, st){
+      var badge=card.querySelector("[data-status-badge]");
+      if(badge){
+        badge.textContent=statusLabel(st);
+        badge.className="badge "+(st==="delivered"?"done":(st==="failed"?"fail":""));
+      }
     }
     $("#loginBtn").onclick=function(){
       MAHOApi.driverLogin({ id: $("#loginId").value.trim(), password: $("#loginPass").value })
@@ -76,23 +114,36 @@
         .catch(function(e){ $("#gateMsg").textContent=e.message||"ورود ناموفق"; });
     };
     $("#logoutBtn").onclick=function(){ MAHOApi.driverLogout().then(function(){ location.reload(); }); };
-    $("#list").addEventListener("click",function(e){
+    $("#app").addEventListener("click",function(e){
       var btn=e.target.closest("[data-st]"); if(!btn) return;
+      if(busy||btn.disabled) return;
       var card=btn.closest(".card"); var id=card.getAttribute("data-oid");
       var st=btn.getAttribute("data-st");
-      var note=(card.querySelector(".note").value||"").trim();
+      var note=(card.querySelector(".note")&&card.querySelector(".note").value||"").trim();
       var msg=card.querySelector(".msg");
       if(st==="failed" && !note){ msg.className="err"; msg.textContent="دلیل تحویل ناموفق لازم است"; return; }
-      var file=card.querySelector(".proof").files[0];
+      var file=card.querySelector(".proof")&&card.querySelector(".proof").files[0];
+      busy=true;
+      setCardBusy(card, true, st==="delivered"?"در حال ثبت تحویل…":"در حال ثبت…");
+      msg.className="muted"; msg.textContent="در حال ارسال…";
       var go=function(){
-        return MAHOApi.driverSetStatus(id,{ status:st, note:note, reason:note }).then(function(){
-          msg.className="ok"; msg.textContent="ثبت شد"; openApp();
+        return MAHOApi.driverSetStatus(id,{ status:st, note:note, reason:note }).then(function(res){
+          var ord=(res&&res.order)||{ driverStatus:st, id:id };
+          applyLocalStatus(card, ord.driverStatus||st);
+          msg.className="ok"; msg.textContent="ثبت شد ✓";
+          return reloadOrders();
         });
       };
       var chain = (st==="delivered" && file && MAHOApi.driverUploadProof)
         ? MAHOApi.driverUploadProof(id, file).then(go)
         : go();
-      chain.catch(function(err){ msg.className="err"; msg.textContent=err.message||"خطا"; });
+      chain.then(function(){ busy=false; }).catch(function(err){
+        busy=false;
+        setCardBusy(card, false);
+        var deliveredBtn=card.querySelector('[data-st="delivered"]');
+        if(deliveredBtn) deliveredBtn.textContent="تحویل‌شده";
+        msg.className="err"; msg.textContent=(err&&err.message)||"خطا — وضعیت قبلی حفظ شد";
+      });
     });
     if(MAHOApi.getToken("driver")) openApp();
   })();

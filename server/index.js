@@ -31,7 +31,7 @@ const { mountV2 } = require("./lib/api-v2");
 const { mountV3 } = require("./lib/api-v3");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
-const { ALL_PERMS } = require("./lib/staff");
+const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -411,10 +411,51 @@ function auth(req) {
   const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
   return t ? sessions.get(t) : null;
 }
+/** Refresh staff permissions from DB so owner changes apply without manual cache clear. */
+function syncAdminSession(s) {
+  if (!s || s.type !== "admin") return s;
+  if (s.owner || s.role === "owner") {
+    s.permissions = ALL_PERMS.slice();
+    return s;
+  }
+  if (!s.staffId) return s;
+  const row = (db.staff || []).find((x) => x.id === s.staffId);
+  if (!row || row.active === false) return null;
+  s.permissions = normalizePerms(row.permissions);
+  s.name = row.name || s.name;
+  s.role = row.role || "staff";
+  return s;
+}
 function requireAdmin(req, res, next) {
-  const s = auth(req);
+  let s = auth(req);
   if (!s || s.type !== "admin") return res.status(401).json({ error: "admin auth required" });
+  s = syncAdminSession(s);
+  if (!s) {
+    const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+    if (t) sessions.delete(t);
+    return res.status(401).json({ error: "admin auth required" });
+  }
+  req.adminSession = s;
   next();
+}
+function requireAdminPerm(perm) {
+  return (req, res, next) => {
+    requireAdmin(req, res, () => {
+      if (!staffHasPerm(req.adminSession, perm)) {
+        return res.status(403).json({ error: "forbidden", need: perm });
+      }
+      next();
+    });
+  };
+}
+function requireAdminAnyPerm(perms) {
+  const list = Array.isArray(perms) ? perms : [perms];
+  return (req, res, next) => {
+    requireAdmin(req, res, () => {
+      if (list.some((p) => staffHasPerm(req.adminSession, p))) return next();
+      return res.status(403).json({ error: "forbidden", need: list[0] });
+    });
+  };
 }
 function requireUser(req, res, next) {
   const s = auth(req);
@@ -513,6 +554,65 @@ app.get("/api/catalog", (req, res) => {
   res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config) });
 });
 
+/* -------------------- SEO: robots + sitemap (public) -------------------- */
+const PUBLIC_SITE = SITE_URL || "https://mahomarket.com";
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.send(
+    "User-agent: *\n" +
+    "Allow: /\n" +
+    "Disallow: /admin.html\n" +
+    "Disallow: /pos.html\n" +
+    "Disallow: /driver.html\n" +
+    "Disallow: /delivery.html\n" +
+    "Disallow: /api/\n" +
+    "Disallow: /uploads/proofs/\n" +
+    "\nSitemap: " + PUBLIC_SITE + "/sitemap.xml\n"
+  );
+});
+app.get("/sitemap.xml", (req, res) => {
+  res.type("application/xml");
+  res.setHeader("Cache-Control", "public, max-age=300");
+  const now = new Date().toISOString().slice(0, 10);
+  const urls = [
+    { loc: PUBLIC_SITE + "/", pri: "1.0", freq: "daily" },
+    { loc: PUBLIC_SITE + "/#products", pri: "0.9", freq: "daily" },
+    { loc: PUBLIC_SITE + "/#categories", pri: "0.8", freq: "weekly" },
+    { loc: PUBLIC_SITE + "/#stores", pri: "0.7", freq: "weekly" },
+    { loc: PUBLIC_SITE + "/#about", pri: "0.5", freq: "monthly" },
+    { loc: PUBLIC_SITE + "/#contact", pri: "0.5", freq: "monthly" },
+  ];
+  const cats = ((db.config && db.config.categories) || []).filter((c) => c && c.enabled !== false);
+  cats.forEach((c) => {
+    if (!c.key) return;
+    urls.push({ loc: PUBLIC_SITE + "/#products?cat=" + encodeURIComponent(c.key), pri: "0.7", freq: "weekly" });
+  });
+  (db.products || []).forEach((p) => {
+    if (!p || p.enabled === false || p.active === false) return;
+    const slug = encodeURIComponent(p.code || p.sku || p.name || "");
+    if (!slug) return;
+    urls.push({ loc: PUBLIC_SITE + "/#product/" + slug, pri: "0.6", freq: "weekly" });
+  });
+  const body = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    urls.map((u) =>
+      "  <url><loc>" + u.loc.replace(/&/g, "&amp;") + "</loc><lastmod>" + now +
+      "</lastmod><changefreq>" + u.freq + "</changefreq><priority>" + u.pri + "</priority></url>"
+    ).join("\n") +
+    "\n</urlset>\n";
+  res.send(body);
+});
+
+/* Prefer apex host when request Host is www. (proxy / direct). Safe no-op for localhost. */
+app.use((req, res, next) => {
+  const host = String(req.headers.host || "").toLowerCase();
+  if (host === "www.mahomarket.com") {
+    return res.redirect(301, "https://mahomarket.com" + req.originalUrl);
+  }
+  next();
+});
+
 /* public uploads */
 app.use("/uploads", express.static(UPLOAD_DIR, {
   fallthrough: false,
@@ -532,11 +632,12 @@ app.post("/api/admin/login", (req, res) => {
   res.json({ token: t, owner: true, permissions: ALL_PERMS.slice(), name: "Owner" });
 });
 
-app.get("/api/admin/state", requireAdmin, (req, res) =>
-  res.json({ products: db.products, stores: db.stores, config: db.config })
-);
+app.get("/api/admin/state", requireAdmin, (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ products: db.products, stores: db.stores, config: db.config });
+});
 
-app.put("/api/admin/catalog", requireAdmin, (req, res) => {
+app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
   const b = scrubImageFields(req.body || {});
   if (Array.isArray(b.products)) db.products = b.products;
   if (Array.isArray(b.stores)) db.stores = clampStoreCoords(b.stores);
@@ -561,7 +662,7 @@ app.put("/api/admin/catalog", requireAdmin, (req, res) => {
   res.json({ ok: true, products: db.products.length });
 });
 
-app.post("/api/admin/upload", requireAdmin, (req, res) => {
+app.post("/api/admin/upload", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
   upload.array("files", 8)(req, res, (err) => {
     if (err) {
       const msg = err.message || "upload failed";
@@ -600,11 +701,14 @@ app.post("/api/admin/upload", requireAdmin, (req, res) => {
   });
 });
 
-app.get("/api/admin/orders", requireAdmin, (req, res) => res.json({ orders: db.orders }));
-app.get("/api/admin/customers", requireAdmin, (req, res) =>
+app.get("/api/admin/orders", requireAdminPerm("orders"), (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ orders: db.orders });
+});
+app.get("/api/admin/customers", requireAdminPerm("customers"), (req, res) =>
   res.json({ customers: db.users.map(publicUser) })
 );
-app.post("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
+app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) => {
   const o = db.orders.find((x) => x.id === req.params.id);
   if (!o) return res.status(404).json({ error: "not found" });
   const prev = normalizeStatus(o.status);

@@ -17,13 +17,61 @@
       } catch (e) {}
     })();
   </script>
-  <title>لباس و لوازم بانوان MAHO | پوشاک و لوازم زنانه</title>
-  <meta name="description" content="لباس و لوازم بانوان MAHO — لباس زنانه، مانتو، شال و روسری، کیف، کفش، اکسسوری و لوازم آرایشی با کیفیت ممتاز و قیمت منصفانه. کوته سنگی، کابل، افغانستان.">
+  <title>MAHO Market | لباس و لوازم بانوان | Women's Fashion Kabul</title>
+  <meta name="description" content="MAHO Market — لباس و لوازم بانوان: لباس زنانه، مانتو، شال و روسری، کیف، کفش و اکسسوری با کیفیت ممتاز. کوته سنگی، کابل، افغانستان. Women's clothing & essentials in Kabul.">
+  <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111111">
+  <link rel="canonical" href="https://mahomarket.com/">
 
-  <meta property="og:title" content="لباس و لوازم بانوان MAHO">
-  <meta property="og:description" content="پوشاک و لوازم زنانه با کیفیت ممتاز — MAHO، کوته سنگی، کابل.">
+  <meta property="og:title" content="MAHO Market | لباس و لوازم بانوان">
+  <meta property="og:description" content="پوشاک و لوازم زنانه با کیفیت ممتاز — MAHO Market، کوته سنگی، کابل.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mahomarket.com/">
+  <meta property="og:locale" content="fa_AF">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:site_name" content="MAHO Market">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MAHO Market">
+  <meta name="twitter:description" content="Women's clothing & essentials — Kote Sangi, Kabul.">
+
+  <script type="application/ld+json" id="ld-org">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://mahomarket.com/#organization",
+        "name": "MAHO Market",
+        "url": "https://mahomarket.com/",
+        "logo": "https://mahomarket.com/icon-512.png",
+        "email": "info@mahomarket.com",
+        "telephone": "+93791505454"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://mahomarket.com/#website",
+        "url": "https://mahomarket.com/",
+        "name": "MAHO Market",
+        "publisher": { "@id": "https://mahomarket.com/#organization" },
+        "inLanguage": ["fa", "en"]
+      },
+      {
+        "@type": "ClothingStore",
+        "@id": "https://mahomarket.com/#localbusiness",
+        "name": "MAHO Market",
+        "url": "https://mahomarket.com/",
+        "telephone": "+93791505454",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Kote Sangi, Mubarak Center, 4th floor, shop 74-75",
+          "addressLocality": "Kabul",
+          "addressCountry": "AF"
+        },
+        "parentOrganization": { "@id": "https://mahomarket.com/#organization" }
+      }
+    ]
+  }
+  </script>
 
   <link rel="icon" href="../icon-192.png">
   <link rel="apple-touch-icon" href="../icon-192.png">
@@ -122,11 +170,11 @@
             <a class="btn btn-lg" href="#products" data-i18n="hero.cta1">مشاهده‌ی محصولات ←</a>
             <a class="btn btn-ghost btn-lg" href="#stores" data-i18n="hero.cta2">آدرس فروشگاه</a>
           </div>
-          <div class="hero-stats">
-            <div class="stat"><b data-count="2500">۰</b><span data-i18n="stat.products">مدل و کالای متنوع</span></div>
-            <div class="stat"><b data-count="5000">۰</b><span data-i18n="stat.customers">مشتری راضی</span></div>
-            <div class="stat"><b data-count="15">۰</b><span data-i18n="stat.years">سال تجربه</span></div>
-            <div class="stat"><b data-count="12">۰</b><span data-i18n="stat.brands">برند معتبر</span></div>
+          <div class="hero-stats" id="heroStats" data-stats-ready="0">
+            <div class="stat"><b data-count="">۰</b><span data-i18n="stat.products">مدل و کالای متنوع</span></div>
+            <div class="stat"><b data-count="">۰</b><span data-i18n="stat.customers">مشتری راضی</span></div>
+            <div class="stat"><b data-count="">۰</b><span data-i18n="stat.years">سال تجربه</span></div>
+            <div class="stat"><b data-count="">۰</b><span data-i18n="stat.brands">برند معتبر</span></div>
           </div>
         </div>
 
@@ -296,8 +344,8 @@
         <div class="footer-col">
           <h4 data-i18n="footer.contact">تماس</h4>
           <p><svg class="ic"><use href="#i-pin"/></svg> <span data-i18n="footer.addr">کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵</span></p>
-        <p><svg class="ic"><use href="#i-call"/></svg> <a class="contact-link" data-i18n="footer.phone" href="tel:">۰۷۰۰ ۱۲۳ ۴۵۶</a></p>
-        <p><svg class="ic"><use href="#i-mail"/></svg> <a class="contact-link" data-i18n="footer.email" href="mailto:">info@maho.example</a></p>
+          <p><svg class="ic"><use href="#i-call"/></svg> <a class="contact-link phone-ltr" id="footerPhoneLink" href="tel:+93791505454"><bdi class="phone-ltr" id="footerPhoneText" dir="ltr">+93791505454</bdi></a></p>
+          <p><svg class="ic"><use href="#i-mail"/></svg> <a class="contact-link" id="footerEmailLink" data-i18n="footer.email" href="mailto:info@mahomarket.com">info@mahomarket.com</a></p>
           <a class="btn btn-outline" id="footerMapLink" target="_blank" rel="noopener" href="#" style="margin-top:8px" data-i18n="footer.map">مشاهده روی نقشه ←</a>
         </div>
       </div>

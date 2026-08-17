@@ -136,10 +136,14 @@ function driverFacingOrder(o) {
 
 function applyDriverStatus(db, order, driver, body, opts) {
   const next = String(body.status || "").trim();
+  if (order.driverId !== driver.id) return { error: "not_your_order", status: 403 };
+  /* Idempotent: same status already applied */
+  if (String(order.driverStatus || "assigned") === next) {
+    return { order, noop: true };
+  }
   if (!canDriverTransition(order.driverStatus || "assigned", next)) {
     return { error: "invalid_driver_transition", status: 400 };
   }
-  if (order.driverId !== driver.id) return { error: "not_your_order", status: 403 };
   if (next === "failed") {
     const reason = sanitizeText(body.reason, 500);
     if (!reason) return { error: "fail_reason_required", status: 400 };
@@ -152,18 +156,15 @@ function applyDriverStatus(db, order, driver, body, opts) {
     if (proofRequired && !(body.proofUrl || (order.deliveryProof && order.deliveryProof.url))) {
       return { error: "proof_required", status: 400 };
     }
-    if (normalizeOrderStatus(order.status) === "dispatched" || normalizeOrderStatus(order.status) === "confirmed") {
-      order.status = "delivered";
-    } else if (normalizeOrderStatus(order.status) !== "delivered") {
-      /* keep order status if already past; still mark driver delivered */
-    }
-    if (normalizeOrderStatus(order.status) === "confirmed") {
-      /* skip invalid jump — require dispatched first for main flow; allow if admin already set */
-    }
   }
   const loc = body.lat != null && body.lng != null ? {
     lat: parseFloat(body.lat), lng: parseFloat(body.lng), at: Date.now(),
   } : null;
+  if (next === "delivered") {
+    order.deliveredAt = Date.now();
+    order.deliveredByDriverId = driver.id;
+    order.deliveredByDriverName = driver.name;
+  }
   appendHistory(order, {
     status: order.status,
     by: "driver:" + driver.id,
