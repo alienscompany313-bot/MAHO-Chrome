@@ -575,25 +575,9 @@ app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml");
   res.setHeader("Cache-Control", "public, max-age=300");
   const now = new Date().toISOString().slice(0, 10);
-  const urls = [
-    { loc: PUBLIC_SITE + "/", pri: "1.0", freq: "daily" },
-    { loc: PUBLIC_SITE + "/#products", pri: "0.9", freq: "daily" },
-    { loc: PUBLIC_SITE + "/#categories", pri: "0.8", freq: "weekly" },
-    { loc: PUBLIC_SITE + "/#stores", pri: "0.7", freq: "weekly" },
-    { loc: PUBLIC_SITE + "/#about", pri: "0.5", freq: "monthly" },
-    { loc: PUBLIC_SITE + "/#contact", pri: "0.5", freq: "monthly" },
-  ];
-  const cats = ((db.config && db.config.categories) || []).filter((c) => c && c.enabled !== false);
-  cats.forEach((c) => {
-    if (!c.key) return;
-    urls.push({ loc: PUBLIC_SITE + "/#products?cat=" + encodeURIComponent(c.key), pri: "0.7", freq: "weekly" });
-  });
-  (db.products || []).forEach((p) => {
-    if (!p || p.enabled === false || p.active === false) return;
-    const slug = encodeURIComponent(p.code || p.sku || p.name || "");
-    if (!slug) return;
-    urls.push({ loc: PUBLIC_SITE + "/#product/" + slug, pri: "0.6", freq: "weekly" });
-  });
+ const urls = [
+  { loc: PUBLIC_SITE + "/", pri: "1.0", freq: "daily" },
+];
   const body = '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map((u) =>
