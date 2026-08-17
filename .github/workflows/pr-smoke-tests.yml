@@ -1,0 +1,53 @@
+# Secure PR/CI smoke tests — temporary DATA_DIR only, no Production access.
+name: PR Smoke Tests
+
+# Quote "on" so YAML 1.1 parsers do not treat it as boolean true.
+"on":
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - cursor/maho-mobile-staff-seo-037e
+      - "cursor/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Server smoke suites
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Smoke features
+        run: node scripts/smoke-features.js
+
+      - name: Smoke phase 3
+        run: node scripts/smoke-phase3.js
+
+      - name: Smoke cancel window
+        run: node scripts/smoke-cancel-window.js
+
+      - name: Smoke phase 4
+        run: node scripts/smoke-phase4.js

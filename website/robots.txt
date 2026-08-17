@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /website/
+Disallow: /admin.html
+Disallow: /website/admin.html
+Disallow: /pos.html
+Disallow: /website/pos.html
+Disallow: /driver.html
+Disallow: /website/driver.html
+Disallow: /delivery.html
+Disallow: /website/delivery.html
+Disallow: /api/
+Disallow: /uploads/proofs/
+
+Sitemap: https://mahomarket.com/sitemap.xml

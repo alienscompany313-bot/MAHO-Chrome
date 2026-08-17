@@ -579,10 +579,51 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
 .reveal.in { opacity: 1; transform: none; }
 
+/* Phone numbers: isolate LTR so "+" stays at the start inside RTL pages */
+.phone-ltr, a.contact-link[href^="tel"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+  text-align: left;
+}
+bdi.phone-ltr { unicode-bidi: isolate; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
   .hero .container { grid-template-columns: 1fr; }
-  .hero-visual { display: none; }
+  /* Keep floating hero cards on mobile — horizontal strip, not absolute collage */
+  .hero-visual {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    height: auto;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    padding: 4px 2px 10px;
+  }
+  .hero-visual .hero-card {
+    position: relative;
+    inset: auto !important;
+    width: min(78%, 260px);
+    min-width: min(72%, 220px);
+    max-width: 100%;
+    height: 150px;
+    flex: 0 0 auto;
+    transform: none !important;
+    scroll-snap-align: start;
+    z-index: 1;
+  }
+  .hero-visual .float { animation: none; }
   .cat-grid, .product-grid, .feature-grid { grid-template-columns: repeat(2, 1fr); }
   .store-grid, .testi-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
@@ -613,11 +654,23 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   .newsletter { flex-direction: column; }
   .newsletter .btn { justify-content: center; }
   .footer-grid { grid-template-columns: 1fr; }
-  .hero-stats { gap: 22px; }
+  .hero-stats { gap: 16px; margin-top: 24px; }
+  .hero-stats .stat b { font-size: 22px; }
+  .hero-visual { gap: 8px; }
+  .hero-visual .hero-card { width: min(72%, 220px); min-width: 200px; height: 132px; padding: 14px; }
+  .hero-visual .hero-card h4 { font-size: 15px; }
 }
 
 @media (max-width: 460px) {
   .cat-grid, .product-grid, .feature-grid { grid-template-columns: 1fr; }
+  .hero-visual .hero-card {
+    width: min(220px, 85%);
+    min-width: min(200px, 82%);
+    max-width: 85%;
+    height: 124px;
+  }
+  .hero-stats { gap: 14px; }
+  .hero-stats .stat { min-width: calc(50% - 10px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

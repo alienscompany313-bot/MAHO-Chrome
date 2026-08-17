@@ -107,7 +107,7 @@
       "footer.link.terms": "قوانین و شرایط", "footer.link.track": "پیگیری سفارش",
       "footer.contact": "تماس",
       "footer.addr": "کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵",
-      "footer.phone": "‪+93 791 505 454‬", "footer.email": "info@maho.example",
+      "footer.phone": "+93791505454", "footer.email": "info@mahomarket.com",
       "footer.map": "مشاهده روی نقشه ←",
       "footer.copyPre": "©", "footer.copy": "MAHO — همه‌ی حقوق محفوظ است.",
       "footer.made": "ساخته‌شده با ❤ برای مشتریان MAHO",
@@ -274,7 +274,7 @@
       "footer.link.terms": "Terms & conditions", "footer.link.track": "Track order",
       "footer.contact": "Contact",
       "footer.addr": "Kote Sangi, Kabul — Mubarak Center, 4th floor, shop 74 & 75",
-      "footer.phone": "+93 791 505 454", "footer.email": "info@maho.example",
+      "footer.phone": "+93791505454", "footer.email": "info@mahomarket.com",
       "footer.map": "View on map →",
       "footer.copyPre": "©", "footer.copy": "MAHO — All rights reserved.",
       "footer.made": "Made with ❤ for MAHO customers",
@@ -434,7 +434,7 @@
       area: "نمایندگی مبارک سنتر، منزل چهارم، دوکان نمبر ۷۴ و ۷۵، کوته سنگی، کابل، افغانستان",
       area_en: "Mubarak Center, 4th floor, shop no. 74 & 75, Kote Sangi, Kabul, Afghanistan",
       hours: "شنبه تا پنجشنبه، ۹ صبح تا ۸ شب", hours_en: "Sat–Thu, 9:00 AM – 8:00 PM",
-      phone: "‪+93 791 505 454‬", phone_en: "+93 791 505 454",
+      phone: "+93791505454", phone_en: "+93791505454",
       map: "https://maps.app.goo.gl/8SJq7HECgYeGkCJD9",
       lat: "34.51162312730907",
       lng: "69.12056249589499",
@@ -566,7 +566,7 @@
           </div>
           <div class="store-row"><span class="ico">${icon("pin")}</span><span>${area}</span></div>
           <div class="store-row"><span class="ico">${icon("clock")}</span><span>${hours}</span></div>
-          <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link" href="${telHref(phone)}" dir="ltr">${phone}</a></div>
+          <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link phone-ltr" href="${telHref(phone)}" dir="ltr"><bdi class="phone-ltr" dir="ltr">${phone}</bdi></a></div>
           <a class="btn btn-outline" target="_blank" rel="noopener" href="${escapeAttr(storeMapUrl(s) || '#')}">${t("store.directions")}</a>
         </article>`;
     }).join("");
@@ -2153,8 +2153,14 @@
     setSel("#home .lead", pick("heroLead"));
     setSel('[data-i18n="footer.desc"]', pick("footerDesc"));
     setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
-    setSel('[data-i18n="footer.phone"]', c.footerPhone || "");
-    setSel('[data-i18n="footer.email"]', c.footerEmail || "");
+    /* Phone: never run through RTL textContent alone — keep LTR isolate */
+    const phoneRaw = String(c.footerPhone || t("footer.phone") || "+93791505454").trim();
+    setFooterPhone(phoneRaw);
+    const emailRaw = c.footerEmail || t("footer.email") || "";
+    const emLink = $("#footerEmailLink") || document.querySelector('.site-footer [data-i18n="footer.email"]');
+    if (emLink) {
+      if (emailRaw) { emLink.textContent = emailRaw; emLink.href = "mailto:" + emailRaw; }
+    }
     /* editable category section texts */
     const sc = CONFIG.sectionCats || {};
     const scPick = (k) => (LANG === "en" ? (sc[k + "_en"] || sc[k] || "") : (sc[k] || sc[k + "_en"] || ""));
@@ -2174,13 +2180,21 @@
     });
     const statsArr = c.stats || [];
     const statEls = $$(".hero-stats .stat");
+    let applied = 0;
     statsArr.forEach((st, i) => {
       if (!st || !statEls[i]) return;
       const b = statEls[i].querySelector("b"), span = statEls[i].querySelector("span");
-      if (b && st.value != null && st.value !== "") { b.setAttribute("data-count", String(st.value)); b.textContent = toDigits(parseInt(st.value, 10) || 0); }
+      if (b && st.value != null && st.value !== "") {
+        b.setAttribute("data-count", String(st.value));
+        b.textContent = toDigits(parseInt(st.value, 10) || 0);
+        applied++;
+      }
       const lab = LANG === "en" ? (st.label_en || st.label) : st.label;
       if (span && lab) span.textContent = lab;
     });
+    const hs = $("#heroStats");
+    if (hs) hs.setAttribute("data-stats-ready", applied > 0 ? "1" : "0");
+    if (applied > 0) runStatCounters(true);
     // Floating hero cards (editable text + size)
     for (let n = 1; n <= 3; n++) {
       const card = document.querySelector(".hero-card.c" + n);
@@ -2200,10 +2214,30 @@
     linkifyContacts();
   }
   function telHref(s) { return "tel:" + String(s || "").replace(/[^\d+]/g, ""); }
+  function setFooterPhone(raw) {
+    const display = String(raw || "").trim() || "+93791505454";
+    const href = telHref(display);
+    const link = $("#footerPhoneLink") || document.querySelector(".site-footer a.contact-link[href^='tel']");
+    let bdi = $("#footerPhoneText");
+    if (link) {
+      if (!bdi) {
+        link.innerHTML = "";
+        bdi = document.createElement("bdi");
+        bdi.id = "footerPhoneText";
+        bdi.className = "phone-ltr";
+        bdi.setAttribute("dir", "ltr");
+        link.appendChild(bdi);
+      }
+      bdi.setAttribute("dir", "ltr");
+      bdi.textContent = display;
+      link.href = href || "#";
+      link.classList.add("phone-ltr");
+    }
+  }
   function linkifyContacts() {
-    const ph = document.querySelector('.site-footer [data-i18n="footer.phone"]');
-    if (ph && ph.tagName === "A") { const v = (ph.textContent || "").trim(); ph.href = v ? telHref(v) : "#"; }
-    const em = document.querySelector('.site-footer [data-i18n="footer.email"]');
+    const phText = ($("#footerPhoneText") && $("#footerPhoneText").textContent) || "";
+    if (phText) setFooterPhone(phText);
+    const em = $("#footerEmailLink") || document.querySelector('.site-footer [data-i18n="footer.email"]');
     if (em && em.tagName === "A") { const v = (em.textContent || "").trim(); em.href = v ? ("mailto:" + v) : "#"; }
   }
 
@@ -2284,29 +2318,50 @@
     $$(".reveal").forEach((el) => el.classList.add("in"));
   }
 
-  /* -------------------- Animated stat counters -------------------- */
-  const counters = $$("[data-count]");
-  function formatCounters() { counters.forEach((el) => { el.textContent = toDigits(parseInt(el.dataset.count, 10)); }); }
-  if (counters.length && "IntersectionObserver" in window) {
-    const countObs = new IntersectionObserver((entries, obs) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const el = entry.target;
-        const target = parseInt(el.dataset.count, 10);
-        const dur = 1400, start = performance.now();
-        const tick = (now) => {
-          const p = Math.min((now - start) / dur, 1);
-          const eased = 1 - Math.pow(1 - p, 3);
-          el.textContent = toDigits(Math.floor(eased * target));
-          if (p < 1) requestAnimationFrame(tick); else el.textContent = toDigits(target);
-        };
-        requestAnimationFrame(tick);
-        obs.unobserve(el);
+  /* -------------------- Animated stat counters (after catalog stats applied) -------------------- */
+  let statsAnimated = false;
+  function runStatCounters(force) {
+    const ready = ($("#heroStats") && $("#heroStats").getAttribute("data-stats-ready") === "1");
+    if (!ready && !force) return;
+    const counters = $$(".hero-stats [data-count]");
+    if (!counters.length) return;
+    if (statsAnimated && !force) return;
+    statsAnimated = true;
+    const animateOne = (el) => {
+      const target = parseInt(el.getAttribute("data-count"), 10);
+      if (!Number.isFinite(target)) { el.textContent = toDigits(0); return; }
+      const dur = 1200, start = performance.now();
+      const tick = (now) => {
+        const p = Math.min((now - start) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = toDigits(Math.floor(eased * target));
+        if (p < 1) requestAnimationFrame(tick); else el.textContent = toDigits(target);
+      };
+      requestAnimationFrame(tick);
+    };
+    if ("IntersectionObserver" in window) {
+      const countObs = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          animateOne(entry.target);
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: 0.35 });
+      counters.forEach((c) => {
+        /* If already in view (mobile), animate immediately with server value */
+        const rect = c.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) animateOne(c);
+        else countObs.observe(c);
       });
-    }, { threshold: 0.5 });
-    counters.forEach((c) => countObs.observe(c));
-  } else {
-    formatCounters();
+    } else {
+      counters.forEach((el) => { el.textContent = toDigits(parseInt(el.getAttribute("data-count"), 10) || 0); });
+    }
+  }
+  function formatCounters() {
+    $$(".hero-stats [data-count]").forEach((el) => {
+      const n = parseInt(el.getAttribute("data-count"), 10);
+      if (Number.isFinite(n)) el.textContent = toDigits(n);
+    });
   }
 
   /* -------------------- Newsletter form -------------------- */
@@ -2392,7 +2447,11 @@
   });
 
   function applyI18n() {
-    $$("[data-i18n]").forEach((el) => { el.textContent = t(el.getAttribute("data-i18n")); });
+    $$("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key === "footer.phone") return; /* handled by setFooterPhone / bdi */
+      el.textContent = t(key);
+    });
     $$("[data-i18n-html]").forEach((el) => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
     $$("[data-i18n-ph]").forEach((el) => { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
   }
@@ -2436,6 +2495,7 @@
     renderStores();
     applyLogo();
     applyHero();
+    statsAnimated = false;
     applyContent();
     applyHesabBanner();
     formatCounters();

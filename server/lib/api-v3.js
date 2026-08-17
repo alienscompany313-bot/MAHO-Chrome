@@ -22,11 +22,17 @@ const { normalizeOrderStatus } = require("./orders");
 
 function mountV3(app, ctx) {
   const {
-    saveDb, auth, requireAdmin, sessions, UPLOAD_DIR, ADMIN_PASSWORD,
+    saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, sessions, UPLOAD_DIR, ADMIN_PASSWORD,
   } = ctx;
   const mail = () => ctx.mail;
   const rlPos = createRateLimiter({ windowMs: 5 * 60 * 1000, max: 40 });
   const rlDriver = createRateLimiter({ windowMs: 5 * 60 * 1000, max: 80 });
+  const guardProof = typeof requireAdminAnyPerm === "function"
+    ? requireAdminAnyPerm(["orders", "delivery"])
+    : requireAdmin;
+  const guardHttps = typeof requireAdminAnyPerm === "function"
+    ? requireAdminAnyPerm(["settings", "products"])
+    : requireAdmin;
 
   const ALLOWED_MIME = {
     "image/jpeg": ".jpg",
@@ -158,7 +164,7 @@ function mountV3(app, ctx) {
 
   /* ---------- Payment methods admin ---------- */
   app.put("/api/admin/payment-methods", requireAdmin, (req, res) => {
-    const s = auth(req);
+    const s = req.adminSession || auth(req);
     if (!hasPerm(s, "settings") && !s.owner) return res.status(403).json({ error: "forbidden" });
     const body = req.body || {};
     const next = normalizePaymentMethods({ paymentMethods: body.methods || body, hesab: ctx.db.config.hesab });
@@ -204,7 +210,7 @@ function mountV3(app, ctx) {
   });
 
   app.post("/api/admin/orders/:id/assign-driver", requireAdmin, (req, res) => {
-    const s = auth(req);
+    const s = req.adminSession || auth(req);
     if (!hasPerm(s, "orders") && !hasPerm(s, "delivery") && !s.owner) {
       return res.status(403).json({ error: "forbidden" });
     }
@@ -313,7 +319,7 @@ function mountV3(app, ctx) {
   });
 
   /* Admin view of proof with admin token */
-  app.get("/api/admin/orders/:id/proof", requireAdmin, (req, res) => {
+  app.get("/api/admin/orders/:id/proof", guardProof, (req, res) => {
     const o = (ctx.db.orders || []).find((x) => x.id === req.params.id);
     if (!o || !o.deliveryProof) return res.status(404).json({ error: "not_found" });
     const abs = path.join(UPLOAD_DIR, "proofs", path.basename(o.deliveryProof.url));
@@ -323,7 +329,7 @@ function mountV3(app, ctx) {
   });
 
   /* Hesab banner / hero slides saved via catalog; ensure HTTPS on banner link helper */
-  app.post("/api/admin/normalize-https", requireAdmin, (req, res) => {
+  app.post("/api/admin/normalize-https", guardHttps, (req, res) => {
     const u = ensureHttpsUrl((req.body || {}).url);
     res.json({ url: u });
   });
