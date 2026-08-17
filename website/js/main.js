@@ -794,13 +794,34 @@
   function deliveryMinOrder() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.minOrder) ? cfg.minOrder : 0; }
   function deliveryMaxKm() { const cfg = CONFIG.delivery || {}; return (cfg.enabled && cfg.maxKm) ? cfg.maxKm : 0; }
   function belowDeliveryMin() { return recvMethod === "deliver" && deliveryMinOrder() > 0 && cartPriceTotal() < deliveryMinOrder(); }
-  function beyondDeliveryMax() { const mx = deliveryMaxKm(); return recvMethod === "deliver" && mx > 0 && currentKm() > mx; }
+  function beyondDeliveryMax() {
+    const mx = deliveryMaxKm();
+    /* Only when GPS coords are present — no GPS means not "out of range" */
+    if (recvMethod !== "deliver" || mx <= 0 || !customerLocation) return false;
+    return currentKm() > mx;
+  }
+  function outOfRangePolicy() {
+    const p = (CONFIG.delivery && CONFIG.delivery.outOfRangePolicy) || "warn";
+    return p === "block" ? "block" : "warn";
+  }
   function deliveryBlockMsg() {
     if (recvMethod !== "deliver") return "";
     if (belowDeliveryMin()) return t("co.belowMin").replace("{n}", money(deliveryMinOrder()));
-    if (!deliveryAllowed || beyondDeliveryMax()) {
+    if (beyondDeliveryMax() && outOfRangePolicy() === "block") {
       const mx = deliveryMaxKm();
       return t("co.outOfRange").replace("{km}", toDigits(Math.round(currentKm() * 10) / 10)).replace("{max}", toDigits(mx || 0));
+    }
+    return "";
+  }
+  function deliveryWarnMsg() {
+    if (recvMethod !== "deliver") return "";
+    if (beyondDeliveryMax() && outOfRangePolicy() === "warn") {
+      const mx = deliveryMaxKm();
+      return (LANG === "en"
+        ? "Your location is outside the delivery radius ({km} km / max {max} km). You can still place the order with your written address."
+        : "موقعیت شما خارج از محدوده دلیوری است ({km} کیلومتر / حداکثر {max}). می‌توانید با آدرس نوشتاری سفارش را ثبت کنید.")
+        .replace("{km}", toDigits(Math.round(currentKm() * 10) / 10))
+        .replace("{max}", toDigits(mx || 0));
     }
     return "";
   }
@@ -823,7 +844,10 @@
     if ($("#coDeliveryFee")) $("#coDeliveryFee").textContent = fee ? money(fee) : t("co.free");
     if ($("#cartTotal2")) $("#cartTotal2").textContent = money(grand);
     const warn = $("#coMinWarn");
-    if (warn) { const msg = deliveryBlockMsg(); if (msg) { warn.hidden = false; warn.textContent = msg; } else { warn.hidden = true; warn.textContent = ""; } }
+    if (warn) {
+      const msg = deliveryBlockMsg() || deliveryWarnMsg();
+      if (msg) { warn.hidden = false; warn.textContent = msg; } else { warn.hidden = true; warn.textContent = ""; }
+    }
   }
   const recvMethodsEl = $("#recvMethods");
   if (recvMethodsEl) recvMethodsEl.addEventListener("click", (e) => {
@@ -896,6 +920,17 @@
   function bankInfo() { return CONFIG.bank || {}; }
   function paymentLink() { return CONFIG.paymentLink || ""; }
   function hesabInfo() { return CONFIG.hesab || {}; }
+  function paymentMethodsCfg() {
+    return (CONFIG.paymentMethods && typeof CONFIG.paymentMethods === "object")
+      ? CONFIG.paymentMethods
+      : { whatsapp: { enabled: true }, hesab: { enabled: hesabInfo().enabled !== false }, bank: { enabled: true }, card: { enabled: true } };
+  }
+  function isPayEnabled(method) {
+    const m = paymentMethodsCfg()[method];
+    if (!m) return true;
+    if (method === "hesab" && hesabInfo().enabled === false) return false;
+    return m.enabled !== false;
+  }
   function updatePayInfo() {
     if (!payInfoEl) return;
     const placeBtn = $("#placeOrder");
@@ -903,14 +938,15 @@
     const hesabImg = $("#hesabQrImg");
     const hesabText = $("#hesabText");
     const hesabLinkBtn = $("#hesabLinkBtn");
-    /* hide hesab methods if disabled */
     if (payMethodsEl) {
-      const hb = payMethodsEl.querySelector('[data-method="hesab"]');
-      const hcfg = hesabInfo();
-      if (hb) hb.hidden = (hcfg.enabled === false);
-      if (hcfg.enabled === false && payMethod === "hesab") {
-        payMethod = "whatsapp";
-        $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === "whatsapp"));
+      ["whatsapp", "hesab", "bank", "card"].forEach((m) => {
+        const hb = payMethodsEl.querySelector('[data-method="' + m + '"]');
+        if (hb) hb.hidden = !isPayEnabled(m);
+      });
+      if (!isPayEnabled(payMethod)) {
+        const first = ["whatsapp", "hesab", "bank", "card"].find(isPayEnabled) || "whatsapp";
+        payMethod = first;
+        $$(".pay-method", payMethodsEl).forEach((x) => x.classList.toggle("active", x.dataset.method === payMethod));
       }
     }
     if (hesabBox) hesabBox.hidden = true;
@@ -1146,8 +1182,13 @@
       showToast(t("co.loginRequired"));
       return null;
     }
-    if (recvMethod === "deliver" && (!deliveryAllowed || beyondDeliveryMax())) {
+    if (recvMethod === "deliver" && beyondDeliveryMax() && outOfRangePolicy() === "block") {
       if ($("#coMsg")) $("#coMsg").textContent = deliveryBlockMsg() || t("co.outOfRange").replace("{km}", toDigits(currentKm())).replace("{max}", toDigits(deliveryMaxKm()));
+      return null;
+    }
+    if (!isPayEnabled(payMethod)) {
+      if ($("#coMsg")) $("#coMsg").textContent = LANG === "en" ? "This payment method is disabled. Please choose another." : "این روش پرداخت غیرفعال است. روش دیگری انتخاب کنید.";
+      updatePayInfo();
       return null;
     }
     if (payMethod === "hesab") {
@@ -1177,8 +1218,9 @@
           customer: customer,
           payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
           delivery: delivery,
-          customerLocation: customerLocation,
+          customerLocation: customerLocation || undefined,
           deliveryNote: customer.note || "",
+          lang: LANG === "en" ? "en" : "fa",
           idempotencyKey: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10),
         };
         return MAHOApi.placeOrder(payload).then((res) => {
@@ -1186,6 +1228,7 @@
           const local = getOrders();
           local.unshift(order);
           saveOrders(local);
+          if (res.warning && res.warning.message) showToast(res.warning.message);
           afterOrderPlaced(order, customer);
           syncStockFromApi();
         });
@@ -1448,38 +1491,81 @@
       applyLocal(o);
     } else if (returnBtn) {
       const id = returnBtn.getAttribute("data-return");
-      const reason = prompt(t("orders.returnReason"));
-      if (reason == null) return;
-      if (!String(reason).trim()) { showToast(t("orders.returnNeedReason")); return; }
-      const details = prompt(t("orders.returnDetails")) || "";
-      const methodChoice = prompt(t("orders.returnMethod") + "\n1 = " + t("orders.returnPickupStore") + "\n2 = " + t("orders.returnPickupCustomer"), "1");
-      if (methodChoice == null) return;
-      const method = String(methodChoice).trim() === "2" ? "pickup_customer" : "pickup_store";
-      const body = { reason: String(reason).trim(), details: String(details).trim(), method: method };
-      if (method === "pickup_customer" && customerLocation) {
-        body.lat = customerLocation.lat;
-        body.lng = customerLocation.lng;
-      }
-      const applyLocal = () => {
-        const orders = getOrders(); const o = orders.find((x) => x.id === id); if (o) { o.status = t("status.returnReq"); o.returnRequest = body; saveOrders(orders); }
+      const card = returnBtn.closest(".order-card");
+      if (!card) return;
+      let form = card.querySelector(".return-form");
+      if (form) { form.hidden = !form.hidden; return; }
+      const ord = getOrders().find((x) => x.id === id) || {};
+      const addr = (ord.customer && ord.customer.address) || "";
+      const phone = (ord.customer && ord.customer.phone) || "";
+      form = document.createElement("div");
+      form.className = "return-form";
+      form.style.cssText = "margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--cream,#fbf8f1)";
+      form.innerHTML = `
+        <label class="note">${t("orders.returnReason")}</label>
+        <input class="ctrl rf-reason" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+        <label class="note">${t("orders.returnDetails")}</label>
+        <textarea class="ctrl rf-details" rows="2" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"></textarea>
+        <label class="note">${t("orders.returnMethod")}</label>
+        <select class="ctrl rf-method" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+          <option value="pickup_store">${t("orders.returnPickupStore")}</option>
+          <option value="pickup_customer">${t("orders.returnPickupCustomer")}</option>
+        </select>
+        <div class="rf-cust" hidden>
+          <label class="note">${LANG === "en" ? "Pickup address" : "آدرس برداشت"}</label>
+          <input class="ctrl rf-address" value="${(addr || "").replace(/"/g, "&quot;")}" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+          <label class="note">${LANG === "en" ? "Phone" : "شماره تماس"}</label>
+          <input class="ctrl rf-phone" dir="ltr" value="${(phone || "").replace(/"/g, "&quot;")}" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+          <p class="note" style="font-size:12px">${LANG === "en" ? "GPS is optional. Order delivery address is used by default." : "موقعیت GPS اختیاری است. به‌صورت پیش‌فرض آدرس دلیوری سفارش استفاده می‌شود."}</p>
+        </div>
+        <button type="button" class="btn btn-gold btn-sm rf-submit">${t("orders.returnSubmit")}</button>
+        <p class="qv-msg rf-msg" style="min-height:18px"></p>`;
+      card.appendChild(form);
+      const methodEl = form.querySelector(".rf-method");
+      const custBox = form.querySelector(".rf-cust");
+      methodEl.addEventListener("change", () => { custBox.hidden = methodEl.value !== "pickup_customer"; });
+      form.querySelector(".rf-submit").addEventListener("click", () => {
+        const reason = (form.querySelector(".rf-reason").value || "").trim();
+        const details = (form.querySelector(".rf-details").value || "").trim();
+        const method = methodEl.value === "pickup_customer" ? "pickup_customer" : "pickup_store";
+        const msg = form.querySelector(".rf-msg");
+        if (!reason) { msg.className = "qv-msg"; msg.textContent = t("orders.returnNeedReason"); return; }
+        const body = { reason: reason, details: details, method: method };
+        if (method === "pickup_customer") {
+          body.address = (form.querySelector(".rf-address").value || "").trim() || addr;
+          body.phone = (form.querySelector(".rf-phone").value || "").trim() || phone;
+          if (!body.address || !body.phone) {
+            msg.className = "qv-msg";
+            msg.textContent = LANG === "en" ? "Address and phone are required." : "آدرس و شماره تماس لازم است.";
+            return;
+          }
+          if (ord.customerLocation && ord.customerLocation.lat != null) {
+            body.lat = ord.customerLocation.lat;
+            body.lng = ord.customerLocation.lng;
+          } else if (customerLocation) {
+            body.lat = customerLocation.lat;
+            body.lng = customerLocation.lng;
+          }
+        }
+        if (apiOnline && window.MAHOApi && MAHOApi.getToken("user") && MAHOApi.returnRequest) {
+          MAHOApi.returnRequest(id, body).then((res) => {
+            const list = getOrders();
+            const i = list.findIndex((x) => x.id === id);
+            if (i >= 0) list[i] = Object.assign({}, list[i], res.order || res);
+            saveOrders(list);
+            showToast(t("orders.returnMsg"));
+            renderOrders();
+          }).catch((err) => {
+            msg.className = "qv-msg";
+            msg.textContent = (err && err.message) || t("acct.sendFail");
+          });
+          return;
+        }
+        const orders = getOrders(); const o = orders.find((x) => x.id === id);
+        if (o) { o.status = t("status.returnReq"); o.returnRequest = body; saveOrders(orders); }
         showToast(t("orders.returnMsg"));
         renderOrders();
-      };
-      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user") && MAHOApi.returnRequest) {
-        MAHOApi.returnRequest(id, body).then((res) => {
-          const ord = res.order || res;
-          const list = getOrders();
-          const i = list.findIndex((x) => x.id === id);
-          if (i >= 0) list[i] = Object.assign({}, list[i], ord);
-          saveOrders(list);
-          showToast(t("orders.returnMsg"));
-          renderOrders();
-        }).catch((err) => {
-          showToast((err && err.message) || t("acct.sendFail"));
-        });
-        return;
-      }
-      applyLocal();
+      });
     }
   });
 
@@ -1932,30 +2018,127 @@
     });
   }
 
-  /* editable hero (header) background image/logo from admin */
+  /* editable hero slider from admin */
+  let heroSliderTimer = null;
+  let heroSlideIdx = 0;
+  function stopHeroSlider() {
+    if (heroSliderTimer) { clearInterval(heroSliderTimer); heroSliderTimer = null; }
+  }
+  function activeHeroSlides() {
+    const slides = Array.isArray(CONFIG.heroSlides) ? CONFIG.heroSlides.slice() : [];
+    const enabled = slides.filter((s) => s && s.enabled !== false && s.url).sort((a, b) => (a.order || 0) - (b.order || 0));
+    if (enabled.length) return enabled;
+    if (CONFIG.heroImage) return [{ url: CONFIG.heroImage, enabled: true, alt: "MAHO", text: "", text_en: "", link: "" }];
+    return [];
+  }
+  function paintHeroSlide(slides, idx) {
+    const hero = document.querySelector(".hero#home") || document.querySelector(".hero");
+    if (!hero) return;
+    const track = hero.querySelector(".hero-slider-track");
+    const dots = hero.querySelector(".hero-slider-dots");
+    const caption = hero.querySelector(".hero-slide-caption");
+    const n = slides.length;
+    if (!n) {
+      hero.style.backgroundImage = "";
+      hero.classList.remove("has-slider");
+      if (track) track.innerHTML = "";
+      if (dots) dots.innerHTML = "";
+      if (caption) caption.innerHTML = "";
+      return;
+    }
+    hero.classList.add("has-slider");
+    const s = slides[((idx % n) + n) % n];
+    hero.style.backgroundImage =
+      "linear-gradient(rgba(12,12,12,.55), rgba(20,17,10,.72))," +
+      "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.32), transparent 60%)," +
+      "url('" + s.url + "')";
+    hero.style.backgroundSize = "cover, cover, cover";
+    hero.style.backgroundPosition = "center, center, center";
+    hero.style.backgroundRepeat = "no-repeat";
+    hero.style.backgroundColor = "#0e0e0e";
+    hero.style.transition = "background-image .8s ease";
+    if (caption) {
+      const txt = LANG === "en" ? (s.text_en || s.text) : (s.text || s.text_en);
+      const link = s.link ? ((window.MAHOApi && MAHOApi.ensureHttps) ? MAHOApi.ensureHttps(s.link) : s.link) : "";
+      caption.innerHTML = txt
+        ? (link ? `<a href="${link}" style="color:inherit;text-decoration:underline">${txt}</a>` : txt)
+        : "";
+    }
+    if (dots) {
+      dots.innerHTML = n > 1 ? slides.map((_, i) => `<button type="button" class="hero-dot${i === ((idx % n) + n) % n ? " active" : ""}" data-slide="${i}" aria-label="slide ${i + 1}"></button>`).join("") : "";
+    }
+    const prev = hero.querySelector(".hero-prev");
+    const next = hero.querySelector(".hero-next");
+    if (prev) prev.hidden = n <= 1;
+    if (next) next.hidden = n <= 1;
+    if (dots) dots.hidden = n <= 1;
+  }
   function applyHero() {
     const hero = document.querySelector(".hero#home") || document.querySelector(".hero");
     if (!hero) return;
-    const img = CONFIG.heroImage;
+    stopHeroSlider();
+    if (!hero.querySelector(".hero-slider-ui")) {
+      const ui = document.createElement("div");
+      ui.className = "hero-slider-ui";
+      ui.innerHTML = `<button type="button" class="hero-prev" aria-label="prev" hidden>‹</button>
+        <button type="button" class="hero-next" aria-label="next" hidden>›</button>
+        <div class="hero-slider-dots"></div>
+        <div class="hero-slide-caption"></div>`;
+      hero.appendChild(ui);
+      ui.querySelector(".hero-prev").addEventListener("click", () => { heroSlideIdx -= 1; paintHeroSlide(activeHeroSlides(), heroSlideIdx); restartHeroAuto(); });
+      ui.querySelector(".hero-next").addEventListener("click", () => { heroSlideIdx += 1; paintHeroSlide(activeHeroSlides(), heroSlideIdx); restartHeroAuto(); });
+      ui.querySelector(".hero-slider-dots").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-slide]"); if (!b) return;
+        heroSlideIdx = parseInt(b.getAttribute("data-slide"), 10) || 0;
+        paintHeroSlide(activeHeroSlides(), heroSlideIdx); restartHeroAuto();
+      });
+    }
+    const slides = activeHeroSlides();
+    heroSlideIdx = 0;
+    paintHeroSlide(slides, 0);
+    restartHeroAuto();
+  }
+  function restartHeroAuto() {
+    stopHeroSlider();
+    const slides = activeHeroSlides();
+    if (slides.length <= 1) return;
+    const sec = Math.max(2, Number(CONFIG.heroSliderIntervalSec) || 5);
+    heroSliderTimer = setInterval(() => {
+      heroSlideIdx += 1;
+      paintHeroSlide(activeHeroSlides(), heroSlideIdx);
+    }, sec * 1000);
+  }
+  function applyHesabBanner() {
+    let box = $("#hesabSiteBanner");
+    const b = CONFIG.hesabBanner || {};
+    if (!b.enabled) { if (box) box.hidden = true; return; }
+    if (!box) {
+      box = document.createElement("section");
+      box.id = "hesabSiteBanner";
+      box.className = "section";
+      box.innerHTML = `<div class="container" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;text-align:center">
+        <img class="hsb-img" alt="HesabPay" style="max-width:180px;width:100%;border-radius:12px;border:1px solid var(--line)">
+        <div><p class="hsb-text" style="font-weight:800;font-size:18px;margin:0 0 8px"></p>
+        <a class="btn btn-gold hsb-link" target="_blank" rel="noopener" hidden></a></div></div>`;
+      const cats = $("#categories");
+      if (cats && cats.parentNode) cats.parentNode.insertBefore(box, cats.nextSibling);
+      else (document.querySelector("main") || document.body).appendChild(box);
+    }
+    box.hidden = false;
+    const img = box.querySelector(".hsb-img");
+    const text = box.querySelector(".hsb-text");
+    const link = box.querySelector(".hsb-link");
     if (img) {
-      // Semi-transparent overlay keeps hero text readable while the uploaded
-      // image stays clearly visible. NOTE: no opaque base layer here, otherwise
-      // it would fully cover the image.
-      hero.style.backgroundImage =
-        "linear-gradient(rgba(12,12,12,.55), rgba(20,17,10,.72))," +
-        "radial-gradient(1100px 620px at 82% -8%, rgba(200,163,95,.32), transparent 60%)," +
-        "radial-gradient(900px 520px at 5% 110%, rgba(200,163,95,.18), transparent 60%)," +
-        "url('" + img + "')";
-      hero.style.backgroundSize = "cover, cover, cover, cover";
-      hero.style.backgroundPosition = "center, center, center, center";
-      hero.style.backgroundRepeat = "no-repeat";
-      hero.style.backgroundColor = "#0e0e0e";
-    } else {
-      hero.style.backgroundImage = "";
-      hero.style.backgroundSize = "";
-      hero.style.backgroundPosition = "";
-      hero.style.backgroundRepeat = "";
-      hero.style.backgroundColor = "";
+      if (b.imageUrl) { img.src = b.imageUrl; img.style.display = ""; }
+      else { img.removeAttribute("src"); img.style.display = "none"; }
+    }
+    if (text) text.textContent = LANG === "en" ? (b.text_en || b.text || "") : (b.text || b.text_en || "");
+    if (link) {
+      if (b.link) {
+        link.href = (window.MAHOApi && MAHOApi.ensureHttps) ? MAHOApi.ensureHttps(b.link) : b.link;
+        link.hidden = false;
+        link.textContent = LANG === "en" ? "Open HesabPay" : "بازکردن حساب‌پی";
+      } else link.hidden = true;
     }
   }
 
@@ -2232,6 +2415,7 @@
     applyLogo();
     applyHero();
     applyContent();
+    applyHesabBanner();
     formatCounters();
     updateYear();
     const label = $("#langLabel");
@@ -2253,6 +2437,7 @@
     applyLogo();
     applyHero();
     applyContent();
+    applyHesabBanner();
     formatCounters();
     applyDeliveryAvailability();
   }
@@ -2330,16 +2515,19 @@
         useMyLocBtn.disabled = false;
         if (!res) return;
         if (res.km != null) distanceKm = res.km;
-        deliveryAllowed = !(res.error === "out_of_range" || res.ok === false);
-        if (di) {
-          di.hidden = false;
-          if (res.error === "out_of_range" || res.ok === false) {
-            di.textContent = t("co.outOfRange").replace("{km}", toDigits(res.km != null ? res.km : currentKm())).replace("{max}", toDigits(res.maxKm != null ? res.maxKm : deliveryMaxKm()));
-          } else if (res.km != null) {
-            di.textContent = t("co.deliveryOk").replace("{km}", toDigits(res.km));
-          } else {
-            di.textContent = t("co.distKm") + ": " + toDigits(currentKm()) + " " + t("co.km");
+        deliveryAllowed = true;
+        if (di) di.hidden = false;
+        if (res.error === "out_of_range" || res.ok === false) {
+          if (outOfRangePolicy() === "block") deliveryAllowed = false;
+          if (di) {
+            di.textContent = (outOfRangePolicy() === "block" ? t("co.outOfRange") : (deliveryWarnMsg() || t("co.outOfRange")))
+              .replace("{km}", toDigits(res.km != null ? res.km : currentKm()))
+              .replace("{max}", toDigits(res.maxKm != null ? res.maxKm : deliveryMaxKm()));
           }
+        } else if (res.km != null) {
+          if (di) di.textContent = t("co.deliveryOk").replace("{km}", toDigits(res.km));
+        } else if (di) {
+          di.textContent = t("co.distKm") + ": " + toDigits(currentKm()) + " " + t("co.km");
         }
         updateCheckoutTotals();
       };
@@ -2350,8 +2538,9 @@
           if (km != null) {
             distanceKm = km;
             const mx = deliveryMaxKm();
-            deliveryAllowed = !(mx > 0 && km > mx);
-            applyCheck({ ok: deliveryAllowed, km: Math.round(km * 100) / 100, maxKm: mx, error: deliveryAllowed ? null : "out_of_range" });
+            const out = mx > 0 && km > mx;
+            deliveryAllowed = !(out && outOfRangePolicy() === "block");
+            applyCheck({ ok: !out, km: Math.round(km * 100) / 100, maxKm: mx, error: out ? "out_of_range" : null });
           } else if (di) {
             di.hidden = false;
             di.textContent = (err && err.message) || t("co.noStoreCoords");
@@ -2363,8 +2552,9 @@
         if (km != null) {
           distanceKm = km;
           const mx = deliveryMaxKm();
-          deliveryAllowed = !(mx > 0 && km > mx);
-          applyCheck({ ok: deliveryAllowed, km: Math.round(km * 100) / 100, maxKm: mx, error: deliveryAllowed ? null : "out_of_range" });
+          const out = mx > 0 && km > mx;
+          deliveryAllowed = !(out && outOfRangePolicy() === "block");
+          applyCheck({ ok: !out, km: Math.round(km * 100) / 100, maxKm: mx, error: out ? "out_of_range" : null });
         } else {
           useMyLocBtn.disabled = false;
           if (di) { di.hidden = false; di.textContent = t("co.noStoreCoords"); }

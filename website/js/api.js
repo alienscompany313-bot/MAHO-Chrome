@@ -421,6 +421,36 @@
       return d;
     });
   }
+  function posLogin(body) {
+    return request("/api/pos/login", { method: "POST", body: body || {} }).then(function (d) {
+      if (d.token) {
+        setToken("pos", d.token);
+        /* POS workspace uses admin-slot APIs historically — mirror token for guard compatibility */
+        setToken("admin", d.token);
+      }
+      return d;
+    });
+  }
+  function posLogout() {
+    var t = getToken("pos") || getToken("admin");
+    return request("/api/pos/logout", { method: "POST", token: t }).then(function (d) {
+      setToken("pos", null);
+      setToken("admin", null);
+      return d;
+    }).catch(function () {
+      setToken("pos", null);
+      setToken("admin", null);
+    });
+  }
+  function posMe() {
+    return request("/api/pos/me", { token: getToken("pos") || getToken("admin") });
+  }
+  function posProducts(query) {
+    var q = query || {};
+    var qs = Object.keys(q).filter(function (k) { return q[k] != null && q[k] !== ""; })
+      .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(q[k]); }).join("&");
+    return request("/api/pos/products" + (qs ? "?" + qs : ""), { token: getToken("pos") || getToken("admin") });
+  }
   function listStaff() {
     return request("/api/admin/staff", { token: getToken("admin") });
   }
@@ -433,32 +463,76 @@
     return request("/api/admin/staff", { method: "POST", body: body || {}, token: getToken("admin") });
   }
   function posSearch(q) {
-    return request("/api/pos/products/search?q=" + encodeURIComponent(q || ""), { token: getToken("admin") });
+    return request("/api/pos/products/search?q=" + encodeURIComponent(q || ""), { token: getToken("pos") || getToken("admin") });
   }
   function posSale(body) {
-    return request("/api/pos/sale", { method: "POST", body: body || {}, token: getToken("admin") });
+    return request("/api/pos/sale", { method: "POST", body: body || {}, token: getToken("pos") || getToken("admin") });
   }
   function posReturn(body) {
-    return request("/api/pos/return", { method: "POST", body: body || {}, token: getToken("admin") });
+    return request("/api/pos/return", { method: "POST", body: body || {}, token: getToken("pos") || getToken("admin") });
   }
   function posShiftOpen(body) {
-    return request("/api/pos/shift/open", { method: "POST", body: body || {}, token: getToken("admin") });
+    return request("/api/pos/shift/open", { method: "POST", body: body || {}, token: getToken("pos") || getToken("admin") });
   }
   function posShiftClose(body) {
-    return request("/api/pos/shift/close", { method: "POST", body: body || {}, token: getToken("admin") });
+    return request("/api/pos/shift/close", { method: "POST", body: body || {}, token: getToken("pos") || getToken("admin") });
   }
   function posShiftCash(body) {
-    return request("/api/pos/shift/cash", { method: "POST", body: body || {}, token: getToken("admin") });
+    return request("/api/pos/shift/cash", { method: "POST", body: body || {}, token: getToken("pos") || getToken("admin") });
   }
   function posReports(params) {
     var qs = [];
     params = params || {};
     if (params.from) qs.push("from=" + encodeURIComponent(params.from));
     if (params.to) qs.push("to=" + encodeURIComponent(params.to));
-    return request("/api/pos/reports" + (qs.length ? "?" + qs.join("&") : ""), { token: getToken("admin") });
+    return request("/api/pos/reports" + (qs.length ? "?" + qs.join("&") : ""), { token: getToken("pos") || getToken("admin") });
   }
   function posSales() {
-    return request("/api/pos/sales", { token: getToken("admin") });
+    return request("/api/pos/sales", { token: getToken("pos") || getToken("admin") });
+  }
+  function driverLogin(body) {
+    return request("/api/driver/login", { method: "POST", body: body || {} }).then(function (d) {
+      if (d.token) setToken("driver", d.token);
+      return d;
+    });
+  }
+  function driverLogout() {
+    var t = getToken("driver");
+    return request("/api/driver/logout", { method: "POST", token: t }).then(function (d) {
+      setToken("driver", null); return d;
+    }).catch(function () { setToken("driver", null); });
+  }
+  function driverOrders() {
+    return request("/api/driver/orders", { token: getToken("driver") });
+  }
+  function driverSetStatus(id, body) {
+    return request("/api/driver/orders/" + encodeURIComponent(id) + "/status", {
+      method: "POST", body: body || {}, token: getToken("driver"),
+    });
+  }
+  function driverUploadProof(id, file) {
+    var fd = new FormData();
+    fd.append("file", file);
+    return fetch(url("/api/driver/orders/" + encodeURIComponent(id) + "/proof"), {
+      method: "POST",
+      headers: { Authorization: "Bearer " + (getToken("driver") || "") },
+      body: fd,
+    }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error((d && d.error) || r.statusText); return d; }); });
+  }
+  function listDrivers() {
+    return request("/api/admin/drivers", { token: getToken("admin") });
+  }
+  function saveDriver(body, id) {
+    if (id) return request("/api/admin/drivers/" + encodeURIComponent(id), { method: "PUT", body: body || {}, token: getToken("admin") });
+    return request("/api/admin/drivers", { method: "POST", body: body || {}, token: getToken("admin") });
+  }
+  function assignDriver(orderId, driverId) {
+    return request("/api/admin/orders/" + encodeURIComponent(orderId) + "/assign-driver", {
+      method: "POST", body: { driverId: driverId }, token: getToken("admin"),
+    });
+  }
+  function savePaymentMethods(methods) {
+    return request("/api/admin/payment-methods", { method: "PUT", body: { methods: methods }, token: getToken("admin") });
   }
 
   global.MAHOApi = {
@@ -502,6 +576,10 @@
     adminMe: adminMe,
     adminReturnResolve: adminReturnResolve,
     staffLogin: staffLogin,
+    posLogin: posLogin,
+    posLogout: posLogout,
+    posMe: posMe,
+    posProducts: posProducts,
     listStaff: listStaff,
     saveStaff: saveStaff,
     posSearch: posSearch,
@@ -512,6 +590,15 @@
     posShiftCash: posShiftCash,
     posReports: posReports,
     posSales: posSales,
+    driverLogin: driverLogin,
+    driverLogout: driverLogout,
+    driverOrders: driverOrders,
+    driverSetStatus: driverSetStatus,
+    driverUploadProof: driverUploadProof,
+    listDrivers: listDrivers,
+    saveDriver: saveDriver,
+    assignDriver: assignDriver,
+    savePaymentMethods: savePaymentMethods,
     adminLogin: adminLogin,
     adminState: adminState,
     adminSaveCatalog: adminSaveCatalog,

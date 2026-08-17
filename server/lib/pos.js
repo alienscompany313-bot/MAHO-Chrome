@@ -10,7 +10,25 @@ function ensurePos(db) {
   if (!Array.isArray(db.posSales)) { db.posSales = []; changed = true; }
   if (!Array.isArray(db.posShifts)) { db.posShifts = []; changed = true; }
   if (!Array.isArray(db.posCashMoves)) { db.posCashMoves = []; changed = true; }
+  if (db.posSeq == null || !Number.isFinite(Number(db.posSeq))) {
+    /* derive next seq from existing POS-MAHO-* receipts without resetting them */
+    let max = 0;
+    (db.posSales || []).forEach((s) => {
+      const m = String(s.receiptNo || s.id || "").match(/^POS-MAHO-(\d+)$/i);
+      if (m) max = Math.max(max, parseInt(m[1], 10) || 0);
+    });
+    db.posSeq = max;
+    changed = true;
+  }
   return changed;
+}
+
+/** Transaction-safe sequential receipt: POS-MAHO-000001 */
+function nextPosReceiptNo(db) {
+  ensurePos(db);
+  db.posSeq = (Number(db.posSeq) || 0) + 1;
+  const n = db.posSeq;
+  return "POS-MAHO-" + String(n).padStart(6, "0");
 }
 
 function findProduct(db, q) {
@@ -57,8 +75,19 @@ function applyStock(db, items, sign) {
 
 function createSale(db, body, staff) {
   ensurePos(db);
+  if (!staff || (!staff.staffId && !staff.owner)) {
+    return { error: "staff_session_required", status: 401 };
+  }
   const rawItems = Array.isArray(body.items) ? body.items : [];
   if (!rawItems.length) return { error: "empty", status: 400 };
+  const idem = String(body.idempotencyKey || "").trim();
+  if (idem) {
+    db.idempotencyKeys = db.idempotencyKeys || {};
+    if (db.idempotencyKeys["pos:" + idem]) {
+      const prev = db.posSales.find((x) => x.id === db.idempotencyKeys["pos:" + idem]);
+      if (prev) return { sale: prev, replay: true };
+    }
+  }
   const items = [];
   for (const it of rawItems) {
     const p = findProduct(db, it.code || it.barcode || it.sku || it.name);
@@ -82,16 +111,13 @@ function createSale(db, body, staff) {
   const discount = Math.max(0, Number(body.discount) || 0);
   const tax = Math.max(0, Number(body.tax) || 0);
   const total = Math.max(0, subtotal - discount + tax);
-  const idem = String(body.idempotencyKey || "").trim();
-  if (idem) {
-    db.idempotencyKeys = db.idempotencyKeys || {};
-    if (db.idempotencyKeys["pos:" + idem]) {
-      const prev = db.posSales.find((x) => x.id === db.idempotencyKeys["pos:" + idem]);
-      if (prev) return { sale: prev, replay: true };
-    }
-  }
+  const openShift = (db.posShifts || []).find((s) => s.status === "open" && (
+    (staff.staffId && s.staffId === staff.staffId) || (!staff.staffId && staff.owner)
+  ));
+  const receiptNo = nextPosReceiptNo(db);
   const sale = {
-    id: "POS-" + Date.now().toString(36).toUpperCase() + "-" + crypto.randomBytes(2).toString("hex"),
+    id: receiptNo,
+    receiptNo,
     type: "sale",
     date: Date.now(),
     items,
@@ -105,9 +131,9 @@ function createSale(db, body, staff) {
       phone: sanitizeText(body.customer.phone, 40),
       email: String(body.customer.email || "").trim().toLowerCase().slice(0, 120),
     } : null,
-    staffId: staff && staff.staffId || null,
-    staffName: staff && staff.name || "admin",
-    shiftId: body.shiftId || null,
+    staffId: staff.staffId || (staff.owner ? "owner" : null),
+    staffName: staff.name || (staff.owner ? "Owner" : "staff"),
+    shiftId: (body.shiftId || (openShift && openShift.id) || null),
     note: sanitizeText(body.note, 500),
   };
   db.posSales.unshift(sale);
@@ -283,7 +309,52 @@ function buildReports(db, { from, to } = {}) {
   };
 }
 
+function listPosProducts(db, { q, cat, stock } = {}) {
+  const needle = String(q || "").trim().toLowerCase();
+  const catF = String(cat || "").trim().toLowerCase();
+  const stockF = String(stock || "").trim().toLowerCase(); /* all|in|low|out */
+  const lowDefault = 3;
+  return (db.products || []).filter((p) => {
+    if (!p || p.enabled === false || p.active === false) return false;
+    if (catF && String(p.cat || p.category || "").toLowerCase() !== catF) return false;
+    const st = p.stock == null || p.stock === "" ? null : Number(p.stock);
+    const lowAt = p.lowStock != null ? Number(p.lowStock) : lowDefault;
+    if (stockF === "out" && !(st != null && st <= 0)) return false;
+    if (stockF === "low" && !(st != null && st > 0 && st <= lowAt)) return false;
+    if (stockF === "in" && !(st == null || st > 0)) return false;
+    if (!needle) return true;
+    const hay = [p.name, p.name_en, p.code, p.barcode, p.sku].map((x) => String(x || "").toLowerCase()).join(" ");
+    return hay.indexOf(needle) >= 0;
+  }).map((p) => {
+    const st = p.stock == null || p.stock === "" ? null : Number(p.stock);
+    const lowAt = p.lowStock != null ? Number(p.lowStock) : lowDefault;
+    let stockStatus = "unknown";
+    if (st != null && Number.isFinite(st)) {
+      if (st <= 0) stockStatus = "out";
+      else if (st <= lowAt) stockStatus = "low";
+      else stockStatus = "in";
+    }
+    const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
+    return {
+      id: p.id || p.code || p.name,
+      name: p.name,
+      name_en: p.name_en || "",
+      code: p.code || p.sku || "",
+      barcode: p.barcode || p.code || p.sku || "",
+      sku: p.sku || p.code || "",
+      price: Number(p.price) || 0,
+      stock: st,
+      lowStockAt: lowAt,
+      stockStatus,
+      cat: p.cat || p.category || "",
+      image: imgs[0] || "",
+      discount: p.discount || 0,
+    };
+  });
+}
+
 module.exports = {
   ensurePos, findProduct, createSale, createPosReturn,
   openShift, cashMove, closeShift, buildReports, applyStock,
+  nextPosReceiptNo, listPosProducts,
 };

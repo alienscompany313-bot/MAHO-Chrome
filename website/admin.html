@@ -224,6 +224,9 @@
         <button type="button" class="side-link" data-panel="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
         <button type="button" class="side-link" data-panel="customers"><span class="si">☺</span><span>مشتریان</span></button>
         <button type="button" class="side-link" data-panel="staff"><span class="si">👤</span><span>کارمندان</span></button>
+        <button type="button" class="side-link" data-panel="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
+        <a class="side-link" href="pos.html" target="_blank" rel="noopener"><span class="si">🖥</span><span>POS (ورود مستقل)</span></a>
+        <a class="side-link" href="driver.html" target="_blank" rel="noopener"><span class="si">🗺</span><span>صفحه راننده</span></a>
         <button type="button" class="side-link" data-panel="poslink"><span class="si">▣</span><span>POS فروش</span></button>
         <button type="button" class="side-link" data-panel="reviews"><span class="si">★</span><span>نظرات</span></button>
         <button type="button" class="side-link" data-panel="stores"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
@@ -396,15 +399,33 @@
         <button class="btn btn-gold btn-sm" id="addStaffBtn" type="button">+ کارمند</button>
       </div>
       <div id="staffBody"></div>
-      <p class="note">دسترسی‌ها: orders, delivery, pos, products, customers, returns, reports, settings, staff</p>
+      <p class="note">دسترسی‌ها: orders, delivery, pos, products, customers, returns, reports, settings, staff, drivers</p>
+    </div>
+
+    <div class="card admin-panel" data-panel="drivers">
+      <div class="row-between">
+        <div><h2>راننده‌های Delivery</h2><div class="sub">فقط مالک اصلی حساب راننده می‌سازد. Assign از جزئیات سفارش.</div></div>
+        <button class="btn btn-gold btn-sm" id="addDriverBtn" type="button">+ راننده</button>
+      </div>
+      <div id="driversBody"></div>
+      <p class="note">صفحه ورود راننده: <a href="driver.html" target="_blank" rel="noopener">driver.html</a></p>
     </div>
 
     <!-- POS LINK -->
     <div class="card admin-panel" data-panel="poslink">
       <h2>Point of Sale</h2>
-      <div class="sub">Workspace جداگانهٔ فروش حضوری، برگشت، صندوق، بارکد و گزارش.</div>
+      <div class="sub">Workspace جداگانهٔ فروش حضوری، برگشت، صندوق، بارکد و گزارش. کارمند می‌تواند مستقیم از pos.html وارد شود.</div>
       <a class="btn btn-gold" href="pos.html" target="_blank" rel="noopener">بازکردن POS ↗</a>
-      <p class="note">موجودی POS با فروشگاه آنلاین مشترک است و Atomic کم می‌شود.</p>
+      <p class="note">موجودی POS با فروشگاه آنلاین مشترک است و Atomic کم می‌شود. شماره‌ها: POS-MAHO-######</p>
+      <div class="row-between" style="margin-top:14px;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0;font-size:15px">فروش‌های POS (فیلتر کارمند)</h3>
+        <button type="button" class="btn btn-outline btn-sm" id="refreshPosSalesAdmin">بازخوانی</button>
+      </div>
+      <div class="grid2" style="margin:8px 0">
+        <div class="field"><label>کارمند</label><select id="posStaffFilter" class="ctrl"><option value="">همه</option></select></div>
+        <div class="field"><label>از تاریخ (اختیاری)</label><input id="posFromFilter" type="date" class="ctrl" dir="ltr"></div>
+      </div>
+      <div id="posSalesAdminBody"><p class="note">پس از ورود، بازخوانی کنید.</p></div>
     </div>
 
     <!-- REVIEWS -->
@@ -544,7 +565,22 @@
         <p class="note">این عکس در پس‌زمینه‌ی سربرگ بالای صفحه‌ی اصلی نشان داده می‌شود (روی آن یک لایه‌ی تیره می‌آید تا نوشته‌ها خوانا بماند).</p>
       </div>
 
+      <h3 style="margin:16px 0 6px;font-size:16px">اسلایدر Header</h3>
+      <div class="sub">چند تصویر با ترتیب، فعال/غیرفعال، متن دری/انگلیسی، لینک و فاصله تعویض (ثانیه).</div>
+      <div class="field"><label>فاصله تعویض اسلاید (ثانیه)</label><input id="cfg_hero_interval" type="number" min="2" value="5" dir="ltr"></div>
+      <div id="heroSlidesBox"></div>
+      <button type="button" class="btn btn-outline btn-sm" id="addHeroSlideBtn">+ افزودن اسلاید</button>
+
       <div class="field"><label>نمبر واتساپ برای سفارش (مثلاً 0700123456)</label><input id="cfg_whatsapp" dir="ltr" placeholder="0700123456"></div>
+
+      <h3 style="margin:16px 0 6px;font-size:16px">روش‌های پرداخت (فعال/غیرفعال مستقل)</h3>
+      <div class="sub">حداقل یک روش باید فعال بماند. تنظیمات و سوابق قبلی حذف نمی‌شوند.</div>
+      <div class="grid2" id="payMethodToggles">
+        <div class="field"><label>واتساپ / هنگام تحویل</label><select id="pay_whatsapp" class="ctrl"><option value="yes">فعال</option><option value="no">غیرفعال</option></select></div>
+        <div class="field"><label>حساب‌پی</label><select id="pay_hesab" class="ctrl"><option value="yes">فعال</option><option value="no">غیرفعال</option></select></div>
+        <div class="field"><label>انتقال بانکی</label><select id="pay_bank" class="ctrl"><option value="yes">فعال</option><option value="no">غیرفعال</option></select></div>
+        <div class="field"><label>کارت آنلاین</label><select id="pay_card" class="ctrl"><option value="yes">فعال</option><option value="no">غیرفعال</option></select></div>
+      </div>
 
       <h3 style="margin:16px 0 6px;font-size:16px">اطلاعات پرداخت</h3>
       <div class="grid2">
@@ -562,6 +598,8 @@
         <div class="field"><label>هزینه‌ی اضافه‌ی دلیوری عاجل (همان روز)</label><input id="cfg_delivery_urgent" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label>حداقل مبلغ سفارش برای دلیوری (افغانی)</label><input id="cfg_delivery_min" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
         <div class="field"><label>حداکثر فاصله‌ی دلیوری (کیلومتر) — خارج از شهر</label><input id="cfg_delivery_max" type="number" min="0" inputmode="numeric" placeholder="۰ = بدون محدودیت"></div>
+        <div class="field"><label>خارج از محدوده با GPS؟</label><select id="cfg_delivery_oor" class="ctrl"><option value="warn">هشدار و اجازه ثبت</option><option value="block">مسدود کردن سفارش</option></select></div>
+        <div class="field"><label>عکس اثبات تحویل برای راننده اجباری؟</label><select id="cfg_delivery_proof" class="ctrl"><option value="no">خیر</option><option value="yes">بله</option></select></div>
       </div>
       <div style="margin-top:6px">
         <label style="font-weight:700;font-size:13px">زمان‌های دریافت/تحویل (گزینه‌هایی که مشتری هنگام سفارش انتخاب می‌کند)</label>
@@ -594,6 +632,17 @@
         <img id="hesabQrPreview" alt="" style="max-width:160px;border-radius:12px;border:1px solid var(--line);display:none">
         <button type="button" class="btn btn-danger btn-sm" id="hesabQrRemove">حذف QR</button>
       </div>
+
+      <h3 style="margin:14px 0 6px;font-size:16px">Banner تبلیغاتی حساب‌پی (صفحه سایت)</h3>
+      <div class="sub">جدا از QR پرداخت Checkout — برای نمایش عمومی در سایت.</div>
+      <div class="grid2">
+        <div class="field"><label>فعال؟</label><select id="cfg_hsb_enabled" class="ctrl"><option value="no">خیر</option><option value="yes">بله</option></select></div>
+        <div class="field"><label>لینک https</label><input id="cfg_hsb_link" dir="ltr" placeholder="https://..."></div>
+        <div class="field"><label>متن دری</label><input id="cfg_hsb_text" placeholder="ما پرداخت با حساب‌پی را می‌پذیریم"></div>
+        <div class="field"><label>متن English</label><input id="cfg_hsb_text_en" dir="ltr"></div>
+        <div class="field"><label>تصویر Banner / QR</label><input type="file" id="cfg_hsb_img" accept="image/*"></div>
+      </div>
+      <img id="hsbPreview" alt="" style="max-width:160px;border-radius:12px;border:1px solid var(--line);display:none">
 
       <h3 style="margin:16px 0 6px;font-size:16px">ایمیل (EmailJS)</h3>
       <div class="sub">برای ارسال «کود تایید حساب» و «تایید سفارش». یک حساب رایگان در <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> بسازید. تا خالی است، حالت آزمایشی فعال می‌ماند.</div>
@@ -874,6 +923,8 @@
       window.scrollTo(0,0);
       if(id==="returns") renderReturnsAdmin();
       if(id==="staff") renderStaffAdmin();
+      if(id==="drivers") renderDriversAdmin();
+      if(id==="poslink") renderPosSalesAdmin();
       if(id==="orders") refreshBadges();
     }
     function initSidebar(){
@@ -948,6 +999,92 @@
               '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+acts+'</div></div>';
           }).join("");
         }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"خطا")+'</p>'; });
+      });
+    }
+
+    function renderHeroSlidesAdmin(slides){
+      var box=$("#heroSlidesBox"); if(!box) return;
+      window._heroSlides=Array.isArray(slides)?slides.slice():[];
+      if(!window._heroSlides.length) window._heroSlides=[{id:"s1",url:(state.config&&state.config.heroImage)||"",enabled:!!(state.config&&state.config.heroImage),order:0,alt:"",text:"",text_en:"",link:""}];
+      box.innerHTML=window._heroSlides.map(function(s,i){
+        return '<div class="hero-slide-row" data-i="'+i+'" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0">'+
+          '<div class="grid2">'+
+          '<div class="field"><label>ترتیب</label><input class="hs-order" type="number" value="'+(s.order||i)+'" dir="ltr"></div>'+
+          '<div class="field"><label>فعال</label><select class="hs-en"><option value="yes"'+(s.enabled!==false?" selected":"")+'>بله</option><option value="no"'+(s.enabled===false?" selected":"")+'>خیر</option></select></div>'+
+          '<div class="field"><label>متن دری</label><input class="hs-text" value="'+esc(s.text||"")+'"></div>'+
+          '<div class="field"><label>متن EN</label><input class="hs-text-en" dir="ltr" value="'+esc(s.text_en||"")+'"></div>'+
+          '<div class="field"><label>Alt</label><input class="hs-alt" value="'+esc(s.alt||"")+'"></div>'+
+          '<div class="field"><label>لینک</label><input class="hs-link" dir="ltr" value="'+esc(s.link||"")+'"></div>'+
+          '</div>'+
+          (s.url?'<img src="'+esc(s.url)+'" alt="" style="max-width:160px;border-radius:8px;margin:6px 0">':'')+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="file" class="hs-file" accept="image/*"><button type="button" class="btn btn-danger btn-sm hs-del">حذف</button></div></div>';
+      }).join("");
+    }
+    function collectHeroSlides(){
+      var box=$("#heroSlidesBox"); if(!box) return (state.config&&state.config.heroSlides)||[];
+      var rows=[].slice.call(box.querySelectorAll(".hero-slide-row"));
+      return rows.map(function(row,i){
+        var prev=(window._heroSlides&&window._heroSlides[i])||{};
+        return {
+          id: prev.id || ("slide-"+i+"-"+Date.now()),
+          url: prev.url || "",
+          enabled: (row.querySelector(".hs-en").value!=="no"),
+          order: Number(row.querySelector(".hs-order").value)||i,
+          text: row.querySelector(".hs-text").value.trim(),
+          text_en: row.querySelector(".hs-text-en").value.trim(),
+          alt: row.querySelector(".hs-alt").value.trim(),
+          link: row.querySelector(".hs-link").value.trim()
+        };
+      });
+    }
+    function renderDriversAdmin(){
+      var box=$("#driversBody"); if(!box) return;
+      if(!MAHOApi.listDrivers){ box.innerHTML='<p class="note">API راننده در دسترس نیست</p>'; return; }
+      MAHOApi.listDrivers().then(function(res){
+        var list=res.drivers||[];
+        box.innerHTML=(list.length?list.map(function(d){
+          return '<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'+
+            '<b>'+esc(d.name)+'</b> · '+(d.active===false?"غیرفعال":"فعال")+
+            '<div class="note" dir="ltr">'+esc(d.email||"")+' · '+esc(d.phone||"")+'</div>'+
+            '<button type="button" class="btn btn-outline btn-sm" data-edit-driver="'+esc(d.id)+'">ویرایش</button> '+
+            '<button type="button" class="btn btn-danger btn-sm" data-disable-driver="'+esc(d.id)+'">غیرفعال</button></div>';
+        }).join(""):'<p class="note">راننده‌ای نیست.</p>')+
+        '<div id="driverForm" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">'+
+        '<div class="grid2"><div class="field"><label>نام</label><input id="drv_name"></div>'+
+        '<div class="field"><label>ایمیل</label><input id="drv_email" dir="ltr"></div>'+
+        '<div class="field"><label>تلفن</label><input id="drv_phone" dir="ltr"></div>'+
+        '<div class="field"><label>رمز</label><input id="drv_pass" type="password" dir="ltr"></div></div>'+
+        '<button type="button" class="btn btn-gold" id="drvSaveBtn">ذخیره راننده</button></div>';
+        window._driverList=list;
+      }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"خطا")+'</p>'; });
+    }
+
+    function renderPosSalesAdmin(){
+      var box=$("#posSalesAdminBody"); if(!box) return;
+      requireBackend(function(){
+        var staffQ=MAHOApi.listStaff?MAHOApi.listStaff().catch(function(){return {staff:[]};}):Promise.resolve({staff:[]});
+        staffQ.then(function(stRes){
+          var sel=$("#posStaffFilter");
+          if(sel && !sel._filled){
+            (stRes.staff||[]).forEach(function(s){
+              var o=document.createElement("option"); o.value=s.id; o.textContent=s.name||s.email||s.id; sel.appendChild(o);
+            });
+            sel._filled=true;
+          }
+          var staffId=(sel&&sel.value)||"";
+          var from=($("#posFromFilter")&&$("#posFromFilter").value)||"";
+          var q="?limit=100";
+          if(staffId) q+="&staffId="+encodeURIComponent(staffId);
+          if(from) q+="&from="+encodeURIComponent(from);
+          return MAHOApi.request("/api/pos/sales"+q,{token:MAHOApi.getToken("admin")}).then(function(res){
+            var sales=(res.sales||[]).filter(function(s){return s.type!=="return";});
+            if(!sales.length){ box.innerHTML='<p class="note">فروشی نیست.</p>'; return; }
+            box.innerHTML='<table class="table"><thead><tr><th>رسید</th><th>کارمند</th><th>مبلغ</th><th>زمان</th></tr></thead><tbody>'+
+              sales.slice(0,80).map(function(s){
+                return '<tr><td dir="ltr">'+esc(s.receiptNo||s.id)+'</td><td>'+esc(s.staffName||"—")+'</td><td>'+money(s.total||0)+'</td><td class="note">'+new Date(s.date||0).toLocaleString("fa-AF")+'</td></tr>';
+              }).join("")+'</tbody></table>';
+          });
+        }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"نیاز به دسترسی POS/گزارش")+'</p>'; });
       });
     }
 
@@ -1089,6 +1226,22 @@
       var sc=c.sectionCats||{};
       ["kicker","kicker_en","title","title_en","lead","lead_en"].forEach(function(k){ var el=$("#scats_"+k); if(el) el.value=sc[k]||""; });
       var dl=c.delivery||{}; $("#cfg_delivery_enabled").value=(dl.enabled===false?"no":"yes"); $("#cfg_delivery_perkm").value=(dl.perKm!=null?dl.perKm:10); $("#cfg_delivery_freekm").value=(dl.freeKm!=null?dl.freeKm:0); $("#cfg_delivery_urgent").value=(dl.urgentFee!=null?dl.urgentFee:100); $("#cfg_delivery_min").value=(dl.minOrder!=null?dl.minOrder:0); $("#cfg_delivery_max").value=(dl.maxKm!=null?dl.maxKm:0);
+      if($("#cfg_delivery_oor")) $("#cfg_delivery_oor").value=(dl.outOfRangePolicy==="block"?"block":"warn");
+      if($("#cfg_delivery_proof")) $("#cfg_delivery_proof").value=(dl.proofPhotoRequired?"yes":"no");
+      var pm=c.paymentMethods||{};
+      ["whatsapp","hesab","bank","card"].forEach(function(k){
+        var el=$("#pay_"+k); if(!el) return;
+        var en = pm[k] ? pm[k].enabled!==false : (k==="hesab" ? (c.hesab&&c.hesab.enabled!==false) : true);
+        el.value = en ? "yes" : "no";
+      });
+      if($("#cfg_hero_interval")) $("#cfg_hero_interval").value=(c.heroSliderIntervalSec!=null?c.heroSliderIntervalSec:5);
+      renderHeroSlidesAdmin(c.heroSlides||[]);
+      var hb=c.hesabBanner||{};
+      if($("#cfg_hsb_enabled")) $("#cfg_hsb_enabled").value=hb.enabled?"yes":"no";
+      if($("#cfg_hsb_link")) $("#cfg_hsb_link").value=hb.link||"";
+      if($("#cfg_hsb_text")) $("#cfg_hsb_text").value=hb.text||"";
+      if($("#cfg_hsb_text_en")) $("#cfg_hsb_text_en").value=hb.text_en||"";
+      if($("#hsbPreview")){ if(hb.imageUrl){$("#hsbPreview").src=hb.imageUrl;$("#hsbPreview").style.display="block";} else {$("#hsbPreview").style.display="none";} }
       var ej=c.emailjs||{}; $("#cfg_ejs_service").value=ej.serviceId||""; $("#cfg_ejs_key").value=ej.publicKey||""; $("#cfg_ejs_template").value=ej.templateId||""; $("#cfg_ejs_order").value=ej.orderTemplateId||""; $("#cfg_ejs_welcome").value=ej.welcomeTemplateId||"";
       if($("#cfg_api_url")) $("#cfg_api_url").value=c.apiUrl||(window.MAHOApi?MAHOApi.configuredUrl():"")||"";
       var lp=$("#logoPreview"); if(c.logo){ lp.src=c.logo; lp.style.display="inline-block"; } else { lp.removeAttribute("src"); lp.style.display="none"; }
@@ -1110,7 +1263,7 @@
         bank:{holder:$("#cfg_bank_holder").value.trim(),name:$("#cfg_bank_name").value.trim(),number:$("#cfg_bank_number").value.trim()},
         paymentLink:$("#cfg_paylink").value.trim(),
         hesab:{
-          enabled:$("#cfg_hesab_enabled")?$("#cfg_hesab_enabled").value!=="no":true,
+          enabled: ($("#pay_hesab") ? $("#pay_hesab").value!=="no" : ($("#cfg_hesab_enabled")?$("#cfg_hesab_enabled").value!=="no":true)),
           order:Number($("#cfg_hesab_order")&&$("#cfg_hesab_order").value)||10,
           title:($("#cfg_hesab_title")&&$("#cfg_hesab_title").value.trim())||"",
           title_en:($("#cfg_hesab_title_en")&&$("#cfg_hesab_title_en").value.trim())||"",
@@ -1136,7 +1289,24 @@
           lead:($("#scats_lead")&&$("#scats_lead").value.trim())||"",
           lead_en:($("#scats_lead_en")&&$("#scats_lead_en").value.trim())||""
         },
-        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
+        delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,outOfRangePolicy:($("#cfg_delivery_oor")&&$("#cfg_delivery_oor").value)||"warn",proofPhotoRequired:($("#cfg_delivery_proof")&&$("#cfg_delivery_proof").value==="yes"),gpsRequired:false,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
+        paymentMethods:{
+          whatsapp:{enabled:$("#pay_whatsapp")?$("#pay_whatsapp").value!=="no":true},
+          hesab:{enabled:$("#pay_hesab")?$("#pay_hesab").value!=="no":true},
+          bank:{enabled:$("#pay_bank")?$("#pay_bank").value!=="no":true},
+          card:{enabled:$("#pay_card")?$("#pay_card").value!=="no":true}
+        },
+        heroSlides: collectHeroSlides(),
+        heroSliderIntervalSec: Number($("#cfg_hero_interval")&&$("#cfg_hero_interval").value)||5,
+        hesabBanner:{
+          enabled: $("#cfg_hsb_enabled")&&$("#cfg_hsb_enabled").value==="yes",
+          link: ($("#cfg_hsb_link")&&$("#cfg_hsb_link").value)||"",
+          text: ($("#cfg_hsb_text")&&$("#cfg_hsb_text").value)||"",
+          text_en: ($("#cfg_hsb_text_en")&&$("#cfg_hsb_text_en").value)||"",
+          imageUrl: (state.config&&state.config.hesabBanner&&state.config.hesabBanner.imageUrl)||"",
+          placement: "after_categories",
+          order: 20
+        },
         emailjs:{serviceId:$("#cfg_ejs_service").value.trim(),publicKey:$("#cfg_ejs_key").value.trim(),templateId:$("#cfg_ejs_template").value.trim(),orderTemplateId:$("#cfg_ejs_order").value.trim(),welcomeTemplateId:$("#cfg_ejs_welcome").value.trim()},
         apiUrl:($("#cfg_api_url")&&$("#cfg_api_url").value.trim())||"",
         content:(state.config&&state.config.content)||{}
@@ -1246,12 +1416,23 @@
             var mu="https://www.google.com/maps?q="+encodeURIComponent(o.customerLocation.lat+","+o.customerLocation.lng);
             maps='<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+mu+'">موقعیت مشتری در Google Maps</a>';
           }
-          var hist=(o.statusHistory||[]).slice(-6).map(function(h){ return '<li class="note">'+new Date(h.at||0).toLocaleString("fa-AF")+' — '+statusLabelFa(h.status)+(h.paymentStatus?(' / '+statusLabelFa(h.paymentStatus)):'')+(h.note?(' — '+esc(h.note)):'')+'</li>'; }).join("");
+          var hist=(o.statusHistory||[]).slice(-6).map(function(h){ return '<li class="note">'+new Date(h.at||0).toLocaleString("fa-AF")+' — '+statusLabelFa(h.status)+(h.paymentStatus?(' / '+statusLabelFa(h.paymentStatus)):'')+(h.note?(' — '+esc(h.note)):'')+(h.driverName?(' — راننده: '+esc(h.driverName)):'')+'</li>'; }).join("");
           var custNo=o.customerNo||(c.customerNo)||"";
           var dl=o.delivery||{};
           var delLine=(dl.method==="deliver")
             ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
             : 'دریافت حضوری';
+          var drvLine="";
+          if(dl.method==="deliver"){
+            var dlist=window._driverList||[];
+            var opts='<option value="">— انتخاب راننده —</option>'+dlist.filter(function(dr){return dr.active!==false;}).map(function(dr){
+              return '<option value="'+esc(dr.id)+'"'+(o.driverId===dr.id?" selected":"")+'>'+esc(dr.name)+'</option>';
+            }).join("");
+            drvLine='<div class="note" style="margin-top:8px">راننده: <b>'+esc(o.driverName||"—")+'</b>'+(o.driverStatus?(' · وضعیت: '+esc(o.driverStatus)):'')+
+              '</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0">'+
+              '<select class="ctrl drv-assign-sel" data-oid="'+esc(o.id)+'" style="min-width:160px">'+opts+'</select>'+
+              '<button type="button" class="btn btn-outline btn-sm" data-assign-driver="'+esc(o.id)+'">Assign راننده</button></div>';
+          }
           return '<div class="adm-order acc-order'+(idx===0?' open':'')+'" data-oid="'+esc(o.id)+'">'+
             '<button type="button" class="acc-head" aria-expanded="'+(idx===0?'true':'false')+'">'+
             '<span><b dir="ltr">'+(o.id||"")+'</b> — '+(c.name||"")+(o.guest?' <span class="tag">مهمان</span>':'')+'</span>'+
@@ -1265,6 +1446,7 @@
             '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
             '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+(o.paymentStatus?(' / '+statusLabelFa(o.paymentStatus)):'')+'</div>'+
             (o.hesabReceipt?('<div class="note">رسید حساب‌پی: '+(o.hesabReceipt.txnId||"")+' — '+(o.hesabReceipt.amount||"")+(o.hesabReceipt.url?(' — <a href="'+esc(o.hesabReceipt.url)+'" target="_blank" rel="noopener">مشاهده</a>'):'')+'</div>'):'')+
+            drvLine+
             '<ul class="adm-items">'+items+'</ul>'+
             '<div><b>تاریخچه وضعیت</b><ul>'+(hist||'<li class="note">—</li>')+'</ul></div>'+
             '<div class="row-between" style="flex-wrap:wrap;gap:8px"><b>مجموع: '+money(o.total||0)+'</b><span style="display:flex;flex-wrap:wrap;gap:6px">'+actions.join(" ")+maps+'</span></div>'+
@@ -1274,7 +1456,10 @@
         if(typeof JsBarcode!=="undefined"){ pending.forEach(function(bb){ try{ JsBarcode("#"+bb.id,bb.code,{format:"CODE128",width:1.4,height:34,fontSize:11,margin:3}); }catch(e){} }); }
       };
       requireBackend(function(){
-        MAHOApi.adminOrders().then(function(res){ paint(res.orders||[]); setApiNote("سفارش‌ها از سرور ✓", true); }).catch(function(err){ setApiNote((err&&err.message)||"خطا", false); paint([]); });
+        var loadDrivers=MAHOApi.listDrivers?MAHOApi.listDrivers().then(function(r){ window._driverList=r.drivers||[]; }).catch(function(){ window._driverList=[]; }):Promise.resolve();
+        loadDrivers.then(function(){
+          MAHOApi.adminOrders().then(function(res){ paint(res.orders||[]); setApiNote("سفارش‌ها از سرور ✓", true); }).catch(function(err){ setApiNote((err&&err.message)||"خطا", false); paint([]); });
+        });
       });
     }
     function orderSummaryTextA(o){
@@ -1900,6 +2085,9 @@
       if(document.querySelector("#scRows .sc-row")) collectShowcase();
       if(document.querySelector("#tsRows .ts-row")) collectTs();
       collectConfig(); collectContent();
+      var pm=state.config.paymentMethods||{};
+      var anyPay=["whatsapp","hesab","bank","card"].some(function(k){ return pm[k] && pm[k].enabled!==false; });
+      if(!anyPay){ alert("حداقل یک روش پرداخت باید فعال باشد."); return; }
       state=scrubLocalImages(state);
       requireBackend(function(){
         MAHOApi.adminSaveCatalog(state).then(function(){
@@ -1964,6 +2152,18 @@
         });
         return;
       }
+      var asg=e.target.getAttribute("data-assign-driver");
+      if(asg&&MAHOApi.assignDriver){
+        var card=e.target.closest(".acc-order")||e.target.closest(".adm-order");
+        var sel=card&&card.querySelector('.drv-assign-sel[data-oid="'+asg+'"]');
+        var did=sel?sel.value:"";
+        if(!did){ alert("راننده را انتخاب کنید"); return; }
+        requireBackend(function(){
+          MAHOApi.assignDriver(asg, did).then(function(){ renderOrdersAdmin(); toast("راننده Assign شد ✓"); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+        return;
+      }
       var qr=e.target.getAttribute("data-qr");
       if(qr&&MAHOApi.adminDeliveryQr){
         requireBackend(function(){
@@ -2017,6 +2217,70 @@
     if($("#filterAwaitHesab")) $("#filterAwaitHesab").onclick=function(){ if($("#ordersFilter")) $("#ordersFilter").value="await_hesab"; renderOrdersAdmin(); };
     if($("#refreshReturns")) $("#refreshReturns").onclick=renderReturnsAdmin;
     if($("#addStaffBtn")) $("#addStaffBtn").onclick=function(){ showPanel("staff"); renderStaffAdmin(); };
+    if($("#addDriverBtn")) $("#addDriverBtn").onclick=function(){ showPanel("drivers"); renderDriversAdmin(); };
+    if($("#addHeroSlideBtn")) $("#addHeroSlideBtn").onclick=function(){
+      window._heroSlides=collectHeroSlides();
+      window._heroSlides.push({id:"s"+Date.now(),url:"",enabled:true,order:window._heroSlides.length,alt:"",text:"",text_en:"",link:""});
+      renderHeroSlidesAdmin(window._heroSlides); setDirty(true);
+    };
+    if($("#heroSlidesBox")) $("#heroSlidesBox").addEventListener("click",function(e){
+      if(e.target.classList.contains("hs-del")){
+        var row=e.target.closest(".hero-slide-row"); var i=parseInt(row.getAttribute("data-i"),10);
+        window._heroSlides=collectHeroSlides(); window._heroSlides.splice(i,1);
+        renderHeroSlidesAdmin(window._heroSlides); setDirty(true);
+      }
+    });
+    if($("#heroSlidesBox")) $("#heroSlidesBox").addEventListener("change",function(e){
+      if(!e.target.classList.contains("hs-file")) return;
+      var row=e.target.closest(".hero-slide-row"); var i=parseInt(row.getAttribute("data-i"),10);
+      var f=e.target.files[0]; if(!f) return;
+      uploadImageFile(f, function(url){
+        if(!url) return;
+        window._heroSlides=collectHeroSlides();
+        if(window._heroSlides[i]) window._heroSlides[i].url=url;
+        renderHeroSlidesAdmin(window._heroSlides); setDirty(true); toast("اسلاید آپلود شد ✓");
+      });
+    });
+    if($("#cfg_hsb_img")) $("#cfg_hsb_img").addEventListener("change",function(e){
+      var f=e.target.files[0]; if(!f) return;
+      uploadImageFile(f, function(url){
+        if(!url) return;
+        if(!state.config.hesabBanner) state.config.hesabBanner={};
+        state.config.hesabBanner.imageUrl=url; fillConfig(); setDirty(true); toast("Banner ذخیره شد ✓");
+      });
+    });
+    if($("#driversBody")) $("#driversBody").addEventListener("click",function(e){
+      if(e.target.id==="drvSaveBtn"){
+        var body={ name:($("#drv_name")&&$("#drv_name").value)||"", email:($("#drv_email")&&$("#drv_email").value)||"", phone:($("#drv_phone")&&$("#drv_phone").value)||"", password:($("#drv_pass")&&$("#drv_pass").value)||"" };
+        var id=window._editDriverId||null;
+        requireBackend(function(){
+          MAHOApi.saveDriver(body, id).then(function(){ window._editDriverId=null; toast("راننده ذخیره شد ✓"); renderDriversAdmin(); })
+            .catch(function(err){ alert((err&&err.message)||"خطا — فقط Owner"); });
+        });
+        return;
+      }
+      var ed=e.target.getAttribute("data-edit-driver");
+      if(ed){
+        var d=(window._driverList||[]).filter(function(x){return x.id===ed;})[0];
+        if(!d) return;
+        window._editDriverId=d.id;
+        if($("#drv_name")) $("#drv_name").value=d.name||"";
+        if($("#drv_email")) $("#drv_email").value=d.email||"";
+        if($("#drv_phone")) $("#drv_phone").value=d.phone||"";
+        return;
+      }
+      var dis=e.target.getAttribute("data-disable-driver");
+      if(dis){
+        requireBackend(function(){
+          MAHOApi.saveDriver({ active:false }, dis).then(function(){ toast("غیرفعال شد"); renderDriversAdmin(); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+      }
+    });
+    /* assign driver handled in ordersBody click */
+    if($("#refreshPosSalesAdmin")) $("#refreshPosSalesAdmin").onclick=renderPosSalesAdmin;
+    if($("#posStaffFilter")) $("#posStaffFilter").addEventListener("change",renderPosSalesAdmin);
+    if($("#posFromFilter")) $("#posFromFilter").addEventListener("change",renderPosSalesAdmin);
     if($("#returnsBody")) $("#returnsBody").addEventListener("click",function(e){
       var st=e.target.getAttribute("data-ret-st"); var oid=e.target.getAttribute("data-oid");
       if(!st||!oid||!MAHOApi.adminReturnResolve) return;
