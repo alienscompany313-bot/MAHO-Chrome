@@ -157,7 +157,9 @@ async function main() {
     assert(!/Disallow:\s*\/\s*$/m.test(robots.raw.split("\n").find((l) => /^Disallow:\s*\/\s*$/.test(l)) || ""), "not disallow all");
     const sm = await req("GET", "/sitemap.xml");
     assert(sm.status === 200 && /<urlset/i.test(sm.raw) && /mahomarket\.com\/</.test(sm.raw.replace(/\s/g, "")), "sitemap xml");
-    assert(/#products/i.test(sm.raw), "sitemap products");
+    const smLocs = [...sm.raw.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
+    assert(smLocs.length === 1 && smLocs[0] === "https://mahomarket.com/", "sitemap homepage only");
+    assert(smLocs.every((u) => !/#/.test(u)), "sitemap no hash fragments");
     const home = await req("GET", "/");
     assert(home.status === 200, "home 200");
     assert(/rel=["']canonical["'][^>]*https:\/\/mahomarket\.com\//i.test(home.raw) || /href=["']https:\/\/mahomarket\.com\/["']/i.test(home.raw), "canonical");
