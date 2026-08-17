@@ -634,7 +634,47 @@ app.post("/api/admin/login", (req, res) => {
 
 app.get("/api/admin/state", requireAdmin, (req, res) => {
   res.setHeader("Cache-Control", "no-store");
-  res.json({ products: db.products, stores: db.stores, config: db.config });
+  const s = req.adminSession || {};
+  const canSettings = !!(s.owner || staffHasPerm(s, "settings"));
+  let config = db.config || {};
+  if (!canSettings) {
+    /* Staff without settings must not receive secrets / payment credentials */
+    const raw = config;
+    config = {
+      categories: raw.categories,
+      showcase: raw.showcase,
+      icons: raw.icons,
+      content: raw.content,
+      sectionCats: raw.sectionCats,
+      heroSlides: raw.heroSlides,
+      heroSliderIntervalSec: raw.heroSliderIntervalSec,
+      heroImage: raw.heroImage,
+      logo: raw.logo,
+      orderApproval: raw.orderApproval,
+      delivery: raw.delivery ? {
+        enabled: raw.delivery.enabled,
+        perKm: raw.delivery.perKm,
+        freeKm: raw.delivery.freeKm,
+        urgentFee: raw.delivery.urgentFee,
+        minOrder: raw.delivery.minOrder,
+        maxKm: raw.delivery.maxKm,
+        outOfRangePolicy: raw.delivery.outOfRangePolicy,
+        proofPhotoRequired: raw.delivery.proofPhotoRequired,
+        gpsRequired: raw.delivery.gpsRequired,
+        timeslots: raw.delivery.timeslots,
+      } : undefined,
+      paymentMethods: raw.paymentMethods,
+      hesab: raw.hesab ? { enabled: raw.hesab.enabled, showOnSite: raw.hesab.showOnSite } : undefined,
+      hesabBanner: raw.hesabBanner ? {
+        enabled: raw.hesabBanner.enabled,
+        text: raw.hesabBanner.text,
+        text_en: raw.hesabBanner.text_en,
+        placement: raw.hesabBanner.placement,
+        order: raw.hesabBanner.order,
+      } : undefined,
+    };
+  }
+  res.json({ products: db.products, stores: db.stores, config: config });
 });
 
 app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
@@ -1164,21 +1204,24 @@ app.post("/api/orders/:id/return", (req, res) => {
 /* -------------------- static website -------------------- */
 mountExtra(app, {
   get db() { return db; },
-  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  requireUser, publicUser, emailOk,
   get mail() { return mail; },
   TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
   UPLOAD_DIR, ALLOW_DEV_CODES, sessions, findProduct, scrubImageFields, isAllowedImageUrl, isDataUrl,
 });
 mountV2(app, {
   get db() { return db; },
-  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  requireUser, publicUser, emailOk,
   get mail() { return mail; },
   sessions, findProduct, isAllowedImageUrl,
   ADMIN_PASSWORD,
 });
 mountV3(app, {
   get db() { return db; },
-  saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  requireUser, publicUser, emailOk,
   get mail() { return mail; },
   sessions, UPLOAD_DIR, ADMIN_PASSWORD,
 });

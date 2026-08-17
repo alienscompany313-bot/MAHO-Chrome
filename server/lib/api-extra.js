@@ -26,11 +26,18 @@ function sniffImage(buf) {
 
 function mountExtra(app, ctx) {
   const {
-    saveDb, auth, requireAdmin, requireUser, publicUser, emailOk,
+    saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+    requireUser, publicUser, emailOk,
     TOKEN_PEPPER, SITE_URL, UPLOAD_DIR, ALLOW_DEV_CODES, sessions,
     findProduct, scrubImageFields, isAllowedImageUrl, isDataUrl,
   } = ctx;
   const mail = () => ctx.mail;
+  const guardOrders = typeof requireAdminPerm === "function" ? requireAdminPerm("orders") : requireAdmin;
+  const guardCustomers = typeof requireAdminPerm === "function" ? requireAdminPerm("customers") : requireAdmin;
+  const guardSettings = typeof requireAdminPerm === "function" ? requireAdminPerm("settings") : requireAdmin;
+  const guardDelivery = typeof requireAdminAnyPerm === "function"
+    ? requireAdminAnyPerm(["orders", "delivery"])
+    : requireAdmin;
 
   const rlAuth = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
   const rlCode = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 10 });
@@ -171,7 +178,7 @@ function mountExtra(app, ctx) {
   });
 
   /* ---------- admin customers enriched + export-safe ---------- */
-  app.get("/api/admin/customers/table", requireAdmin, (req, res) => {
+  app.get("/api/admin/customers/table", guardCustomers, (req, res) => {
     const members = (ctx.db.users || []).filter((u) => !u.deletedAt && u.status !== "deleted").map(publicCustomer);
     /* guest orders as pseudo-rows */
     const guestMap = new Map();
@@ -202,12 +209,12 @@ function mountExtra(app, ctx) {
     res.json({ customers: members.concat([...guestMap.values()]) });
   });
 
-  app.get("/api/admin/audit", requireAdmin, (req, res) => {
+  app.get("/api/admin/audit", guardSettings, (req, res) => {
     res.json({ auditLog: (ctx.db.auditLog || []).slice(0, 200) });
   });
 
   /* ---------- order detail + actions for admin ---------- */
-  app.get("/api/admin/orders/:id", requireAdmin, (req, res) => {
+  app.get("/api/admin/orders/:id", guardOrders, (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     res.json({
@@ -219,7 +226,7 @@ function mountExtra(app, ctx) {
     });
   });
 
-  app.post("/api/admin/orders/:id/note", requireAdmin, (req, res) => {
+  app.post("/api/admin/orders/:id/note", guardOrders, (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     o.adminNote = sanitizeText((req.body || {}).note, 1000);
@@ -240,7 +247,7 @@ function mountExtra(app, ctx) {
     return raw;
   }
 
-  app.post("/api/admin/orders/:id/delivery-qr", requireAdmin, async (req, res) => {
+  app.post("/api/admin/orders/:id/delivery-qr", guardDelivery, async (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     const st = normalizeOrderStatus(o.status);
@@ -254,7 +261,7 @@ function mountExtra(app, ctx) {
     res.json({ url: pageUrl, qrDataUrl: dataUrl, orderId: o.id });
   });
 
-  app.post("/api/admin/orders/:id/delivery-qr/revoke", requireAdmin, (req, res) => {
+  app.post("/api/admin/orders/:id/delivery-qr/revoke", guardDelivery, (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     if (o.deliveryQr) o.deliveryQr.revoked = true;
@@ -391,7 +398,7 @@ function mountExtra(app, ctx) {
     });
   });
 
-  app.post("/api/admin/orders/:id/payment-status", requireAdmin, (req, res) => {
+  app.post("/api/admin/orders/:id/payment-status", guardOrders, (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     const next = String((req.body || {}).paymentStatus || "");

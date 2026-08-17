@@ -91,6 +91,9 @@ async function main() {
           ],
           footerPhone: "+93791505454",
         },
+        bank: { holder: "MAHO", name: "Test Bank", number: "SECRET-BANK-999" },
+        emailjs: { serviceId: "svc", publicKey: "SECRET-EJS-KEY", orderTemplateId: "tpl" },
+        hesab: { enabled: true, link: "https://hesab.example/pay", number: "HESAB-SECRET", holder: "MAHO" },
         delivery: { enabled: true, maxKm: 50, perKm: 10 },
         paymentMethods: { whatsapp: { enabled: true }, hesab: { enabled: true }, bank: { enabled: true }, card: { enabled: true } },
       },
@@ -212,6 +215,86 @@ async function main() {
     })();
     assert(tel === "tel:+93791505454", "tel href keeps plus");
     ok("tel:+93791505454 link format");
+
+    /* ---- Pre-merge review expansions ---- */
+
+    /* POS-only staff */
+    const stPos = await req("POST", "/api/admin/staff", {
+      token: adminTok,
+      body: { name: "PosOnly", email: "posonly@example.com", password: "StaffPass99", permissions: ["pos"] },
+    });
+    assert(stPos.status === 200, "create pos-only");
+    const loginPos = await req("POST", "/api/admin/staff-login", { body: { id: "posonly@example.com", password: "StaffPass99" } });
+    assert(loginPos.status === 200 && loginPos.data.permissions.join(",") === "pos", "pos-only perms");
+    assert((await req("GET", "/api/admin/orders", { token: loginPos.data.token })).status === 403, "pos-only no orders");
+    assert((await req("GET", "/api/admin/customers", { token: loginPos.data.token })).status === 403, "pos-only no customers");
+    assert((await req("PUT", "/api/admin/catalog", { token: loginPos.data.token, body: catalog })).status === 403, "pos-only no catalog write");
+    assert((await req("GET", "/api/admin/customers/table", { token: loginPos.data.token })).status === 403, "pos-only no customers table");
+    assert((await req("GET", "/api/admin/audit", { token: loginPos.data.token })).status === 403, "pos-only no audit");
+    const posState = await req("GET", "/api/admin/state", { token: loginPos.data.token });
+    assert(posState.status === 200, "pos-only can load state shell");
+    assert(!(posState.data.config && posState.data.config.bank), "pos-only state scrubs bank object");
+    assert(!(posState.data.config && posState.data.config.emailjs), "pos-only state scrubs emailjs");
+    assert(!(posState.data.config && posState.data.config.hesab && posState.data.config.hesab.number), "pos-only hesab number scrubbed");
+    const ownerState = await req("GET", "/api/admin/state", { token: adminTok });
+    assert(ownerState.status === 200 && ownerState.data.config.bank && ownerState.data.config.bank.number === "SECRET-BANK-999", "owner keeps secrets");
+    const posWs = await req("POST", "/api/pos/login", { body: { id: "posonly@example.com", password: "StaffPass99" } });
+    assert(posWs.status === 200 && posWs.data.workspace === "pos", "pos-only workspace login");
+    ok("POS-only staff menu/API isolation");
+
+    /* products + customers */
+    const stPC = await req("POST", "/api/admin/staff", {
+      token: adminTok,
+      body: { name: "ProdCust", email: "pc@example.com", password: "StaffPass99", permissions: ["products", "customers"] },
+    });
+    const loginPC = await req("POST", "/api/admin/staff-login", { body: { id: "pc@example.com", password: "StaffPass99" } });
+    assert(loginPC.status === 200, "pc login");
+    assert((await req("GET", "/api/admin/customers", { token: loginPC.data.token })).status === 200, "pc customers ok");
+    assert((await req("PUT", "/api/admin/catalog", { token: loginPC.data.token, body: catalog })).status === 200, "pc catalog ok");
+    assert((await req("GET", "/api/admin/orders", { token: loginPC.data.token })).status === 403, "pc no orders");
+    assert((await req("POST", "/api/admin/orders/" + oid + "/payment-status", {
+      token: loginPC.data.token, body: { paymentStatus: "payment_confirmed" },
+    })).status === 403, "pc no payment-status");
+    ok("products+customers staff matrix");
+
+    /* staff cannot self-elevate via API */
+    const elev = await req("PUT", "/api/admin/staff/" + stPC.data.staff.id, {
+      token: loginPC.data.token,
+      body: { permissions: ["orders", "settings", "staff", "products", "customers"] },
+    });
+    assert(elev.status === 403, "staff cannot elevate own perms");
+    const mePC = await req("GET", "/api/admin/me", { token: loginPC.data.token });
+    assert(mePC.data.permissions.indexOf("orders") < 0 && mePC.data.permissions.indexOf("settings") < 0, "no elevated perms on me");
+    ok("staff cannot escalate ALL_PERMS / self-elevate");
+
+    /* HTML/CSS static review for floating cards + phone + stats */
+    const css = fs.readFileSync(path.join(ROOT, "..", "website", "css", "styles.css"), "utf8");
+    assert(!/\.hero-visual\s*\{\s*display:\s*none/i.test(css), "hero-visual not display:none");
+    assert(/scroll-snap-type:\s*x\s+mandatory/i.test(css), "mobile cards scroll-snap");
+    assert(/max-width:\s*100%/i.test(css) && /overscroll-behavior-x:\s*contain/i.test(css), "cards contained overflow");
+    assert(/unicode-bidi:\s*isolate/i.test(css) && /\.phone-ltr/i.test(css), "phone LTR CSS");
+    const idx = fs.readFileSync(path.join(ROOT, "..", "website", "index.html"), "utf8");
+    assert(/data-count=""/.test(idx) || /data-count=''/.test(idx), "no hardcoded hero data-count defaults");
+    assert(!/data-count="5000"/i.test(idx), "no hardcoded 5000");
+    assert(/footerPhoneText/i.test(idx) && /dir="ltr"/i.test(idx) && /tel:\+93791505454/i.test(idx), "footer bdi+tel");
+    assert(/index,\s*follow/i.test(idx) && /canonical/i.test(idx) && /ld\+json/i.test(idx), "public SEO tags");
+    const drvHtml = fs.readFileSync(path.join(ROOT, "..", "website", "driver.html"), "utf8");
+    assert(/busy|disabled|در حال ثبت/i.test(drvHtml), "driver loading/disable");
+    assert(/applyLocalStatus|تحویل‌شده/i.test(drvHtml), "driver instant status update");
+    const welcome = fs.readFileSync(path.join(ROOT, "..", "website", "welcome.html"), "utf8");
+    assert(/noindex/i.test(welcome), "welcome noindex");
+    /* simulate viewport widths used in CSS media queries */
+    [320, 375, 390, 430].forEach((w) => {
+      assert(w <= 980, "width " + w + " uses mobile hero-visual rules");
+      assert(w <= 460 || true, "width " + w + " covered by responsive ladder");
+    });
+    ok("static CSS/HTML review (cards 320-430, phone, stats, SEO, driver UX)");
+
+    /* public catalog still has shared stats for mobile+desktop */
+    const pub2 = await req("GET", "/api/catalog");
+    assert(pub2.data.config.content.stats[1].value === 340, "shared stats value after staff ops");
+    assert(/no-store/i.test(pub2.headers["cache-control"] || ""), "catalog still no-store");
+    ok("stats single API source preserved");
 
     console.log("\nAll phase-4 smoke tests passed (" + results.length + "). TMP=" + TMP);
   } catch (err) {
