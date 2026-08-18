@@ -43,6 +43,9 @@ jobs:
       - name: Smoke engagement
         run: node scripts/smoke-engagement.js
 
+      - name: Smoke ops suite
+        run: node scripts/smoke-ops-suite.js
+
       - name: Smoke features
         run: node scripts/smoke-features.js
 

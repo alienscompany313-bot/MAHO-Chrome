@@ -16,6 +16,8 @@ const {
   publicCampaign,
   createCampaign,
   resolveCampaignRecipients,
+  resolveCampaignRecipientsDetailed,
+  campaignsToCsv,
   createFeedbackInvite,
   findFeedbackByToken,
   submitFeedback,
@@ -171,8 +173,31 @@ function mountEngagement(app, ctx) {
 
   app.post("/api/admin/campaigns/preview-count", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     ensureEngagement(db());
-    const recipients = resolveCampaignRecipients(db(), req.body || {});
-    res.json({ ok: true, recipientCount: recipients.length });
+    const detail = resolveCampaignRecipientsDetailed(db(), req.body || {});
+    res.json({
+      ok: true,
+      recipientCount: detail.recipientCount,
+      newsletterCount: detail.newsletterCount,
+      registeredCount: detail.registeredCount,
+      duplicatesRemoved: detail.duplicatesRemoved,
+      finalRecipients: detail.recipientCount,
+    });
+  });
+
+  app.get("/api/admin/campaigns/export", requireAdminAnyPerm(["marketing", "customers", "reports"]), (req, res) => {
+    ensureEngagement(db());
+    const rows = (db().campaigns || []).map(publicCampaign);
+    const csv = campaignsToCsv(rows);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="maho-campaigns.csv"');
+    return res.send(csv);
+  });
+
+  app.get("/api/admin/campaigns/:id", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
+    ensureEngagement(db());
+    const c = (db().campaigns || []).find((x) => x && x.id === req.params.id);
+    if (!c) return res.status(404).json({ error: "not_found" });
+    res.json({ campaign: publicCampaign(c) });
   });
 
   app.post("/api/admin/campaigns/test", requireAdminAnyPerm(["marketing", "customers"]), async (req, res) => {
@@ -185,12 +210,14 @@ function mountEngagement(app, ctx) {
       return res.status(503).json({ error: "email_not_configured" });
     }
     const unsubUrl = siteUrl() + "/unsubscribe.html?email=" + encodeURIComponent(to) + "&token=test";
+    const products = Array.isArray(b.products) ? b.products : [];
     try {
       const ok = await m.campaignEmail(to, {
         subject: sanitizeText(b.subject, 200) || "Test",
         message: sanitizeText(b.message, 8000) || "",
         ctaText: sanitizeText(b.ctaText, 80),
         ctaUrl: sanitizeText(b.ctaUrl, 500),
+        products,
         unsubscribeUrl: unsubUrl,
       });
       if (!ok) return res.status(503).json({ error: "send_failed" });
@@ -210,42 +237,79 @@ function mountEngagement(app, ctx) {
     if (c.status === "sent") {
       return res.status(409).json({ error: "already_sent" });
     }
+    /* Warn if promoted products became inactive */
+    if (Array.isArray(c.productCodes) && c.productCodes.length) {
+      const live = (db().products || []).filter((p) =>
+        p && p.active !== false && !p.deleted && c.productCodes.indexOf(p.code) >= 0
+      );
+      if (live.length < c.productCodes.length) {
+        if (!(req.body || {}).forceInactiveProducts) {
+          return res.status(409).json({
+            error: "inactive_products",
+            missing: c.productCodes.filter((code) => !live.some((p) => p.code === code)),
+          });
+        }
+      }
+      c.products = live.map((p) => ({
+        code: p.code,
+        name: p.name || "",
+        image: (p.images && p.images[0]) || p.image || "",
+        price: Number(p.price) || 0,
+        oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
+        urlPath: "/p/" + encodeURIComponent(p.code),
+      }));
+    }
     const m = mail();
     if (!m || typeof m.campaignEmail !== "function") {
       return res.status(503).json({ error: "email_not_configured" });
     }
 
-    const recipients = resolveCampaignRecipients(db(), req.body || {});
+    const body = Object.assign({}, req.body || {}, { mode: (req.body && req.body.mode) || c.recipientMode || "newsletter" });
+    const detail = resolveCampaignRecipientsDetailed(db(), body);
+    const recipients = detail.recipients;
     if (!recipients.length) return res.status(400).json({ error: "no_recipients" });
 
     c.sendLock = true;
     c.status = "sending";
+    c.recipientMode = body.mode;
     c.recipientCount = recipients.length;
+    c.newsletterCount = detail.newsletterCount;
+    c.registeredCount = detail.registeredCount;
+    c.duplicatesRemoved = detail.duplicatesRemoved;
     c.successCount = 0;
     c.failedCount = 0;
     saveDb();
 
-    /* Respond immediately; finish send in background to avoid double-click races */
     res.json({ ok: true, campaign: publicCampaign(c), started: true });
 
     setImmediate(async () => {
       try {
+        const base = siteUrl().replace(/\/+$/, "");
+        const products = (c.products || []).map((p) => Object.assign({}, p, {
+          url: base + (p.urlPath || ("/p/" + encodeURIComponent(p.code || ""))),
+        }));
         for (let i = 0; i < recipients.length; i++) {
           const sub = recipients[i];
-          const full = findSubscriberByEmail(db(), sub.email);
-          if (!full || full.status !== "active") {
-            c.failedCount++;
-            continue;
+          let unsubUrl = siteUrl() + "/unsubscribe.html?email=" + encodeURIComponent(sub.email);
+          if (sub.source === "newsletter") {
+            const full = findSubscriberByEmail(db(), sub.email);
+            if (!full || full.status !== "active") {
+              c.failedCount++;
+              continue;
+            }
+            const raw = issueUnsubscribeToken(full, pepper());
+            unsubUrl += "&token=" + encodeURIComponent(raw);
+          } else {
+            /* registered: unsubscribe flips marketingConsent only */
+            unsubUrl += "&source=registered";
           }
-          let raw = issueUnsubscribeToken(full, pepper());
-          const unsubUrl = siteUrl() + "/unsubscribe.html?email=" +
-            encodeURIComponent(full.email) + "&token=" + encodeURIComponent(raw);
           try {
-            const ok = await m.campaignEmail(full.email, {
+            const ok = await m.campaignEmail(sub.email, {
               subject: c.subject,
               message: c.message,
               ctaText: c.ctaText,
               ctaUrl: c.ctaUrl,
+              products,
               unsubscribeUrl: unsubUrl,
             });
             if (ok) c.successCount++;
@@ -263,6 +327,13 @@ function mountEngagement(app, ctx) {
       }
       c.sendLock = false;
       saveDb();
+      pushAudit(db(), {
+        actor: (req.adminSession && (req.adminSession.name || "admin")) || "admin",
+        action: "campaign_sent",
+        entityType: "campaign",
+        entityId: c.id,
+        meta: { recipientCount: c.recipientCount, successCount: c.successCount, failedCount: c.failedCount },
+      });
     });
   });
 
@@ -278,11 +349,13 @@ function mountEngagement(app, ctx) {
       code: it.code || "",
     }));
     const cfg = engagementCfg();
+    const storePickup = !!(order && order.delivery && (order.delivery.method === "pickup" || order.delivery.method === "store_pickup"));
     res.setHeader("Cache-Control", "no-store");
     res.json({
       feedback: publicFeedback(f),
       items,
-      googleReviewUrl: cfg.googleReviewUrl || "",
+      storePickup,
+      googleReviewUrl: cfg.googleReviewUrl || process.env.GOOGLE_REVIEW_URL || "",
       minStarsForGoogleReview: cfg.minStarsForGoogleReview || 4,
     });
   });

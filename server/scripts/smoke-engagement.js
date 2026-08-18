@@ -126,7 +126,8 @@ async function main() {
         items: [{ name: "شال", qty: 1 }],
         customer: { name: "A", phone: "0700111222", email, address: "کابل" },
         payment: "whatsapp",
-        delivery: { method: "pickup" },
+        delivery: { method: "deliver", time: "normal" },
+        customerLocation: { lat: 34.5, lng: 69.1 },
         idempotencyKey: "eng_" + Date.now(),
       },
     });

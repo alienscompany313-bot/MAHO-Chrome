@@ -146,17 +146,20 @@ function appendHistory(order, entry) {
   order.statusHistory.push(Object.assign({ at: Date.now() }, entry));
 }
 
-function allowedAdminActions(status) {
+function allowedAdminActions(status, order) {
   const s = normalizeOrderStatus(status);
+  const pickup = order && order.delivery && (order.delivery.method === "pickup" || order.delivery.method === "store_pickup");
   const actions = [];
   if (s === "new" || s === "pending") {
     actions.push({ id: "confirmed", label: "تأیید سفارش" });
     actions.push({ id: "cancelled", label: "لغو سفارش" });
   } else if (s === "confirmed") {
-    actions.push({ id: "dispatched", label: "ارسال شد" });
+    if (pickup) actions.push({ id: "dispatched", label: "آماده تحویل از فروشگاه" });
+    else actions.push({ id: "dispatched", label: "ارسال شد" });
     actions.push({ id: "cancelled", label: "لغو سفارش" });
   } else if (s === "dispatched") {
-    actions.push({ id: "delivered", label: "رسید / تحویل شد" });
+    if (pickup) actions.push({ id: "delivered", label: "تحویل به مشتری" });
+    else actions.push({ id: "delivered", label: "رسید / تحویل شد" });
     actions.push({ id: "cancelled", label: "لغو سفارش" });
   } else if (s === "return_requested") {
     actions.push({ id: "return_approved", label: "تأیید برگشت" });
@@ -180,13 +183,14 @@ function customerCanReturn(status) {
   return normalizeOrderStatus(status) === "delivered";
 }
 
-function statusLabelFa(code) {
+function statusLabelFa(code, order) {
+  const pickup = order && order.delivery && (order.delivery.method === "pickup" || order.delivery.method === "store_pickup");
   const m = {
     new: "منتظر تأیید",
     pending: "منتظر تأیید",
-    confirmed: "تأییدشده",
-    dispatched: "ارسال‌شده",
-    delivered: "تحویل‌شده",
+    confirmed: pickup ? "در حال آماده‌سازی" : "تأییدشده",
+    dispatched: pickup ? "آماده تحویل از فروشگاه" : "ارسال‌شده",
+    delivered: pickup ? "تحویل شد (فروشگاه)" : "تحویل‌شده",
     cancelled: "لغوشده",
     return_requested: "درخواست برگشت",
     return_approved: "برگشت تأییدشده",

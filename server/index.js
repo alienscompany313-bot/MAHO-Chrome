@@ -30,6 +30,7 @@ const { mountExtra } = require("./lib/api-extra");
 const { mountV2 } = require("./lib/api-v2");
 const { mountV3 } = require("./lib/api-v3");
 const { mountEngagement, maybeSendFeedbackRequest } = require("./lib/api-engagement");
+const { mountOpsSuite } = require("./lib/api-ops-suite");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
@@ -326,6 +327,7 @@ function publicUser(u) {
     id: u.id, name: u.name, phone: u.phone, email: u.email,
     address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: u.payments || [],
     status: u.status || (u.verified ? "active" : "pending"), verified: !!u.verified,
+    marketingConsent: u.marketingConsent === true,
   } : null;
 }
 function publicConfig(c) {
@@ -754,9 +756,26 @@ app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) 
     o.deliveryQr.revoked = true;
   }
   pushAudit(db, { actor: "admin", action: "order_status", entityType: "order", entityId: o.id, meta: { from: prev, to: next } });
+  const isPickup = o.delivery && (o.delivery.method === "pickup" || o.delivery.method === "store_pickup");
+  if (next === "delivered") {
+    try {
+      const { applyDeliveryReturnPolicy, fulfillmentType } = require("./lib/returns-ops");
+      applyDeliveryReturnPolicy(db, o);
+      o.fulfillmentType = fulfillmentType(o);
+    } catch (_) {}
+  }
   saveDb();
   if (o.customer && o.customer.email && emailOk(o.customer.email) && mail) {
-    mail.orderStatus(o.customer.email, o, sanitizeText((req.body || {}).note, 500)).catch(() => {});
+    if (isPickup && next === "dispatched" && typeof mail.pickupReady === "function") {
+      const store = (db.stores && db.stores[0]) || {};
+      mail.pickupReady(o.customer.email, o, store, o.lang || "fa").catch(() => {});
+    } else if (isPickup && next === "delivered" && typeof mail.pickupCompleted === "function") {
+      mail.pickupCompleted(o.customer.email, o, o.lang || "fa").catch(() => {});
+    } else if (!(isPickup && (next === "dispatched" || next === "delivered"))) {
+      mail.orderStatus(o.customer.email, o, sanitizeText((req.body || {}).note, 500)).catch(() => {});
+    } else if (isPickup && next !== "dispatched" && next !== "delivered") {
+      mail.orderStatus(o.customer.email, o, sanitizeText((req.body || {}).note, 500)).catch(() => {});
+    }
   }
   if (next === "delivered") {
     maybeSendFeedbackRequest({
@@ -765,7 +784,7 @@ app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) 
       mail,
     }, o);
   }
-  res.json({ order: o, actions: allowedAdminActions(o.status) });
+  res.json({ order: o, actions: allowedAdminActions(o.status, o) });
 });
 
 /* -------------------- auth -------------------- */
@@ -805,6 +824,7 @@ app.post("/api/auth/register", (req, res) => {
     attempts: 0,
     lastSent: Date.now(),
     ip,
+    marketingConsent: b.marketingConsent === true,
   });
   /* also keep memory map for backward compat during roll-out — no plaintext password */
   pendingReg.set(email, { exp: Date.now() + 10 * 60 * 1000 });
@@ -842,6 +862,7 @@ app.post("/api/auth/verify", (req, res) => {
     id: crypto.randomUUID(), name: pending.name, phone: pending.phone, email: pending.email,
     address: pending.address, addr: pending.addr || {}, pass: pending.passHash, verified: true,
     status: "active",
+    marketingConsent: pending.marketingConsent === true,
     customerNo: nextCustomerNo(), payments: [], createdAt: Date.now(),
   };
   db.users.push(user); saveDb();
@@ -1229,6 +1250,20 @@ mountEngagement(app, {
   saveDb, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
   get mail() { return mail; },
   TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+});
+mountOpsSuite(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  requireUser,
+  get mail() { return mail; },
+  UPLOAD_DIR,
+  SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+  requireDriver: (req, res, next) => {
+    const s = auth(req);
+    if (!s || s.type !== "driver") return res.status(401).json({ error: "driver_auth_required" });
+    req.driverSession = s;
+    next();
+  },
 });
 
 /* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */

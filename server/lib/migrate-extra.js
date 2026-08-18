@@ -6,6 +6,8 @@ const { ensurePos } = require("./pos");
 const { ensurePaymentMethods } = require("./payments");
 const { ensureDrivers } = require("./driver");
 const { ensureEngagement } = require("./engagement");
+const { ensureReturnsOps } = require("./returns-ops");
+const { ensureGiveaways } = require("./giveaway");
 
 function extendMigrate(data) {
   if (!data || typeof data !== "object") return false;
@@ -19,6 +21,8 @@ function extendMigrate(data) {
   if (ensurePos(data)) changed = true;
   if (ensureDrivers(data)) changed = true;
   if (ensureEngagement(data)) changed = true;
+  if (ensureReturnsOps(data)) changed = true;
+  if (ensureGiveaways(data)) changed = true;
 
   /* category section texts (homepage) */
   if (!data.config.sectionCats || typeof data.config.sectionCats !== "object") {
@@ -145,7 +149,7 @@ function extendMigrate(data) {
     });
   }
 
-  /* users: status + soft delete fields */
+  /* users: status + soft delete fields + marketingConsent */
   if (Array.isArray(data.users)) {
     data.users.forEach((u) => {
       if (!u) return;
@@ -154,6 +158,7 @@ function extendMigrate(data) {
         changed = true;
       }
       if (u.deletedAt === undefined) { u.deletedAt = null; changed = true; }
+      if (u.marketingConsent == null) { u.marketingConsent = false; changed = true; }
     });
   }
 

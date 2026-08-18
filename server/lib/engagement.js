@@ -186,6 +186,36 @@ function subscribersToXlsHtml(rows) {
     head.map(esc).join("</th><th>") + "</th></tr></thead><tbody>" + body + "</tbody></table></body></html>";
 }
 
+const CAMPAIGN_TYPES = ["general", "single_product", "multiple_products", "discount", "announcement"];
+
+function normalizeCampaignType(t) {
+  const v = String(t || "general").toLowerCase().replace(/\s+/g, "_");
+  if (CAMPAIGN_TYPES.indexOf(v) >= 0) return v;
+  if (v === "general_promotion" || v === "promo") return "general";
+  return "general";
+}
+
+function activeProductSnapshot(db, codes) {
+  const list = Array.isArray(codes) ? codes : [];
+  const out = [];
+  (db.products || []).forEach((p) => {
+    if (!p || p.active === false || p.deleted) return;
+    const code = String(p.code || "").trim();
+    if (!code) return;
+    if (list.length && list.map(String).indexOf(code) < 0 && list.map(String).indexOf(p.id) < 0) return;
+    out.push({
+      code,
+      name: p.name || "",
+      image: (p.images && p.images[0]) || p.image || "",
+      price: Number(p.price) || 0,
+      oldPrice: p.oldPrice != null ? Number(p.oldPrice) : (p.compareAt != null ? Number(p.compareAt) : null),
+      discount: p.discount || null,
+      urlPath: "/p/" + encodeURIComponent(code),
+    });
+  });
+  return out;
+}
+
 function publicCampaign(c) {
   if (!c) return null;
   return {
@@ -195,10 +225,17 @@ function publicCampaign(c) {
     message: c.message,
     ctaText: c.ctaText || "",
     ctaUrl: c.ctaUrl || "",
+    campaignType: c.campaignType || "general",
+    recipientMode: c.recipientMode || "newsletter",
+    products: Array.isArray(c.products) ? c.products : [],
+    productCodes: Array.isArray(c.productCodes) ? c.productCodes : [],
     createdBy: c.createdBy || "",
     createdAt: c.createdAt || null,
     sentAt: c.sentAt || null,
     recipientCount: c.recipientCount || 0,
+    newsletterCount: c.newsletterCount || 0,
+    registeredCount: c.registeredCount || 0,
+    duplicatesRemoved: c.duplicatesRemoved || 0,
     successCount: c.successCount || 0,
     failedCount: c.failedCount || 0,
     status: c.status || "draft",
@@ -211,15 +248,33 @@ function createCampaign(db, body, createdBy) {
   const subject = sanitizeText(body.subject, 200);
   const message = sanitizeText(body.message, 8000);
   if (!name || !subject || !message) return { ok: false, error: "missing_fields", status: 400 };
+  const campaignType = normalizeCampaignType(body.campaignType || body.type);
+  const productCodes = Array.isArray(body.productCodes)
+    ? body.productCodes.map((x) => sanitizeText(String(x), 40)).filter(Boolean)
+    : [];
+  const products = activeProductSnapshot(db, productCodes);
+  if ((campaignType === "single_product" || campaignType === "multiple_products") && !products.length) {
+    return { ok: false, error: "no_active_products", status: 400 };
+  }
+  if (campaignType === "single_product" && products.length > 1) {
+    products.length = 1;
+  }
   const c = {
     id: "cmp_" + crypto.randomBytes(8).toString("hex"),
     name, subject, message,
     ctaText: sanitizeText(body.ctaText, 80) || "",
     ctaUrl: sanitizeText(body.ctaUrl, 500) || "",
+    campaignType,
+    recipientMode: sanitizeText(body.recipientMode || body.mode || "newsletter", 40) || "newsletter",
+    productCodes: products.map((p) => p.code),
+    products,
     createdBy: sanitizeText(createdBy, 80) || "admin",
     createdAt: now(),
     sentAt: null,
     recipientCount: 0,
+    newsletterCount: 0,
+    registeredCount: 0,
+    duplicatesRemoved: 0,
     successCount: 0,
     failedCount: 0,
     status: "draft",
@@ -229,16 +284,117 @@ function createCampaign(db, body, createdBy) {
   return { ok: true, campaign: publicCampaign(c) };
 }
 
-function resolveCampaignRecipients(db, body) {
-  const mode = String(body.mode || "active").toLowerCase();
-  if (mode === "selected") {
-    return filterSubscribers(db, { ids: body.ids || [], status: "active" });
-  }
-  if (mode === "filter") {
-    return filterSubscribers(db, { q: body.q, status: body.status || "active" })
+function registeredMarketingRecipients(db, { q, ids } = {}) {
+  const needle = String(q || "").trim().toLowerCase();
+  const idSet = Array.isArray(ids) && ids.length ? new Set(ids.map(String)) : null;
+  return (db.users || []).filter((u) => {
+    if (!u || u.deletedAt || u.status === "deleted" || u.verified === false) return false;
+    if (u.marketingConsent !== true) return false;
+    if (!isValidEmail(u.email)) return false;
+    if (idSet && !idSet.has(u.id)) return false;
+    if (needle) {
+      const hay = [u.email, u.name, u.phone, u.customerNo].join(" ").toLowerCase();
+      if (hay.indexOf(needle) < 0) return false;
+    }
+    return true;
+  }).map((u) => ({
+    id: u.id,
+    email: normalizeEmail(u.email),
+    status: "active",
+    source: "registered",
+    name: u.name || "",
+    customerId: u.id,
+  }));
+}
+
+/**
+ * Resolve recipients with dedupe. Modes:
+ * newsletter|active, registered, both, selected, filter
+ * Returns { recipients, newsletterCount, registeredCount, duplicatesRemoved }
+ */
+function resolveCampaignRecipientsDetailed(db, body) {
+  ensureEngagement(db);
+  const mode = String(body.mode || body.recipientMode || "newsletter").toLowerCase();
+  let newsletter = [];
+  let registered = [];
+
+  if (mode === "registered") {
+    registered = registeredMarketingRecipients(db, { q: body.q, ids: body.ids });
+  } else if (mode === "both") {
+    newsletter = filterSubscribers(db, { status: "active" });
+    registered = registeredMarketingRecipients(db, {});
+  } else if (mode === "selected") {
+    if (body.source === "registered" || body.recipientSource === "registered") {
+      registered = registeredMarketingRecipients(db, { ids: body.ids || [] });
+    } else if (body.mixed) {
+      newsletter = filterSubscribers(db, { ids: body.subscriberIds || body.ids || [], status: "active" });
+      registered = registeredMarketingRecipients(db, { ids: body.userIds || [] });
+    } else {
+      newsletter = filterSubscribers(db, { ids: body.ids || [], status: "active" });
+    }
+  } else if (mode === "filter") {
+    newsletter = filterSubscribers(db, { q: body.q, status: body.status || "active" })
       .filter((s) => s.status === "active");
+    if (body.includeRegistered) {
+      registered = registeredMarketingRecipients(db, { q: body.q });
+    }
+  } else {
+    /* newsletter / active (default + legacy) */
+    newsletter = filterSubscribers(db, { status: "active" });
   }
-  return filterSubscribers(db, { status: "active" });
+
+  const seen = new Set();
+  const recipients = [];
+  let duplicatesRemoved = 0;
+  const push = (row, source) => {
+    const e = normalizeEmail(row.email);
+    if (!isValidEmail(e)) return;
+    if (seen.has(e)) { duplicatesRemoved++; return; }
+    seen.add(e);
+    recipients.push({
+      id: row.id || null,
+      email: e,
+      status: "active",
+      source: source || row.source || "newsletter",
+      name: row.name || "",
+      customerId: row.customerId || null,
+    });
+  };
+  newsletter.forEach((s) => push(s, "newsletter"));
+  registered.forEach((s) => push(s, "registered"));
+
+  return {
+    recipients,
+    newsletterCount: newsletter.length,
+    registeredCount: registered.length,
+    duplicatesRemoved,
+    recipientCount: recipients.length,
+  };
+}
+
+function resolveCampaignRecipients(db, body) {
+  return resolveCampaignRecipientsDetailed(db, body).recipients;
+}
+
+function campaignsToCsv(rows) {
+  const header = [
+    "id", "name", "subject", "campaignType", "recipientMode", "newsletterCount",
+    "registeredCount", "duplicatesRemoved", "recipientCount", "successCount",
+    "failedCount", "status", "createdBy", "createdAt", "sentAt", "productCodes",
+  ];
+  const lines = [header.join(",")];
+  (rows || []).forEach((r) => {
+    lines.push([
+      r.id, r.name, r.subject, r.campaignType, r.recipientMode,
+      r.newsletterCount || 0, r.registeredCount || 0, r.duplicatesRemoved || 0,
+      r.recipientCount || 0, r.successCount || 0, r.failedCount || 0,
+      r.status, r.createdBy,
+      r.createdAt ? new Date(r.createdAt).toISOString() : "",
+      r.sentAt ? new Date(r.sentAt).toISOString() : "",
+      (r.productCodes || []).join(";"),
+    ].map(csvSafeCell).join(","));
+  });
+  return "\uFEFF" + lines.join("\n");
 }
 
 function clampStars(n) {
@@ -369,7 +525,12 @@ function submitFeedback(db, orderId, rawToken, pepper, body) {
     return { ok: false, error: "already_submitted", status: 409, feedback: publicFeedback(f) };
   }
 
-  f.driverRating = clampStars(body.driverRating);
+  const order = (db.orders || []).find((o) => o && o.id === orderId);
+  const pickup = order && order.delivery && (order.delivery.method === "pickup" || order.delivery.method === "store_pickup");
+
+  if (!pickup) f.driverRating = clampStars(body.driverRating);
+  else f.driverRating = null;
+
   f.overallSatisfaction = clampStars(body.overallSatisfaction);
   f.comment = sanitizeText(body.comment, 2000) || "";
   const ratings = Array.isArray(body.productRatings) ? body.productRatings : [];
@@ -383,10 +544,9 @@ function submitFeedback(db, orderId, rawToken, pepper, body) {
   f.status = "submitted";
   delete f._rawToken;
 
-  const order = (db.orders || []).find((o) => o && o.id === orderId);
   if (order) markOrderFeedbackSubmitted(order, f.submittedAt);
 
-  return { ok: true, feedback: publicFeedback(f) };
+  return { ok: true, feedback: publicFeedback(f), storePickup: !!pickup };
 }
 
 function feedbackAnalytics(db) {
@@ -446,41 +606,81 @@ function driverPerformance(db) {
       assigned: 0,
       delivered: 0,
       failed: 0,
+      returnPickupJobs: 0,
       avgRating: null,
       ratingCount: 0,
+      feedbackCount: 0,
+      starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     };
   });
   orders.forEach((o) => {
     const id = o.deliveredByDriverId || o.driverId;
-    if (!id) return;
-    if (!byId[id]) {
-      byId[id] = {
-        id,
-        name: o.deliveredByDriverName || o.driverName || id,
-        email: "",
-        active: true,
-        assigned: 0,
-        delivered: 0,
-        failed: 0,
-        avgRating: null,
-        ratingCount: 0,
-      };
+    if (id) {
+      if (!byId[id]) {
+        byId[id] = {
+          id,
+          name: o.deliveredByDriverName || o.driverName || id,
+          email: "",
+          active: true,
+          assigned: 0,
+          delivered: 0,
+          failed: 0,
+          returnPickupJobs: 0,
+          avgRating: null,
+          ratingCount: 0,
+          feedbackCount: 0,
+          starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        };
+      }
+      byId[id].assigned++;
+      if (o.driverStatus === "delivered" || o.status === "delivered") byId[id].delivered++;
+      if (o.driverStatus === "failed") byId[id].failed++;
     }
-    byId[id].assigned++;
-    if (o.driverStatus === "delivered" || o.status === "delivered") byId[id].delivered++;
-    if (o.driverStatus === "failed") byId[id].failed++;
+    const rid = o.returnRequest && o.returnRequest.returnDriverId;
+    if (rid) {
+      if (!byId[rid]) {
+        byId[rid] = {
+          id: rid,
+          name: o.returnRequest.returnDriverName || rid,
+          email: "",
+          active: true,
+          assigned: 0,
+          delivered: 0,
+          failed: 0,
+          returnPickupJobs: 0,
+          avgRating: null,
+          ratingCount: 0,
+          feedbackCount: 0,
+          starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        };
+      }
+      byId[rid].returnPickupJobs++;
+    }
+  });
+  (db.feedback || []).filter((f) => f && f.status === "submitted" && f.driverRating).forEach((f) => {
+    const id = f.driverId;
+    const star = parseInt(f.driverRating, 10);
+    const hit = (id && byId[id]) || Object.keys(byId).map((k) => byId[k]).find((x) => x.name === f.driverName);
+    if (!hit) return;
+    hit.feedbackCount++;
+    hit.ratingCount++;
+    if (star >= 1 && star <= 5) hit.starCounts[star] = (hit.starCounts[star] || 0) + 1;
   });
   analytics.drivers.forEach((d) => {
     const id = d.driverId;
     if (id && byId[id]) {
       byId[id].avgRating = d.avgRating;
       byId[id].ratingCount = d.count;
+      byId[id].feedbackCount = d.count;
     } else if (d.driverName) {
       const hit = Object.keys(byId).map((k) => byId[k]).find((x) => x.name === d.driverName);
-      if (hit) { hit.avgRating = d.avgRating; hit.ratingCount = d.count; }
+      if (hit) { hit.avgRating = d.avgRating; hit.ratingCount = d.count; hit.feedbackCount = d.count; }
     }
   });
-  return Object.keys(byId).map((k) => byId[k]).sort((a, b) => (b.delivered || 0) - (a.delivered || 0));
+  const { bayesianDriverRank } = require("./returns-ops");
+  const ranked = bayesianDriverRank(Object.keys(byId).map((k) => byId[k]));
+  ranked.forEach((d, i) => { d.performanceRank = i + 1; });
+  return ranked;
 }
 
 module.exports = {
@@ -500,6 +700,11 @@ module.exports = {
   publicCampaign,
   createCampaign,
   resolveCampaignRecipients,
+  resolveCampaignRecipientsDetailed,
+  registeredMarketingRecipients,
+  activeProductSnapshot,
+  campaignsToCsv,
+  CAMPAIGN_TYPES,
   createFeedbackInvite,
   findFeedbackByToken,
   submitFeedback,
