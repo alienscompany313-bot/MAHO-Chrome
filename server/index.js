@@ -35,6 +35,7 @@ const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staf
 const {
   checkStock, applyStockDelta, colorKey,
 } = require("./lib/variant-stock");
+const { mountProductPage } = require("./lib/product-page");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -1219,6 +1220,12 @@ mountV3(app, {
   requireUser, publicUser, emailOk,
   get mail() { return mail; },
   sessions, UPLOAD_DIR, ADMIN_PASSWORD,
+});
+
+/* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */
+mountProductPage(app, {
+  getDb: () => db,
+  siteUrl: PUBLIC_SITE,
 });
 
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
