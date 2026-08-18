@@ -451,7 +451,11 @@
             <option value="announcement">Announcement</option>
           </select>
         </div>
-        <div class="field"><label>کد محصولات (با کاما، مثلاً P0008,P0009)</label><input id="cmpProducts" dir="ltr" placeholder="P0008,P0009"></div>
+        <div class="field"><label>محصولات پیشنهادی</label>
+          <select id="cmpProductPick" multiple size="5" dir="ltr" style="width:100%;min-height:110px"></select>
+          <p class="note">از لیست محصولات Active انتخاب کنید (Ctrl/Cmd برای چندتایی). کدها: <span id="cmpProductsHint" dir="ltr">—</span></p>
+          <input type="hidden" id="cmpProducts" value="">
+        </div>
       </div>
       <div class="field"><label>متن پیام</label><textarea id="cmpMessage" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea></div>
       <div class="grid2">
@@ -505,6 +509,11 @@
           </select>
         </div>
       </div>
+      <div class="grid2" id="gwMetaRow">
+        <div class="field"><label>از تاریخ (purchased_range)</label><input id="gwFrom" type="date"></div>
+        <div class="field"><label>تا تاریخ</label><input id="gwTo" type="date"></div>
+      </div>
+      <div class="field"><label>حداقل مبلغ خرید (min_purchase)</label><input id="gwMinAmt" type="number" min="0" step="1" placeholder="AFN"></div>
       <p class="note" id="gwPreviewNote">Eligible: —</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
         <button type="button" class="btn btn-outline" id="gwPreview">پیش‌نمایش واجدین</button>
@@ -538,11 +547,14 @@
     <div class="card admin-panel" data-panel="feedback">
       <div class="row-between">
         <div><h2>بازخورد و امتیاز</h2><div class="sub">امتیاز راننده، محصول، رضایت کلی و درخواست Google Review پس از تحویل.</div></div>
-        <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" id="fbExportBtn">Export CSV</button>
+          <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+        </div>
       </div>
       <div class="grid2" style="margin-top:12px">
         <div class="field"><label>لینک Google Review</label><input id="engGoogleUrl" dir="ltr" placeholder="https://g.page/r/..."></div>
-        <div class="field"><label>حداقل ستاره برای نمایش Google Review</label><input id="engMinStars" type="number" min="1" max="5" value="4"></div>
+        <div class="field"><label>یادداشت</label><p class="note" style="margin:8px 0 0">CTA گوگل برای همه مشتریان با لینک تنظیم‌شده نمایش داده می‌شود (مستقل از امتیاز داخلی؛ اجباری نیست).</p></div>
       </div>
       <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled"> ارسال خودکار درخواست بازخورد هنگام تحویل (اختیاری — پیش‌فرض دستی از صفحه سفارش)</label>
       <button type="button" class="btn btn-gold btn-sm" id="engSaveCfg">ذخیره تنظیمات</button>
@@ -554,7 +566,10 @@
     <div class="card admin-panel" data-panel="driverperf">
       <div class="row-between">
         <div><h2>عملکرد راننده</h2><div class="sub">تعداد تحویل، ناموفق و میانگین امتیاز از بازخورد مشتریان.</div></div>
-        <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" id="dpExportBtn">Export CSV</button>
+          <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+        </div>
       </div>
       <div style="overflow:auto;margin-top:12px">
         <table>
@@ -568,7 +583,10 @@
     <div class="card admin-panel" data-panel="returns">
       <div class="row-between">
         <div><h2>برگشتی‌ها</h2><div class="sub">درخواست‌های برگشت مشتریان — تأیید، رد یا تکمیل. سفارش‌ها و موجودی فقط با عملیات مجاز تغییر می‌کنند.</div></div>
-        <button class="btn btn-outline btn-sm" id="refreshReturns" type="button">بازخوانی</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" id="exportReturnsCsv" type="button">Export CSV</button>
+          <button class="btn btn-outline btn-sm" id="refreshReturns" type="button">بازخوانی</button>
+        </div>
       </div>
       <div id="returnsBody"></div>
     </div>
@@ -1177,11 +1195,10 @@
       if(id==="customers") renderCustomers();
       if(id==="reviews") renderReviewsAdmin();
       if(id==="subscribers") loadSubscribers();
-      if(id==="campaigns") loadCampaigns();
+      if(id==="campaigns") { fillCmpProducts(); loadCampaigns(); }
       if(id==="feedback") loadFeedbackPanel();
       if(id==="giveaways") loadGiveaways();
       if(id==="returnreasons") loadReturnReasons();
-      if(id==="driverperf") loadDriverPerf();
       if(id==="driverperf") loadDriverPerf();
     }
     function initSidebar(){
@@ -1683,7 +1700,7 @@
         });
       });
     }
-    function statusLabelFa(code){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa"):code; }
+    function statusLabelFa(code, order){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa",order):code; }
     function readOrders(){ try{return JSON.parse(sessionStorage.getItem("maho_orders_cache")||"[]")||[];}catch(e){return[];} }
     function writeOrders(orders){ try{ sessionStorage.setItem("maho_orders_cache",JSON.stringify(orders||[])); }catch(e){} }
     function renderOrdersAdmin(){
@@ -1711,7 +1728,7 @@
             return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
           }).join("");
           var code=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(o.status):o.status;
-          var s=statusLabelFa(code);
+          var s=statusLabelFa(code, o);
           var actions=[];
           if(code==="new"||code==="pending"){ actions.push('<button class="btn btn-gold btn-sm" data-st="confirmed" data-oid="'+o.id+'">تأیید سفارش</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
           else if(code==="confirmed"){
@@ -3073,10 +3090,35 @@
     if ($("#subExportCsv")) $("#subExportCsv").onclick = function(){ exportSubs("csv"); };
     if ($("#subExportXls")) $("#subExportXls").onclick = function(){ exportSubs("xls"); };
 
+    function fillCmpProducts(){
+      var sel = $("#cmpProductPick"); if (!sel) return;
+      var list = (S.products || []).filter(function(p){ return p && p.active !== false && !p.deleted && p.code; });
+      var prev = {};
+      Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ prev[o.value] = true; });
+      sel.innerHTML = list.map(function(p){
+        var price = Number(p.price)||0;
+        var label = (p.code||"")+" — "+(p.name||"")+" — "+price+" AFN";
+        return '<option value="'+esc(p.code)+'"'+(prev[p.code]?" selected":"")+'>'+esc(label)+'</option>';
+      }).join("");
+      syncCmpProductCodes();
+    }
+    function syncCmpProductCodes(){
+      var sel = $("#cmpProductPick");
+      var codes = [];
+      if (sel) Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ if (o.value) codes.push(o.value); });
+      if ($("#cmpProducts")) $("#cmpProducts").value = codes.join(",");
+      if ($("#cmpProductsHint")) $("#cmpProductsHint").textContent = codes.length ? codes.join(", ") : "—";
+      return codes;
+    }
+    if ($("#cmpProductPick")) $("#cmpProductPick").onchange = syncCmpProductCodes;
+
     function cmpPayload(){
       var mode = ($("#cmpMode") && $("#cmpMode").value) || "newsletter";
       if (mode === "active") mode = "newsletter";
-      var codes = (($("#cmpProducts")&&$("#cmpProducts").value)||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
+      var codes = syncCmpProductCodes();
+      if (!codes.length) {
+        codes = (($("#cmpProducts")&&$("#cmpProducts").value)||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
+      }
       var body = {
         name: ($("#cmpName")&&$("#cmpName").value)||"",
         subject: ($("#cmpSubject")&&$("#cmpSubject").value)||"",
@@ -3100,15 +3142,28 @@
         var box = $("#cmpHistory"); if (!box) return;
         var list = (x.data && x.data.campaigns) || [];
         box.innerHTML = list.map(function(c){
-          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'+
-            '<b>'+esc(c.name)+'</b> — <span dir="ltr">'+esc(c.subject)+'</span>'+
-            '<div class="note">type: '+esc(c.campaignType||"general")+' · mode: '+esc(c.recipientMode||"")+
-            ' · NL: '+toFa(c.newsletterCount||0)+' · Reg: '+toFa(c.registeredCount||0)+
-            ' · Dup: '+toFa(c.duplicatesRemoved||0)+' · Final: '+toFa(c.recipientCount||0)+
-            ' · ok/fail: '+toFa(c.successCount||0)+'/'+toFa(c.failedCount||0)+
-            ' · status: '+esc(c.status)+
-            (c.productCodes&&c.productCodes.length?(' · products: '+esc(c.productCodes.join(", "))):"")+
-            (c.sentAt?(' · '+new Date(c.sentAt).toLocaleString("fa-AF")):"")+'</div></div>';
+          var prods = (c.products || []).map(function(p){
+            return '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+
+              (p.image?'<img src="'+esc(p.image)+'" alt="" width="40" height="40" style="object-fit:cover;border-radius:8px">':'')+
+              '<div><b>'+esc(p.name||"")+'</b> <span dir="ltr" class="note">'+esc(p.code||"")+'</span>'+
+              '<div class="note">'+toFa(p.price||0)+' AFN'+(p.oldPrice?(' <s>'+toFa(p.oldPrice)+'</s>'):'')+
+              ' · <a href="/p/'+esc(p.code||"")+'" target="_blank" rel="noopener">/p/'+esc(p.code||"")+'</a></div></div></div>';
+          }).join("");
+          var msgShort = String(c.message||"").slice(0,140);
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'+
+            '<div class="row-between"><div><b>'+esc(c.name)+'</b> <span class="tag">'+esc(c.status)+'</span></div>'+
+            '<span class="note">'+(c.createdAt?new Date(c.createdAt).toLocaleString("fa-AF"):"")+'</span></div>'+
+            '<div class="note">موضوع: <span dir="ltr">'+esc(c.subject)+'</span></div>'+
+            '<div class="note">'+esc(msgShort)+(String(c.message||"").length>140?"…":"")+'</div>'+
+            '<div class="note">نوع: '+esc(c.campaignType||"general")+' · مخاطب: '+esc(c.recipientMode||"")+
+            ' · NL '+toFa(c.newsletterCount||0)+' / Reg '+toFa(c.registeredCount||0)+
+            ' / Dup '+toFa(c.duplicatesRemoved||0)+' → Final '+toFa(c.recipientCount||0)+
+            ' · موفق/ناموفق '+toFa(c.successCount||0)+'/'+toFa(c.failedCount||0)+
+            (c.createdBy?(' · توسط '+esc(c.createdBy)):"")+
+            (c.sentAt?(' · ارسال '+new Date(c.sentAt).toLocaleString("fa-AF")):"")+'</div>'+
+            (c.ctaText?('<div class="note">CTA: '+esc(c.ctaText)+(c.ctaUrl?(' → <span dir="ltr">'+esc(c.ctaUrl)+'</span>'):'')+'</div>'):'')+
+            (prods||(c.productCodes&&c.productCodes.length?('<div class="note">کدها: '+esc(c.productCodes.join(", "))+'</div>'):""))+
+            '</div>';
         }).join("") || '<p class="note">کمپینی ثبت نشده</p>';
       });
     }
@@ -3160,14 +3215,18 @@
         engFetch("/api/admin/campaigns", { method:"POST", body: p }).then(function(created){
           if (!created.ok) { alert("ساخت کمپین ناموفق: "+((created.data&&created.data.error)||"")); return null; }
           var id = created.data.campaign.id;
-          return engFetch("/api/admin/campaigns/"+encodeURIComponent(id)+"/send", { method:"POST", body: p });
-        }).then(function(sent){
-          if (!sent) return;
+          return engFetch("/api/admin/campaigns/"+encodeURIComponent(id)+"/send", { method:"POST", body: p })
+            .then(function(sent){ return { sent: sent, id: id }; });
+        }).then(function(pack){
+          if (!pack) return;
+          var sent = pack.sent;
           if (sent.status===409 && sent.data && sent.data.error==="inactive_products") {
             if (confirm("برخی محصولات inactive شده‌اند. با force ارسال شود؟")) {
               p.forceInactiveProducts = true;
-              return engFetch("/api/admin/campaigns/"+encodeURIComponent(sent.data && sent.data.id || "")+"/send", { method:"POST", body: p });
+              return engFetch("/api/admin/campaigns/"+encodeURIComponent(pack.id)+"/send", { method:"POST", body: p })
+                .then(function(s2){ alert(s2.ok ? "ارسال شروع شد" : ("خطا: "+((s2.data&&s2.data.error)||s2.status))); loadCampaigns(); });
             }
+            return;
           }
           alert(sent.ok ? "ارسال شروع شد" : ("خطا: "+((sent.data&&sent.data.error)||sent.status)));
           loadCampaigns();
@@ -3194,20 +3253,36 @@
         }).join("")||'<p class="note">قرعه‌کشی ثبت نشده</p>';
       });
     }
+    function gwEligibilityBody(){
+      var rule = ($("#gwRule")&&$("#gwRule").value)||"registered";
+      var meta = {};
+      if (rule === "purchased_range") {
+        var from = ($("#gwFrom")&&$("#gwFrom").value)||"";
+        var to = ($("#gwTo")&&$("#gwTo").value)||"";
+        if (from) meta.from = new Date(from).getTime();
+        if (to) meta.to = new Date(to).getTime() + 86400000 - 1;
+      }
+      if (rule === "min_purchase") {
+        meta.minAmount = Number(($("#gwMinAmt")&&$("#gwMinAmt").value)||0);
+      }
+      return { eligibilityRule: rule, eligibilityMeta: meta };
+    }
     if ($("#gwRefreshBtn")) $("#gwRefreshBtn").onclick=loadGiveaways;
     if ($("#gwPreview")) $("#gwPreview").onclick=function(){
-      engFetch("/api/admin/giveaways/preview",{method:"POST",body:{eligibilityRule:($("#gwRule")&&$("#gwRule").value)||"registered"}}).then(function(x){
+      engFetch("/api/admin/giveaways/preview",{method:"POST",body:gwEligibilityBody()}).then(function(x){
         var d=x.data||{};
         if($("#gwPreviewNote")) $("#gwPreviewNote").textContent="Eligible: "+toFa(d.eligible||0)+" · Excluded: "+toFa(d.excluded||0)+" · Dup: "+toFa(d.duplicatesRemoved||0)+" · Final: "+toFa(d.finalParticipants||0);
       });
     };
     if ($("#gwCreate")) $("#gwCreate").onclick=function(){
+      var base = gwEligibilityBody();
       engFetch("/api/admin/giveaways",{method:"POST",body:{
         title:($("#gwTitle")&&$("#gwTitle").value)||"",
         prize:($("#gwPrize")&&$("#gwPrize").value)||"",
         description:($("#gwDesc")&&$("#gwDesc").value)||"",
         winnersCount:Number(($("#gwWinners")&&$("#gwWinners").value)||1),
-        eligibilityRule:($("#gwRule")&&$("#gwRule").value)||"registered"
+        eligibilityRule: base.eligibilityRule,
+        eligibilityMeta: base.eligibilityMeta
       }}).then(function(x){
         if(!x.ok){ alert((x.data&&x.data.error)||"خطا"); return; }
         toast("قرعه‌کشی ساخته شد"); loadGiveaways();
@@ -3300,7 +3375,6 @@
       engFetch("/api/admin/engagement-config").then(function(x){
         var e = (x.data && x.data.engagement) || {};
         if ($("#engGoogleUrl")) $("#engGoogleUrl").value = e.googleReviewUrl || "";
-        if ($("#engMinStars")) $("#engMinStars").value = e.minStarsForGoogleReview || 4;
         if ($("#engFbEnabled")) $("#engFbEnabled").checked = e.feedbackRequestEnabled === true;
       });
       engFetch("/api/admin/feedback").then(function(x){
@@ -3322,11 +3396,21 @@
       });
     }
     if ($("#fbRefreshBtn")) $("#fbRefreshBtn").onclick = loadFeedbackPanel;
+    function downloadAdminCsv(url, filename){
+      var h = adminAuthHeaders();
+      fetch(url, { headers: h }).then(function(r){ return r.blob().then(function(b){ return { ok:r.ok, b:b }; }); })
+        .then(function(x){
+          if (!x.ok) { alert("Export ناموفق"); return; }
+          var a=document.createElement("a"); a.href=URL.createObjectURL(x.b); a.download=filename; a.click();
+        });
+    }
+    if ($("#fbExportBtn")) $("#fbExportBtn").onclick = function(){ downloadAdminCsv("/api/admin/feedback/export", "maho-feedback.csv"); };
+    if ($("#dpExportBtn")) $("#dpExportBtn").onclick = function(){ downloadAdminCsv("/api/admin/driver-performance/export", "maho-driver-performance.csv"); };
+    if ($("#exportReturnsCsv")) $("#exportReturnsCsv").onclick = function(){ downloadAdminCsv("/api/admin/returns/export", "maho-returns.csv"); };
     if ($("#engSaveCfg")) $("#engSaveCfg").onclick = function(){
       engFetch("/api/admin/engagement-config", { method:"PUT", body:{
         engagement: {
           googleReviewUrl: ($("#engGoogleUrl")&&$("#engGoogleUrl").value)||"",
-          minStarsForGoogleReview: Number(($("#engMinStars")&&$("#engMinStars").value)||4),
           feedbackRequestEnabled: !!($("#engFbEnabled")&&$("#engFbEnabled").checked)
         }
       }}).then(function(x){ toast(x.ok?"ذخیره شد":"ناموفق"); });

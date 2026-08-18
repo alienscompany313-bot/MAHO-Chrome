@@ -101,6 +101,22 @@ function mountV2(app, ctx) {
     const check = canTransition(o.status, next, { actor: "admin" });
     if (!check.ok) return res.status(400).json({ error: check.error });
     if (check.noop) return res.json({ order: o });
+    if (next === "return_completed") {
+      const rr = o.returnRequest;
+      if (rr && !rr.stockRestored) {
+        const method = rr.method || "pickup_store";
+        const atStore = method === "pickup_store"
+          || rr.returnPickupStatus === "returned_to_store"
+          || rr.returnPickupStatus === "completed"
+          || !!rr.returnedToStoreAt;
+        if (!atStore) {
+          return res.status(400).json({
+            error: "not_returned_to_store",
+            message: "ابتدا کالا باید به فروشگاه برگشته و ثبت returned_to_store شود.",
+          });
+        }
+      }
+    }
     const prev = o.status;
     o.status = next;
     if (o.returnRequest) {
@@ -109,20 +125,17 @@ function mountV2(app, ctx) {
       o.returnRequest.resolveNote = sanitizeText((req.body || {}).note, 500);
     }
     if (next === "return_completed") {
-      /* Restock only once, after completion (implies returned_to_store + inspection) */
-      if (!(o.returnRequest && o.returnRequest.stockRestored)) {
+      const rr = o.returnRequest;
+      if (rr && !rr.stockRestored) {
         const { applyStockDelta } = require("./variant-stock");
         (o.items || []).forEach((it) => {
           const p = findProduct(it.name, it.code);
           if (p) applyStockDelta(p, it.qty || 1, +1, it.color, it.size);
         });
-        if (o.returnRequest) {
-          o.returnRequest.stockRestored = true;
-          if (o.returnRequest.returnPickupStatus !== "completed") {
-            o.returnRequest.returnPickupStatus = "completed";
-          }
-          if (!o.returnRequest.returnedToStoreAt) o.returnRequest.returnedToStoreAt = Date.now();
-        }
+        rr.stockRestored = true;
+        rr.returnPickupStatus = "completed";
+        if (!rr.returnedToStoreAt) rr.returnedToStoreAt = Date.now();
+        if (rr.refundStatus === "not_ready" || !rr.refundStatus) rr.refundStatus = "approved";
       }
     }
     appendHistory(o, { status: next, by: "admin", note: sanitizeText((req.body || {}).note, 500), from: prev });
@@ -150,7 +163,7 @@ function mountV2(app, ctx) {
     let reasonTitleSnapshot = reason;
     if (reasonId) {
       const snap = resolveReasonSnapshot(ctx.db, reasonId, reason);
-      if (!snap.active && !reason) return res.status(400).json({ error: "inactive_reason" });
+      if (!snap.active) return res.status(400).json({ error: "inactive_reason" });
       reasonTitleSnapshot = snap.reasonTitleSnapshot || reason;
       reason = reasonTitleSnapshot;
       if (snap.requireNote && !sanitizeText(b.details, 1000)) {

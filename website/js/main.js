@@ -1114,14 +1114,14 @@
       apiToken: token || (window.MAHOApi && MAHOApi.getToken("user")) || "",
     };
   }
-  function orderStatusText(code) {
-    if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG);
+  function orderStatusText(code, order) {
+    if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG, order);
     return code || "";
   }
   function withApiOrderStatus(order) {
     if (!order) return order;
     const code = (window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(order.status) : order.status;
-    return Object.assign({}, order, { status: orderStatusText(code), statusCode: code });
+    return Object.assign({}, order, { status: orderStatusText(code, order), statusCode: code });
   }
   function isNormalDeliveryOrder(o) {
     const d = (o && o.delivery) || {};

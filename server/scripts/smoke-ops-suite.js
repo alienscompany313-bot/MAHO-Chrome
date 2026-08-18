@@ -332,18 +332,95 @@ async function main() {
     const noPhoto = await req("POST", "/api/driver/return-pickups/" + oid0 + "/confirm", { token: dtok, body: {} });
     assert(noPhoto.status === 400 && noPhoto.data.error === "photo_required", "photo required blocks");
 
+    /* cash before pickup confirm — hesab still 403; sequencing covered with whatsapp below */
+    const cashEarlyHesab = await req("POST", "/api/driver/return-pickups/" + oid0 + "/cash-refund", { token: dtok, body: {} });
+    assert(cashEarlyHesab.status === 403, "hesab cash early blocked");
+
     /* make photo optional and confirm */
     await req("POST", "/api/admin/orders/" + oid0 + "/assign-return-driver", {
       token: tok, body: { driverId, photoRequired: false, confirmReassign: true },
     });
+
+    /* inventory: cannot complete before returned_to_store for address pickup */
+    const earlyComplete = await req("POST", "/api/admin/orders/" + oid0 + "/return-resolve", {
+      token: tok, body: { status: "return_completed" },
+    });
+    /* may fail transition if not approved first */
+    await req("POST", "/api/admin/orders/" + oid0 + "/return-resolve", {
+      token: tok, body: { status: "return_approved" },
+    });
+    const earlyComplete2 = await req("POST", "/api/admin/orders/" + oid0 + "/return-resolve", {
+      token: tok, body: { status: "return_completed" },
+    });
+    assert(earlyComplete2.status === 400 && earlyComplete2.data.error === "not_returned_to_store", "restock gated");
+
     const conf = await req("POST", "/api/driver/return-pickups/" + oid0 + "/confirm", { token: dtok, body: {} });
     assert(conf.status === 200 && conf.data.returnPickupStatus === "picked_up", "pickup confirm");
-    ok("photo required/optional + pickup confirm");
+    ok("photo required/optional + pickup confirm + restock gate");
 
-    /* cash refund blocked for hesab */
+    /* cash refund blocked for hesab even after pickup */
     const cashBad = await req("POST", "/api/driver/return-pickups/" + oid0 + "/cash-refund", { token: dtok, body: {} });
     assert(cashBad.status === 403, "non-cash cash refund rejected");
     ok("non-cash cash refund rejected");
+
+    /* whatsapp COD: cash refund requires pickup confirm first */
+    const emailCash = "cash_" + Date.now() + "@example.com";
+    const regC = await req("POST", "/api/auth/register", {
+      body: { name: "C", phone: "0700111005", email: emailCash, password: "BuyerPass99" },
+    });
+    await req("POST", "/api/auth/verify", { body: { email: emailCash, code: regC.data.devCode } });
+    const ulC = await req("POST", "/api/auth/login", { body: { id: emailCash, password: "BuyerPass99" } });
+    await req("PUT", "/api/admin/returns-config", {
+      token: tok, body: { returns: { returnWindowDays: 7, returnPickupPhotoRequired: false } },
+    });
+    const ordC = await req("POST", "/api/orders", {
+      token: ulC.data.token,
+      body: {
+        items: [{ name: "شال A", qty: 1, code: "P0008" }],
+        customer: { name: "C", phone: "0700111005", email: emailCash, address: "کابل" },
+        payment: "whatsapp",
+        delivery: { method: "deliver" },
+        customerLocation: { lat: 34.53, lng: 69.13 },
+        idempotencyKey: "ops_c_" + Date.now(),
+      },
+    });
+    assert(ordC.status === 200, "cash order " + ordC.status);
+    const oidC = ordC.data.order.id;
+    await req("POST", "/api/admin/orders/" + oidC + "/status", { token: tok, body: { status: "confirmed" } });
+    await req("POST", "/api/admin/orders/" + oidC + "/status", { token: tok, body: { status: "dispatched" } });
+    await req("POST", "/api/admin/orders/" + oidC + "/status", { token: tok, body: { status: "delivered" } });
+    const retC = await req("POST", "/api/orders/" + oidC + "/return-request", {
+      token: ulC.data.token,
+      body: { method: "pickup_customer", reasonId: rr.id, reason: rr.title, address: "کابل", phone: "0700111005" },
+    });
+    assert(retC.status === 200, "cash return " + retC.status);
+    await req("POST", "/api/admin/orders/" + oidC + "/assign-return-driver", {
+      token: tok, body: { driverId, photoRequired: false },
+    });
+    const cashBefore = await req("POST", "/api/driver/return-pickups/" + oidC + "/cash-refund", { token: dtok, body: {} });
+    assert(cashBefore.status === 400 && cashBefore.data.error === "pickup_not_confirmed", "cash before pickup blocked");
+    await req("POST", "/api/driver/return-pickups/" + oidC + "/confirm", { token: dtok, body: {} });
+    const cashOk = await req("POST", "/api/driver/return-pickups/" + oidC + "/cash-refund", { token: dtok, body: {} });
+    assert(cashOk.status === 200 && cashOk.data.cashRefundPaid === true, "cash refund after pickup");
+    const cashDup = await req("POST", "/api/driver/return-pickups/" + oidC + "/cash-refund", { token: dtok, body: {} });
+    assert(cashDup.status === 409, "double cash refund blocked");
+    ok("cash refund sequencing + duplicate guard");
+
+    /* store pickup cannot assign delivery driver */
+    const denyDrv = await req("POST", "/api/admin/orders/" + oidP + "/assign-driver", {
+      token: tok, body: { driverId },
+    });
+    assert(denyDrv.status === 400 && denyDrv.data.error === "store_pickup_no_driver", "pickup no delivery driver");
+    ok("store pickup rejects delivery driver assign");
+
+    /* exports */
+    const expFb = await req("GET", "/api/admin/feedback/export", { token: tok });
+    assert(expFb.status === 200, "feedback export");
+    const expDp = await req("GET", "/api/admin/driver-performance/export", { token: tok });
+    assert(expDp.status === 200, "driver perf export");
+    const expRet = await req("GET", "/api/admin/returns/export", { token: tok });
+    assert(expRet.status === 200 && /orderId/.test(expRet.raw || ""), "returns export");
+    ok("exports feedback/driver/returns");
 
     /* analytics */
     const an = await req("GET", "/api/admin/return-analytics", { token: tok });

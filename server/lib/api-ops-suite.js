@@ -136,6 +136,36 @@ function mountOpsSuite(app, ctx) {
     res.json(data);
   });
 
+  app.get("/api/admin/returns/export", requireAdminAnyPerm(["returns", "reports"]), (req, res) => {
+    const { csvSafeCell } = require("./engagement");
+    const header = [
+      "orderId", "status", "method", "reason", "customerName", "customerEmail", "total",
+      "returnPickupStatus", "refundStatus", "approvedRefundAmount", "cashRefundPaid",
+      "requestedAt", "returnedToStoreAt", "stockRestored",
+    ];
+    const lines = [header.join(",")];
+    (db().orders || []).forEach((o) => {
+      if (!o || !o.returnRequest) return;
+      const rr = o.returnRequest;
+      const c = o.customer || {};
+      lines.push([
+        csvSafeCell(o.id), csvSafeCell(o.status), csvSafeCell(rr.method),
+        csvSafeCell(rr.reasonTitleSnapshot || rr.reason),
+        csvSafeCell(c.name), csvSafeCell(c.email),
+        Number(o.total) || 0,
+        csvSafeCell(rr.returnPickupStatus), csvSafeCell(rr.refundStatus),
+        rr.approvedRefundAmount != null ? rr.approvedRefundAmount : "",
+        rr.cashRefundPaid ? "yes" : "no",
+        rr.requestedAt ? new Date(rr.requestedAt).toISOString() : "",
+        rr.returnedToStoreAt ? new Date(rr.returnedToStoreAt).toISOString() : "",
+        rr.stockRestored ? "yes" : "no",
+      ].join(","));
+    });
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="maho-returns.csv"');
+    res.send("\uFEFF" + lines.join("\n"));
+  });
+
   /* ---------- Late return override ---------- */
   app.post("/api/admin/orders/:id/late-return-override", requireAdminAnyPerm(["returns", "orders"]), (req, res) => {
     const o = (db().orders || []).find((x) => x && x.id === req.params.id);
@@ -322,9 +352,11 @@ function mountOpsSuite(app, ctx) {
 
   app.get("/api/driver/return-pickups", requireDriverLocal, (req, res) => {
     const driverId = req.driverSession.driverId;
+    const activeStatuses = { not_assigned: 1, assigned: 1, on_the_way: 1, picked_up: 1, returned_to_store: 1 };
     const list = (db().orders || []).filter((o) =>
       o && o.returnRequest && o.returnRequest.returnDriverId === driverId
       && o.returnRequest.method === "pickup_customer"
+      && activeStatuses[o.returnRequest.returnPickupStatus || "assigned"]
     ).map((o) => ({
       orderId: o.id,
       returnNumber: o.returnRequest.id || o.id + "-R",
@@ -406,6 +438,10 @@ function mountOpsSuite(app, ctx) {
     }
     if (!isCashPayment(o)) return res.status(403).json({ error: "cash_refund_not_allowed" });
     if (o.returnRequest.cashRefundPaid) return res.status(409).json({ error: "already_paid" });
+    const st = String(o.returnRequest.returnPickupStatus || "");
+    if (st !== "picked_up" && st !== "returned_to_store" && st !== "completed" && !o.returnRequest.pickupConfirmed) {
+      return res.status(400).json({ error: "pickup_not_confirmed", message: "ابتدا تحویل گرفتن جنس برگشتی را تأیید کنید." });
+    }
     const amount = approvedRefundAmount(o);
     o.returnRequest.cashRefundPaid = true;
     o.returnRequest.cashRefundAmount = amount;

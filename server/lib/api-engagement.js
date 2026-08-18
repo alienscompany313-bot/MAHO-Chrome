@@ -27,6 +27,8 @@ const {
   markOrderFeedbackRequested,
   feedbackAnalytics,
   driverPerformance,
+  activeProductSnapshot,
+  csvSafeCell,
 } = require("./engagement");
 const { sanitizeText, createRateLimiter, clientIp } = require("./security");
 const { pushAudit } = require("./audit");
@@ -210,7 +212,14 @@ function mountEngagement(app, ctx) {
       return res.status(503).json({ error: "email_not_configured" });
     }
     const unsubUrl = siteUrl() + "/unsubscribe.html?email=" + encodeURIComponent(to) + "&token=test";
-    const products = Array.isArray(b.products) ? b.products : [];
+    let products = Array.isArray(b.products) ? b.products : [];
+    if ((!products.length) && (Array.isArray(b.productCodes) || b.campaignType)) {
+      products = activeProductSnapshot(db(), b.productCodes || []);
+    }
+    const base = siteUrl().replace(/\/+$/, "");
+    products = products.map((p) => Object.assign({}, p, {
+      url: p.url || (base + (p.urlPath || ("/p/" + encodeURIComponent(p.code || "")))),
+    }));
     try {
       const ok = await m.campaignEmail(to, {
         subject: sanitizeText(b.subject, 200) || "Test",
@@ -386,6 +395,43 @@ function mountEngagement(app, ctx) {
     ensureEngagement(db());
     res.setHeader("Cache-Control", "no-store");
     res.json({ drivers: driverPerformance(db()) });
+  });
+
+  app.get("/api/admin/feedback/export", requireAdminAnyPerm(["marketing", "reports", "customers", "drivers"]), (req, res) => {
+    ensureEngagement(db());
+    const header = ["id", "orderId", "customerName", "driverName", "driverRating", "overallSatisfaction", "productRatings", "comment", "status", "submittedAt"];
+    const lines = [header.join(",")];
+    (db().feedback || []).forEach((f) => {
+      if (!f || f.status !== "submitted") return;
+      const products = (f.productRatings || []).map((p) => (p.code || p.name || "") + ":" + (p.rating || "")).join(";");
+      lines.push([
+        csvSafeCell(f.id), csvSafeCell(f.orderId), csvSafeCell(f.customerName),
+        csvSafeCell(f.driverName), f.driverRating || "", f.overallSatisfaction || "",
+        csvSafeCell(products), csvSafeCell(f.comment), csvSafeCell(f.status),
+        f.submittedAt ? new Date(f.submittedAt).toISOString() : "",
+      ].join(","));
+    });
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="maho-feedback.csv"');
+    res.send("\uFEFF" + lines.join("\n"));
+  });
+
+  app.get("/api/admin/driver-performance/export", requireAdminAnyPerm(["drivers", "reports", "marketing"]), (req, res) => {
+    ensureEngagement(db());
+    const header = ["rank", "name", "assigned", "delivered", "returnPickupJobs", "feedbackCount", "avgRating", "rankScore", "stars1", "stars2", "stars3", "stars4", "stars5"];
+    const lines = [header.join(",")];
+    driverPerformance(db()).forEach((d) => {
+      lines.push([
+        d.performanceRank || "", csvSafeCell(d.name), d.assigned || 0, d.delivered || 0, d.returnPickupJobs || 0,
+        d.feedbackCount || 0, d.avgRating != null ? d.avgRating : "", d.rankScore != null ? d.rankScore : "",
+        (d.starCounts && d.starCounts[1]) || 0, (d.starCounts && d.starCounts[2]) || 0,
+        (d.starCounts && d.starCounts[3]) || 0, (d.starCounts && d.starCounts[4]) || 0,
+        (d.starCounts && d.starCounts[5]) || 0,
+      ].join(","));
+    });
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="maho-driver-performance.csv"');
+    res.send("\uFEFF" + lines.join("\n"));
   });
 
   app.get("/api/admin/engagement-config", requireAdminAnyPerm(["marketing", "settings"]), (req, res) => {

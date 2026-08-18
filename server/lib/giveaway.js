@@ -91,13 +91,23 @@ function createGiveaway(db, body, createdBy) {
   return { ok: true, giveaway: publicGiveaway(g) };
 }
 
+/** Unbiased index in [0, max) via rejection sampling (no modulo bias). */
+function secureIndex(max) {
+  if (max <= 1) return 0;
+  const limit = Math.floor(0x100000000 / max) * max;
+  let x;
+  do {
+    x = crypto.randomBytes(4).readUInt32BE(0);
+  } while (x >= limit);
+  return x % max;
+}
+
 function securePick(arr, n) {
   const pool = arr.slice();
   const out = [];
   const take = Math.min(n, pool.length);
   for (let i = 0; i < take; i++) {
-    const buf = crypto.randomBytes(4);
-    const idx = buf.readUInt32BE(0) % pool.length;
+    const idx = secureIndex(pool.length);
     out.push(pool[idx]);
     pool.splice(idx, 1);
   }

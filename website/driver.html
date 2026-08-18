@@ -74,8 +74,17 @@
         var box=$("#returnList");
         if(!list.length){ box.innerHTML="<p class='muted'>ماموریت برگشتی نیست.</p>"; return; }
         box.innerHTML=list.map(function(p){
-          var cash=p.cashEligible?('<div class="ok">مبلغ نقدی قابل پرداخت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
-            '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">پول نقد به مشتری پرداخت شد</button>'):'<div class="muted">Refund غیرنقدی — فقط جمع‌آوری کالا</div>';
+          var cash = "";
+          if (p.cashEligible) {
+            if (p.returnPickupStatus === "picked_up" || p.returnPickupStatus === "returned_to_store" || p.returnPickupStatus === "completed") {
+              cash = '<div class="ok">مبلغ نقدی قابل پرداخت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+                '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">پول نقد به مشتری پرداخت شد</button>';
+            } else {
+              cash = '<div class="muted">پس از تأیید «جنس برگشتی را دریافت کردم» می‌توانید refund نقدی را ثبت کنید.</div>';
+            }
+          } else {
+            cash = '<div class="muted">Refund غیرنقدی — فقط جمع‌آوری کالا</div>';
+          }
           var photoNote=p.photoRequired?'<span class="badge fail">عکس الزامی</span>':'<span class="badge">عکس اختیاری</span>';
           return '<div class="card" data-ret="'+p.orderId+'">'+
             '<div><b dir="ltr">#'+p.orderId+'</b> · <span class="badge">'+ (p.returnPickupStatus||"") +'</span> '+photoNote+'</div>'+
