@@ -29,6 +29,7 @@ const { extendMigrate } = require("./lib/migrate-extra");
 const { mountExtra } = require("./lib/api-extra");
 const { mountV2 } = require("./lib/api-v2");
 const { mountV3 } = require("./lib/api-v3");
+const { mountEngagement, maybeSendFeedbackRequest } = require("./lib/api-engagement");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
@@ -80,10 +81,11 @@ const SMTP = {
   port: parseInt(process.env.SMTP_PORT || "587", 10),
   user: process.env.SMTP_USER || "",
   pass: process.env.SMTP_PASS || "",
-  fromEmail: process.env.SMTP_FROM_EMAIL || "info@mahomarket.com",
-  fromName: process.env.SMTP_FROM_NAME || "MAHO Market",
+  fromEmail: process.env.MAIL_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || "info@mahomarket.com",
+  fromName: process.env.MAIL_FROM_NAME || process.env.SMTP_FROM_NAME || "MAHO Market",
   replyTo: process.env.SMTP_REPLY_TO || "support@mahomarket.com",
   ordersEmail: process.env.ORDERS_NOTIFY_EMAIL || "orders@mahomarket.com",
+  secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_SECURE === "1",
 };
 const SITE_URL = String(process.env.SITE_URL || process.env.PUBLIC_URL || "").replace(/\/+$/, "") || "";
 const TOKEN_PEPPER = process.env.TOKEN_PEPPER || ADMIN_PASSWORD;
@@ -106,7 +108,9 @@ if (IS_PROD) {
 let mailTransport = null;
 if (EMAIL_ENABLED) {
   mailTransport = nodemailer.createTransport({
-    host: SMTP.host, port: SMTP.port, secure: SMTP.port === 465,
+    host: SMTP.host,
+    port: SMTP.port,
+    secure: SMTP.secure || SMTP.port === 465,
     auth: { user: SMTP.user, pass: SMTP.pass },
   });
 }
@@ -754,6 +758,13 @@ app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) 
   if (o.customer && o.customer.email && emailOk(o.customer.email) && mail) {
     mail.orderStatus(o.customer.email, o, sanitizeText((req.body || {}).note, 500)).catch(() => {});
   }
+  if (next === "delivered") {
+    maybeSendFeedbackRequest({
+      db, saveDb, TOKEN_PEPPER,
+      SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+      mail,
+    }, o);
+  }
   res.json({ order: o, actions: allowedAdminActions(o.status) });
 });
 
@@ -1210,6 +1221,14 @@ mountV3(app, {
   requireUser, publicUser, emailOk,
   get mail() { return mail; },
   sessions, UPLOAD_DIR, ADMIN_PASSWORD,
+  TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+  maybeSendFeedbackRequest,
+});
+mountEngagement(app, {
+  get db() { return db; },
+  saveDb, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  get mail() { return mail; },
+  TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
 });
 
 /* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */

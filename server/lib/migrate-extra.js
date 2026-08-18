@@ -5,6 +5,7 @@
 const { ensurePos } = require("./pos");
 const { ensurePaymentMethods } = require("./payments");
 const { ensureDrivers } = require("./driver");
+const { ensureEngagement } = require("./engagement");
 
 function extendMigrate(data) {
   if (!data || typeof data !== "object") return false;
@@ -17,6 +18,7 @@ function extendMigrate(data) {
   if (!Array.isArray(data.staff)) { data.staff = []; changed = true; }
   if (ensurePos(data)) changed = true;
   if (ensureDrivers(data)) changed = true;
+  if (ensureEngagement(data)) changed = true;
 
   /* category section texts (homepage) */
   if (!data.config.sectionCats || typeof data.config.sectionCats !== "object") {

@@ -6,7 +6,7 @@
 const { hashPassword, verifyPassword, sanitizeText } = require("./security");
 
 const ALL_PERMS = [
-  "orders", "delivery", "pos", "products", "customers", "returns", "reports", "settings", "staff", "drivers",
+  "orders", "delivery", "pos", "products", "customers", "returns", "reports", "settings", "staff", "drivers", "marketing",
 ];
 
 function normalizePerms(list) {

@@ -290,6 +290,13 @@
       token: getToken("admin"),
     });
   }
+  function adminRequestFeedback(id) {
+    return request("/api/admin/orders/" + encodeURIComponent(id) + "/request-feedback", {
+      method: "POST",
+      body: {},
+      token: getToken("admin"),
+    });
+  }
   function adminUpload(files) {
     var fd = new FormData();
     var list = Array.isArray(files) ? files : [files];
@@ -610,6 +617,7 @@
     adminRevokeDeliveryQr: adminRevokeDeliveryQr,
     adminSetPaymentStatus: adminSetPaymentStatus,
     adminSetOrderStatus: adminSetOrderStatus,
+    adminRequestFeedback: adminRequestFeedback,
     adminUpload: adminUpload,
     ensureAdmin: ensureAdmin,
     logoutAdmin: logoutAdmin,

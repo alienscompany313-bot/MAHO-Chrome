@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Smoke engagement
+        run: node scripts/smoke-engagement.js
+
       - name: Smoke features
         run: node scripts/smoke-features.js
 
