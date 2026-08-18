@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Customer engagement smoke — temp DATA_DIR only.
+ * Covers newsletter, campaigns, and admin-controlled delivery feedback.
  */
 "use strict";
 const fs = require("fs");
@@ -106,7 +107,7 @@ async function main() {
     assert(send2.status === 409 || send2.status === 200 || send2.status === 503, "double-send guarded");
     ok("campaigns create/send guard");
 
-    /* feedback invite via delivered order */
+    /* ---- Order + admin-controlled feedback ---- */
     await req("PUT", "/api/admin/catalog", {
       token: tok,
       body: {
@@ -131,23 +132,106 @@ async function main() {
     });
     assert(ord.status === 200 || ord.status === 201, "order " + ord.status);
     const oid = ord.data.order.id;
+
+    /* 1–2: pending / processing → request-feedback forbidden */
+    const denyNew = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(denyNew.status === 400 && denyNew.data.error === "not_delivered", "pending blocked");
+    ok("pending order: request feedback forbidden");
+
     await req("POST", "/api/admin/orders/" + oid + "/status", { token: tok, body: { status: "confirmed" } });
+    const denyProc = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(denyProc.status === 400 && denyProc.data.error === "not_delivered", "processing blocked");
+    ok("processing order: request feedback forbidden");
+
     await req("POST", "/api/admin/orders/" + oid + "/status", { token: tok, body: { status: "dispatched" } });
     await req("POST", "/api/admin/orders/" + oid + "/status", { token: tok, body: { status: "delivered" } });
 
-    /* read feedback invite from db file */
-    await new Promise((r) => setTimeout(r, 200));
-    const db = JSON.parse(fs.readFileSync(path.join(DATA, "db.json"), "utf8"));
-    assert(Array.isArray(db.feedback) && db.feedback.length >= 1, "feedback invite created");
-    const fb = db.feedback.find((f) => f.orderId === oid);
-    assert(fb && fb.tokenHash, "feedback token");
-    /* recreate raw token by creating another? we can't recover raw — use engagement helper by reading from invite before delete.
-       For smoke: create invite path via API isn't public with raw. Instead verify analytics endpoint and unsubscribe page. */
+    /* Delivered must NOT auto-create feedback invite (manual default) */
+    await new Promise((r) => setTimeout(r, 250));
+    let db = JSON.parse(fs.readFileSync(path.join(DATA, "db.json"), "utf8"));
+    const autoFb = (db.feedback || []).find((f) => f && f.orderId === oid);
+    assert(!autoFb, "no auto feedback invite on delivered");
+    const oDel = (db.orders || []).find((o) => o.id === oid);
+    assert(oDel && (oDel.feedbackStatus == null || oDel.feedbackStatus === "not_requested"), "status not_requested after deliver");
+    assert(!(oDel.feedbackRequestCount > 0), "count still 0 after deliver");
+    ok("delivered: no auto-send; eligible only");
+
+    /* 11: unauthorized */
+    const unauth = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { body: {} });
+    assert(unauth.status === 401 || unauth.status === 403, "unauthorized " + unauth.status);
+    ok("unauthorized => 401/403");
+
+    /* 3–8: first request */
+    const first = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(first.status === 200 && first.data.ok, "first request " + first.status + " " + JSON.stringify(first.data));
+    assert(first.data.feedback && first.data.feedback.feedbackStatus === "requested", "status Requested");
+    assert(first.data.feedback.feedbackRequestCount === 1, "count=1");
+    assert(first.data.feedback.feedbackRequestSentAt, "sentAt");
+    assert(first.data.feedback.feedbackRequestSentBy, "sentBy");
+    assert(first.data.feedback.feedbackLastRequestedAt, "lastRequestedAt");
+    const fbToken = first.data.devFeedbackToken;
+    assert(fbToken && typeof fbToken === "string", "dev feedback token for smoke");
+    assert(!JSON.stringify(first.data).includes("tokenHash"), "no tokenHash in response");
+    ok("delivered + first click => request recorded");
+
+    db = JSON.parse(fs.readFileSync(path.join(DATA, "db.json"), "utf8"));
+    const o1 = (db.orders || []).find((o) => o.id === oid);
+    assert(o1.feedbackStatus === "requested", "db feedbackStatus");
+    assert(o1.feedbackRequestCount === 1, "db count");
+    assert(o1.feedbackRequestSentBy, "db sentBy");
+    assert((db.feedback || []).some((f) => f.orderId === oid && f.tokenHash), "invite exists");
+
+    /* 10: double click / too soon */
+    const dup = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(dup.status === 409, "double-click guarded " + dup.status);
+    ok("double click => no duplicate accidental send");
+
+    /* 9: resend after cooldown */
+    await new Promise((r) => setTimeout(r, 2600));
+    const resend = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(resend.status === 200 && resend.data.feedback.feedbackRequestCount === 2, "resend count=2");
+    ok("resend => requestCount increments");
+
+    /* 13–15: feedback link + ratings + google CTA */
+    const tokFb = resend.data.devFeedbackToken;
+    assert(tokFb, "resend provides rotated token");
+    const getFb = await req("GET", "/api/feedback/" + oid + "?token=" + encodeURIComponent(tokFb));
+    assert(getFb.status === 200 && getFb.data.feedback, "feedback link works");
+    assert(typeof getFb.data.googleReviewUrl === "string", "google review field present");
+    assert(typeof getFb.data.minStarsForGoogleReview === "number", "min stars present");
+
+    const submit = await req("POST", "/api/feedback/" + oid, {
+      body: {
+        token: tokFb,
+        driverRating: 5,
+        overallSatisfaction: 4,
+        productRatings: [{ code: "S1", name: "شال", rating: 5 }],
+        comment: "عالی",
+        googleReviewClicked: true,
+      },
+    });
+    assert(submit.status === 200 && submit.data.feedback.status === "submitted", "submit ok");
+    assert(submit.data.feedback.driverRating === 5, "driver rating");
+    assert(submit.data.feedback.overallSatisfaction === 4, "overall");
+    assert(submit.data.feedback.productRatings && submit.data.feedback.productRatings[0].rating === 5, "product rating");
+    assert(submit.data.feedback.googleReviewClicked === true, "google CTA click stored");
+    ok("feedback submit + ratings + google CTA");
+
+    /* 12: submitted status on order */
+    db = JSON.parse(fs.readFileSync(path.join(DATA, "db.json"), "utf8"));
+    const o2 = (db.orders || []).find((o) => o.id === oid);
+    assert(o2.feedbackStatus === "submitted", "order feedbackStatus=submitted");
+    assert(o2.feedbackSubmittedAt, "submittedAt");
+    ok("submitted feedback => status Submitted");
+
+    const afterSub = await req("POST", "/api/admin/orders/" + oid + "/request-feedback", { token: tok, body: {} });
+    assert(afterSub.status === 409 && afterSub.data.error === "already_submitted", "no resend after submit");
+
     const analytics = await req("GET", "/api/admin/feedback", { token: tok });
     assert(analytics.status === 200 && analytics.data.analytics, "feedback analytics");
     const perf = await req("GET", "/api/admin/driver-performance", { token: tok });
     assert(perf.status === 200 && Array.isArray(perf.data.drivers), "driver performance");
-    ok("feedback invite + analytics + driver perf");
+    ok("analytics + driver perf");
 
     const unsubPage = await req("GET", "/unsubscribe.html");
     assert(unsubPage.status === 200, "unsubscribe page");

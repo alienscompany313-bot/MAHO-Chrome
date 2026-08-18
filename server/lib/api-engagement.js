@@ -20,11 +20,15 @@ const {
   findFeedbackByToken,
   submitFeedback,
   publicFeedback,
+  publicOrderFeedbackMeta,
+  normalizeFeedbackStatus,
+  markOrderFeedbackRequested,
   feedbackAnalytics,
   driverPerformance,
 } = require("./engagement");
 const { sanitizeText, createRateLimiter, clientIp } = require("./security");
 const { pushAudit } = require("./audit");
+const { normalizeOrderStatus } = require("./orders");
 
 const rlSubscribe = createRateLimiter({ windowMs: 60 * 1000, max: 8 });
 const rlUnsub = createRateLimiter({ windowMs: 60 * 1000, max: 20 });
@@ -329,10 +333,109 @@ function mountEngagement(app, ctx) {
     saveDb();
     res.json({ ok: true, engagement: cur });
   });
+
+  /* ---------- Admin: manual Request Feedback (order detail) ---------- */
+  app.post("/api/admin/orders/:id/request-feedback", requireAdminAnyPerm(["orders", "marketing", "customers"]), async (req, res) => {
+    ensureEngagement(db());
+    const o = (db().orders || []).find((x) => x && x.id === req.params.id);
+    if (!o) return res.status(404).json({ error: "not_found" });
+
+    const st = normalizeOrderStatus(o.status);
+    if (st !== "delivered") {
+      return res.status(400).json({ error: "not_delivered", status: st });
+    }
+    if (!o.customer || !isValidEmail(o.customer.email)) {
+      return res.status(400).json({ error: "no_customer_email" });
+    }
+    if (normalizeFeedbackStatus(o) === "submitted") {
+      return res.status(409).json({
+        error: "already_submitted",
+        feedback: publicOrderFeedbackMeta(o),
+      });
+    }
+    if (o.feedbackRequestLock) {
+      return res.status(409).json({ error: "already_sending", feedback: publicOrderFeedbackMeta(o) });
+    }
+    /* Guard accidental double-click / rapid duplicate */
+    const lastAt = o.feedbackLastRequestedAt || 0;
+    if (lastAt && (Date.now() - lastAt) < 2500) {
+      return res.status(409).json({ error: "too_soon", feedback: publicOrderFeedbackMeta(o) });
+    }
+
+    const m = mail();
+    if (!m || typeof m.feedbackRequest !== "function") {
+      return res.status(503).json({ error: "email_not_configured" });
+    }
+
+    const sess = req.adminSession || {};
+    const sentBy = sess.owner
+      ? "Owner"
+      : (sanitizeText(sess.name || sess.staffId || sess.role || "admin", 80) || "admin");
+
+    o.feedbackRequestLock = true;
+    saveDb();
+
+    let raw = null;
+    try {
+      const invite = createFeedbackInvite(db(), o, pepper(), { refresh: true });
+      if (!invite || !invite._rawToken) {
+        o.feedbackRequestLock = false;
+        saveDb();
+        return res.status(500).json({ error: "invite_failed" });
+      }
+      raw = invite._rawToken;
+      delete invite._rawToken;
+      markOrderFeedbackRequested(o, sentBy);
+      saveDb();
+
+      const url = siteUrl() +
+        "/feedback.html?o=" + encodeURIComponent(o.id) + "&t=" + encodeURIComponent(raw);
+      /* Never log the token */
+      const ok = await m.feedbackRequest(o.customer.email, o, url, o.lang || "fa");
+      if (!ok) {
+        /* Keep request recorded; admin can resend. Soft failure. */
+        pushAudit(db(), {
+          actor: sentBy,
+          action: "feedback_request_email_failed",
+          entityType: "order",
+          entityId: o.id,
+          meta: { count: o.feedbackRequestCount || 0 },
+        });
+      } else {
+        pushAudit(db(), {
+          actor: sentBy,
+          action: "feedback_request_sent",
+          entityType: "order",
+          entityId: o.id,
+          meta: { count: o.feedbackRequestCount || 0 },
+        });
+      }
+      o.feedbackRequestLock = false;
+      saveDb();
+      const payload = {
+        ok: true,
+        emailed: !!ok,
+        order: { id: o.id, status: o.status },
+        feedback: publicOrderFeedbackMeta(o),
+      };
+      /* Dev/smoke only — never log; omitted in production */
+      if (process.env.ALLOW_DEV_CODES === "true" && raw) {
+        payload.devFeedbackToken = raw;
+      }
+      res.json(payload);
+    } catch (_) {
+      o.feedbackRequestLock = false;
+      saveDb();
+      res.status(500).json({ error: "send_failed" });
+    } finally {
+      raw = null;
+    }
+  });
 }
 
 /**
- * After an order is delivered, create feedback invite + email (non-blocking).
+ * Optional auto-send after Delivered. Only runs when engagement.feedbackRequestEnabled === true.
+ * Default is manual (admin Request Feedback button). Never throws into order flow.
  */
 function maybeSendFeedbackRequest(ctx, order) {
   try {
@@ -340,13 +443,19 @@ function maybeSendFeedbackRequest(ctx, order) {
     if (!order.customer || !order.customer.email) return;
     ensureEngagement(ctx.db);
     const cfg = ctx.db.config.engagement || {};
-    if (cfg.feedbackRequestEnabled === false) return;
-    const invite = createFeedbackInvite(ctx.db, order, ctx.TOKEN_PEPPER);
-    if (!invite) return;
-    ctx.saveDb();
+    /* Opt-in only — default manual */
+    if (cfg.feedbackRequestEnabled !== true) return;
+    if (normalizeOrderStatus(order.status) !== "delivered") return;
+    if (normalizeFeedbackStatus(order) === "submitted") return;
+    if (order.feedbackRequestLock) return;
+    const lastAt = order.feedbackLastRequestedAt || 0;
+    if (lastAt && (Date.now() - lastAt) < 2500) return;
+
+    const invite = createFeedbackInvite(ctx.db, order, ctx.TOKEN_PEPPER, { refresh: true });
+    if (!invite || !invite._rawToken) return;
     const raw = invite._rawToken;
-    if (!raw) return;
     delete invite._rawToken;
+    markOrderFeedbackRequested(order, "auto");
     ctx.saveDb();
     const m = typeof ctx.mail === "function" ? ctx.mail() : ctx.mail;
     if (!m || typeof m.feedbackRequest !== "function") return;

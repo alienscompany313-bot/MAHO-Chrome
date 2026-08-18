@@ -473,7 +473,7 @@
         <div class="field"><label>لینک Google Review</label><input id="engGoogleUrl" dir="ltr" placeholder="https://g.page/r/..."></div>
         <div class="field"><label>حداقل ستاره برای نمایش Google Review</label><input id="engMinStars" type="number" min="1" max="5" value="4"></div>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled" checked> ارسال درخواست بازخورد پس از تحویل</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled"> ارسال خودکار درخواست بازخورد هنگام تحویل (اختیاری — پیش‌فرض دستی از صفحه سفارش)</label>
       <button type="button" class="btn btn-gold btn-sm" id="engSaveCfg">ذخیره تنظیمات</button>
       <div id="fbStats" class="note" style="margin:14px 0"></div>
       <div id="fbRecent"></div>
@@ -1668,6 +1668,35 @@
             (o.hesabReceipt?('<div class="note">رسید حساب‌پی: '+(o.hesabReceipt.txnId||"")+' — '+(o.hesabReceipt.amount||"")+(o.hesabReceipt.url?(' — <a href="'+esc(o.hesabReceipt.url)+'" target="_blank" rel="noopener">مشاهده</a>'):'')+'</div>'):'')+
             drvLine+
             '<ul class="adm-items">'+items+'</ul>'+
+            (function(){
+              var fs = (o.feedbackStatus||"not_requested");
+              var fsLabel = fs==="submitted"?"Submitted":(fs==="requested"?"Requested":"Not requested");
+              var fsFa = fs==="submitted"?"ثبت‌شده":(fs==="requested"?"ارسال‌شده":"درخواست نشده");
+              var lastAt = o.feedbackLastRequestedAt ? new Date(o.feedbackLastRequestedAt).toLocaleString("fa-AF") : "—";
+              var sentAt = o.feedbackRequestSentAt ? new Date(o.feedbackRequestSentAt).toLocaleString("fa-AF") : "—";
+              var subAt = o.feedbackSubmittedAt ? new Date(o.feedbackSubmittedAt).toLocaleString("fa-AF") : "—";
+              var cnt = o.feedbackRequestCount || 0;
+              var by = o.feedbackRequestSentBy || "—";
+              var btn = "";
+              if(code==="delivered"){
+                if(fs==="submitted"){
+                  btn = '<button type="button" class="btn btn-outline btn-sm" disabled title="نظر ثبت شده">نظر ثبت شده</button>';
+                } else if(fs==="requested"){
+                  btn = '<button type="button" class="btn btn-gold btn-sm" data-request-feedback="'+esc(o.id)+'" data-fb-resend="1">ارسال دوباره درخواست نظر</button>';
+                } else {
+                  btn = '<button type="button" class="btn btn-gold btn-sm" data-request-feedback="'+esc(o.id)+'">درخواست نظر مشتری</button>';
+                }
+              } else {
+                btn = '<button type="button" class="btn btn-outline btn-sm" disabled title="فقط پس از تحویل">درخواست نظر مشتری</button>';
+              }
+              return '<div class="note" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)">'+
+                '<b>Feedback Status:</b> '+esc(fsLabel)+' <span dir="rtl">('+esc(fsFa)+')</span><br>'+
+                'Last requested: <span dir="ltr">'+esc(lastAt)+'</span> · Requested by: '+esc(by)+
+                ' · Count: '+toFa(cnt)+
+                (fs==="submitted"?(' · Submitted at: <span dir="ltr">'+esc(subAt)+'</span>'):'')+
+                (fs!=="not_requested"&&fs!=="submitted"?(' · First sent: <span dir="ltr">'+esc(sentAt)+'</span>'):'')+
+                '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">'+btn+'</div></div>';
+            })()+
             '<div><b>تاریخچه وضعیت</b><ul>'+(hist||'<li class="note">—</li>')+'</ul></div>'+
             '<div class="row-between" style="flex-wrap:wrap;gap:8px"><b>مجموع: '+money(o.total||0)+'</b><span style="display:flex;flex-wrap:wrap;gap:6px">'+actions.join(" ")+maps+'</span></div>'+
             '<div id="qrBox_'+esc(o.id)+'" class="note" style="margin-top:8px"></div>'+
@@ -2602,6 +2631,36 @@
         });
         return;
       }
+      var fbreq=e.target.getAttribute("data-request-feedback");
+      if(fbreq){
+        if(e.target.disabled) return;
+        var isResend=e.target.getAttribute("data-fb-resend")==="1";
+        var msg=isResend
+          ? "برای این سفارش قبلاً درخواست نظر ارسال شده است. دوباره ارسال شود؟"
+          : "درخواست نظر برای این مشتری ارسال شود؟";
+        if(!confirm(msg)) return;
+        e.target.disabled=true;
+        requireBackend(function(){
+          var fn=MAHOApi.adminRequestFeedback||function(id){
+            return MAHOApi.request("/api/admin/orders/"+encodeURIComponent(id)+"/request-feedback",{
+              method:"POST", body:{}, token:MAHOApi.getToken("admin")
+            });
+          };
+          fn.call(MAHOApi, fbreq).then(function(){
+            renderOrdersAdmin();
+            toast(isResend?"درخواست نظر دوباره ارسال شد ✓":"درخواست نظر ارسال شد ✓");
+          }).catch(function(err){
+            e.target.disabled=false;
+            var code=(err&&err.data&&err.data.error)||(err&&err.message)||"خطا";
+            if(code==="not_delivered") alert("فقط برای سفارش تحویل‌شده می‌توان درخواست نظر فرستاد.");
+            else if(code==="already_sending"||code==="too_soon") alert("لطفاً چند لحظه صبر کنید — درخواست در حال ارسال است.");
+            else if(code==="already_submitted") alert("نظر این سفارش قبلاً ثبت شده است.");
+            else if(code==="no_customer_email") alert("ایمیل مشتری ثبت نشده است.");
+            else alert(code);
+          });
+        });
+        return;
+      }
       var qr=e.target.getAttribute("data-qr");
       if(qr&&MAHOApi.adminDeliveryQr){
         requireBackend(function(){
@@ -2964,7 +3023,7 @@
         var e = (x.data && x.data.engagement) || {};
         if ($("#engGoogleUrl")) $("#engGoogleUrl").value = e.googleReviewUrl || "";
         if ($("#engMinStars")) $("#engMinStars").value = e.minStarsForGoogleReview || 4;
-        if ($("#engFbEnabled")) $("#engFbEnabled").checked = e.feedbackRequestEnabled !== false;
+        if ($("#engFbEnabled")) $("#engFbEnabled").checked = e.feedbackRequestEnabled === true;
       });
       engFetch("/api/admin/feedback").then(function(x){
         if (!x.ok) return;

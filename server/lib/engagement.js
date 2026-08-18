@@ -18,14 +18,15 @@ function ensureEngagement(data) {
   if (!data.config.engagement || typeof data.config.engagement !== "object") {
     data.config.engagement = {
       googleReviewUrl: "",
-      feedbackRequestEnabled: true,
+      /* Optional auto-email on Delivered; default manual (admin button). */
+      feedbackRequestEnabled: false,
       minStarsForGoogleReview: 4,
     };
     changed = true;
   } else {
     const e = data.config.engagement;
     if (e.googleReviewUrl == null) { e.googleReviewUrl = ""; changed = true; }
-    if (e.feedbackRequestEnabled == null) { e.feedbackRequestEnabled = true; changed = true; }
+    if (e.feedbackRequestEnabled == null) { e.feedbackRequestEnabled = false; changed = true; }
     if (e.minStarsForGoogleReview == null) { e.minStarsForGoogleReview = 4; changed = true; }
   }
   return changed;
@@ -266,12 +267,67 @@ function publicFeedback(f) {
   };
 }
 
-function createFeedbackInvite(db, order, pepper) {
+function normalizeFeedbackStatus(order) {
+  const s = String((order && order.feedbackStatus) || "").toLowerCase();
+  if (s === "submitted") return "submitted";
+  if (s === "requested") return "requested";
+  return "not_requested";
+}
+
+function publicOrderFeedbackMeta(order) {
+  if (!order) return null;
+  return {
+    feedbackStatus: normalizeFeedbackStatus(order),
+    feedbackRequestSentAt: order.feedbackRequestSentAt || null,
+    feedbackRequestSentBy: order.feedbackRequestSentBy || null,
+    feedbackRequestCount: order.feedbackRequestCount || 0,
+    feedbackLastRequestedAt: order.feedbackLastRequestedAt || null,
+    feedbackSubmittedAt: order.feedbackSubmittedAt || null,
+  };
+}
+
+function markOrderFeedbackRequested(order, sentBy) {
+  if (!order) return;
+  const t = now();
+  if (!order.feedbackRequestSentAt) order.feedbackRequestSentAt = t;
+  order.feedbackRequestSentBy = sanitizeText(sentBy, 80) || order.feedbackRequestSentBy || "admin";
+  order.feedbackRequestCount = (parseInt(order.feedbackRequestCount, 10) || 0) + 1;
+  order.feedbackLastRequestedAt = t;
+  if (normalizeFeedbackStatus(order) !== "submitted") {
+    order.feedbackStatus = "requested";
+  }
+}
+
+function markOrderFeedbackSubmitted(order, submittedAt) {
+  if (!order) return;
+  order.feedbackStatus = "submitted";
+  order.feedbackSubmittedAt = submittedAt || now();
+}
+
+/**
+ * Create or refresh a feedback invite. Pass { refresh: true } to rotate the token
+ * (needed for resend / when emailing). Without refresh, an existing invite is returned as-is
+ * (no raw token) so callers cannot accidentally re-email stale invites.
+ */
+function createFeedbackInvite(db, order, pepper, opts) {
   ensureEngagement(db);
   if (!order || !order.id) return null;
+  const refresh = !!(opts && opts.refresh);
   const existing = (db.feedback || []).find((f) => f && f.orderId === order.id);
-  if (existing) return existing;
+  if (existing && !refresh) return existing;
+
   const raw = randomToken(24);
+  if (existing) {
+    existing.tokenHash = hashOpaque(raw, pepper);
+    existing.customerEmail = (order.customer && order.customer.email) || existing.customerEmail || "";
+    existing.customerName = (order.customer && order.customer.name) || existing.customerName || "";
+    existing.driverId = order.deliveredByDriverId || order.driverId || existing.driverId || "";
+    existing.driverName = order.deliveredByDriverName || order.driverName || existing.driverName || "";
+    if (existing.status !== "submitted") existing.status = "pending";
+    existing._rawToken = raw;
+    return existing;
+  }
+
   const f = {
     id: "fb_" + crypto.randomBytes(8).toString("hex"),
     orderId: order.id,
@@ -326,6 +382,10 @@ function submitFeedback(db, orderId, rawToken, pepper, body) {
   f.submittedAt = now();
   f.status = "submitted";
   delete f._rawToken;
+
+  const order = (db.orders || []).find((o) => o && o.id === orderId);
+  if (order) markOrderFeedbackSubmitted(order, f.submittedAt);
+
   return { ok: true, feedback: publicFeedback(f) };
 }
 
@@ -444,6 +504,10 @@ module.exports = {
   findFeedbackByToken,
   submitFeedback,
   publicFeedback,
+  publicOrderFeedbackMeta,
+  normalizeFeedbackStatus,
+  markOrderFeedbackRequested,
+  markOrderFeedbackSubmitted,
   feedbackAnalytics,
   driverPerformance,
 };
