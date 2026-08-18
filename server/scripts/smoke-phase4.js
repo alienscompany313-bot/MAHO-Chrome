@@ -301,6 +301,18 @@ async function main() {
     assert(/applyLocalStatus|تحویل‌شده/i.test(drvHtml), "driver instant status update");
     const welcome = fs.readFileSync(path.join(ROOT, "..", "website", "welcome.html"), "utf8");
     assert(/noindex/i.test(welcome), "welcome noindex");
+    /* admin.html inline script must parse — broken quotes break gate login entirely */
+    const adminHtml = fs.readFileSync(path.join(ROOT, "..", "website", "admin.html"), "utf8");
+    const inlineMatch = adminHtml.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi);
+    assert(inlineMatch && inlineMatch.length >= 1, "admin has inline scripts");
+    const lastInline = inlineMatch[inlineMatch.length - 1].replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
+    assert(/\$\("#gateBtn"\)\.onclick\s*=/.test(lastInline), "admin gateBtn handler present");
+    try {
+      new (require("vm").Script)(lastInline, { filename: "admin.html-inline.js" });
+    } catch (synErr) {
+      assert(false, "admin.html inline JS syntax: " + (synErr && synErr.message));
+    }
+    assert(!/innerHTML\s*=\s*"[^"]*<[^"]*class="/.test(lastInline), "no broken class= inside double-quoted innerHTML");
     /* simulate viewport widths used in CSS media queries */
     [320, 375, 390, 430].forEach((w) => {
       assert(w <= 980, "width " + w + " uses mobile hero-visual rules");
