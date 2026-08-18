@@ -168,6 +168,9 @@ async function main() {
     assert(/rel=["']canonical["'][^>]*\/p\/S1/i.test(productPage.raw), "product canonical");
     assert(/application\/ld\+json/i.test(productPage.raw) && /"@type":\s*"Product"/i.test(productPage.raw), "product json-ld");
     assert(/priceCurrency["']?\s*:\s*["']?AFN/i.test(productPage.raw) || /"priceCurrency":"AFN"/.test(productPage.raw), "product AFN");
+    const productPageLower = await req("GET", "/p/s1");
+    assert(productPageLower.status === 200, "product seo case-insensitive 200");
+    assert(/rel=["']canonical["'][^>]*href=["']https:\/\/mahomarket\.com\/p\/S1["']/i.test(productPageLower.raw), "canonical keeps stored code case");
     const missingPage = await req("GET", "/p/DOES-NOT-EXIST");
     assert(missingPage.status === 404, "missing product 404");
     assert(/noindex/i.test(missingPage.raw), "missing product noindex");
