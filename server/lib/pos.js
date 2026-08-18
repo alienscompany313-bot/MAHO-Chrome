@@ -4,6 +4,7 @@
  */
 const crypto = require("crypto");
 const { sanitizeText } = require("./security");
+const { applyStockDelta } = require("./variant-stock");
 
 function ensurePos(db) {
   let changed = false;
@@ -60,15 +61,24 @@ function applyStock(db, items, sign) {
     const p = findProduct(db, it.code || it.name) || (db.products || []).find((x) => x.name === it.name);
     if (!p) return { ok: false, error: "product_not_found", name: it.name };
     const qty = Math.max(1, parseInt(it.qty, 10) || 1);
-    if (p.stock != null && p.stock !== "") {
-      const stock = Number(p.stock);
-      if (!Number.isFinite(stock)) continue;
-      if (sign < 0 && stock < qty) return { ok: false, error: "insufficient_stock", name: p.name, stock };
-      updates.push({ p, qty, sign });
-    }
+    /* dry-run via clone of numbers only for check — applyStockDelta mutates; so check first */
+    const probe = applyStockDelta(
+      {
+        stock: p.stock,
+        sizes: p.sizes,
+        colors: p.colors,
+        variantStock: p.variantStock ? Object.assign({}, p.variantStock) : undefined,
+      },
+      qty,
+      sign,
+      it.color,
+      it.size
+    );
+    if (!probe.ok) return { ok: false, error: probe.error || "insufficient_stock", name: p.name, stock: probe.stock };
+    updates.push({ p: p, qty: qty, sign: sign, color: it.color, size: it.size });
   }
-  updates.forEach(({ p, qty, sign }) => {
-    p.stock = Number(p.stock) + sign * qty;
+  updates.forEach(({ p, qty, sign, color, size }) => {
+    applyStockDelta(p, qty, sign, color, size);
   });
   return { ok: true };
 }
