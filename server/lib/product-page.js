@@ -41,14 +41,14 @@ function productPublicCode(p) {
 }
 
 function findProductByCode(products, codeParam) {
-  const needle = String(codeParam || "").trim();
+  const needle = String(codeParam || "").trim().toLowerCase();
   if (!needle || !Array.isArray(products)) return null;
   return products.find((p) => {
     if (!p) return false;
-    const code = String(p.code || "").trim();
-    const sku = String(p.sku || "").trim();
-    const barcode = String(p.barcode || "").trim();
-    return code === needle || sku === needle || barcode === needle;
+    const code = String(p.code || "").trim().toLowerCase();
+    const sku = String(p.sku || "").trim().toLowerCase();
+    const barcode = String(p.barcode || "").trim().toLowerCase();
+    return (code && code === needle) || (sku && sku === needle) || (barcode && barcode === needle);
   }) || null;
 }
 
