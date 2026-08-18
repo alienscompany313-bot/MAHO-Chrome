@@ -35,7 +35,7 @@ const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staf
 const {
   checkStock, applyStockDelta, colorKey,
 } = require("./lib/variant-stock");
-const { mountProductPage } = require("./lib/product-page");
+const { mountProductPage, buildSitemapXml } = require("./lib/product-page");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -578,18 +578,8 @@ app.get("/robots.txt", (req, res) => {
 app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml");
   res.setHeader("Cache-Control", "public, max-age=300");
-  const now = new Date().toISOString().slice(0, 10);
- const urls = [
-  { loc: PUBLIC_SITE + "/", pri: "1.0", freq: "daily" },
-];
-  const body = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    urls.map((u) =>
-      "  <url><loc>" + u.loc.replace(/&/g, "&amp;") + "</loc><lastmod>" + now +
-      "</lastmod><changefreq>" + u.freq + "</changefreq><priority>" + u.pri + "</priority></url>"
-    ).join("\n") +
-    "\n</urlset>\n";
-  res.send(body);
+  /* Homepage + active products from live db.products (no hard-coded SKUs). */
+  res.send(buildSitemapXml(db.products, PUBLIC_SITE));
 });
 
 /* Prefer apex host when request Host is www. (proxy / direct). Safe no-op for localhost. */
