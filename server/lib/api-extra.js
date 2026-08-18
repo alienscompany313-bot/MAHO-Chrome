@@ -91,13 +91,8 @@ function mountExtra(app, ctx) {
   /* ---------- stock snapshot (no-cache) ---------- */
   app.get("/api/stock", (req, res) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    const items = (ctx.db.products || []).map((p) => ({
-      code: p.code || "",
-      name: p.name,
-      stock: p.stock == null || p.stock === "" ? null : Number(p.stock),
-      price: p.price,
-      discount: p.discount || 0,
-    }));
+    const { stockPublicRow } = require("./variant-stock");
+    const items = (ctx.db.products || []).map((p) => stockPublicRow(p));
     res.json({ at: Date.now(), products: items });
   });
 

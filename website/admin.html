@@ -87,6 +87,11 @@
     .img-thumb{position:relative;width:74px;height:74px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
     .img-thumb img{width:100%;height:100%;object-fit:cover}
     .img-thumb button{position:absolute;top:2px;inset-inline-end:2px;width:22px;height:22px;border-radius:50%;border:0;background:#000a;color:#fff;cursor:pointer;font-size:13px;line-height:1}
+    .vstock-table{border-collapse:collapse;width:100%;min-width:280px;font-size:13px;background:#fff}
+    .vstock-table th,.vstock-table td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+    .vstock-table th{background:#f7f3ea;font-weight:700;white-space:nowrap}
+    .vstock-table th.corner{text-align:right}
+    .vstock-table input{width:64px;max-width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;text-align:center;font-family:inherit}
     .logo-preview{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);object-fit:cover;background:#111}
     .toast{position:fixed;inset-inline-start:24px;bottom:80px;z-index:70;background:#173d22;color:#fff;border:1px solid #2e7d32;padding:12px 18px;border-radius:12px;font-weight:700;box-shadow:0 12px 30px #0003;transform:translateY(140%);opacity:0;transition:.3s}
     .toast.show{transform:none;opacity:1}
@@ -705,7 +710,7 @@
         <div class="field"><label>نام کالا (فارسی) *</label><input id="f_name"></div>
         <div class="field"><label>نام کالا (English)</label><input id="f_name_en" dir="ltr"></div>
         <div class="field"><label>کود کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
-        <div class="field"><label>تعداد موجودی</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"></div>
+        <div class="field"><label>تعداد موجودی (کل)</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"><p class="note" id="f_stockHint" style="display:none;margin:4px 0 0">موجودی کل از ترکیب‌های رنگ/سایز محاسبه می‌شود و قابل ویرایش مستقیم نیست.</p></div>
         <div class="field"><label>کتگوری</label>
           <select id="f_cat"></select>
         </div>
@@ -731,9 +736,28 @@
         <div id="f_imgPreview" class="img-previews"></div>
         <p class="note">اولین عکس، عکس اصلی است؛ عکس‌ها خودکار کوچک می‌شوند.</p>
       </div>
-      <div class="grid2">
-        <div class="field"><label>سایزها (با کامه جدا کنید)</label><input id="f_sizes" placeholder="S، M، L، XL"></div>
-        <div class="field"><label>رنگ‌ها (با کامه جدا کنید)</label><input id="f_colors" placeholder="مشکی، سرخ، آبی"></div>
+      <div class="field" style="margin-top:8px">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer">
+          <input type="checkbox" id="f_hasColors"> این محصول رنگ دارد
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;margin-top:8px">
+          <input type="checkbox" id="f_hasSizes"> این محصول سایز دارد
+        </label>
+      </div>
+      <div class="field" id="f_colorsWrap" style="display:none;margin-top:10px">
+        <label>رنگ‌ها (با کامه جدا کنید)</label>
+        <input id="f_colors" placeholder="مثلاً مشکی، سرخ، سفید|#fff">
+        <p class="note">هر مقدار دلخواه مجاز است. برای رنگ با نمونه: نام|#hex</p>
+      </div>
+      <div class="field" id="f_sizesWrap" style="display:none;margin-top:10px">
+        <label>سایزها (با کامه جدا کنید)</label>
+        <input id="f_sizes" placeholder="مثلاً XS، S، M، L، XL یا ۳۸، ۴۰">
+        <p class="note">هیچ سایز اجباری نیست؛ هر مقدار دلخواه وارد کنید.</p>
+      </div>
+      <div class="field" id="variantStockWrap" style="display:none;margin-top:10px">
+        <label id="variantStockTitle">موجودی</label>
+        <p class="note" id="variantStockNote">موجودی کل از مجموع این مقادیر محاسبه می‌شود.</p>
+        <div id="variantStockTable" style="overflow:auto;max-width:100%"></div>
       </div>
       <p class="note" id="modalMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
@@ -1894,6 +1918,161 @@
     /* no offline bootstrap — wait for authenticated openApp() */
 
     /* ---------- product modal ---------- */
+    function colorKeyAdmin(c){ return String(c||"").split("|")[0].trim(); }
+    function variantKeyAdmin(color, size){ return colorKeyAdmin(color) + "||" + String(size||"").trim(); }
+    var modalVariantPrev = {};
+    var modalOptionSnapshot = { colors: [], sizes: [], hasColors: false, hasSizes: false };
+    function readVariantMatrixFromDom(){
+      var map = {};
+      document.querySelectorAll("#variantStockTable [data-vkey]").forEach(function(inp){
+        var k = inp.getAttribute("data-vkey");
+        var n = parseInt(toEn(inp.value).trim(), 10);
+        map[k] = isNaN(n) ? 0 : Math.max(0, n);
+      });
+      return map;
+    }
+    function sumVariantMap(map){
+      var s = 0;
+      Object.keys(map||{}).forEach(function(k){ var n = parseInt(map[k],10); if(!isNaN(n)) s += Math.max(0,n); });
+      return s;
+    }
+    function stockKeysFor(colors, sizes, hasColors, hasSizes){
+      var keys = [];
+      if(!hasColors && !hasSizes) return keys;
+      var C = hasColors ? colors.slice() : [""];
+      var S = hasSizes ? sizes.slice() : [""];
+      if(hasColors && !C.length) return keys;
+      if(hasSizes && !S.length) return keys;
+      C.forEach(function(col){ S.forEach(function(sz){ keys.push(variantKeyAdmin(col, sz)); }); });
+      return keys;
+    }
+    function confirmLosingStock(prevMap, nextKeys){
+      var lost = [];
+      Object.keys(prevMap||{}).forEach(function(k){
+        var n = parseInt(prevMap[k], 10) || 0;
+        if(n > 0 && nextKeys.indexOf(k) < 0) lost.push(k + " (" + n + ")");
+      });
+      if(!lost.length) return true;
+      return confirm("با این تغییر، موجودی این ترکیب‌ها حذف می‌شود:\n• " + lost.join("\n• ") + "\n\nادامه می‌دهید؟");
+    }
+    function bindVariantInputs(){
+      var stockInp = $("#f_stock");
+      function syncTotal(){
+        var map = readVariantMatrixFromDom();
+        modalVariantPrev = Object.assign({}, modalVariantPrev, map);
+        stockInp.value = String(sumVariantMap(map));
+      }
+      document.querySelectorAll("#variantStockTable [data-vkey]").forEach(function(inp){
+        inp.addEventListener("input", syncTotal);
+        inp.addEventListener("change", syncTotal);
+      });
+      syncTotal();
+    }
+    function refreshVariantStockUI(opts){
+      opts = opts || {};
+      var hasColors = $("#f_hasColors").checked;
+      var hasSizes = $("#f_hasSizes").checked;
+      var colorsWrap = $("#f_colorsWrap");
+      var sizesWrap = $("#f_sizesWrap");
+      var wrap = $("#variantStockWrap");
+      var table = $("#variantStockTable");
+      var title = $("#variantStockTitle");
+      var note = $("#variantStockNote");
+      var stockInp = $("#f_stock");
+      var hint = $("#f_stockHint");
+      colorsWrap.style.display = hasColors ? "block" : "none";
+      sizesWrap.style.display = hasSizes ? "block" : "none";
+
+      var sizes = hasSizes ? parseList($("#f_sizes").value) : [];
+      var colorsRaw = hasColors ? parseList($("#f_colors").value) : [];
+      var colors = colorsRaw.map(colorKeyAdmin).filter(Boolean);
+
+      /* detect removals that drop stock */
+      var draftMap = Object.assign({}, modalVariantPrev, readVariantMatrixFromDom());
+      var nextKeys = stockKeysFor(colors, sizes, hasColors, hasSizes);
+      if(!opts.skipConfirm){
+        if(!confirmLosingStock(draftMap, (hasColors || hasSizes) ? nextKeys : [])){
+          /* revert checkbox / lists to snapshot */
+          if(opts.revert) opts.revert();
+          return false;
+        }
+      }
+      modalVariantPrev = draftMap;
+      modalOptionSnapshot = { colors: colorsRaw.slice(), sizes: sizes.slice(), hasColors: hasColors, hasSizes: hasSizes };
+
+      if(!hasColors && !hasSizes){
+        wrap.style.display = "none";
+        table.innerHTML = "";
+        stockInp.readOnly = false;
+        stockInp.style.opacity = "1";
+        hint.style.display = "none";
+        return true;
+      }
+
+      wrap.style.display = "block";
+      hint.style.display = "block";
+      stockInp.readOnly = true;
+      stockInp.style.opacity = "0.75";
+
+      var html = "";
+      if(hasColors && hasSizes){
+        title.textContent = "موجودی رنگ × سایز";
+        note.textContent = "برای هر ترکیب رنگ و سایز تعداد جداگانه وارد کنید. موجودی کل خودکار جمع می‌شود.";
+        if(!colors.length || !sizes.length){
+          table.innerHTML = '<p class="note">ابتدا حداقل یک رنگ و یک سایز وارد کنید.</p>';
+          stockInp.value = "0";
+          return true;
+        }
+        html = '<table class="vstock-table"><thead><tr><th class="corner">رنگ \\ سایز</th>';
+        sizes.forEach(function(sz){ html += "<th>"+esc(sz)+"</th>"; });
+        html += "</tr></thead><tbody>";
+        colorsRaw.forEach(function(colRaw){
+          var col = colorKeyAdmin(colRaw);
+          html += "<tr><th class=\"corner\">"+esc(colRaw)+"</th>";
+          sizes.forEach(function(sz){
+            var k = variantKeyAdmin(col, sz);
+            var v = Object.prototype.hasOwnProperty.call(draftMap, k) ? draftMap[k] : 0;
+            html += '<td><input type="number" min="0" inputmode="numeric" data-vkey="'+esc(k)+'" value="'+(v||0)+'"></td>';
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+      } else if(hasColors && !hasSizes){
+        title.textContent = "موجودی بر اساس رنگ";
+        note.textContent = "برای هر رنگ تعداد جداگانه وارد کنید.";
+        if(!colors.length){
+          table.innerHTML = '<p class="note">حداقل یک رنگ وارد کنید.</p>';
+          stockInp.value = "0";
+          return true;
+        }
+        html = '<table class="vstock-table"><thead><tr><th class="corner">رنگ</th><th>تعداد</th></tr></thead><tbody>';
+        colorsRaw.forEach(function(colRaw){
+          var col = colorKeyAdmin(colRaw);
+          var k = variantKeyAdmin(col, "");
+          var v = Object.prototype.hasOwnProperty.call(draftMap, k) ? draftMap[k] : 0;
+          html += '<tr><th class="corner">'+esc(colRaw)+'</th><td><input type="number" min="0" inputmode="numeric" data-vkey="'+esc(k)+'" value="'+(v||0)+'"></td></tr>';
+        });
+        html += "</tbody></table>";
+      } else {
+        title.textContent = "موجودی بر اساس سایز";
+        note.textContent = "برای هر سایز تعداد جداگانه وارد کنید.";
+        if(!sizes.length){
+          table.innerHTML = '<p class="note">حداقل یک سایز وارد کنید.</p>';
+          stockInp.value = "0";
+          return true;
+        }
+        html = '<table class="vstock-table"><thead><tr><th class="corner">سایز</th><th>تعداد</th></tr></thead><tbody>';
+        sizes.forEach(function(sz){
+          var k = variantKeyAdmin("", sz);
+          var v = Object.prototype.hasOwnProperty.call(draftMap, k) ? draftMap[k] : 0;
+          html += '<tr><th class="corner">'+esc(sz)+'</th><td><input type="number" min="0" inputmode="numeric" data-vkey="'+esc(k)+'" value="'+(v||0)+'"></td></tr>';
+        });
+        html += "</tbody></table>";
+      }
+      table.innerHTML = html;
+      bindVariantInputs();
+      return true;
+    }
     function openModal(i){
       editIndex=(typeof i==="number")?i:-1;
       $("#modalTitle").textContent=editIndex>=0?"ویرایش محصول":"افزودن محصول";
@@ -1908,8 +2087,15 @@
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:""; $("#f_discount").value=(p.discount!=null&&p.discount!==0)?p.discount:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
       modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
-      $("#f_sizes").value=(p.sizes||[]).join("، "); $("#f_colors").value=(p.colors||[]).join("، ");
+      var hasColors = !!(p.hasColors === true || (Array.isArray(p.colors) && p.colors.length));
+      var hasSizes = !!(p.hasSizes === true || (Array.isArray(p.sizes) && p.sizes.length));
+      $("#f_hasColors").checked = hasColors;
+      $("#f_hasSizes").checked = hasSizes;
+      $("#f_sizes").value=(p.sizes||[]).join("، ");
+      $("#f_colors").value=(p.colors||[]).join("، ");
+      modalVariantPrev = (p.variantStock && typeof p.variantStock === "object") ? Object.assign({}, p.variantStock) : {};
       toggleBadgeText();
+      refreshVariantStockUI({ skipConfirm: true });
       $("#overlay").classList.add("show");
     }
     function closeModal(){$("#overlay").classList.remove("show")}
@@ -1929,6 +2115,35 @@
       }).catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); e.target.value=""; });
     });
     $("#f_badge").onchange=toggleBadgeText;
+    function onOptionToggle(which){
+      var prevHasC = modalOptionSnapshot.hasColors;
+      var prevHasS = modalOptionSnapshot.hasSizes;
+      var prevColors = ($("#f_colors").value||"");
+      var prevSizes = ($("#f_sizes").value||"");
+      refreshVariantStockUI({
+        revert: function(){
+          $("#f_hasColors").checked = !!prevHasC;
+          $("#f_hasSizes").checked = !!prevHasS;
+          $("#f_colors").value = prevColors;
+          $("#f_sizes").value = prevSizes;
+          refreshVariantStockUI({ skipConfirm: true });
+        }
+      });
+    }
+    $("#f_hasColors").addEventListener("change", function(){ onOptionToggle("colors"); });
+    $("#f_hasSizes").addEventListener("change", function(){ onOptionToggle("sizes"); });
+    $("#f_sizes").addEventListener("change", function(){
+      var snap = (modalOptionSnapshot.sizes || []).join("، ");
+      refreshVariantStockUI({
+        revert: function(){ $("#f_sizes").value = snap; refreshVariantStockUI({ skipConfirm: true }); }
+      });
+    });
+    $("#f_colors").addEventListener("change", function(){
+      var snap = (modalOptionSnapshot.colors || []).join("، ");
+      refreshVariantStockUI({
+        revert: function(){ $("#f_colors").value = snap; refreshVariantStockUI({ skipConfirm: true }); }
+      });
+    });
     $("#addBtn").onclick=function(){openModal()};
     $("#cancelBtn").onclick=closeModal;
     $("#overlay").addEventListener("click",function(e){if(e.target===$("#overlay"))closeModal()});
@@ -1942,16 +2157,43 @@
       if(!name){ $("#modalMsg").textContent="نام کالا الزامی است."; return; }
       if(price===""||isNaN(Number(price))){ $("#modalMsg").textContent="قیمت معتبر وارد کنید."; return; }
       var badge=$("#f_badge").value;
-      var p={ name:name, name_en:$("#f_name_en").value.trim(), code:$("#f_code").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price) };
-      var stock=toEn($("#f_stock").value).trim(); if(stock!==""&&!isNaN(Number(stock))) p.stock=Number(stock);
+      var hasColors = $("#f_hasColors").checked;
+      var hasSizes = $("#f_hasSizes").checked;
+      var p={ name:name, name_en:$("#f_name_en").value.trim(), code:$("#f_code").value.trim(), cat:$("#f_cat").value, icon:$("#f_icon").value, price:Number(price), hasColors: hasColors, hasSizes: hasSizes };
+      var sizes = hasSizes ? parseList($("#f_sizes").value) : [];
+      var colors = hasColors ? parseList($("#f_colors").value) : [];
+      if(hasSizes && !sizes.length){ $("#modalMsg").textContent="حداقل یک سایز وارد کنید یا گزینه «سایز دارد» را خاموش کنید."; return; }
+      if(hasColors && !colors.length){ $("#modalMsg").textContent="حداقل یک رنگ وارد کنید یا گزینه «رنگ دارد» را خاموش کنید."; return; }
+      if(sizes.length) p.sizes=sizes;
+      if(colors.length) p.colors=colors;
+      if(hasColors || hasSizes){
+        var map = Object.assign({}, modalVariantPrev, readVariantMatrixFromDom());
+        var S = hasSizes ? sizes : [""];
+        var C = hasColors ? colors.map(colorKeyAdmin).filter(Boolean) : [""];
+        var next = {};
+        C.forEach(function(col){ S.forEach(function(sz){
+          var k = variantKeyAdmin(col, sz);
+          var n = parseInt(map[k], 10);
+          next[k] = isNaN(n) ? 0 : Math.max(0, n);
+        }); });
+        p.variantStock = next;
+        p.stock = sumVariantMap(next);
+      } else {
+        var stock=toEn($("#f_stock").value).trim(); if(stock!==""&&!isNaN(Number(stock))) p.stock=Number(stock);
+      }
       var old=toEn($("#f_old").value).trim(); if(old!==""&&!isNaN(Number(old))) p.old=Number(old);
       var disc=toEn($("#f_discount").value).trim(); if(disc!==""&&!isNaN(Number(disc))&&Number(disc)>0) p.discount=Math.min(95,Number(disc));
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
       if(modalImages.length) p.images=modalImages.slice();
-      var sizes=parseList($("#f_sizes").value); if(sizes.length) p.sizes=sizes;
-      var colors=parseList($("#f_colors").value); if(colors.length) p.colors=colors;
-      if(editIndex>=0) state.products[editIndex]=p; else state.products.push(p);
+      if(editIndex>=0){
+        /* preserve unrelated fields (cost, lowStock, sku, ...) */
+        var prev = state.products[editIndex] || {};
+        Object.keys(prev).forEach(function(k){
+          if(p[k] === undefined && ["cost","lowStock","sku","barcode","badgeText_en"].indexOf(k) >= 0) p[k] = prev[k];
+        });
+        state.products[editIndex]=p;
+      } else state.products.push(p);
       renderTable(); setDirty(true); closeModal();
     };
 

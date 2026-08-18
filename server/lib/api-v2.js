@@ -109,10 +109,11 @@ function mountV2(app, ctx) {
       o.returnRequest.resolveNote = sanitizeText((req.body || {}).note, 500);
     }
     if (next === "return_completed") {
-      /* restock all items safely */
+      /* restock all items safely (variant-aware when color/size present) */
+      const { applyStockDelta } = require("./variant-stock");
       (o.items || []).forEach((it) => {
         const p = findProduct(it.name, it.code);
-        if (p && p.stock != null && p.stock !== "") p.stock = Number(p.stock) + (Number(it.qty) || 0);
+        if (p) applyStockDelta(p, it.qty || 1, +1, it.color, it.size);
       });
     }
     appendHistory(o, { status: next, by: "admin", note: sanitizeText((req.body || {}).note, 500), from: prev });

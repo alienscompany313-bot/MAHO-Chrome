@@ -32,6 +32,9 @@ const { mountV3 } = require("./lib/api-v3");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
+const {
+  checkStock, applyStockDelta, colorKey,
+} = require("./lib/variant-stock");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -920,11 +923,9 @@ function findProduct(name, code) {
 }
 function decStock(items, sign) {
   (items || []).forEach((it) => {
-    const p = findProduct(it.name);
-    if (p && p.stock != null && p.stock !== "") {
-      const n = parseInt(p.stock, 10);
-      if (!isNaN(n)) p.stock = Math.max(0, n + sign * (it.qty || 1));
-    }
+    const p = findProduct(it.name, it.code);
+    if (!p) return;
+    applyStockDelta(p, it.qty || 1, sign, it.color, it.size);
   });
 }
 app.post("/api/orders", (req, res) => {
@@ -965,14 +966,20 @@ app.post("/api/orders", (req, res) => {
   /* Server-side price & stock validation (atomic-ish via single-threaded event loop + immediate save) */
   const items = [];
   for (const it of rawItems) {
-    const p = findProduct(it.name) || (it.code && db.products.find((x) => x.code === it.code));
+    const p = findProduct(it.name, it.code) || (it.code && db.products.find((x) => x.code === it.code));
     if (!p) return res.status(400).json({ error: "unknown_item", item: it.name });
     const qty = Math.max(1, parseInt(it.qty, 10) || 1);
-    if (p.stock != null && p.stock !== "") {
-      const stock = parseInt(p.stock, 10);
-      if (!isNaN(stock) && stock < qty) {
-        return res.status(409).json({ error: "insufficient stock", item: p.name, stock: stock });
-      }
+    const size = sanitizeText(it.size, 40);
+    const color = sanitizeText(it.color, 40);
+    const chk = checkStock(p, qty, color, size);
+    if (!chk.ok) {
+      return res.status(409).json({
+        error: "insufficient stock",
+        item: p.name,
+        stock: chk.stock,
+        size: size || undefined,
+        color: colorKey(color) || undefined,
+      });
     }
     const disc = Math.min(95, Math.max(0, parseFloat(p.discount) || 0));
     const unit = disc > 0 ? Math.round((p.price || 0) * (1 - disc / 100)) : (p.price || 0);
@@ -980,7 +987,7 @@ app.post("/api/orders", (req, res) => {
     items.push({
       name: p.name, name_en: p.name_en || "", code: p.code || "",
       price: unit, listPrice: p.price || 0, discount: disc,
-      qty: qty, size: sanitizeText(it.size, 40), color: sanitizeText(it.color, 40),
+      qty: qty, size: size, color: color,
       image: imgs[0] || "",
     });
   }
@@ -1098,15 +1105,19 @@ app.post("/api/orders", (req, res) => {
   if (order.status === "confirmed") applyApprovedCancelWindow(order);
   appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: "user", note: "ثبت سفارش" });
 
-  /* decrement stock after building order */
+  /* decrement stock after building order (product + color + size when variants exist) */
   for (const it of items) {
-    const p = findProduct(it.name);
-    if (p && p.stock != null && p.stock !== "") {
-      const n = parseInt(p.stock, 10);
-      if (!isNaN(n)) {
-        if (n < it.qty) return res.status(409).json({ error: "insufficient stock", item: it.name, stock: n });
-        p.stock = n - it.qty;
-      }
+    const p = findProduct(it.name, it.code);
+    if (!p) continue;
+    const adj = applyStockDelta(p, it.qty, -1, it.color, it.size);
+    if (!adj.ok) {
+      return res.status(409).json({
+        error: "insufficient stock",
+        item: it.name,
+        stock: adj.stock,
+        size: it.size || undefined,
+        color: colorKey(it.color) || undefined,
+      });
     }
   }
 
