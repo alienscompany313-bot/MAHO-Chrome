@@ -27,6 +27,20 @@
   function escapeAttr(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+  function productPublicCode(p) {
+    const code = String((p && p.code) || "").trim();
+    if (code) return code;
+    const sku = String((p && p.sku) || "").trim();
+    if (sku) return sku;
+    const barcode = String((p && p.barcode) || "").trim();
+    return barcode || "";
+  }
+  function productSeoHref(p) {
+    if (!p || p.enabled === false || p.active === false) return "";
+    const code = productPublicCode(p);
+    if (!code || /[#?/\s]/.test(code)) return "";
+    return "/p/" + encodeURIComponent(code);
+  }
   function iconMeta(id) {
     const icons = (CONFIG && Array.isArray(CONFIG.icons)) ? CONFIG.icons : [];
     return icons.find((x) => x && x.id === id) || null;
@@ -533,8 +547,14 @@
       const outOverlay = out ? `<span class="out-overlay">${t("stock.out")}</span>` : "";
       const stockNote = low ? `<span class="stock-note low">${t("stock.left").replace("{n}", toDigits(stock))}</span>`
         : (out ? `<span class="stock-note out">${t("stock.out")}</span>` : "");
+      const seoHref = productSeoHref(p);
+      /* Crawlable SEO URL for Google; visually hidden — card UI/modal behavior unchanged */
+      const seoLink = seoHref
+        ? `<a class="product-seo-link" href="${escapeAttr(seoHref)}">${escHtml(name)}</a>`
+        : "";
       return `
         <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
+          ${seoLink}
           <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}</div>
           <div class="product-body">
             <span class="cat">${catLabel(p.cat)}</span>
@@ -749,6 +769,11 @@
   /* product grid: click card = quick view, click bag = add (open quick view if it has options) */
   if (productGrid) {
     productGrid.addEventListener("click", (e) => {
+      /* SEO crawlable <a href="/p/..."> keeps modal UX: intercept in-page clicks */
+      const seoA = e.target.closest("a.product-seo-link");
+      if (seoA) {
+        e.preventDefault();
+      }
       const card = e.target.closest(".product-card");
       if (!card) return;
       const p = PRODUCTS[parseInt(card.dataset.idx, 10)];

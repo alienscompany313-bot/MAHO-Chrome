@@ -421,6 +421,19 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   overflow: hidden; box-shadow: var(--shadow-sm);
   transition: transform .2s ease, box-shadow .2s ease, opacity .25s ease;
   display: flex; flex-direction: column;
+  position: relative;
+}
+/* Crawlable product URL for search engines; visually hidden — no card appearance change */
+.product-seo-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
 .product-card.is-hidden { display: none; }

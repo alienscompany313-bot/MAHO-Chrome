@@ -233,6 +233,53 @@ function renderNotFoundHtml() {
     "</html>\n";
 }
 
+function escapeXml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+/**
+ * Active products with a real public code → /p/{code} URLs (deduped).
+ * Skips inactive rows and products without a stable code/sku/barcode.
+ */
+function listActiveProductSitemapUrls(products, siteUrl) {
+  const base = siteBase(siteUrl);
+  const seen = new Set();
+  const urls = [];
+  (Array.isArray(products) ? products : []).forEach((p) => {
+    if (!isProductActive(p)) return;
+    const code = productPublicCode(p);
+    if (!code) return;
+    if (/[#?/\s]/.test(code)) return;
+    const key = code.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    urls.push(base + "/p/" + encodeURIComponent(code));
+  });
+  return urls;
+}
+
+/** Dynamic sitemap: homepage + active product SEO pages. No hashes / private paths. */
+function buildSitemapXml(products, siteUrl) {
+  const base = siteBase(siteUrl);
+  const now = new Date().toISOString().slice(0, 10);
+  const entries = [{ loc: base + "/", pri: "1.0", freq: "daily" }];
+  listActiveProductSitemapUrls(products, siteUrl).forEach((loc) => {
+    entries.push({ loc: loc, pri: "0.8", freq: "weekly" });
+  });
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    entries.map((u) =>
+      "  <url><loc>" + escapeXml(u.loc) + "</loc><lastmod>" + now +
+      "</lastmod><changefreq>" + u.freq + "</changefreq><priority>" + u.pri + "</priority></url>"
+    ).join("\n") +
+    "\n</urlset>\n";
+}
+
 /**
  * Mount GET /p/:code — must be registered before static fallthrough is fine,
  * but should run as an explicit route.
@@ -270,6 +317,7 @@ function mountProductPage(app, opts) {
 
 module.exports = {
   escapeHtml,
+  escapeXml,
   findProductByCode,
   isProductActive,
   productPublicCode,
@@ -277,5 +325,7 @@ module.exports = {
   buildProductPageModel,
   renderProductHtml,
   renderNotFoundHtml,
+  listActiveProductSitemapUrls,
+  buildSitemapXml,
   mountProductPage,
 };
