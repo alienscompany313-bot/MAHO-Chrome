@@ -3181,9 +3181,9 @@
       var p = cmpPayload();
       var box = $("#cmpPreviewBox"); if (!box) return;
       box.style.display = "block";
-      box.innerHTML = "<b>"+esc(p.subject)+"</b> <span class="note">("+esc(p.campaignType)+")</span><hr>"+esc(p.message).replace(/\n/g,"<br>")+
-        (p.productCodes&&p.productCodes.length?('<p>Products: <span dir="ltr">'+esc(p.productCodes.join(", "))+'</span></p>'):"")+
-        (p.ctaText&&p.ctaUrl?('<p><a href="'+esc(p.ctaUrl)+'">'+esc(p.ctaText)+'</a></p>'):"");
+      box.innerHTML = "<b>"+esc(p.subject)+"</b> <span class='note'>("+esc(p.campaignType)+")</span><hr>"+esc(p.message).replace(/\n/g,"<br>")+
+        (p.productCodes&&p.productCodes.length?("<p>Products: <span dir='ltr'>"+esc(p.productCodes.join(", "))+"</span></p>"):"")+
+        (p.ctaText&&p.ctaUrl?("<p><a href='"+esc(p.ctaUrl)+"'>"+esc(p.ctaText)+"</a></p>"):"");
     };
     if ($("#cmpTest")) $("#cmpTest").onclick = function(){
       var to = prompt("ایمیل تست را وارد کنید:");
