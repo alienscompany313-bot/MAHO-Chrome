@@ -252,7 +252,11 @@ function createCampaign(db, body, createdBy) {
   const productCodes = Array.isArray(body.productCodes)
     ? body.productCodes.map((x) => sanitizeText(String(x), 40)).filter(Boolean)
     : [];
-  const products = activeProductSnapshot(db, productCodes);
+  if ((campaignType === "single_product" || campaignType === "multiple_products") && !productCodes.length) {
+    return { ok: false, error: "product_required", status: 400 };
+  }
+  /* Empty codes must NOT expand to all catalog products (snapshot is opt-in by code list). */
+  const products = productCodes.length ? activeProductSnapshot(db, productCodes) : [];
   if ((campaignType === "single_product" || campaignType === "multiple_products") && !products.length) {
     return { ok: false, error: "no_active_products", status: 400 };
   }

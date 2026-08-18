@@ -451,9 +451,11 @@
             <option value="announcement">Announcement</option>
           </select>
         </div>
-        <div class="field"><label>محصولات پیشنهادی</label>
-          <select id="cmpProductPick" multiple size="5" dir="ltr" style="width:100%;min-height:110px"></select>
-          <p class="note">از لیست محصولات Active انتخاب کنید (Ctrl/Cmd برای چندتایی). کدها: <span id="cmpProductsHint" dir="ltr">—</span></p>
+        <div class="field" id="cmpProductsField">
+          <label id="cmpProductsLabel">محصولات پیشنهادی</label>
+          <select id="cmpProductPick" size="8" dir="ltr" style="width:100%;min-height:110px"></select>
+          <p class="note" id="cmpProductsHelp">ابتدا نوع کمپین Single/Multiple Product را انتخاب کنید.</p>
+          <p class="note">انتخاب‌شده: <span id="cmpProductsHint" dir="ltr">—</span></p>
           <input type="hidden" id="cmpProducts" value="">
         </div>
       </div>
@@ -2156,7 +2158,7 @@
       });
       state.config.showcase=arr;
     }
-    function loadInto(d){ var n=normalize(scrubLocalImages(d||{})); state.products=n.products; state.stores=n.stores; state.config=n.config; iconList(); catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); renderIconsAdmin(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); }
+    function loadInto(d){ var n=normalize(scrubLocalImages(d||{})); state.products=n.products; state.stores=n.stores; state.config=n.config; iconList(); catList(); renderTable(); renderStoreTable(); renderCats(); fillCatSelect(); renderIconsAdmin(); showcaseList(); renderShowcaseAdmin(); renderDiscounts(); tsList(); renderTsAdmin(); fillConfig(); fillContent(); renderOrdersAdmin(); renderCustomers(); renderReviewsAdmin(); try{ fillCmpProducts(); }catch(_){} }
     function loadFromServer(){
       if(!window.MAHOApi || !MAHOApi.getToken("admin")){ showGate("برای مدیریت باید به سرور وارد شوید."); return; }
       MAHOApi.adminState().then(function(d){
@@ -3092,40 +3094,96 @@
 
     function fillCmpProducts(){
       var sel = $("#cmpProductPick"); if (!sel) return;
-      var list = (S.products || []).filter(function(p){ return p && p.active !== false && !p.deleted && p.code; });
+      var type = ($("#cmpType") && $("#cmpType").value) || "general";
+      var needsProducts = (type === "single_product" || type === "multiple_products");
+      var field = $("#cmpProductsField");
+      if (field) field.style.display = needsProducts ? "" : "none";
+      if (!needsProducts) {
+        sel.innerHTML = "";
+        if ($("#cmpProducts")) $("#cmpProducts").value = "";
+        if ($("#cmpProductsHint")) $("#cmpProductsHint").textContent = "—";
+        return;
+      }
+      /* Use live admin catalog state — same products as Products panel / DB */
+      var list = (state.products || []).filter(function(p){
+        return p && p.active !== false && !p.deleted && String(p.code || "").trim();
+      });
       var prev = {};
       Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ prev[o.value] = true; });
+      var multi = (type === "multiple_products");
+      sel.multiple = multi;
+      sel.size = multi ? 8 : Math.min(10, Math.max(4, list.length || 4));
+      if ($("#cmpProductsLabel")) {
+        $("#cmpProductsLabel").textContent = multi ? "محصولات پیشنهادی (چندتایی)" : "محصول پیشنهادی (تک‌انتخابی)";
+      }
+      if ($("#cmpProductsHelp")) {
+        $("#cmpProductsHelp").textContent = multi
+          ? "محصولات Active از کاتالوگ فروشگاه. برای انتخاب چندتایی Ctrl/Cmd را نگه دارید."
+          : "یک محصول Active از کاتالوگ فروشگاه انتخاب کنید.";
+      }
       sel.innerHTML = list.map(function(p){
-        var price = Number(p.price)||0;
-        var label = (p.code||"")+" — "+(p.name||"")+" — "+price+" AFN";
-        return '<option value="'+esc(p.code)+'"'+(prev[p.code]?" selected":"")+'>'+esc(label)+'</option>';
+        var code = String(p.code || "").trim();
+        var label = code + " — " + (p.name || "");
+        return '<option value="'+esc(code)+'"'+(prev[code]?" selected":"")+'>'+esc(label)+'</option>';
       }).join("");
+      if (!list.length) {
+        sel.innerHTML = '<option value="" disabled>محصول فعالی در کاتالوگ نیست</option>';
+      }
+      /* Single-product: keep only first selection if multiple leftover */
+      if (!multi && sel.selectedOptions && sel.selectedOptions.length > 1) {
+        var keep = sel.selectedOptions[0].value;
+        Array.prototype.forEach.call(sel.options, function(o){ o.selected = (o.value === keep); });
+      }
       syncCmpProductCodes();
     }
     function syncCmpProductCodes(){
       var sel = $("#cmpProductPick");
+      var type = ($("#cmpType") && $("#cmpType").value) || "general";
       var codes = [];
       if (sel) Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ if (o.value) codes.push(o.value); });
+      if (type === "single_product" && codes.length > 1) codes = [codes[0]];
       if ($("#cmpProducts")) $("#cmpProducts").value = codes.join(",");
       if ($("#cmpProductsHint")) $("#cmpProductsHint").textContent = codes.length ? codes.join(", ") : "—";
       return codes;
     }
     if ($("#cmpProductPick")) $("#cmpProductPick").onchange = syncCmpProductCodes;
+    if ($("#cmpType")) $("#cmpType").onchange = function(){ fillCmpProducts(); };
+
+    function cmpSelectedProductCards(codes){
+      var want = {};
+      (codes || []).forEach(function(c){ want[String(c)] = true; });
+      return (state.products || []).filter(function(p){
+        return p && want[String(p.code || "").trim()] && p.active !== false && !p.deleted;
+      }).map(function(p){
+        var code = String(p.code || "").trim();
+        var imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
+        var price = Number(p.price) || 0;
+        var disc = Math.min(95, Math.max(0, parseFloat(p.discount) || 0));
+        var sale = disc > 0 ? Math.round(price * (1 - disc / 100)) : price;
+        var url = "/p/" + encodeURIComponent(code);
+        return {
+          code: code,
+          name: p.name || "",
+          image: imgs[0] || "",
+          price: sale,
+          oldPrice: disc > 0 ? price : (p.oldPrice != null ? Number(p.oldPrice) : null),
+          url: url
+        };
+      });
+    }
 
     function cmpPayload(){
       var mode = ($("#cmpMode") && $("#cmpMode").value) || "newsletter";
       if (mode === "active") mode = "newsletter";
-      var codes = syncCmpProductCodes();
-      if (!codes.length) {
-        codes = (($("#cmpProducts")&&$("#cmpProducts").value)||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
-      }
+      var type = ($("#cmpType")&&$("#cmpType").value)||"general";
+      var codes = (type === "single_product" || type === "multiple_products") ? syncCmpProductCodes() : [];
       var body = {
         name: ($("#cmpName")&&$("#cmpName").value)||"",
         subject: ($("#cmpSubject")&&$("#cmpSubject").value)||"",
         message: ($("#cmpMessage")&&$("#cmpMessage").value)||"",
         ctaText: ($("#cmpCtaText")&&$("#cmpCtaText").value)||"",
         ctaUrl: ($("#cmpCtaUrl")&&$("#cmpCtaUrl").value)||"",
-        campaignType: ($("#cmpType")&&$("#cmpType").value)||"general",
+        campaignType: type,
         productCodes: codes,
         mode: mode,
         recipientMode: mode
@@ -3180,15 +3238,36 @@
     if ($("#cmpPreview")) $("#cmpPreview").onclick = function(){
       var p = cmpPayload();
       var box = $("#cmpPreviewBox"); if (!box) return;
+      if ((p.campaignType === "single_product" || p.campaignType === "multiple_products") && !(p.productCodes && p.productCodes.length)) {
+        alert(p.campaignType === "single_product"
+          ? "برای Single Product باید یک محصول انتخاب کنید."
+          : "برای Multiple Products حداقل یک محصول انتخاب کنید.");
+        return;
+      }
       box.style.display = "block";
+      var cards = cmpSelectedProductCards(p.productCodes || []);
+      var prodHtml = cards.map(function(pr){
+        return '<div style="display:flex;gap:10px;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)">'+
+          (pr.image?'<img src="'+esc(pr.image)+'" alt="" width="56" height="56" style="object-fit:cover;border-radius:8px">':'')+
+          '<div><b>'+esc(pr.name)+'</b> <span dir="ltr" class="note">'+esc(pr.code)+'</span>'+
+          '<div class="note">'+toFa(pr.price)+' AFN'+(pr.oldPrice?(' <s>'+toFa(pr.oldPrice)+'</s>'):'')+
+          ' · <a href="'+esc(pr.url)+'" target="_blank" rel="noopener">'+esc(pr.url)+'</a></div></div></div>';
+      }).join("");
       box.innerHTML = "<b>"+esc(p.subject)+"</b> <span class='note'>("+esc(p.campaignType)+")</span><hr>"+esc(p.message).replace(/\n/g,"<br>")+
-        (p.productCodes&&p.productCodes.length?("<p>Products: <span dir='ltr'>"+esc(p.productCodes.join(", "))+"</span></p>"):"")+
+        (prodHtml || "")+
         (p.ctaText&&p.ctaUrl?("<p><a href='"+esc(p.ctaUrl)+"'>"+esc(p.ctaText)+"</a></p>"):"");
     };
     if ($("#cmpTest")) $("#cmpTest").onclick = function(){
+      var p = cmpPayload();
+      if ((p.campaignType === "single_product" || p.campaignType === "multiple_products") && !(p.productCodes && p.productCodes.length)) {
+        alert(p.campaignType === "single_product"
+          ? "برای Single Product باید یک محصول انتخاب کنید."
+          : "برای Multiple Products حداقل یک محصول انتخاب کنید.");
+        return;
+      }
       var to = prompt("ایمیل تست را وارد کنید:");
       if (!to) return;
-      var p = cmpPayload(); p.to = to;
+      p.to = to;
       engFetch("/api/admin/campaigns/test", { method:"POST", body: p }).then(function(x){
         alert(x.ok ? "ایمیل تست ارسال شد (اگر SMTP تنظیم باشد)" : ("ناموفق: "+((x.data&&x.data.error)||x.status)));
       });
@@ -3205,11 +3284,19 @@
       if (_cmpSending) return;
       var p = cmpPayload();
       if (!p.name || !p.subject || !p.message) { alert("نام، موضوع و متن الزامی است"); return; }
+      if (p.campaignType === "single_product" && !(p.productCodes && p.productCodes.length === 1)) {
+        alert("برای Single Product باید دقیقاً یک محصول انتخاب کنید.");
+        return;
+      }
+      if (p.campaignType === "multiple_products" && !(p.productCodes && p.productCodes.length)) {
+        alert("برای Multiple Products حداقل یک محصول انتخاب کنید.");
+        return;
+      }
       engFetch("/api/admin/campaigns/preview-count", { method:"POST", body: p }).then(function(x){
         var d = x.data || {};
         var n = d.finalRecipients || d.recipientCount || 0;
         if (!n) { alert("گیرنده‌ای یافت نشد"); return; }
-        if (!confirm("ارسال کمپین؟\nNewsletter: "+(d.newsletterCount||0)+"\nRegistered: "+(d.registeredCount||0)+"\nDuplicates: "+(d.duplicatesRemoved||0)+"\nFinal: "+n)) return;
+        if (!confirm("ارسال کمپین؟\nNewsletter: "+(d.newsletterCount||0)+"\nRegistered: "+(d.registeredCount||0)+"\nDuplicates: "+(d.duplicatesRemoved||0)+"\nFinal: "+n+(p.productCodes&&p.productCodes.length?("\nProducts: "+p.productCodes.join(", ")):"") )) return;
         _cmpSending = true;
         var btn = $("#cmpSend"); if (btn) btn.disabled = true;
         engFetch("/api/admin/campaigns", { method:"POST", body: p }).then(function(created){
