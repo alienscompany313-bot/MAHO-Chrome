@@ -2492,7 +2492,7 @@
   if (form) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const value = (emailInput.value || "").trim();
+      const value = (emailInput.value || "").trim().toLowerCase();
       const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       if (!valid) {
         note.textContent = t("form.err");
@@ -2500,10 +2500,30 @@
         emailInput.focus();
         return;
       }
-      note.textContent = t("form.ok");
-      note.className = "form-note ok";
-      form.reset();
-      showToast(t("toast.news"));
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: value, source: "website" }),
+      })
+        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then((x) => {
+          if (!x.ok) {
+            note.textContent = t("form.err");
+            note.className = "form-note err";
+            return;
+          }
+          note.textContent = t("form.ok");
+          note.className = "form-note ok";
+          form.reset();
+          showToast(t("toast.news"));
+        })
+        .catch(() => {
+          note.textContent = t("form.err");
+          note.className = "form-note err";
+        })
+        .finally(() => { if (btn) btn.disabled = false; });
     });
   }
 

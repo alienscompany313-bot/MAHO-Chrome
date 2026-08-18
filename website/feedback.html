@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>نظر و امتیاز سفارش | MAHO Market</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .stars button{font-size:22px;background:none;border:0;cursor:pointer;color:#ccc}
+    .stars button.on{color:#c8a35f}
+    .field{margin:14px 0}
+    label{display:block;font-weight:700;margin-bottom:6px}
+    textarea,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit}
+  </style>
+</head>
+<body>
+  <main style="max-width:560px;margin:40px auto;padding:0 16px;font-family:Tahoma,Arial,sans-serif;line-height:1.8">
+    <h1>نظر و امتیاز سفارش</h1>
+    <p id="status">در حال بارگذاری…</p>
+    <form id="fbForm" hidden>
+      <div class="field">
+        <label>امتیاز راننده</label>
+        <div class="stars" id="driverStars" data-val="5"></div>
+      </div>
+      <div class="field">
+        <label>رضایت کلی</label>
+        <div class="stars" id="overallStars" data-val="5"></div>
+      </div>
+      <div id="productRatings"></div>
+      <div class="field">
+        <label>نظر شما (اختیاری)</label>
+        <textarea id="comment" rows="4" maxlength="2000"></textarea>
+      </div>
+      <button type="submit" class="btn btn-gold" id="submitBtn">ارسال نظر</button>
+    </form>
+    <div id="thanks" hidden>
+      <p>از بازخورد شما سپاسگزاریم.</p>
+      <p id="googleWrap" hidden><a id="googleLink" class="btn btn-gold" target="_blank" rel="noopener">ثبت نظر در Google</a></p>
+      <p><a href="/">بازگشت به فروشگاه</a></p>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var orderId = params.get("o") || "";
+      var token = params.get("t") || "";
+      var status = document.getElementById("status");
+      var form = document.getElementById("fbForm");
+      var items = [];
+      var minGoogle = 4;
+      var googleUrl = "";
+
+      function makeStars(el) {
+        el.innerHTML = "";
+        for (var i = 1; i <= 5; i++) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = "★";
+          b.setAttribute("data-n", String(i));
+          if (i <= (parseInt(el.getAttribute("data-val"), 10) || 5)) b.className = "on";
+          b.onclick = function () {
+            var n = parseInt(this.getAttribute("data-n"), 10);
+            el.setAttribute("data-val", String(n));
+            Array.prototype.forEach.call(el.querySelectorAll("button"), function (x) {
+              x.className = parseInt(x.getAttribute("data-n"), 10) <= n ? "on" : "";
+            });
+          };
+          el.appendChild(b);
+        }
+      }
+
+      if (!orderId || !token) {
+        status.textContent = "لینک نامعتبر است.";
+        return;
+      }
+
+      fetch("/api/feedback/" + encodeURIComponent(orderId) + "?token=" + encodeURIComponent(token))
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) {
+          if (!x.ok) { status.textContent = "لینک منقضی یا نامعتبر است."; return; }
+          if (x.d.feedback && x.d.feedback.status === "submitted") {
+            status.hidden = true;
+            document.getElementById("thanks").hidden = false;
+            return;
+          }
+          items = x.d.items || [];
+          googleUrl = x.d.googleReviewUrl || "";
+          minGoogle = x.d.minStarsForGoogleReview || 4;
+          status.textContent = "سفارش " + orderId;
+          form.hidden = false;
+          makeStars(document.getElementById("driverStars"));
+          makeStars(document.getElementById("overallStars"));
+          var box = document.getElementById("productRatings");
+          box.innerHTML = items.map(function (it, i) {
+            return '<div class="field"><label>امتیاز محصول: ' + (it.name || it.code || "") +
+              '</label><div class="stars" id="pr' + i + '" data-val="5" data-code="' + (it.code || "") +
+              '" data-name="' + (it.name || "") + '"></div></div>';
+          }).join("");
+          items.forEach(function (_, i) { makeStars(document.getElementById("pr" + i)); });
+        })
+        .catch(function () { status.textContent = "خطا در بارگذاری."; });
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var btn = document.getElementById("submitBtn");
+        btn.disabled = true;
+        var productRatings = items.map(function (it, i) {
+          var el = document.getElementById("pr" + i);
+          return {
+            code: el.getAttribute("data-code") || "",
+            name: el.getAttribute("data-name") || "",
+            rating: parseInt(el.getAttribute("data-val"), 10) || 5
+          };
+        });
+        var overall = parseInt(document.getElementById("overallStars").getAttribute("data-val"), 10) || 5;
+        fetch("/api/feedback/" + encodeURIComponent(orderId), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            token: token,
+            driverRating: parseInt(document.getElementById("driverStars").getAttribute("data-val"), 10) || 5,
+            overallSatisfaction: overall,
+            productRatings: productRatings,
+            comment: document.getElementById("comment").value || "",
+            googleReviewClicked: false
+          })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (x) {
+            if (!x.ok) { status.textContent = "ثبت نظر ناموفق بود."; btn.disabled = false; return; }
+            form.hidden = true;
+            status.hidden = true;
+            document.getElementById("thanks").hidden = false;
+            if (googleUrl && overall >= minGoogle) {
+              document.getElementById("googleWrap").hidden = false;
+              var a = document.getElementById("googleLink");
+              a.href = googleUrl;
+              a.addEventListener("click", function () {
+                fetch("/api/feedback/" + encodeURIComponent(orderId), {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ token: token, googleReviewClicked: true, driverRating: 5, overallSatisfaction: overall, productRatings: productRatings })
+                }).catch(function () {});
+              }, { once: true });
+            }
+          })
+          .catch(function () { status.textContent = "خطا در ارسال."; btn.disabled = false; });
+      });
+    })();
+  </script>
+</body>
+</html>

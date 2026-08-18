@@ -396,6 +396,51 @@ ${supportContactHtml(getStorePhone(), lang)}`,
     return orderStatus(to, order, "", order.lang);
   }
 
+  function campaignEmail(to, opts) {
+    opts = opts || {};
+    const subject = opts.subject || "MAHO Market";
+    const message = String(opts.message || "");
+    const paragraphs = message.split(/\n+/).map((p) => p.trim()).filter(Boolean)
+      .map((p) => `<p>${escapeHtml(p)}</p>`).join("");
+    const cta = (opts.ctaUrl && opts.ctaText)
+      ? ctaBtn(opts.ctaUrl, opts.ctaText)
+      : "";
+    const unsub = opts.unsubscribeUrl
+      ? `<p style="font-size:12px;color:#7a7368;margin-top:28px;text-align:center">
+<a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#7a7368">لغو عضویت / Unsubscribe</a></p>`
+      : "";
+    const html = wrap({
+      title: subject,
+      preheader: message.slice(0, 120),
+      bodyHtml: paragraphs + cta + unsub,
+      siteUrl, logoUrl,
+      lang: "fa",
+    });
+    const text = message + (opts.unsubscribeUrl ? "\n\nUnsubscribe: " + opts.unsubscribeUrl : "");
+    return send(to, subject, html, text);
+  }
+
+  function feedbackRequest(to, order, feedbackUrl, lang) {
+    const isEn = lang === "en";
+    const title = isEn ? "How was your delivery?" : "نظر شما درباره تحویل سفارش";
+    const html = wrap({
+      title,
+      preheader: title,
+      lang: isEn ? "en" : "fa",
+      siteUrl, logoUrl,
+      bodyHtml: isEn
+        ? `<p>Hi ${escapeHtml((order.customer && order.customer.name) || "")},</p>
+<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> was delivered. Please rate your experience:</p>
+${ctaBtn(feedbackUrl, "Leave feedback")}
+${supportContactHtml(getStorePhone(), "en")}`
+        : `<p>سلام ${escapeHtml((order.customer && order.customer.name) || "")}،</p>
+<p>سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> تحویل شد. لطفاً تجربه خود را امتیاز دهید:</p>
+${ctaBtn(feedbackUrl, "ثبت نظر و امتیاز")}
+${supportContactHtml(getStorePhone(), "fa")}`,
+    });
+    return send(to, "MAHO Market — " + title, html, feedbackUrl);
+  }
+
   return {
     send,
     verificationCode,
@@ -405,6 +450,8 @@ ${supportContactHtml(getStorePhone(), lang)}`,
     orderAdminNotify,
     orderStatus,
     hesabPayStatus,
+    campaignEmail,
+    feedbackRequest,
     statusLabelFa,
     payLabel,
     supportContactHtml,

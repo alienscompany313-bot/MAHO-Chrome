@@ -276,6 +276,15 @@ function mountV3(app, ctx) {
     if (mail() && o.customer && o.customer.email && (o.driverStatus === "delivered" || o.driverStatus === "failed" || o.driverStatus === "in_transit")) {
       mail().orderStatus(o.customer.email, o, (req.body || {}).note || o.deliveryFailReason || "", o.lang || "fa").catch(() => {});
     }
+    if (o.driverStatus === "delivered" && typeof ctx.maybeSendFeedbackRequest === "function") {
+      ctx.maybeSendFeedbackRequest({
+        db: ctx.db,
+        saveDb,
+        TOKEN_PEPPER: ctx.TOKEN_PEPPER,
+        SITE_URL: ctx.SITE_URL,
+        mail: mail(),
+      }, o);
+    }
     res.json({ order: driverFacingOrder(o) });
   });
 

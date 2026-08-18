@@ -229,6 +229,10 @@
         <button type="button" class="side-link" data-panel="orders" data-perm="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
         <button type="button" class="side-link" data-panel="returns" data-perm="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
         <button type="button" class="side-link" data-panel="customers" data-perm="customers"><span class="si">☺</span><span>مشتریان</span></button>
+        <button type="button" class="side-link" data-panel="subscribers" data-perm="marketing"><span class="si">✉</span><span>مشترکین ایمیل</span></button>
+        <button type="button" class="side-link" data-panel="campaigns" data-perm="marketing"><span class="si">📣</span><span>کمپین ایمیل</span></button>
+        <button type="button" class="side-link" data-panel="feedback" data-perm="marketing"><span class="si">★</span><span>بازخورد و امتیاز</span></button>
+        <button type="button" class="side-link" data-panel="driverperf" data-perm="drivers"><span class="si">📊</span><span>عملکرد راننده</span></button>
         <button type="button" class="side-link" data-panel="staff" data-perm="staff"><span class="si">👤</span><span>کارمندان</span></button>
         <button type="button" class="side-link" data-panel="drivers" data-perm="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
         <a class="side-link" href="pos.html" target="_blank" rel="noopener" data-perm="pos"><span class="si">🖥</span><span>POS (ورود مستقل)</span></a>
@@ -389,6 +393,206 @@
       </div>
     </div>
 
+    <!-- NEWSLETTER SUBSCRIBERS -->
+    <div class="card admin-panel" data-panel="subscribers">
+      <div class="row-between">
+        <div>
+          <h2>مشترکین ایمیل</h2>
+          <div class="sub">اعضای خبرنامه وب‌سایت — جستجو، فیلتر، فعال/غیرفعال و خروجی CSV/Excel.</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="subRefreshBtn">Refresh</button>
+      </div>
+      <div class="row-between" style="gap:8px;flex-wrap:wrap;margin:12px 0">
+        <input id="subSearch" placeholder="جستجوی ایمیل…" style="min-width:180px;flex:1">
+        <select id="subStatus"><option value="">همه</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        <span class="note" id="subCounts">۰ مشترک</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button type="button" class="btn btn-outline btn-sm" id="subSelectAll">Select All</button>
+        <button type="button" class="btn btn-outline btn-sm" id="subDeactivate">Deactivate</button>
+        <button type="button" class="btn btn-outline btn-sm" id="subReactivate">Reactivate</button>
+        <button type="button" class="btn btn-gold btn-sm" id="subExportCsv">Export CSV</button>
+        <button type="button" class="btn btn-gold btn-sm" id="subExportXls">Export Excel</button>
+        <select id="subExportScope">
+          <option value="filter">نتیجه فیلتر</option>
+          <option value="all">همه</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="selected">Selected</option>
+        </select>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th><input type="checkbox" id="subCheckAll"></th><th>Email</th><th>وضعیت</th><th>Source</th><th>تاریخ عضویت</th></tr></thead>
+          <tbody id="subBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMAIL CAMPAIGNS -->
+    <div class="card admin-panel" data-panel="campaigns">
+      <div class="row-between">
+        <div><h2>کمپین ایمیل</h2><div class="sub">ارسال ایمیل به مشترکین فعال؛ با پیش‌نمایش، تست و تأیید قبل از ارسال.</div></div>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>نام کمپین</label><input id="cmpName"></div>
+        <div class="field"><label>موضوع</label><input id="cmpSubject"></div>
+      </div>
+      <div class="field"><label>متن پیام</label><textarea id="cmpMessage" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>متن دکمه CTA (اختیاری)</label><input id="cmpCtaText"></div>
+        <div class="field"><label>لینک CTA (اختیاری)</label><input id="cmpCtaUrl" dir="ltr"></div>
+      </div>
+      <div class="field">
+        <label>گیرندگان</label>
+        <select id="cmpMode">
+          <option value="active">همه Active subscribers</option>
+          <option value="selected">Selected subscribers</option>
+          <option value="filter">نتیجه Search/Filter مشترکین</option>
+        </select>
+      </div>
+      <p class="note" id="cmpCountNote">تعداد گیرندگان: —</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <button type="button" class="btn btn-outline" id="cmpPreviewCount">شمارش گیرندگان</button>
+        <button type="button" class="btn btn-outline" id="cmpPreview">Preview</button>
+        <button type="button" class="btn btn-outline" id="cmpTest">Send Test Email</button>
+        <button type="button" class="btn btn-gold" id="cmpSend">Send Campaign</button>
+      </div>
+      <div id="cmpPreviewBox" class="note" style="display:none;border:1px solid var(--line);padding:12px;border-radius:12px;margin-bottom:12px"></div>
+      <h3 style="margin-top:18px">تاریخچه کمپین‌ها</h3>
+      <div id="cmpHistory"></div>
+    </div>
+
+    <!-- FEEDBACK ANALYTICS -->
+    <div class="card admin-panel" data-panel="feedback">
+      <div class="row-between">
+        <div><h2>بازخورد و امتیاز</h2><div class="sub">امتیاز راننده، محصول، رضایت کلی و درخواست Google Review پس از تحویل.</div></div>
+        <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>لینک Google Review</label><input id="engGoogleUrl" dir="ltr" placeholder="https://g.page/r/..."></div>
+        <div class="field"><label>حداقل ستاره برای نمایش Google Review</label><input id="engMinStars" type="number" min="1" max="5" value="4"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled" checked> ارسال درخواست بازخورد پس از تحویل</label>
+      <button type="button" class="btn btn-gold btn-sm" id="engSaveCfg">ذخیره تنظیمات</button>
+      <div id="fbStats" class="note" style="margin:14px 0"></div>
+      <div id="fbRecent"></div>
+    </div>
+
+    <!-- DRIVER PERFORMANCE -->
+    <div class="card admin-panel" data-panel="driverperf">
+      <div class="row-between">
+        <div><h2>عملکرد راننده</h2><div class="sub">تعداد تحویل، ناموفق و میانگین امتیاز از بازخورد مشتریان.</div></div>
+        <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+      </div>
+      <div style="overflow:auto;margin-top:12px">
+        <table>
+          <thead><tr><th>راننده</th><th>Assigned</th><th>Delivered</th><th>Failed</th><th>Avg Rating</th><th>Ratings</th></tr></thead>
+          <tbody id="dpBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NEWSLETTER SUBSCRIBERS -->
+    <div class="card admin-panel" data-panel="subscribers">
+      <div class="row-between">
+        <div>
+          <h2>مشترکین ایمیل</h2>
+          <div class="sub">اعضای خبرنامه وب‌سایت — جستجو، فیلتر، فعال/غیرفعال و خروجی CSV/Excel.</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="subRefreshBtn">Refresh</button>
+      </div>
+      <div class="row-between" style="gap:8px;flex-wrap:wrap;margin:12px 0">
+        <input id="subSearch" placeholder="جستجوی ایمیل…" style="min-width:180px;flex:1">
+        <select id="subStatus"><option value="">همه</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        <span class="note" id="subCounts">۰ مشترک</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button type="button" class="btn btn-outline btn-sm" id="subSelectAll">Select All</button>
+        <button type="button" class="btn btn-outline btn-sm" id="subDeactivate">Deactivate</button>
+        <button type="button" class="btn btn-outline btn-sm" id="subReactivate">Reactivate</button>
+        <button type="button" class="btn btn-gold btn-sm" id="subExportCsv">Export CSV</button>
+        <button type="button" class="btn btn-gold btn-sm" id="subExportXls">Export Excel</button>
+        <select id="subExportScope">
+          <option value="filter">نتیجه فیلتر</option>
+          <option value="all">همه</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="selected">Selected</option>
+        </select>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th><input type="checkbox" id="subCheckAll"></th><th>Email</th><th>وضعیت</th><th>Source</th><th>تاریخ عضویت</th></tr></thead>
+          <tbody id="subBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMAIL CAMPAIGNS -->
+    <div class="card admin-panel" data-panel="campaigns">
+      <div class="row-between">
+        <div><h2>کمپین ایمیل</h2><div class="sub">ارسال ایمیل به مشترکین فعال؛ با پیش‌نمایش، تست و تأیید قبل از ارسال.</div></div>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>نام کمپین</label><input id="cmpName"></div>
+        <div class="field"><label>موضوع</label><input id="cmpSubject"></div>
+      </div>
+      <div class="field"><label>متن پیام</label><textarea id="cmpMessage" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>متن دکمه CTA (اختیاری)</label><input id="cmpCtaText"></div>
+        <div class="field"><label>لینک CTA (اختیاری)</label><input id="cmpCtaUrl" dir="ltr"></div>
+      </div>
+      <div class="field">
+        <label>گیرندگان</label>
+        <select id="cmpMode">
+          <option value="active">همه Active subscribers</option>
+          <option value="selected">Selected subscribers</option>
+          <option value="filter">نتیجه Search/Filter مشترکین</option>
+        </select>
+      </div>
+      <p class="note" id="cmpCountNote">تعداد گیرندگان: —</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <button type="button" class="btn btn-outline" id="cmpPreviewCount">شمارش گیرندگان</button>
+        <button type="button" class="btn btn-outline" id="cmpPreview">Preview</button>
+        <button type="button" class="btn btn-outline" id="cmpTest">Send Test Email</button>
+        <button type="button" class="btn btn-gold" id="cmpSend">Send Campaign</button>
+      </div>
+      <div id="cmpPreviewBox" class="note" style="display:none;border:1px solid var(--line);padding:12px;border-radius:12px;margin-bottom:12px"></div>
+      <h3 style="margin-top:18px">تاریخچه کمپین‌ها</h3>
+      <div id="cmpHistory"></div>
+    </div>
+
+    <!-- FEEDBACK ANALYTICS -->
+    <div class="card admin-panel" data-panel="feedback">
+      <div class="row-between">
+        <div><h2>بازخورد و امتیاز</h2><div class="sub">امتیاز راننده، محصول، رضایت کلی و درخواست Google Review پس از تحویل.</div></div>
+        <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>لینک Google Review</label><input id="engGoogleUrl" dir="ltr" placeholder="https://g.page/r/..."></div>
+        <div class="field"><label>حداقل ستاره برای نمایش Google Review</label><input id="engMinStars" type="number" min="1" max="5" value="4"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled" checked> ارسال درخواست بازخورد پس از تحویل</label>
+      <button type="button" class="btn btn-gold btn-sm" id="engSaveCfg">ذخیره تنظیمات</button>
+      <div id="fbStats" class="note" style="margin:14px 0"></div>
+      <div id="fbRecent"></div>
+    </div>
+
+    <!-- DRIVER PERFORMANCE -->
+    <div class="card admin-panel" data-panel="driverperf">
+      <div class="row-between">
+        <div><h2>عملکرد راننده</h2><div class="sub">تعداد تحویل، ناموفق و میانگین امتیاز از بازخورد مشتریان.</div></div>
+        <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+      </div>
+      <div style="overflow:auto;margin-top:12px">
+        <table>
+          <thead><tr><th>راننده</th><th>Assigned</th><th>Delivered</th><th>Failed</th><th>Avg Rating</th><th>Ratings</th></tr></thead>
+          <tbody id="dpBody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- RETURNS -->
     <div class="card admin-panel" data-panel="returns">
       <div class="row-between">
@@ -405,7 +609,7 @@
         <button class="btn btn-gold btn-sm" id="addStaffBtn" type="button">+ کارمند</button>
       </div>
       <div id="staffBody"></div>
-      <p class="note">دسترسی‌ها: orders, delivery, pos, products, customers, returns, reports, settings, staff, drivers</p>
+      <p class="note">دسترسی‌ها: orders, delivery, pos, products, customers, returns, reports, settings, staff, drivers, marketing</p>
     </div>
 
     <div class="card admin-panel" data-panel="drivers">
@@ -911,7 +1115,8 @@
     var PANEL_PERM={
       products:"products", categories:"products", icons:"products", discounts:"products", showcase:"products",
       orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
-      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings"
+      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings",
+      subscribers:"marketing", campaigns:"marketing", feedback:"marketing", driverperf:"drivers"
     };
     function hasUiPerm(p){
       if(!p) return true;
@@ -1000,6 +1205,10 @@
       if(id==="orders"){ renderOrdersAdmin(); refreshBadges(); }
       if(id==="customers") renderCustomers();
       if(id==="reviews") renderReviewsAdmin();
+      if(id==="subscribers") loadSubscribers();
+      if(id==="campaigns") loadCampaigns();
+      if(id==="feedback") loadFeedbackPanel();
+      if(id==="driverperf") loadDriverPerf();
     }
     function initSidebar(){
       var nav=$("#sideNav"); if(!nav || nav.dataset.bound) return; nav.dataset.bound="1";
@@ -2693,6 +2902,208 @@
       state.products=state.products.concat(mapped);
       renderTable(); setDirty(true); toast("اجناس MAHO اضافه شد ✓");
     };
+
+    /* ---------- Customer Engagement (newsletter / campaigns / feedback) ---------- */
+    var _subRows = [];
+    var _cmpSending = false;
+    function adminAuthHeaders(){
+      var h = { Accept: "application/json" };
+      try {
+        var t = MAHOApi.getToken("admin");
+        if (t) h.Authorization = "Bearer " + t;
+      } catch (e) {}
+      return h;
+    }
+    function engFetch(path, opts){
+      opts = opts || {};
+      var headers = Object.assign(adminAuthHeaders(), opts.headers || {});
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      return fetch(path, {
+        method: opts.method || "GET",
+        headers: headers,
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, status: r.status, data: d, res: r }; }); });
+    }
+    function selectedSubIds(){
+      var ids = [];
+      document.querySelectorAll("#subBody input[data-sub]:checked").forEach(function(c){ ids.push(c.getAttribute("data-sub")); });
+      return ids;
+    }
+    function loadSubscribers(){
+      var q = ($("#subSearch") && $("#subSearch").value) || "";
+      var st = ($("#subStatus") && $("#subStatus").value) || "";
+      var url = "/api/admin/subscribers?q=" + encodeURIComponent(q) + (st ? "&status=" + encodeURIComponent(st) : "");
+      engFetch(url).then(function(x){
+        if (!x.ok) { toast("بارگذاری مشترکین ناموفق"); return; }
+        _subRows = x.data.subscribers || [];
+        if ($("#subCounts")) $("#subCounts").textContent = toFa(x.data.total||0) + " کل / " + toFa(x.data.active||0) + " فعال / " + toFa(x.data.inactive||0) + " غیرفعال";
+        var body = $("#subBody"); if (!body) return;
+        body.innerHTML = _subRows.map(function(s){
+          return '<tr><td><input type="checkbox" data-sub="'+esc(s.id)+'"></td>'+
+            '<td dir="ltr">'+esc(s.email)+'</td>'+
+            '<td>'+esc(s.status)+'</td>'+
+            '<td>'+esc(s.source||"")+'</td>'+
+            '<td>'+(s.createdAt?new Date(s.createdAt).toLocaleString("fa-AF"):"—")+'</td></tr>';
+        }).join("") || '<tr><td colspan="5" class="note">مشترکی نیست</td></tr>';
+      });
+    }
+    function bulkSubStatus(status){
+      var ids = selectedSubIds();
+      if (!ids.length) { alert("حداقل یک مشترک را انتخاب کنید"); return; }
+      var chain = Promise.resolve();
+      ids.forEach(function(id){
+        chain = chain.then(function(){ return engFetch("/api/admin/subscribers/"+encodeURIComponent(id)+"/status", { method:"POST", body:{ status: status } }); });
+      });
+      chain.then(function(){ loadSubscribers(); toast("به‌روز شد"); });
+    }
+    function exportSubs(format){
+      var scope = ($("#subExportScope") && $("#subExportScope").value) || "filter";
+      var q = ($("#subSearch") && $("#subSearch").value) || "";
+      var st = ($("#subStatus") && $("#subStatus").value) || "";
+      var url = "/api/admin/subscribers/export?format="+encodeURIComponent(format)+"&scope="+encodeURIComponent(scope)+
+        "&q="+encodeURIComponent(q)+(st?"&status="+encodeURIComponent(st):"");
+      if (scope === "selected") url += "&ids="+encodeURIComponent(selectedSubIds().join(","));
+      var a = document.createElement("a");
+      a.href = url + "&_t=" + Date.now();
+      /* need auth: fetch blob */
+      fetch(url, { headers: adminAuthHeaders() }).then(function(r){
+        if (!r.ok) throw new Error("export failed");
+        return r.blob();
+      }).then(function(blob){
+        var u = URL.createObjectURL(blob);
+        a.href = u;
+        a.download = format === "xls" ? "maho-subscribers.xls" : "maho-subscribers.csv";
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+      }).catch(function(){ alert("خروجی ناموفق"); });
+    }
+    if ($("#subRefreshBtn")) $("#subRefreshBtn").onclick = loadSubscribers;
+    if ($("#subSearch")) $("#subSearch").oninput = function(){ clearTimeout(window._subT); window._subT=setTimeout(loadSubscribers, 250); };
+    if ($("#subStatus")) $("#subStatus").onchange = loadSubscribers;
+    if ($("#subSelectAll")) $("#subSelectAll").onclick = function(){ document.querySelectorAll("#subBody input[data-sub]").forEach(function(c){ c.checked=true; }); };
+    if ($("#subCheckAll")) $("#subCheckAll").onchange = function(){ var on=this.checked; document.querySelectorAll("#subBody input[data-sub]").forEach(function(c){ c.checked=on; }); };
+    if ($("#subDeactivate")) $("#subDeactivate").onclick = function(){ bulkSubStatus("inactive"); };
+    if ($("#subReactivate")) $("#subReactivate").onclick = function(){ bulkSubStatus("active"); };
+    if ($("#subExportCsv")) $("#subExportCsv").onclick = function(){ exportSubs("csv"); };
+    if ($("#subExportXls")) $("#subExportXls").onclick = function(){ exportSubs("xls"); };
+
+    function cmpPayload(){
+      var mode = ($("#cmpMode") && $("#cmpMode").value) || "active";
+      var body = {
+        name: ($("#cmpName")&&$("#cmpName").value)||"",
+        subject: ($("#cmpSubject")&&$("#cmpSubject").value)||"",
+        message: ($("#cmpMessage")&&$("#cmpMessage").value)||"",
+        ctaText: ($("#cmpCtaText")&&$("#cmpCtaText").value)||"",
+        ctaUrl: ($("#cmpCtaUrl")&&$("#cmpCtaUrl").value)||"",
+        mode: mode
+      };
+      if (mode === "selected") body.ids = selectedSubIds();
+      if (mode === "filter") {
+        body.q = ($("#subSearch")&&$("#subSearch").value)||"";
+        body.status = ($("#subStatus")&&$("#subStatus").value)||"active";
+      }
+      return body;
+    }
+    function loadCampaigns(){
+      engFetch("/api/admin/campaigns").then(function(x){
+        var box = $("#cmpHistory"); if (!box) return;
+        var list = (x.data && x.data.campaigns) || [];
+        box.innerHTML = list.map(function(c){
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'+
+            '<b>'+esc(c.name)+'</b> — <span dir="ltr">'+esc(c.subject)+'</span>'+
+            '<div class="note">status: '+esc(c.status)+' · recipients: '+toFa(c.recipientCount||0)+
+            ' · ok: '+toFa(c.successCount||0)+' · fail: '+toFa(c.failedCount||0)+
+            (c.sentAt?(' · '+new Date(c.sentAt).toLocaleString("fa-AF")):"")+'</div></div>';
+        }).join("") || '<p class="note">کمپینی ثبت نشده</p>';
+      });
+    }
+    if ($("#cmpPreviewCount")) $("#cmpPreviewCount").onclick = function(){
+      engFetch("/api/admin/campaigns/preview-count", { method:"POST", body: cmpPayload() }).then(function(x){
+        if ($("#cmpCountNote")) $("#cmpCountNote").textContent = "تعداد گیرندگان: " + toFa((x.data&&x.data.recipientCount)||0);
+      });
+    };
+    if ($("#cmpPreview")) $("#cmpPreview").onclick = function(){
+      var p = cmpPayload();
+      var box = $("#cmpPreviewBox"); if (!box) return;
+      box.style.display = "block";
+      box.innerHTML = "<b>"+esc(p.subject)+"</b><hr>"+esc(p.message).replace(/\n/g,"<br>")+
+        (p.ctaText&&p.ctaUrl?('<p><a href="'+esc(p.ctaUrl)+'">'+esc(p.ctaText)+'</a></p>'):"");
+    };
+    if ($("#cmpTest")) $("#cmpTest").onclick = function(){
+      var to = prompt("ایمیل تست را وارد کنید:");
+      if (!to) return;
+      var p = cmpPayload(); p.to = to;
+      engFetch("/api/admin/campaigns/test", { method:"POST", body: p }).then(function(x){
+        alert(x.ok ? "ایمیل تست ارسال شد (اگر SMTP تنظیم باشد)" : ("ناموفق: "+((x.data&&x.data.error)||x.status)));
+      });
+    };
+    if ($("#cmpSend")) $("#cmpSend").onclick = function(){
+      if (_cmpSending) return;
+      var p = cmpPayload();
+      if (!p.name || !p.subject || !p.message) { alert("نام، موضوع و متن الزامی است"); return; }
+      engFetch("/api/admin/campaigns/preview-count", { method:"POST", body: p }).then(function(x){
+        var n = (x.data && x.data.recipientCount) || 0;
+        if (!n) { alert("گیرنده‌ای یافت نشد"); return; }
+        if (!confirm("ارسال کمپین به "+n+" مشترک فعال؟")) return;
+        _cmpSending = true;
+        var btn = $("#cmpSend"); if (btn) btn.disabled = true;
+        engFetch("/api/admin/campaigns", { method:"POST", body: p }).then(function(created){
+          if (!created.ok) { alert("ساخت کمپین ناموفق"); return null; }
+          var id = created.data.campaign.id;
+          return engFetch("/api/admin/campaigns/"+encodeURIComponent(id)+"/send", { method:"POST", body: p });
+        }).then(function(sent){
+          if (!sent) return;
+          alert(sent.ok ? "ارسال شروع شد" : ("خطا: "+((sent.data&&sent.data.error)||sent.status)));
+          loadCampaigns();
+        }).finally(function(){ _cmpSending=false; if(btn) btn.disabled=false; });
+      });
+    };
+
+    function loadFeedbackPanel(){
+      engFetch("/api/admin/engagement-config").then(function(x){
+        var e = (x.data && x.data.engagement) || {};
+        if ($("#engGoogleUrl")) $("#engGoogleUrl").value = e.googleReviewUrl || "";
+        if ($("#engMinStars")) $("#engMinStars").value = e.minStarsForGoogleReview || 4;
+        if ($("#engFbEnabled")) $("#engFbEnabled").checked = e.feedbackRequestEnabled !== false;
+      });
+      engFetch("/api/admin/feedback").then(function(x){
+        if (!x.ok) return;
+        var a = x.data.analytics || {};
+        if ($("#fbStats")) {
+          $("#fbStats").innerHTML = "بازخورد ثبت‌شده: "+toFa(a.totalSubmitted||0)+
+            " · میانگین رضایت: "+(a.avgOverall!=null?a.avgOverall:"—")+
+            " · میانگین راننده: "+(a.avgDriver!=null?a.avgDriver:"—")+
+            " · کلیک Google Review: "+toFa(a.googleReviewClicks||0);
+        }
+        var box = $("#fbRecent"); if (!box) return;
+        var rows = a.recent || x.data.feedback || [];
+        box.innerHTML = rows.map(function(f){
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'+
+            '<b dir="ltr">'+esc(f.orderId)+'</b> — راننده: '+esc(f.driverName||"—")+' ('+toFa(f.driverRating||0)+'★) · رضایت: '+toFa(f.overallSatisfaction||0)+'★'+
+            '<div class="note">'+esc(f.comment||"")+'</div></div>';
+        }).join("") || '<p class="note">بازخوردی نیست</p>';
+      });
+    }
+    if ($("#fbRefreshBtn")) $("#fbRefreshBtn").onclick = loadFeedbackPanel;
+    if ($("#engSaveCfg")) $("#engSaveCfg").onclick = function(){
+      engFetch("/api/admin/engagement-config", { method:"PUT", body:{
+        engagement: {
+          googleReviewUrl: ($("#engGoogleUrl")&&$("#engGoogleUrl").value)||"",
+          minStarsForGoogleReview: Number(($("#engMinStars")&&$("#engMinStars").value)||4),
+          feedbackRequestEnabled: !!($("#engFbEnabled")&&$("#engFbEnabled").checked)
+        }
+      }}).then(function(x){ toast(x.ok?"ذخیره شد":"ناموفق"); });
+    };
+    function loadDriverPerf(){
+      engFetch("/api/admin/driver-performance").then(function(x){
+        var body = $("#dpBody"); if (!body) return;
+        var list = (x.data && x.data.drivers) || [];
+        body.innerHTML = list.map(function(d){
+          return '<tr><td>'+esc(d.name)+'</td><td>'+toFa(d.assigned||0)+'</td><td>'+toFa(d.delivered||0)+'</td><td>'+toFa(d.failed||0)+'</td><td>'+(d.avgRating!=null?d.avgRating:"—")+'</td><td>'+toFa(d.ratingCount||0)+'</td></tr>';
+        }).join("") || '<tr><td colspan="6" class="note">داده‌ای نیست</td></tr>';
+      });
+    }
+    if ($("#dpRefreshBtn")) $("#dpRefreshBtn").onclick = loadDriverPerf;
 
     $("#logoutBtn").onclick=function(){
       if(dirty && !confirm("تغییرات ذخیره‌نشده دارید. بدون ذخیره خارج شوید؟")) return;
