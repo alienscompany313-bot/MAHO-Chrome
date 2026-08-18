@@ -402,7 +402,25 @@ ${supportContactHtml(getStorePhone(), lang)}`,
     const message = String(opts.message || "");
     const paragraphs = message.split(/\n+/).map((p) => p.trim()).filter(Boolean)
       .map((p) => `<p>${escapeHtml(p)}</p>`).join("");
-    const cta = (opts.ctaUrl && opts.ctaText)
+    const products = Array.isArray(opts.products) ? opts.products : [];
+    const base = (siteUrl || "https://mahomarket.com").replace(/\/+$/, "");
+    const productHtml = products.map((p) => {
+      const url = p.url || (base + "/p/" + encodeURIComponent(p.code || ""));
+      const img = p.image
+        ? `<img src="${escapeHtml(p.image)}" alt="" style="width:100%;max-width:220px;height:auto;border-radius:10px;display:block;margin:0 auto 10px">`
+        : "";
+      const priceLine = p.oldPrice
+        ? `<span style="text-decoration:line-through;color:#7a7368;margin-inline-end:8px">${escapeHtml(moneyAf(p.oldPrice, "fa"))}</span><strong>${escapeHtml(moneyAf(p.price, "fa"))}</strong>`
+        : `<strong>${escapeHtml(moneyAf(p.price, "fa"))}</strong>`;
+      return `<div style="border:1px solid #e6e0d4;border-radius:12px;padding:14px;margin:14px 0;text-align:center">
+${img}
+<div style="font-weight:800;font-size:16px;margin-bottom:4px">${escapeHtml(p.name || "")}</div>
+<div style="font-size:12px;color:#7a7368;direction:ltr">${escapeHtml(p.code || "")}</div>
+<div style="margin:8px 0">${priceLine}</div>
+${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
+</div>`;
+    }).join("");
+    const cta = (!products.length && opts.ctaUrl && opts.ctaText)
       ? ctaBtn(opts.ctaUrl, opts.ctaText)
       : "";
     const unsub = opts.unsubscribeUrl
@@ -412,7 +430,7 @@ ${supportContactHtml(getStorePhone(), lang)}`,
     const html = wrap({
       title: subject,
       preheader: message.slice(0, 120),
-      bodyHtml: paragraphs + cta + unsub,
+      bodyHtml: paragraphs + productHtml + cta + unsub,
       siteUrl, logoUrl,
       lang: "fa",
     });
@@ -420,9 +438,96 @@ ${supportContactHtml(getStorePhone(), lang)}`,
     return send(to, subject, html, text);
   }
 
+  function pickupReady(to, order, store, langArg) {
+    const lang = normalizeLang(langArg, order);
+    const isEn = lang === "en";
+    const c = order.customer || {};
+    const s = store || {};
+    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل است | MAHO";
+    const html = wrap({
+      title,
+      preheader: title,
+      siteUrl, logoUrl, lang,
+      bodyHtml: isEn
+        ? `<p>Hello ${escapeHtml(c.name || "")},</p>
+<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready. You can pick it up at the MAHO store.</p>
+<p><strong>Store:</strong> ${escapeHtml(s.name || "MAHO")}<br>
+<strong>Address:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
+${s.hours ? "<br><strong>Hours:</strong> " + escapeHtml(s.hours) : ""}</p>
+${supportContactHtml(getStorePhone(), lang)}`
+        : `<p>سلام ${escapeHtml(c.name || "")}،</p>
+<p>سفارش شما آماده است و می‌توانید آن را از فروشگاه MAHO تحویل بگیرید.</p>
+<p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>فروشگاه:</strong> ${escapeHtml(s.name || "MAHO")}<br>
+<strong>آدرس:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
+${s.hours ? "<br><strong>ساعات کاری:</strong> " + escapeHtml(s.hours) : ""}</p>
+${supportContactHtml(getStorePhone(), lang)}`,
+    });
+    return send(to, title, html);
+  }
+
+  function pickupCompleted(to, order, langArg) {
+    const lang = normalizeLang(langArg, order);
+    const isEn = lang === "en";
+    const c = order.customer || {};
+    const title = isEn ? "Your order was picked up | MAHO" : "سفارش شما تحویل شد | MAHO";
+    const html = wrap({
+      title,
+      preheader: title,
+      siteUrl, logoUrl, lang,
+      bodyHtml: isEn
+        ? `<p>Hello ${escapeHtml(c.name || "")},</p>
+<p>Thank you for shopping with us. Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> was handed over at the MAHO store.</p>
+${supportContactHtml(getStorePhone(), lang)}`
+        : `<p>سلام ${escapeHtml(c.name || "")}،</p>
+<p>از خرید شما سپاسگزاریم. سفارش شما از فروشگاه MAHO تحویل داده شد.</p>
+<p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span></p>
+${supportContactHtml(getStorePhone(), lang)}`,
+    });
+    return send(to, title, html);
+  }
+
+  function giveawayWinner(to, opts) {
+    opts = opts || {};
+    const title = "تبریک! برنده قرعه‌کشی MAHO";
+    const html = wrap({
+      title,
+      preheader: title,
+      siteUrl, logoUrl, lang: "fa",
+      bodyHtml: `<p>سلام ${escapeHtml(opts.name || "")}،</p>
+<p>تبریک! شما در قرعه‌کشی <strong>${escapeHtml(opts.title || "")}</strong> برنده شدید.</p>
+<p>جایزه: <strong>${escapeHtml(opts.prize || "")}</strong></p>
+${supportContactHtml(getStorePhone(), "fa")}`,
+    });
+    return send(to, "MAHO Market — " + title, html);
+  }
+
+  function googleReviewInvite(to, order, reviewUrl, langArg) {
+    const lang = normalizeLang(langArg, order);
+    const isEn = lang === "en";
+    const title = isEn ? "Share your experience on Google" : "نظر خود را در Google ثبت کنید";
+    const html = wrap({
+      title,
+      preheader: title,
+      siteUrl, logoUrl, lang,
+      bodyHtml: isEn
+        ? `<p>Hello ${escapeHtml((order.customer && order.customer.name) || "")},</p>
+<p>Thank you for your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong>. If you wish, you can leave a Google review:</p>
+${ctaBtn(reviewUrl, "Leave a Google review")}
+${supportContactHtml(getStorePhone(), lang)}`
+        : `<p>سلام ${escapeHtml((order.customer && order.customer.name) || "")}،</p>
+<p>از سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> سپاسگزاریم. در صورت تمایل می‌توانید نظر خود را در Google ثبت کنید:</p>
+${ctaBtn(reviewUrl, "ثبت نظر در Google")}
+${supportContactHtml(getStorePhone(), lang)}`,
+    });
+    return send(to, "MAHO Market — " + title, html, reviewUrl);
+  }
+
   function feedbackRequest(to, order, feedbackUrl, lang) {
     const isEn = lang === "en";
-    const title = isEn ? "How was your delivery?" : "نظر شما درباره تحویل سفارش";
+    const title = isEn ? "How was your experience?" : "نظر شما درباره سفارش";
     const html = wrap({
       title,
       preheader: title,
@@ -430,11 +535,11 @@ ${supportContactHtml(getStorePhone(), lang)}`,
       siteUrl, logoUrl,
       bodyHtml: isEn
         ? `<p>Hi ${escapeHtml((order.customer && order.customer.name) || "")},</p>
-<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> was delivered. Please rate your experience:</p>
+<p>Thank you for your purchase. Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is complete. Please rate your experience:</p>
 ${ctaBtn(feedbackUrl, "Leave feedback")}
 ${supportContactHtml(getStorePhone(), "en")}`
         : `<p>سلام ${escapeHtml((order.customer && order.customer.name) || "")}،</p>
-<p>سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> تحویل شد. لطفاً تجربه خود را امتیاز دهید:</p>
+<p>از خرید شما سپاسگزاریم. سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> تکمیل شد. لطفاً تجربه خود را امتیاز دهید:</p>
 ${ctaBtn(feedbackUrl, "ثبت نظر و امتیاز")}
 ${supportContactHtml(getStorePhone(), "fa")}`,
     });
@@ -452,6 +557,10 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     hesabPayStatus,
     campaignEmail,
     feedbackRequest,
+    pickupReady,
+    pickupCompleted,
+    giveawayWinner,
+    googleReviewInvite,
     statusLabelFa,
     payLabel,
     supportContactHtml,

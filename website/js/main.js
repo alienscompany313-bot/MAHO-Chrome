@@ -1114,14 +1114,14 @@
       apiToken: token || (window.MAHOApi && MAHOApi.getToken("user")) || "",
     };
   }
-  function orderStatusText(code) {
-    if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG);
+  function orderStatusText(code, order) {
+    if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG, order);
     return code || "";
   }
   function withApiOrderStatus(order) {
     if (!order) return order;
     const code = (window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(order.status) : order.status;
-    return Object.assign({}, order, { status: orderStatusText(code), statusCode: code });
+    return Object.assign({}, order, { status: orderStatusText(code, order), statusCode: code });
   }
   function isNormalDeliveryOrder(o) {
     const d = (o && o.delivery) || {};
@@ -1419,7 +1419,9 @@
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
         const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
         const canCancel = !!cancelUi.canCancel;
-        const canReturn = code === "delivered";
+        const canReturn = code === "delivered" && !o.returnRequest && (
+          o.lateReturnApproved || !o.returnDeadlineAt || Date.now() <= Number(o.returnDeadlineAt)
+        );
         let cancelMeta = "";
         if (canCancel && cancelUi.deadline) {
           cancelMeta = `<div class="cancel-countdown note" style="margin-top:6px">${t("orders.cancelCountdown")} <span class="cancel-countdown-time" dir="ltr">${formatCancelCountdown(cancelUi.remainingMs)}</span></div>`;
@@ -1575,7 +1577,7 @@
       form.style.cssText = "margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--cream,#fbf8f1)";
       form.innerHTML = `
         <label class="note">${t("orders.returnReason")}</label>
-        <input class="ctrl rf-reason" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
+        <select class="ctrl rf-reason-id" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"><option value="">…</option></select>
         <label class="note">${t("orders.returnDetails")}</label>
         <textarea class="ctrl rf-details" rows="2" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"></textarea>
         <label class="note">${t("orders.returnMethod")}</label>
@@ -1593,16 +1595,28 @@
         <button type="button" class="btn btn-gold btn-sm rf-submit">${t("orders.returnSubmit")}</button>
         <p class="qv-msg rf-msg" style="min-height:18px"></p>`;
       card.appendChild(form);
+      fetch("/api/return-reasons").then(function(r){ return r.json(); }).then(function(d){
+        var sel = form.querySelector(".rf-reason-id");
+        var reasons = (d && d.reasons) || [];
+        sel.innerHTML = '<option value="">' + (LANG === "en" ? "Select reason" : "انتخاب دلیل") + "</option>" +
+          reasons.map(function(r){
+            return '<option value="' + r.id + '" data-note="' + (r.requireNote ? "1" : "0") + '">' + (LANG === "en" && r.titleEn ? r.titleEn : r.title) + "</option>";
+          }).join("");
+      }).catch(function(){});
       const methodEl = form.querySelector(".rf-method");
       const custBox = form.querySelector(".rf-cust");
       methodEl.addEventListener("change", () => { custBox.hidden = methodEl.value !== "pickup_customer"; });
       form.querySelector(".rf-submit").addEventListener("click", () => {
-        const reason = (form.querySelector(".rf-reason").value || "").trim();
+        const reasonSel = form.querySelector(".rf-reason-id");
+        const reasonId = (reasonSel && reasonSel.value) || "";
+        const reason = reasonSel && reasonSel.selectedOptions[0] ? reasonSel.selectedOptions[0].textContent : "";
         const details = (form.querySelector(".rf-details").value || "").trim();
         const method = methodEl.value === "pickup_customer" ? "pickup_customer" : "pickup_store";
         const msg = form.querySelector(".rf-msg");
-        if (!reason) { msg.className = "qv-msg"; msg.textContent = t("orders.returnNeedReason"); return; }
-        const body = { reason: reason, details: details, method: method };
+        if (!reasonId && !reason) { msg.className = "qv-msg"; msg.textContent = t("orders.returnNeedReason"); return; }
+        const needNote = reasonSel && reasonSel.selectedOptions[0] && reasonSel.selectedOptions[0].getAttribute("data-note") === "1";
+        if (needNote && !details) { msg.className = "qv-msg"; msg.textContent = LANG === "en" ? "Please add details" : "توضیحات بیشتر الزامی است"; return; }
+        const body = { reason: reason, reasonId: reasonId, details: details, method: method };
         if (method === "pickup_customer") {
           body.address = (form.querySelector(".rf-address").value || "").trim() || addr;
           body.phone = (form.querySelector(".rf-phone").value || "").trim() || phone;
@@ -1885,12 +1899,13 @@
     const addr = readAddr("su");
     const address = composeAddress(addr);
     const pass = ($("#su_pass").value || "").trim();
+    const marketingConsent = !!(document.getElementById("su_marketing") && document.getElementById("su_marketing").checked);
     if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
     if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
     if (apiOnline && window.MAHOApi) {
       acctMsg(t("acct.sending"), true);
-      MAHOApi.register({ name: name, phone: phone, email: email, address: address, addr: addr, password: pass }).then((res) => {
-        pendingSignup = { name: name, phone: phone, email: email, addr: addr, address: address, pass: pass, viaApi: true, code: res.devCode || "" };
+      MAHOApi.register({ name: name, phone: phone, email: email, address: address, addr: addr, password: pass, marketingConsent: marketingConsent }).then((res) => {
+        pendingSignup = { name: name, phone: phone, email: email, addr: addr, address: address, pass: pass, marketingConsent: marketingConsent, viaApi: true, code: res.devCode || "" };
         showSignupStep("verify");
         if (res.devCode) acctMsg(t("acct.demoNote").replace("{code}", res.devCode), true);
         else acctMsg(t("acct.codeSent"), true);

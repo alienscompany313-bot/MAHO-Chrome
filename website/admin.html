@@ -142,10 +142,11 @@
     .admin-sidebar.collapsed .side-link span,.admin-sidebar.collapsed .side-title{display:none}
     .side-title{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.04em;padding:6px 10px 10px}
     .side-nav{display:flex;flex-direction:column;gap:4px}
-    .side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 13px inherit;padding:11px 12px;border-radius:10px;cursor:pointer;min-height:44px}
+    .side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 15.5px/1.45 inherit;padding:12px 14px;border-radius:10px;cursor:pointer;min-height:46px;letter-spacing:0}
     .side-link:hover,.side-link:focus-visible{background:rgba(200,163,95,.18);outline:2px solid var(--gold);outline-offset:1px}
-    .side-link.active{background:var(--gold);color:#1a1509}
-    .side-link .si{width:22px;text-align:center;flex-shrink:0}
+    .side-link.active{background:var(--gold);color:#1a1509;font-weight:800}
+    .side-link .si{width:24px;text-align:center;flex-shrink:0;font-size:16px}
+    .side-title{font-size:13.5px;font-weight:700;color:#c8a35f;padding:14px 12px 6px;letter-spacing:.02em}
     .side-collapse{width:100%;margin-top:14px;border-color:rgba(255,255,255,.25)}
     .admin-main{flex:1;min-width:0;margin:22px auto;padding:0 16px 96px;max-width:1050px}
     .admin-panel{display:none}
@@ -232,6 +233,8 @@
         <button type="button" class="side-link" data-panel="subscribers" data-perm="marketing"><span class="si">✉</span><span>مشترکین ایمیل</span></button>
         <button type="button" class="side-link" data-panel="campaigns" data-perm="marketing"><span class="si">📣</span><span>کمپین ایمیل</span></button>
         <button type="button" class="side-link" data-panel="feedback" data-perm="marketing"><span class="si">★</span><span>بازخورد و امتیاز</span></button>
+        <button type="button" class="side-link" data-panel="giveaways" data-perm="marketing"><span class="si">🎁</span><span>قرعه‌کشی مشتریان</span></button>
+        <button type="button" class="side-link" data-panel="returnreasons" data-perm="returns"><span class="si">📋</span><span>دلایل برگشتی</span></button>
         <button type="button" class="side-link" data-panel="driverperf" data-perm="drivers"><span class="si">📊</span><span>عملکرد راننده</span></button>
         <button type="button" class="side-link" data-panel="staff" data-perm="staff"><span class="si">👤</span><span>کارمندان</span></button>
         <button type="button" class="side-link" data-panel="drivers" data-perm="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
@@ -438,6 +441,22 @@
         <div class="field"><label>نام کمپین</label><input id="cmpName"></div>
         <div class="field"><label>موضوع</label><input id="cmpSubject"></div>
       </div>
+      <div class="grid2">
+        <div class="field"><label>نوع کمپین</label>
+          <select id="cmpType">
+            <option value="general">General Promotion</option>
+            <option value="single_product">Single Product</option>
+            <option value="multiple_products">Multiple Products</option>
+            <option value="discount">Discount</option>
+            <option value="announcement">Announcement</option>
+          </select>
+        </div>
+        <div class="field"><label>محصولات پیشنهادی</label>
+          <select id="cmpProductPick" multiple size="5" dir="ltr" style="width:100%;min-height:110px"></select>
+          <p class="note">از لیست محصولات Active انتخاب کنید (Ctrl/Cmd برای چندتایی). کدها: <span id="cmpProductsHint" dir="ltr">—</span></p>
+          <input type="hidden" id="cmpProducts" value="">
+        </div>
+      </div>
       <div class="field"><label>متن پیام</label><textarea id="cmpMessage" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea></div>
       <div class="grid2">
         <div class="field"><label>متن دکمه CTA (اختیاری)</label><input id="cmpCtaText"></div>
@@ -446,16 +465,19 @@
       <div class="field">
         <label>گیرندگان</label>
         <select id="cmpMode">
-          <option value="active">همه Active subscribers</option>
+          <option value="newsletter">مشترکین فعال Newsletter</option>
+          <option value="registered">مشتریان ثبت‌نام‌شده (با رضایت)</option>
+          <option value="both">هر دو گروه</option>
           <option value="selected">Selected subscribers</option>
           <option value="filter">نتیجه Search/Filter مشترکین</option>
         </select>
       </div>
-      <p class="note" id="cmpCountNote">تعداد گیرندگان: —</p>
+      <p class="note" id="cmpCountNote">Newsletter: — · Registered: — · Duplicates: — · Final: —</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
         <button type="button" class="btn btn-outline" id="cmpPreviewCount">شمارش گیرندگان</button>
         <button type="button" class="btn btn-outline" id="cmpPreview">Preview</button>
         <button type="button" class="btn btn-outline" id="cmpTest">Send Test Email</button>
+        <button type="button" class="btn btn-outline" id="cmpExport">Export History CSV</button>
         <button type="button" class="btn btn-gold" id="cmpSend">Send Campaign</button>
       </div>
       <div id="cmpPreviewBox" class="note" style="display:none;border:1px solid var(--line);padding:12px;border-radius:12px;margin-bottom:12px"></div>
@@ -463,15 +485,76 @@
       <div id="cmpHistory"></div>
     </div>
 
+    <!-- GIVEAWAYS -->
+    <div class="card admin-panel" data-panel="giveaways">
+      <div class="row-between">
+        <div><h2>قرعه‌کشی مشتریان</h2><div class="sub">تعیین واجدین شرایط، پیش‌نمایش، Draw امن، و تاریخچه.</div></div>
+        <button type="button" class="btn btn-outline" id="gwRefreshBtn">Refresh</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>عنوان</label><input id="gwTitle"></div>
+        <div class="field"><label>جایزه</label><input id="gwPrize"></div>
+      </div>
+      <div class="field"><label>توضیح</label><textarea id="gwDesc" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>تعداد برندگان</label><input id="gwWinners" type="number" min="1" value="1"></div>
+        <div class="field"><label>Eligibility</label>
+          <select id="gwRule">
+            <option value="registered">Registered customers</option>
+            <option value="newsletter">Active newsletter</option>
+            <option value="both">Both</option>
+            <option value="delivered">At least one Delivered order</option>
+            <option value="purchased_range">Purchased in date range</option>
+            <option value="min_purchase">Minimum purchase amount</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2" id="gwMetaRow">
+        <div class="field"><label>از تاریخ (purchased_range)</label><input id="gwFrom" type="date"></div>
+        <div class="field"><label>تا تاریخ</label><input id="gwTo" type="date"></div>
+      </div>
+      <div class="field"><label>حداقل مبلغ خرید (min_purchase)</label><input id="gwMinAmt" type="number" min="0" step="1" placeholder="AFN"></div>
+      <p class="note" id="gwPreviewNote">Eligible: —</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <button type="button" class="btn btn-outline" id="gwPreview">پیش‌نمایش واجدین</button>
+        <button type="button" class="btn btn-gold" id="gwCreate">ایجاد قرعه‌کشی</button>
+        <a class="btn btn-outline" href="/api/admin/giveaways/export" id="gwExportLink">Export CSV</a>
+      </div>
+      <div id="gwList"></div>
+    </div>
+
+    <!-- RETURN REASONS -->
+    <div class="card admin-panel" data-panel="returnreasons">
+      <div class="row-between">
+        <div><h2>دلایل برگشتی</h2><div class="sub">مدیریت دلایل Active برای مشتری + آمار دلایل.</div></div>
+        <button type="button" class="btn btn-outline" id="rrRefreshBtn">Refresh</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>عنوان دلیل</label><input id="rrTitle"></div>
+        <div class="field"><label>Title EN</label><input id="rrTitleEn" dir="ltr"></div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="rrRequireNote"> نیاز به توضیح بیشتر</label>
+      <button type="button" class="btn btn-gold btn-sm" id="rrAddBtn">افزودن دلیل</button>
+      <div id="rrList" style="margin-top:14px"></div>
+      <h3 style="margin-top:18px">بیشترین دلایل برگشتی</h3>
+      <div id="rrAnalytics" class="note"></div>
+      <div class="field" style="margin-top:16px"><label>مهلت برگشت کالا (روز)</label><input id="retWindowDays" type="number" min="0" max="365" value="7"></div>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="retPhotoReq"> عکس Pickup برگشتی الزامی (پیش‌فرض)</label>
+      <button type="button" class="btn btn-outline btn-sm" id="retCfgSave">ذخیره تنظیمات برگشت</button>
+    </div>
+
     <!-- FEEDBACK ANALYTICS -->
     <div class="card admin-panel" data-panel="feedback">
       <div class="row-between">
         <div><h2>بازخورد و امتیاز</h2><div class="sub">امتیاز راننده، محصول، رضایت کلی و درخواست Google Review پس از تحویل.</div></div>
-        <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" id="fbExportBtn">Export CSV</button>
+          <button type="button" class="btn btn-outline" id="fbRefreshBtn">Refresh</button>
+        </div>
       </div>
       <div class="grid2" style="margin-top:12px">
         <div class="field"><label>لینک Google Review</label><input id="engGoogleUrl" dir="ltr" placeholder="https://g.page/r/..."></div>
-        <div class="field"><label>حداقل ستاره برای نمایش Google Review</label><input id="engMinStars" type="number" min="1" max="5" value="4"></div>
+        <div class="field"><label>یادداشت</label><p class="note" style="margin:8px 0 0">CTA گوگل برای همه مشتریان با لینک تنظیم‌شده نمایش داده می‌شود (مستقل از امتیاز داخلی؛ اجباری نیست).</p></div>
       </div>
       <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" id="engFbEnabled"> ارسال خودکار درخواست بازخورد هنگام تحویل (اختیاری — پیش‌فرض دستی از صفحه سفارش)</label>
       <button type="button" class="btn btn-gold btn-sm" id="engSaveCfg">ذخیره تنظیمات</button>
@@ -483,7 +566,10 @@
     <div class="card admin-panel" data-panel="driverperf">
       <div class="row-between">
         <div><h2>عملکرد راننده</h2><div class="sub">تعداد تحویل، ناموفق و میانگین امتیاز از بازخورد مشتریان.</div></div>
-        <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" id="dpExportBtn">Export CSV</button>
+          <button type="button" class="btn btn-outline" id="dpRefreshBtn">Refresh</button>
+        </div>
       </div>
       <div style="overflow:auto;margin-top:12px">
         <table>
@@ -497,7 +583,10 @@
     <div class="card admin-panel" data-panel="returns">
       <div class="row-between">
         <div><h2>برگشتی‌ها</h2><div class="sub">درخواست‌های برگشت مشتریان — تأیید، رد یا تکمیل. سفارش‌ها و موجودی فقط با عملیات مجاز تغییر می‌کنند.</div></div>
-        <button class="btn btn-outline btn-sm" id="refreshReturns" type="button">بازخوانی</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" id="exportReturnsCsv" type="button">Export CSV</button>
+          <button class="btn btn-outline btn-sm" id="refreshReturns" type="button">بازخوانی</button>
+        </div>
       </div>
       <div id="returnsBody"></div>
     </div>
@@ -1016,7 +1105,7 @@
       products:"products", categories:"products", icons:"products", discounts:"products", showcase:"products",
       orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
       poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings",
-      subscribers:"marketing", campaigns:"marketing", feedback:"marketing", driverperf:"drivers"
+      subscribers:"marketing", campaigns:"marketing", feedback:"marketing", giveaways:"marketing", returnreasons:"returns", driverperf:"drivers"
     };
     function hasUiPerm(p){
       if(!p) return true;
@@ -1106,8 +1195,10 @@
       if(id==="customers") renderCustomers();
       if(id==="reviews") renderReviewsAdmin();
       if(id==="subscribers") loadSubscribers();
-      if(id==="campaigns") loadCampaigns();
+      if(id==="campaigns") { fillCmpProducts(); loadCampaigns(); }
       if(id==="feedback") loadFeedbackPanel();
+      if(id==="giveaways") loadGiveaways();
+      if(id==="returnreasons") loadReturnReasons();
       if(id==="driverperf") loadDriverPerf();
     }
     function initSidebar(){
@@ -1180,6 +1271,8 @@
     function renderReturnsAdmin(){
       var box=$("#returnsBody"); if(!box) return;
       requireBackend(function(){
+        var loadDrivers=MAHOApi.listDrivers?MAHOApi.listDrivers().then(function(r){ window._driverList=r.drivers||[]; }).catch(function(){ window._driverList=[]; }):Promise.resolve();
+        loadDrivers.then(function(){
         MAHOApi.adminReturns().then(function(res){
           var list=res.returns||[];
           if(!list.length){ box.innerHTML='<p class="note">درخواست برگشتی نیست.</p>'; return; }
@@ -1197,16 +1290,30 @@
             return '<div class="adm-order" style="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:12px">'+
               '<div class="row-between"><b dir="ltr">'+esc(o.id)+'</b><span class="tag">'+esc(st)+'</span></div>'+
               '<div class="note">مشتری: '+esc((o.customer&&o.customer.name)||"")+' · <span dir="ltr">'+esc((o.customer&&o.customer.phone)||"")+'</span></div>'+
-              '<div class="note">روش: '+(rr.method==="pickup_customer"?"تحویل از آدرس مشتری":"بازگشت به فروشگاه")+'</div>'+
-              '<div class="note">دلیل: '+esc(rr.reason||"")+'</div>'+
+              '<div class="note">روش: '+(rr.method==="pickup_customer"?"جمع‌آوری از آدرس مشتری":"تحویل به فروشگاه")+'</div>'+
+              '<div class="note">دلیل: '+esc(rr.reasonTitleSnapshot||rr.reason||"")+'</div>'+
               '<div class="note">توضیح: '+esc(rr.details||"")+'</div>'+
+              '<div class="note">Pickup status: '+esc(rr.returnPickupStatus||"—")+' · Refund: '+esc(rr.refundStatus||"—")+' · مبلغ: '+money(rr.approvedRefundAmount!=null?rr.approvedRefundAmount:o.total)+'</div>'+
+              '<div class="note">راننده برگشت: '+esc(rr.returnDriverName||"—")+(rr.photoRequired?' · عکس الزامی':'')+'</div>'+
+              ((rr.pickupPhotos&&rr.pickupPhotos.length)?'<div class="note">عکس‌ها: '+rr.pickupPhotos.map(function(p){return '<a href="'+esc(p.url)+'" target="_blank" rel="noopener">مشاهده</a>';}).join(" ")+'</div>':'')+
               '<div class="note">زمان: '+(rr.requestedAt?new Date(rr.requestedAt).toLocaleString("fa-AF"):"—")+'</div>'+
-              '<div class="note">آدرس: '+esc(pk.address||"")+'</div>'+
-              (pk.mapsUrl?('<div><a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="'+esc(pk.mapsUrl)+'">Google Maps</a></div>'):'')+
-              '<ul class="adm-items">'+(o.items||[]).map(function(it){return '<li>'+esc(it.name)+' × '+toFa(it.qty)+'</li>';}).join("")+'</ul>'+
-              '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+acts+'</div></div>';
+              (rr.method==="pickup_customer"?'<div style="margin:8px 0"><select class="ctrl" id="retDrv_'+esc(o.id)+'"></select> <button type="button" class="btn btn-outline btn-sm" data-assign-ret-drv="'+esc(o.id)+'">تعیین درایور برای جمع‌آوری</button></div>':'')+
+              '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+acts+
+              '<button type="button" class="btn btn-outline btn-sm" data-late-override="'+esc(o.id)+'">اجازه برگشت استثنایی</button>'+
+              (o.status==="return_approved"?'<button type="button" class="btn btn-outline btn-sm" data-ret-store="'+esc(o.id)+'">رسید به فروشگاه</button>':'')+
+              '</div></div>';
           }).join("");
-        }).catch(function(err){ box.innerHTML='<p class="note">'+(err&&err.message||"خطا")+'</p>'; });
+          /* populate driver selects */
+          var dlist=window._driverList||[];
+          list.forEach(function(o){
+            var sel=document.getElementById("retDrv_"+o.id);
+            if(!sel) return;
+            sel.innerHTML='<option value="">— راننده —</option>'+dlist.filter(function(d){return d.active!==false;}).map(function(d){
+              return '<option value="'+esc(d.id)+'"'+(((o.returnRequest||{}).returnDriverId===d.id)?" selected":"")+'>'+esc(d.name)+'</option>';
+            }).join("");
+          });
+        }).catch(function(){ box.innerHTML='<p class="note">خطا</p>'; });
+        });
       });
     }
 
@@ -1593,7 +1700,7 @@
         });
       });
     }
-    function statusLabelFa(code){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa"):code; }
+    function statusLabelFa(code, order){ return (window.MAHOApi&&MAHOApi.statusLabel)?MAHOApi.statusLabel(code,"fa",order):code; }
     function readOrders(){ try{return JSON.parse(sessionStorage.getItem("maho_orders_cache")||"[]")||[];}catch(e){return[];} }
     function writeOrders(orders){ try{ sessionStorage.setItem("maho_orders_cache",JSON.stringify(orders||[])); }catch(e){} }
     function renderOrdersAdmin(){
@@ -1621,11 +1728,19 @@
             return '<li><b>'+(it.name||"")+'</b>'+vs+' × '+toFa(it.qty||1)+' = '+money((it.price||0)*(it.qty||1))+bc+'</li>';
           }).join("");
           var code=(window.MAHOApi&&MAHOApi.statusCode)?MAHOApi.statusCode(o.status):o.status;
-          var s=statusLabelFa(code);
+          var s=statusLabelFa(code, o);
           var actions=[];
           if(code==="new"||code==="pending"){ actions.push('<button class="btn btn-gold btn-sm" data-st="confirmed" data-oid="'+o.id+'">تأیید سفارش</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
-          else if(code==="confirmed"){ actions.push('<button class="btn btn-gold btn-sm" data-st="dispatched" data-oid="'+o.id+'">ارسال شد</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
-          else if(code==="dispatched"){ actions.push('<button class="btn btn-gold btn-sm" data-st="delivered" data-oid="'+o.id+'">رسید / تحویل شد</button>'); actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>'); }
+          else if(code==="confirmed"){
+            var isPickup=o.delivery&&(o.delivery.method==="pickup"||o.delivery.method==="store_pickup");
+            actions.push('<button class="btn btn-gold btn-sm" data-st="dispatched" data-oid="'+o.id+'">'+(isPickup?"آماده تحویل از فروشگاه":"ارسال شد")+'</button>');
+            actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>');
+          }
+          else if(code==="dispatched"){
+            var isPickup2=o.delivery&&(o.delivery.method==="pickup"||o.delivery.method==="store_pickup");
+            actions.push('<button class="btn btn-gold btn-sm" data-st="delivered" data-oid="'+o.id+'">'+(isPickup2?"تحویل به مشتری":"رسید / تحویل شد")+'</button>');
+            actions.push('<button class="btn btn-danger btn-sm" data-st="cancelled" data-oid="'+o.id+'">لغو سفارش</button>');
+          }
           if(o.payment==="hesab"){
             actions.push('<button class="btn btn-outline btn-sm" data-pay="payment_confirmed" data-oid="'+o.id+'">تأیید پرداخت حساب‌پی</button>');
             actions.push('<button class="btn btn-outline btn-sm" data-pay="payment_rejected" data-oid="'+o.id+'">رد پرداخت</button>');
@@ -2780,11 +2895,40 @@
     if($("#posFromFilter")) $("#posFromFilter").addEventListener("change",renderPosSalesAdmin);
     if($("#returnsBody")) $("#returnsBody").addEventListener("click",function(e){
       var st=e.target.getAttribute("data-ret-st"); var oid=e.target.getAttribute("data-oid");
-      if(!st||!oid||!MAHOApi.adminReturnResolve) return;
-      requireBackend(function(){
-        MAHOApi.adminReturnResolve(oid,{status:st}).then(function(){ renderReturnsAdmin(); refreshBadges(); toast("برگشت به‌روز شد ✓"); })
-          .catch(function(err){ alert((err&&err.message)||"خطا"); });
-      });
+      if(st&&oid&&MAHOApi.adminReturnResolve){
+        requireBackend(function(){
+          MAHOApi.adminReturnResolve(oid,{status:st}).then(function(){ renderReturnsAdmin(); refreshBadges(); toast("برگشت به‌روز شد ✓"); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+        return;
+      }
+      var asg=e.target.getAttribute("data-assign-ret-drv");
+      if(asg){
+        var sel=document.getElementById("retDrv_"+asg);
+        var did=sel?sel.value:"";
+        if(!did){ alert("راننده را انتخاب کنید"); return; }
+        engFetch("/api/admin/orders/"+encodeURIComponent(asg)+"/assign-return-driver",{method:"POST",body:{driverId:did}}).then(function(x){
+          if(!x.ok){ alert((x.data&&x.data.error)||"خطا"); return; }
+          toast("راننده برگشت Assign شد"); renderReturnsAdmin();
+        });
+        return;
+      }
+      var late=e.target.getAttribute("data-late-override");
+      if(late){
+        var reason=prompt("دلیل اجازه برگشت استثنایی (الزامی):");
+        if(!reason) return;
+        engFetch("/api/admin/orders/"+encodeURIComponent(late)+"/late-return-override",{method:"POST",body:{reason:reason}}).then(function(x){
+          alert(x.ok?"ثبت شد":((x.data&&x.data.error)||"خطا"));
+        });
+        return;
+      }
+      var store=e.target.getAttribute("data-ret-store");
+      if(store){
+        engFetch("/api/admin/orders/"+encodeURIComponent(store)+"/return-to-store",{method:"POST",body:{}}).then(function(x){
+          if(x.ok){ toast("رسید به فروشگاه ثبت شد"); renderReturnsAdmin(); }
+          else alert((x.data&&x.data.error)||"خطا");
+        });
+      }
     });
     if($("#staffBody")) $("#staffBody").addEventListener("click",function(e){
       if(e.target.id==="stSaveBtn"){
@@ -2946,15 +3090,45 @@
     if ($("#subExportCsv")) $("#subExportCsv").onclick = function(){ exportSubs("csv"); };
     if ($("#subExportXls")) $("#subExportXls").onclick = function(){ exportSubs("xls"); };
 
+    function fillCmpProducts(){
+      var sel = $("#cmpProductPick"); if (!sel) return;
+      var list = (S.products || []).filter(function(p){ return p && p.active !== false && !p.deleted && p.code; });
+      var prev = {};
+      Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ prev[o.value] = true; });
+      sel.innerHTML = list.map(function(p){
+        var price = Number(p.price)||0;
+        var label = (p.code||"")+" — "+(p.name||"")+" — "+price+" AFN";
+        return '<option value="'+esc(p.code)+'"'+(prev[p.code]?" selected":"")+'>'+esc(label)+'</option>';
+      }).join("");
+      syncCmpProductCodes();
+    }
+    function syncCmpProductCodes(){
+      var sel = $("#cmpProductPick");
+      var codes = [];
+      if (sel) Array.prototype.forEach.call(sel.selectedOptions || [], function(o){ if (o.value) codes.push(o.value); });
+      if ($("#cmpProducts")) $("#cmpProducts").value = codes.join(",");
+      if ($("#cmpProductsHint")) $("#cmpProductsHint").textContent = codes.length ? codes.join(", ") : "—";
+      return codes;
+    }
+    if ($("#cmpProductPick")) $("#cmpProductPick").onchange = syncCmpProductCodes;
+
     function cmpPayload(){
-      var mode = ($("#cmpMode") && $("#cmpMode").value) || "active";
+      var mode = ($("#cmpMode") && $("#cmpMode").value) || "newsletter";
+      if (mode === "active") mode = "newsletter";
+      var codes = syncCmpProductCodes();
+      if (!codes.length) {
+        codes = (($("#cmpProducts")&&$("#cmpProducts").value)||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
+      }
       var body = {
         name: ($("#cmpName")&&$("#cmpName").value)||"",
         subject: ($("#cmpSubject")&&$("#cmpSubject").value)||"",
         message: ($("#cmpMessage")&&$("#cmpMessage").value)||"",
         ctaText: ($("#cmpCtaText")&&$("#cmpCtaText").value)||"",
         ctaUrl: ($("#cmpCtaUrl")&&$("#cmpCtaUrl").value)||"",
-        mode: mode
+        campaignType: ($("#cmpType")&&$("#cmpType").value)||"general",
+        productCodes: codes,
+        mode: mode,
+        recipientMode: mode
       };
       if (mode === "selected") body.ids = selectedSubIds();
       if (mode === "filter") {
@@ -2968,24 +3142,47 @@
         var box = $("#cmpHistory"); if (!box) return;
         var list = (x.data && x.data.campaigns) || [];
         box.innerHTML = list.map(function(c){
-          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">'+
-            '<b>'+esc(c.name)+'</b> — <span dir="ltr">'+esc(c.subject)+'</span>'+
-            '<div class="note">status: '+esc(c.status)+' · recipients: '+toFa(c.recipientCount||0)+
-            ' · ok: '+toFa(c.successCount||0)+' · fail: '+toFa(c.failedCount||0)+
-            (c.sentAt?(' · '+new Date(c.sentAt).toLocaleString("fa-AF")):"")+'</div></div>';
+          var prods = (c.products || []).map(function(p){
+            return '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+
+              (p.image?'<img src="'+esc(p.image)+'" alt="" width="40" height="40" style="object-fit:cover;border-radius:8px">':'')+
+              '<div><b>'+esc(p.name||"")+'</b> <span dir="ltr" class="note">'+esc(p.code||"")+'</span>'+
+              '<div class="note">'+toFa(p.price||0)+' AFN'+(p.oldPrice?(' <s>'+toFa(p.oldPrice)+'</s>'):'')+
+              ' · <a href="/p/'+esc(p.code||"")+'" target="_blank" rel="noopener">/p/'+esc(p.code||"")+'</a></div></div></div>';
+          }).join("");
+          var msgShort = String(c.message||"").slice(0,140);
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">'+
+            '<div class="row-between"><div><b>'+esc(c.name)+'</b> <span class="tag">'+esc(c.status)+'</span></div>'+
+            '<span class="note">'+(c.createdAt?new Date(c.createdAt).toLocaleString("fa-AF"):"")+'</span></div>'+
+            '<div class="note">موضوع: <span dir="ltr">'+esc(c.subject)+'</span></div>'+
+            '<div class="note">'+esc(msgShort)+(String(c.message||"").length>140?"…":"")+'</div>'+
+            '<div class="note">نوع: '+esc(c.campaignType||"general")+' · مخاطب: '+esc(c.recipientMode||"")+
+            ' · NL '+toFa(c.newsletterCount||0)+' / Reg '+toFa(c.registeredCount||0)+
+            ' / Dup '+toFa(c.duplicatesRemoved||0)+' → Final '+toFa(c.recipientCount||0)+
+            ' · موفق/ناموفق '+toFa(c.successCount||0)+'/'+toFa(c.failedCount||0)+
+            (c.createdBy?(' · توسط '+esc(c.createdBy)):"")+
+            (c.sentAt?(' · ارسال '+new Date(c.sentAt).toLocaleString("fa-AF")):"")+'</div>'+
+            (c.ctaText?('<div class="note">CTA: '+esc(c.ctaText)+(c.ctaUrl?(' → <span dir="ltr">'+esc(c.ctaUrl)+'</span>'):'')+'</div>'):'')+
+            (prods||(c.productCodes&&c.productCodes.length?('<div class="note">کدها: '+esc(c.productCodes.join(", "))+'</div>'):""))+
+            '</div>';
         }).join("") || '<p class="note">کمپینی ثبت نشده</p>';
       });
     }
     if ($("#cmpPreviewCount")) $("#cmpPreviewCount").onclick = function(){
       engFetch("/api/admin/campaigns/preview-count", { method:"POST", body: cmpPayload() }).then(function(x){
-        if ($("#cmpCountNote")) $("#cmpCountNote").textContent = "تعداد گیرندگان: " + toFa((x.data&&x.data.recipientCount)||0);
+        var d = x.data || {};
+        if ($("#cmpCountNote")) $("#cmpCountNote").textContent =
+          "Newsletter: "+toFa(d.newsletterCount||0)+
+          " · Registered: "+toFa(d.registeredCount||0)+
+          " · Duplicates: "+toFa(d.duplicatesRemoved||0)+
+          " · Final: "+toFa(d.finalRecipients||d.recipientCount||0);
       });
     };
     if ($("#cmpPreview")) $("#cmpPreview").onclick = function(){
       var p = cmpPayload();
       var box = $("#cmpPreviewBox"); if (!box) return;
       box.style.display = "block";
-      box.innerHTML = "<b>"+esc(p.subject)+"</b><hr>"+esc(p.message).replace(/\n/g,"<br>")+
+      box.innerHTML = "<b>"+esc(p.subject)+"</b> <span class="note">("+esc(p.campaignType)+")</span><hr>"+esc(p.message).replace(/\n/g,"<br>")+
+        (p.productCodes&&p.productCodes.length?('<p>Products: <span dir="ltr">'+esc(p.productCodes.join(", "))+'</span></p>'):"")+
         (p.ctaText&&p.ctaUrl?('<p><a href="'+esc(p.ctaUrl)+'">'+esc(p.ctaText)+'</a></p>'):"");
     };
     if ($("#cmpTest")) $("#cmpTest").onclick = function(){
@@ -2996,33 +3193,188 @@
         alert(x.ok ? "ایمیل تست ارسال شد (اگر SMTP تنظیم باشد)" : ("ناموفق: "+((x.data&&x.data.error)||x.status)));
       });
     };
+    if ($("#cmpExport")) $("#cmpExport").onclick = function(){
+      var h = adminAuthHeaders();
+      fetch("/api/admin/campaigns/export", { headers: h }).then(function(r){ return r.blob().then(function(b){ return { ok:r.ok, b:b }; }); })
+        .then(function(x){
+          if (!x.ok) { alert("Export ناموفق"); return; }
+          var a=document.createElement("a"); a.href=URL.createObjectURL(x.b); a.download="maho-campaigns.csv"; a.click();
+        });
+    };
     if ($("#cmpSend")) $("#cmpSend").onclick = function(){
       if (_cmpSending) return;
       var p = cmpPayload();
       if (!p.name || !p.subject || !p.message) { alert("نام، موضوع و متن الزامی است"); return; }
       engFetch("/api/admin/campaigns/preview-count", { method:"POST", body: p }).then(function(x){
-        var n = (x.data && x.data.recipientCount) || 0;
+        var d = x.data || {};
+        var n = d.finalRecipients || d.recipientCount || 0;
         if (!n) { alert("گیرنده‌ای یافت نشد"); return; }
-        if (!confirm("ارسال کمپین به "+n+" مشترک فعال؟")) return;
+        if (!confirm("ارسال کمپین؟\nNewsletter: "+(d.newsletterCount||0)+"\nRegistered: "+(d.registeredCount||0)+"\nDuplicates: "+(d.duplicatesRemoved||0)+"\nFinal: "+n)) return;
         _cmpSending = true;
         var btn = $("#cmpSend"); if (btn) btn.disabled = true;
         engFetch("/api/admin/campaigns", { method:"POST", body: p }).then(function(created){
-          if (!created.ok) { alert("ساخت کمپین ناموفق"); return null; }
+          if (!created.ok) { alert("ساخت کمپین ناموفق: "+((created.data&&created.data.error)||"")); return null; }
           var id = created.data.campaign.id;
-          return engFetch("/api/admin/campaigns/"+encodeURIComponent(id)+"/send", { method:"POST", body: p });
-        }).then(function(sent){
-          if (!sent) return;
+          return engFetch("/api/admin/campaigns/"+encodeURIComponent(id)+"/send", { method:"POST", body: p })
+            .then(function(sent){ return { sent: sent, id: id }; });
+        }).then(function(pack){
+          if (!pack) return;
+          var sent = pack.sent;
+          if (sent.status===409 && sent.data && sent.data.error==="inactive_products") {
+            if (confirm("برخی محصولات inactive شده‌اند. با force ارسال شود؟")) {
+              p.forceInactiveProducts = true;
+              return engFetch("/api/admin/campaigns/"+encodeURIComponent(pack.id)+"/send", { method:"POST", body: p })
+                .then(function(s2){ alert(s2.ok ? "ارسال شروع شد" : ("خطا: "+((s2.data&&s2.data.error)||s2.status))); loadCampaigns(); });
+            }
+            return;
+          }
           alert(sent.ok ? "ارسال شروع شد" : ("خطا: "+((sent.data&&sent.data.error)||sent.status)));
           loadCampaigns();
         }).finally(function(){ _cmpSending=false; if(btn) btn.disabled=false; });
       });
     };
 
+    function loadGiveaways(){
+      engFetch("/api/admin/giveaways").then(function(x){
+        var box=$("#gwList"); if(!box) return;
+        var list=(x.data&&x.data.giveaways)||[];
+        box.innerHTML=list.map(function(g){
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px" data-gwid="'+esc(g.id)+'">'+
+            '<b>'+esc(g.title)+'</b> — '+esc(g.prize||"")+' <span class="tag">'+esc(g.status)+'</span>'+
+            '<div class="note">rule: '+esc(g.eligibilityRule)+' · participants: '+toFa(g.participantCount||0)+
+            ' · winners: '+toFa((g.winners||[]).length)+'</div>'+
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
+            (g.status==="draft"?'<button type="button" class="btn btn-gold btn-sm" data-gw-draw="'+esc(g.id)+'">Draw</button>':'')+
+            (g.status==="drawn"?'<button type="button" class="btn btn-outline btn-sm" data-gw-notify="'+esc(g.id)+'">ایمیل به برندگان</button>':'')+
+            (g.status!=="voided"?'<button type="button" class="btn btn-danger btn-sm" data-gw-void="'+esc(g.id)+'">Void</button>':'')+
+            '</div>'+
+            ((g.winners&&g.winners.length)?'<div class="note" dir="ltr">Winners: '+esc(g.winners.map(function(w){return w.email;}).join(", "))+'</div>':'')+
+            '</div>';
+        }).join("")||'<p class="note">قرعه‌کشی ثبت نشده</p>';
+      });
+    }
+    function gwEligibilityBody(){
+      var rule = ($("#gwRule")&&$("#gwRule").value)||"registered";
+      var meta = {};
+      if (rule === "purchased_range") {
+        var from = ($("#gwFrom")&&$("#gwFrom").value)||"";
+        var to = ($("#gwTo")&&$("#gwTo").value)||"";
+        if (from) meta.from = new Date(from).getTime();
+        if (to) meta.to = new Date(to).getTime() + 86400000 - 1;
+      }
+      if (rule === "min_purchase") {
+        meta.minAmount = Number(($("#gwMinAmt")&&$("#gwMinAmt").value)||0);
+      }
+      return { eligibilityRule: rule, eligibilityMeta: meta };
+    }
+    if ($("#gwRefreshBtn")) $("#gwRefreshBtn").onclick=loadGiveaways;
+    if ($("#gwPreview")) $("#gwPreview").onclick=function(){
+      engFetch("/api/admin/giveaways/preview",{method:"POST",body:gwEligibilityBody()}).then(function(x){
+        var d=x.data||{};
+        if($("#gwPreviewNote")) $("#gwPreviewNote").textContent="Eligible: "+toFa(d.eligible||0)+" · Excluded: "+toFa(d.excluded||0)+" · Dup: "+toFa(d.duplicatesRemoved||0)+" · Final: "+toFa(d.finalParticipants||0);
+      });
+    };
+    if ($("#gwCreate")) $("#gwCreate").onclick=function(){
+      var base = gwEligibilityBody();
+      engFetch("/api/admin/giveaways",{method:"POST",body:{
+        title:($("#gwTitle")&&$("#gwTitle").value)||"",
+        prize:($("#gwPrize")&&$("#gwPrize").value)||"",
+        description:($("#gwDesc")&&$("#gwDesc").value)||"",
+        winnersCount:Number(($("#gwWinners")&&$("#gwWinners").value)||1),
+        eligibilityRule: base.eligibilityRule,
+        eligibilityMeta: base.eligibilityMeta
+      }}).then(function(x){
+        if(!x.ok){ alert((x.data&&x.data.error)||"خطا"); return; }
+        toast("قرعه‌کشی ساخته شد"); loadGiveaways();
+      });
+    };
+    if ($("#gwList")) $("#gwList").addEventListener("click",function(e){
+      var draw=e.target.getAttribute("data-gw-draw");
+      var voidId=e.target.getAttribute("data-gw-void");
+      var notify=e.target.getAttribute("data-gw-notify");
+      if(draw){
+        if(!confirm("قرعه‌کشی انجام شود؟ این عمل نهایی است.")) return;
+        engFetch("/api/admin/giveaways/"+encodeURIComponent(draw)+"/draw",{method:"POST",body:{}}).then(function(x){
+          alert(x.ok?"Draw انجام شد":((x.data&&x.data.error)||"خطا")); loadGiveaways();
+        });
+      }
+      if(voidId){
+        var reason=prompt("دلیل Void:");
+        if(!reason) return;
+        engFetch("/api/admin/giveaways/"+encodeURIComponent(voidId)+"/void",{method:"POST",body:{reason:reason}}).then(function(x){
+          alert(x.ok?"Void شد":((x.data&&x.data.error)||"خطا")); loadGiveaways();
+        });
+      }
+      if(notify){
+        if(!confirm("ایمیل تبریک برای برندگان ارسال شود؟")) return;
+        engFetch("/api/admin/giveaways/"+encodeURIComponent(notify)+"/notify-winners",{method:"POST",body:{}}).then(function(x){
+          alert(x.ok?("ارسال: "+((x.data&&x.data.emailed)||0)):((x.data&&x.data.error)||"خطا"));
+        });
+      }
+    });
+    if ($("#gwExportLink")) $("#gwExportLink").onclick=function(e){
+      e.preventDefault();
+      fetch("/api/admin/giveaways/export",{headers:adminAuthHeaders()}).then(function(r){return r.blob().then(function(b){return {ok:r.ok,b:b};});})
+        .then(function(x){ if(!x.ok){alert("Export ناموفق");return;} var a=document.createElement("a"); a.href=URL.createObjectURL(x.b); a.download="maho-giveaways.csv"; a.click(); });
+    };
+
+    function loadReturnReasons(){
+      engFetch("/api/admin/return-reasons").then(function(x){
+        var box=$("#rrList"); if(!box) return;
+        var list=(x.data&&x.data.reasons)||[];
+        box.innerHTML=list.map(function(r){
+          return '<div class="row-between" style="border-bottom:1px solid var(--line);padding:8px 0">'+
+            '<div><b>'+esc(r.title)+'</b> '+(r.requireNote?'<span class="note">(نیاز به توضیح)</span>':'')+
+            ' <span class="tag">'+(r.active?"active":"inactive")+'</span></div>'+
+            '<div style="display:flex;gap:6px">'+
+            '<button type="button" class="btn btn-outline btn-sm" data-rr-toggle="'+esc(r.id)+'" data-active="'+(r.active?"0":"1")+'">'+(r.active?"غیرفعال":"فعال")+'</button>'+
+            '<button type="button" class="btn btn-danger btn-sm" data-rr-del="'+esc(r.id)+'">حذف</button></div></div>';
+        }).join("")||'<p class="note">دلیلی نیست</p>';
+      });
+      engFetch("/api/admin/return-analytics").then(function(x){
+        var box=$("#rrAnalytics"); if(!box) return;
+        var reasons=(x.data&&x.data.reasons)||[];
+        box.innerHTML=reasons.map(function(r){
+          return '<div>'+esc(r.title)+' — '+toFa(r.count)+' — '+r.percentage+'%</div>';
+        }).join("")||"آمار برگشتی نیست";
+      });
+      engFetch("/api/admin/returns-config").then(function(x){
+        var r=(x.data&&x.data.returns)||{};
+        if($("#retWindowDays")) $("#retWindowDays").value=r.returnWindowDays!=null?r.returnWindowDays:7;
+        if($("#retPhotoReq")) $("#retPhotoReq").checked=!!r.returnPickupPhotoRequired;
+      });
+    }
+    if ($("#rrRefreshBtn")) $("#rrRefreshBtn").onclick=loadReturnReasons;
+    if ($("#rrAddBtn")) $("#rrAddBtn").onclick=function(){
+      engFetch("/api/admin/return-reasons",{method:"POST",body:{
+        title:($("#rrTitle")&&$("#rrTitle").value)||"",
+        titleEn:($("#rrTitleEn")&&$("#rrTitleEn").value)||"",
+        requireNote:!!($("#rrRequireNote")&&$("#rrRequireNote").checked)
+      }}).then(function(x){ if(!x.ok){alert((x.data&&x.data.error)||"خطا");return;} toast("اضافه شد"); loadReturnReasons(); });
+    };
+    if ($("#rrList")) $("#rrList").addEventListener("click",function(e){
+      var tog=e.target.getAttribute("data-rr-toggle");
+      var del=e.target.getAttribute("data-rr-del");
+      if(tog){
+        engFetch("/api/admin/return-reasons/"+encodeURIComponent(tog),{method:"PUT",body:{active:e.target.getAttribute("data-active")==="1"}}).then(function(){ loadReturnReasons(); });
+      }
+      if(del){
+        if(!confirm("حذف/آرشیو این دلیل؟")) return;
+        fetch("/api/admin/return-reasons/"+encodeURIComponent(del),{method:"DELETE",headers:adminAuthHeaders()})
+          .then(function(r){return r.json();}).then(function(){ loadReturnReasons(); });
+      }
+    });
+    if ($("#retCfgSave")) $("#retCfgSave").onclick=function(){
+      engFetch("/api/admin/returns-config",{method:"PUT",body:{returns:{
+        returnWindowDays:Number(($("#retWindowDays")&&$("#retWindowDays").value)||7),
+        returnPickupPhotoRequired:!!($("#retPhotoReq")&&$("#retPhotoReq").checked)
+      }}}).then(function(x){ toast(x.ok?"ذخیره شد":"ناموفق"); });
+    };
+
     function loadFeedbackPanel(){
       engFetch("/api/admin/engagement-config").then(function(x){
         var e = (x.data && x.data.engagement) || {};
         if ($("#engGoogleUrl")) $("#engGoogleUrl").value = e.googleReviewUrl || "";
-        if ($("#engMinStars")) $("#engMinStars").value = e.minStarsForGoogleReview || 4;
         if ($("#engFbEnabled")) $("#engFbEnabled").checked = e.feedbackRequestEnabled === true;
       });
       engFetch("/api/admin/feedback").then(function(x){
@@ -3044,11 +3396,21 @@
       });
     }
     if ($("#fbRefreshBtn")) $("#fbRefreshBtn").onclick = loadFeedbackPanel;
+    function downloadAdminCsv(url, filename){
+      var h = adminAuthHeaders();
+      fetch(url, { headers: h }).then(function(r){ return r.blob().then(function(b){ return { ok:r.ok, b:b }; }); })
+        .then(function(x){
+          if (!x.ok) { alert("Export ناموفق"); return; }
+          var a=document.createElement("a"); a.href=URL.createObjectURL(x.b); a.download=filename; a.click();
+        });
+    }
+    if ($("#fbExportBtn")) $("#fbExportBtn").onclick = function(){ downloadAdminCsv("/api/admin/feedback/export", "maho-feedback.csv"); };
+    if ($("#dpExportBtn")) $("#dpExportBtn").onclick = function(){ downloadAdminCsv("/api/admin/driver-performance/export", "maho-driver-performance.csv"); };
+    if ($("#exportReturnsCsv")) $("#exportReturnsCsv").onclick = function(){ downloadAdminCsv("/api/admin/returns/export", "maho-returns.csv"); };
     if ($("#engSaveCfg")) $("#engSaveCfg").onclick = function(){
       engFetch("/api/admin/engagement-config", { method:"PUT", body:{
         engagement: {
           googleReviewUrl: ($("#engGoogleUrl")&&$("#engGoogleUrl").value)||"",
-          minStarsForGoogleReview: Number(($("#engMinStars")&&$("#engMinStars").value)||4),
           feedbackRequestEnabled: !!($("#engFbEnabled")&&$("#engFbEnabled").checked)
         }
       }}).then(function(x){ toast(x.ok?"ذخیره شد":"ناموفق"); });

@@ -101,6 +101,22 @@ function mountV2(app, ctx) {
     const check = canTransition(o.status, next, { actor: "admin" });
     if (!check.ok) return res.status(400).json({ error: check.error });
     if (check.noop) return res.json({ order: o });
+    if (next === "return_completed") {
+      const rr = o.returnRequest;
+      if (rr && !rr.stockRestored) {
+        const method = rr.method || "pickup_store";
+        const atStore = method === "pickup_store"
+          || rr.returnPickupStatus === "returned_to_store"
+          || rr.returnPickupStatus === "completed"
+          || !!rr.returnedToStoreAt;
+        if (!atStore) {
+          return res.status(400).json({
+            error: "not_returned_to_store",
+            message: "ابتدا کالا باید به فروشگاه برگشته و ثبت returned_to_store شود.",
+          });
+        }
+      }
+    }
     const prev = o.status;
     o.status = next;
     if (o.returnRequest) {
@@ -109,12 +125,18 @@ function mountV2(app, ctx) {
       o.returnRequest.resolveNote = sanitizeText((req.body || {}).note, 500);
     }
     if (next === "return_completed") {
-      /* restock all items safely (variant-aware when color/size present) */
-      const { applyStockDelta } = require("./variant-stock");
-      (o.items || []).forEach((it) => {
-        const p = findProduct(it.name, it.code);
-        if (p) applyStockDelta(p, it.qty || 1, +1, it.color, it.size);
-      });
+      const rr = o.returnRequest;
+      if (rr && !rr.stockRestored) {
+        const { applyStockDelta } = require("./variant-stock");
+        (o.items || []).forEach((it) => {
+          const p = findProduct(it.name, it.code);
+          if (p) applyStockDelta(p, it.qty || 1, +1, it.color, it.size);
+        });
+        rr.stockRestored = true;
+        rr.returnPickupStatus = "completed";
+        if (!rr.returnedToStoreAt) rr.returnedToStoreAt = Date.now();
+        if (rr.refundStatus === "not_ready" || !rr.refundStatus) rr.refundStatus = "approved";
+      }
     }
     appendHistory(o, { status: next, by: "admin", note: sanitizeText((req.body || {}).note, 500), from: prev });
     pushAudit(ctx.db, { actor: (req.adminSession && req.adminSession.staffId) || "admin", action: "return_resolve", entityType: "order", entityId: o.id, meta: { status: next } });
@@ -125,16 +147,29 @@ function mountV2(app, ctx) {
     res.json({ order: o });
   });
 
-  /* customer return request (delivered only) */
+  /* customer return request (delivered only + return window) */
   app.post("/api/orders/:id/return-request", requireUser, (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
     const s = auth(req);
     if (!(s && s.type === "admin") && o.userId !== s.userId) return res.status(403).json({ error: "forbidden" });
-    if (!customerCanReturn(o.status)) return res.status(400).json({ error: "return_only_after_delivered" });
+    const { customerMayRequestReturn, resolveReasonSnapshot } = require("./returns-ops");
+    const win = customerMayRequestReturn(o);
+    if (!win.ok) return res.status(400).json({ error: win.error || "return_not_allowed" });
     const b = req.body || {};
     const method = b.method === "pickup_customer" ? "pickup_customer" : "pickup_store";
-    const reason = sanitizeText(b.reason, 200);
+    const reasonId = sanitizeText(b.reasonId, 40);
+    let reason = sanitizeText(b.reason, 200);
+    let reasonTitleSnapshot = reason;
+    if (reasonId) {
+      const snap = resolveReasonSnapshot(ctx.db, reasonId, reason);
+      if (!snap.active) return res.status(400).json({ error: "inactive_reason" });
+      reasonTitleSnapshot = snap.reasonTitleSnapshot || reason;
+      reason = reasonTitleSnapshot;
+      if (snap.requireNote && !sanitizeText(b.details, 1000)) {
+        return res.status(400).json({ error: "details_required" });
+      }
+    }
     const details = sanitizeText(b.details, 1000);
     if (!reason) return res.status(400).json({ error: "reason_required" });
     let pickup = null;
@@ -144,7 +179,6 @@ function mountV2(app, ctx) {
       const address = sanitizeText(b.address || (o.customer && o.customer.address), 400);
       const phone = sanitizeText(b.phone || (o.customer && o.customer.phone), 40);
       if (!address || !phone) return res.status(400).json({ error: "address_phone_required" });
-      /* GPS optional — order delivery address/phone are enough */
       pickup = {
         address, phone,
         lat: lat != null ? lat : null,
@@ -166,8 +200,14 @@ function mountV2(app, ctx) {
     o.status = "return_requested";
     o.returnRequest = {
       method, reason, details,
+      reasonId: reasonId || null,
+      reasonTitleSnapshot,
       requestedAt: Date.now(),
       pickup,
+      returnPickupStatus: method === "pickup_customer" ? "not_assigned" : "n/a",
+      refundStatus: "not_ready",
+      approvedRefundAmount: Number(o.total) || 0,
+      stockRestored: false,
     };
     appendHistory(o, { status: "return_requested", by: "customer", note: reason });
     saveDb();

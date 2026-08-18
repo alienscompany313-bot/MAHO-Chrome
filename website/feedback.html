@@ -11,21 +11,23 @@
     .stars button.on{color:#c8a35f}
     .field{margin:14px 0}
     label{display:block;font-weight:700;margin-bottom:6px}
-    textarea,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    .guide{font-size:12px;color:#7a7368}
   </style>
 </head>
 <body>
   <main style="max-width:560px;margin:40px auto;padding:0 16px;font-family:Tahoma,Arial,sans-serif;line-height:1.8">
     <h1>نظر و امتیاز سفارش</h1>
+    <p class="guide">۱=بسیار ناراضی · ۲=ناراضی · ۳=متوسط · ۴=راضی · ۵=بسیار راضی</p>
     <p id="status">در حال بارگذاری…</p>
     <form id="fbForm" hidden>
-      <div class="field">
+      <div class="field" id="driverField">
         <label>امتیاز راننده</label>
-        <div class="stars" id="driverStars" data-val="5"></div>
+        <div class="stars" id="driverStars" data-val=""></div>
       </div>
       <div class="field">
         <label>رضایت کلی</label>
-        <div class="stars" id="overallStars" data-val="5"></div>
+        <div class="stars" id="overallStars" data-val=""></div>
       </div>
       <div id="productRatings"></div>
       <div class="field">
@@ -48,17 +50,17 @@
       var status = document.getElementById("status");
       var form = document.getElementById("fbForm");
       var items = [];
-      var minGoogle = 4;
       var googleUrl = "";
+      var storePickup = false;
 
       function makeStars(el) {
         el.innerHTML = "";
+        el.setAttribute("data-val", "");
         for (var i = 1; i <= 5; i++) {
           var b = document.createElement("button");
           b.type = "button";
           b.textContent = "★";
           b.setAttribute("data-n", String(i));
-          if (i <= (parseInt(el.getAttribute("data-val"), 10) || 5)) b.className = "on";
           b.onclick = function () {
             var n = parseInt(this.getAttribute("data-n"), 10);
             el.setAttribute("data-val", String(n));
@@ -78,74 +80,85 @@
       fetch("/api/feedback/" + encodeURIComponent(orderId) + "?token=" + encodeURIComponent(token))
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (x) {
-          if (!x.ok) { status.textContent = "لینک منقضی یا نامعتبر است."; return; }
+          if (!x.ok) { status.textContent = "لینک نامعتبر یا منقضی است."; return; }
           if (x.d.feedback && x.d.feedback.status === "submitted") {
             status.hidden = true;
             document.getElementById("thanks").hidden = false;
+            googleUrl = x.d.googleReviewUrl || "";
+            if (googleUrl) {
+              document.getElementById("googleWrap").hidden = false;
+              document.getElementById("googleLink").href = googleUrl;
+            }
             return;
           }
+          storePickup = !!x.d.storePickup;
           items = x.d.items || [];
           googleUrl = x.d.googleReviewUrl || "";
-          minGoogle = x.d.minStarsForGoogleReview || 4;
-          status.textContent = "سفارش " + orderId;
+          status.hidden = true;
           form.hidden = false;
-          makeStars(document.getElementById("driverStars"));
+          if (storePickup) document.getElementById("driverField").hidden = true;
+          else makeStars(document.getElementById("driverStars"));
           makeStars(document.getElementById("overallStars"));
           var box = document.getElementById("productRatings");
-          box.innerHTML = items.map(function (it, i) {
+          box.innerHTML = items.map(function (it, idx) {
             return '<div class="field"><label>امتیاز محصول: ' + (it.name || it.code || "") +
-              '</label><div class="stars" id="pr' + i + '" data-val="5" data-code="' + (it.code || "") +
+              '</label><div class="stars" id="pr' + idx + '" data-val="" data-code="' + (it.code || "") +
               '" data-name="' + (it.name || "") + '"></div></div>';
           }).join("");
-          items.forEach(function (_, i) { makeStars(document.getElementById("pr" + i)); });
+          items.forEach(function (_it, idx) { makeStars(document.getElementById("pr" + idx)); });
         })
-        .catch(function () { status.textContent = "خطا در بارگذاری."; });
+        .catch(function () { status.textContent = "خطا در ارتباط با سرور."; });
 
-      form.addEventListener("submit", function (e) {
+      form.onsubmit = function (e) {
         e.preventDefault();
-        var btn = document.getElementById("submitBtn");
-        btn.disabled = true;
-        var productRatings = items.map(function (it, i) {
-          var el = document.getElementById("pr" + i);
+        var overall = parseInt(document.getElementById("overallStars").getAttribute("data-val"), 10) || 0;
+        if (!overall) { alert("لطفاً رضایت کلی را انتخاب کنید."); return; }
+        var driverRating = storePickup ? null : (parseInt(document.getElementById("driverStars").getAttribute("data-val"), 10) || 0);
+        if (!storePickup && !driverRating) { alert("لطفاً امتیاز راننده را انتخاب کنید."); return; }
+        var productRatings = items.map(function (it, idx) {
+          var el = document.getElementById("pr" + idx);
           return {
-            code: el.getAttribute("data-code") || "",
-            name: el.getAttribute("data-name") || "",
-            rating: parseInt(el.getAttribute("data-val"), 10) || 5
+            code: el.getAttribute("data-code"),
+            name: el.getAttribute("data-name"),
+            rating: parseInt(el.getAttribute("data-val"), 10) || 0
           };
-        });
-        var overall = parseInt(document.getElementById("overallStars").getAttribute("data-val"), 10) || 5;
+        }).filter(function (r) { return r.rating > 0; });
+        if (items.length && productRatings.length < items.length) {
+          alert("لطفاً برای همه محصولات امتیاز بدهید.");
+          return;
+        }
+        document.getElementById("submitBtn").disabled = true;
         fetch("/api/feedback/" + encodeURIComponent(orderId), {
           method: "POST",
           headers: { "Content-Type": "application/json", "Accept": "application/json" },
           body: JSON.stringify({
             token: token,
-            driverRating: parseInt(document.getElementById("driverStars").getAttribute("data-val"), 10) || 5,
+            driverRating: driverRating,
             overallSatisfaction: overall,
             productRatings: productRatings,
-            comment: document.getElementById("comment").value || "",
-            googleReviewClicked: false
+            comment: document.getElementById("comment").value
           })
         }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
           .then(function (x) {
-            if (!x.ok) { status.textContent = "ثبت نظر ناموفق بود."; btn.disabled = false; return; }
+            if (!x.ok) { alert((x.d && x.d.error) || "ارسال ناموفق"); document.getElementById("submitBtn").disabled = false; return; }
             form.hidden = true;
-            status.hidden = true;
             document.getElementById("thanks").hidden = false;
-            if (googleUrl && overall >= minGoogle) {
+            var gUrl = (x.d && x.d.googleReviewUrl) || googleUrl;
+            if (gUrl) {
               document.getElementById("googleWrap").hidden = false;
-              var a = document.getElementById("googleLink");
-              a.href = googleUrl;
-              a.addEventListener("click", function () {
+              var link = document.getElementById("googleLink");
+              link.href = gUrl;
+              link.onclick = function () {
                 fetch("/api/feedback/" + encodeURIComponent(orderId), {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ token: token, googleReviewClicked: true, driverRating: 5, overallSatisfaction: overall, productRatings: productRatings })
+                  body: JSON.stringify({ token: token, googleReviewClicked: true })
                 }).catch(function () {});
-              }, { once: true });
+              };
             }
           })
-          .catch(function () { status.textContent = "خطا در ارسال."; btn.disabled = false; });
-      });
+          .catch(function () { alert("خطا"); document.getElementById("submitBtn").disabled = false; });
+      };
     })();
   </script>
 </body>

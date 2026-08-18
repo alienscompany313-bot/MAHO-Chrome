@@ -89,6 +89,10 @@ function assignDriver(db, order, driverId, actor) {
   ensureDrivers(db);
   const d = db.drivers.find((x) => x.id === driverId && x.active !== false);
   if (!d) return { error: "driver_not_found", status: 404 };
+  const delMethod = order && order.delivery && order.delivery.method;
+  if (delMethod === "pickup" || delMethod === "store_pickup" || delMethod === "store") {
+    return { error: "store_pickup_no_driver", status: 400 };
+  }
   const st = normalizeOrderStatus(order.status);
   if (st === "cancelled" || st === "delivered") return { error: "cannot_assign", status: 400 };
   order.driverId = d.id;

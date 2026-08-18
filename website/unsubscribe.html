@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>لغو عضویت خبرنامه | MAHO Market</title>
+  <title>لغو عضویت ایمیل | MAHO Market</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <main style="max-width:520px;margin:48px auto;padding:0 16px;font-family:Tahoma,Arial,sans-serif;line-height:1.8">
-    <h1>لغو عضویت خبرنامه</h1>
+    <h1>لغو دریافت ایمیل‌های تبلیغاتی</h1>
     <p id="msg">در حال پردازش…</p>
     <p><a href="/">بازگشت به فروشگاه</a></p>
   </main>
@@ -18,8 +18,27 @@
       var params = new URLSearchParams(location.search);
       var email = params.get("email") || "";
       var token = params.get("token") || "";
+      var source = params.get("source") || "";
       var msg = document.getElementById("msg");
-      if (!email || !token || token === "test") {
+      if (!email) {
+        msg.textContent = "لینک نامعتبر است.";
+        return;
+      }
+      if (source === "registered") {
+        fetch("/api/newsletter/unsubscribe-registered", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ email: email })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (x) {
+            msg.textContent = x.ok
+              ? "تمایل به دریافت ایمیل‌های تبلیغاتی لغو شد. حساب کاربری شما همچنان فعال است."
+              : "لغو ناموفق بود.";
+          })
+          .catch(function () { msg.textContent = "خطا در ارتباط با سرور."; });
+        return;
+      }
+      if (!token || token === "test") {
         msg.textContent = token === "test"
           ? "این لینک آزمایشی است و عضویت واقعی را لغو نمی‌کند."
           : "لینک نامعتبر است.";

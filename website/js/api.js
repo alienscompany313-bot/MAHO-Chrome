@@ -368,8 +368,18 @@
     payment_confirmed: "پرداخت تأیید شد",
     payment_rejected: "پرداخت رد شد",
   };
-  function statusLabel(code, lang) {
+  var STATUS_FA_PICKUP = {
+    confirmed: "در حال آماده‌سازی",
+    dispatched: "آماده تحویل از فروشگاه",
+    delivered: "تحویل شد (فروشگاه)",
+  };
+  function isPickupOrder(order) {
+    var m = order && order.delivery && order.delivery.method;
+    return m === "pickup" || m === "store_pickup" || m === "store" || order.fulfillmentType === "store_pickup";
+  }
+  function statusLabel(code, lang, order) {
     var c = String(code || "");
+    if (lang !== "en" && order && isPickupOrder(order) && STATUS_FA_PICKUP[c]) return STATUS_FA_PICKUP[c];
     if (STATUS_FA[c]) return lang === "en" ? c.replace(/_/g, " ") : STATUS_FA[c];
     return c;
   }
