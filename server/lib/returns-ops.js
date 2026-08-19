@@ -15,6 +15,79 @@ const DEFAULT_RETURN_REASONS = [
   { title: "سایر", titleEn: "Other", requireNote: true },
 ];
 
+/** Canonical return methods: pickup_store | pickup_customer */
+function normalizeReturnMethod(raw) {
+  const s = String(raw || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (!s) return null;
+  const customer = {
+    pickup_customer: 1,
+    customer_address_pickup: 1,
+    pickup_from_address: 1,
+    customer_pickup: 1,
+    address_pickup: 1,
+    pickup_from_my_address: 1,
+  };
+  const store = {
+    pickup_store: 1,
+    store_dropoff: 1,
+    return_to_store: 1,
+    store_return: 1,
+    dropoff_store: 1,
+    store_pickup_return: 1,
+  };
+  if (customer[s]) return "pickup_customer";
+  if (store[s]) return "pickup_store";
+  return null;
+}
+
+function returnMethodLabelFa(method) {
+  const m = normalizeReturnMethod(method);
+  if (m === "pickup_customer") return "جمع‌آوری از آدرس من";
+  if (m === "pickup_store") return "تحویل به فروشگاه";
+  return "— انتخاب نشده —";
+}
+
+/**
+ * Prefer order.returnRequest; else aggregate from item-level returnRequest rows
+ * so Admin/Driver flows see the customer-selected method.
+ */
+function resolveOrderReturnRequest(order) {
+  if (!order) return null;
+  const rr0 = order.returnRequest;
+  if (rr0 && (rr0.method || rr0.requestedAt)) {
+    const method = normalizeReturnMethod(rr0.method) || rr0.method || null;
+    return Object.assign({}, rr0, { method: method || rr0.method });
+  }
+  const lines = (order.items || []).filter((it) => it && it.returnRequest && it.returnRequest.requestedAt);
+  if (!lines.length) return rr0 || null;
+  const cust = lines.find((it) => normalizeReturnMethod(it.returnRequest.method) === "pickup_customer");
+  const srcLine = cust || lines[0];
+  const src = srcLine.returnRequest;
+  const method = normalizeReturnMethod(src.method) || src.method || null;
+  const refundSum = lines.reduce((s, it) => s + (Number(it.returnRequest.approvedRefundAmount) || 0), 0);
+  return {
+    method,
+    reason: src.reason || "",
+    details: src.details || "",
+    reasonId: src.reasonId || null,
+    reasonTitleSnapshot: src.reasonTitleSnapshot || src.reason || "",
+    requestedAt: src.requestedAt,
+    pickup: src.pickup || null,
+    returnPickupStatus: src.returnPickupStatus || (method === "pickup_customer" ? "not_assigned" : "n/a"),
+    refundStatus: src.refundStatus || "not_ready",
+    approvedRefundAmount: refundSum || src.approvedRefundAmount || null,
+    stockRestored: !!src.stockRestored,
+    returnDriverId: src.returnDriverId || null,
+    returnDriverName: src.returnDriverName || null,
+    returnDriverAssignedAt: src.returnDriverAssignedAt || null,
+    returnDriverAssignedBy: src.returnDriverAssignedBy || null,
+    photoRequired: src.photoRequired,
+    pickupPhotos: src.pickupPhotos || [],
+    fromItemReturns: true,
+    lineIds: lines.map((it) => it.lineId),
+  };
+}
+
 function now() { return Date.now(); }
 
 function ensureReturnsOps(data) {
@@ -318,4 +391,7 @@ module.exports = {
   returnReasonAnalytics,
   bayesianDriverRank,
   DEFAULT_RETURN_REASONS,
+  normalizeReturnMethod,
+  returnMethodLabelFa,
+  resolveOrderReturnRequest,
 };

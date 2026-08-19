@@ -205,13 +205,18 @@ async function main() {
 
     /* store pickup flow */
     const ulogin = await req("POST", "/api/auth/login", { body: { id: emailNo, password: "BuyerPass99" } });
+    const eligPu = await req("POST", "/api/checkout/pickup-stores", {
+      body: { items: [{ name: "شال A", qty: 1, code: "P0008" }] },
+    });
+    assert(eligPu.status === 200 && (eligPu.data.stores || []).length >= 1, "eligible pickup stores");
+    const pickupStoreId = eligPu.data.stores[0].id;
     const ordPickup = await req("POST", "/api/orders", {
       token: ulogin.data.token,
       body: {
         items: [{ name: "شال A", qty: 1, code: "P0008" }],
         customer: { name: "No", phone: "0700111002", email: emailNo, address: "کابل" },
         payment: "whatsapp",
-        delivery: { method: "pickup" },
+        delivery: { method: "pickup", storeId: pickupStoreId },
         idempotencyKey: "ops_pu_" + Date.now(),
       },
     });

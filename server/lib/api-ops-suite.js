@@ -22,6 +22,8 @@ const {
   approvedRefundAmount,
   returnReasonAnalytics,
   fulfillmentType,
+  normalizeReturnMethod,
+  resolveOrderReturnRequest,
 } = require("./returns-ops");
 const {
   ensureGiveaways,
@@ -195,9 +197,20 @@ function mountOpsSuite(app, ctx) {
   /* ---------- Assign return driver ---------- */
   app.post("/api/admin/orders/:id/assign-return-driver", requireAdminAnyPerm(["returns", "orders", "drivers"]), (req, res) => {
     const o = (db().orders || []).find((x) => x && x.id === req.params.id);
-    if (!o || !o.returnRequest) return res.status(404).json({ error: "not_found" });
-    if (o.returnRequest.method !== "pickup_customer") {
+    if (!o) return res.status(404).json({ error: "not_found" });
+    if (!o.returnRequest) {
+      const resolved = resolveOrderReturnRequest(o);
+      if (resolved) o.returnRequest = Object.assign({}, resolved);
+    }
+    if (!o.returnRequest) return res.status(404).json({ error: "not_found" });
+    const method = normalizeReturnMethod(o.returnRequest.method) || o.returnRequest.method;
+    o.returnRequest.method = method;
+    if (method !== "pickup_customer") {
       return res.status(400).json({ error: "not_customer_pickup" });
+    }
+    const st = String(o.status || "");
+    if (st === "return_completed" || st === "return_rejected") {
+      return res.status(400).json({ error: "return_not_assignable" });
     }
     const driverId = String((req.body || {}).driverId || "");
     const driver = (db().drivers || []).find((d) => d && d.id === driverId && d.active !== false);
@@ -217,10 +230,22 @@ function mountOpsSuite(app, ctx) {
     o.returnRequest.returnDriverAssignedBy = actorName(req);
     o.returnRequest.returnPickupStatus = "assigned";
     o.returnRequest.photoRequired = photoRequired;
-    if (o.returnRequest.refundStatus == null) o.returnRequest.refundStatus = "approved";
+    if (o.returnRequest.refundStatus == null || o.returnRequest.refundStatus === "not_ready") {
+      o.returnRequest.refundStatus = "approved";
+    }
     if (o.returnRequest.approvedRefundAmount == null) {
       o.returnRequest.approvedRefundAmount = Number(o.total) || 0;
     }
+    (o.items || []).forEach((it) => {
+      if (it && it.returnRequest && (normalizeReturnMethod(it.returnRequest.method) === "pickup_customer" || !it.returnRequest.method)) {
+        it.returnRequest.returnDriverId = driver.id;
+        it.returnRequest.returnDriverName = driver.name;
+        it.returnRequest.returnDriverAssignedAt = o.returnRequest.returnDriverAssignedAt;
+        it.returnRequest.returnDriverAssignedBy = o.returnRequest.returnDriverAssignedBy;
+        it.returnRequest.returnPickupStatus = "assigned";
+        it.returnRequest.photoRequired = photoRequired;
+      }
+    });
     saveDb();
     pushAudit(db(), {
       actor: actorName(req),
@@ -441,7 +466,7 @@ function mountOpsSuite(app, ctx) {
     const activeStatuses = { not_assigned: 1, assigned: 1, on_the_way: 1, picked_up: 1, returned_to_store: 1 };
     const list = (db().orders || []).filter((o) =>
       o && o.returnRequest && o.returnRequest.returnDriverId === driverId
-      && o.returnRequest.method === "pickup_customer"
+      && normalizeReturnMethod(o.returnRequest.method) === "pickup_customer"
       && activeStatuses[o.returnRequest.returnPickupStatus || "assigned"]
     ).map((o) => ({
       orderId: o.id,

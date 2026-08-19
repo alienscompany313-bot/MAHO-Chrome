@@ -344,25 +344,108 @@ function requestItemReturn(order, lineId, body, meta) {
   if (!line) return { ok: false, error: "line_not_found", status: 404 };
   const elig = itemReturnEligible(order, line, meta.now);
   if (!elig.ok) return { ok: false, error: elig.error, status: 400 };
-  const method = String(body.method || "pickup_store");
+  const { normalizeReturnMethod } = require("./returns-ops");
+  const method = normalizeReturnMethod((body && body.method) || "");
   if (method !== "pickup_store" && method !== "pickup_customer") {
-    return { ok: false, error: "invalid_return_method", status: 400 };
+    return { ok: false, error: "return_method_required", status: 400 };
+  }
+  if (!(body && (body.reasonId || body.reason))) {
+    return { ok: false, error: "return_reason_required", status: 400 };
   }
   const refundable = refundableForLine(order, line);
+  let pickup = null;
+  if (method === "pickup_customer") {
+    const address = String((body && body.address) || (order.customer && order.customer.address) || "").trim().slice(0, 400);
+    const phone = String((body && body.phone) || (order.customer && order.customer.phone) || "").trim().slice(0, 40);
+    if (!address || !phone) {
+      return { ok: false, error: "address_phone_required", status: 400 };
+    }
+    const lat = body && body.lat != null ? Number(body.lat) : (order.customerLocation && order.customerLocation.lat);
+    const lng = body && body.lng != null ? Number(body.lng) : (order.customerLocation && order.customerLocation.lng);
+    pickup = {
+      address,
+      phone,
+      lat: Number.isFinite(lat) ? lat : null,
+      lng: Number.isFinite(lng) ? lng : null,
+      mapsUrl: (Number.isFinite(lat) && Number.isFinite(lng))
+        ? ("https://www.google.com/maps?q=" + encodeURIComponent(lat + "," + lng))
+        : ((order.customerLocation && order.customerLocation.mapsUrl) || null),
+    };
+  }
   line.returnRequest = {
     method,
     reason: String(body.reason || "").slice(0, 500),
     details: String(body.details || "").slice(0, 1000),
     reasonId: body.reasonId || null,
-    reasonTitleSnapshot: body.reasonTitleSnapshot || "",
+    reasonTitleSnapshot: body.reasonTitleSnapshot || String(body.reason || "").slice(0, 200),
     requestedAt: Date.now(),
     refundStatus: "not_ready",
     approvedRefundAmount: refundable,
     stockRestored: false,
     returnPickupStatus: method === "pickup_customer" ? "not_assigned" : "n/a",
+    pickup: pickup,
   };
   setItemStatus(order, lineId, "return_requested", { by: meta.by || "customer", reason: body.reason });
+  /* Mirror onto order.returnRequest so Admin Returns + driver assign see the method. */
+  syncOrderReturnRequestFromItem(order, line);
   return { ok: true, line, order };
+}
+
+/**
+ * Keep order.returnRequest in sync with item returns without erasing
+ * method / pickup / reason on later updates.
+ */
+function syncOrderReturnRequestFromItem(order, line) {
+  if (!order || !line || !line.returnRequest) return;
+  const { normalizeReturnMethod } = require("./returns-ops");
+  const lr = line.returnRequest;
+  const method = normalizeReturnMethod(lr.method) || lr.method;
+  if (!order.returnRequest) {
+    order.returnRequest = {
+      method,
+      reason: lr.reason || "",
+      details: lr.details || "",
+      reasonId: lr.reasonId || null,
+      reasonTitleSnapshot: lr.reasonTitleSnapshot || lr.reason || "",
+      requestedAt: lr.requestedAt || Date.now(),
+      pickup: lr.pickup || null,
+      returnPickupStatus: method === "pickup_customer" ? "not_assigned" : "n/a",
+      refundStatus: lr.refundStatus || "not_ready",
+      approvedRefundAmount: lr.approvedRefundAmount,
+      stockRestored: false,
+      fromItemReturns: true,
+      lineIds: [line.lineId],
+    };
+    return;
+  }
+  const rr = order.returnRequest;
+  /* Never erase an existing customer-selected method; upgrade store→customer if needed */
+  const existing = normalizeReturnMethod(rr.method);
+  if (!existing) rr.method = method;
+  else if (method === "pickup_customer") rr.method = "pickup_customer";
+  else if (!rr.method) rr.method = method;
+  if (!rr.reason && lr.reason) rr.reason = lr.reason;
+  if (!rr.reasonId && lr.reasonId) rr.reasonId = lr.reasonId;
+  if (!rr.reasonTitleSnapshot && (lr.reasonTitleSnapshot || lr.reason)) {
+    rr.reasonTitleSnapshot = lr.reasonTitleSnapshot || lr.reason;
+  }
+  if (lr.details && !rr.details) rr.details = lr.details;
+  if (method === "pickup_customer" && lr.pickup && !rr.pickup) rr.pickup = lr.pickup;
+  if (!rr.requestedAt) rr.requestedAt = lr.requestedAt || Date.now();
+  if (rr.returnPickupStatus == null || rr.returnPickupStatus === "") {
+    rr.returnPickupStatus = (normalizeReturnMethod(rr.method) === "pickup_customer") ? "not_assigned" : "n/a";
+  }
+  const ids = Array.isArray(rr.lineIds) ? rr.lineIds.map(String) : [];
+  if (line.lineId && ids.indexOf(String(line.lineId)) < 0) ids.push(String(line.lineId));
+  rr.lineIds = ids;
+  /* Recompute refundable from item returns when mirrored */
+  const sum = (order.items || []).reduce((s, it) => {
+    if (it && it.returnRequest && it.returnRequest.approvedRefundAmount != null) {
+      return s + (Number(it.returnRequest.approvedRefundAmount) || 0);
+    }
+    return s;
+  }, 0);
+  if (sum > 0) rr.approvedRefundAmount = sum;
 }
 
 function createShipment(order, lineIds, meta) {
@@ -595,6 +678,7 @@ module.exports = {
   cancelItem,
   itemReturnEligible,
   requestItemReturn,
+  syncOrderReturnRequestFromItem,
   createShipment,
   markShipmentDelivered,
   publicItem,

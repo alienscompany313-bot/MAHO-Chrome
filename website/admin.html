@@ -942,8 +942,11 @@
         <div class="field"><label>کود کالا</label><input id="f_code" dir="ltr" placeholder="مثلاً DRS-001"></div>
         <div class="field"><label>تعداد موجودی (کل)</label><input id="f_stock" type="number" min="0" inputmode="numeric" placeholder="مثلاً 10"><p class="note" id="f_stockHint" style="display:none;margin:4px 0 0">موجودی کل از ترکیب‌های رنگ/سایز محاسبه می‌شود و قابل ویرایش مستقیم نیست.</p></div>
         <div class="field" style="grid-column:1/-1"><label>فروشگاه‌های حامل این محصول</label>
+          <label style="display:inline-flex;align-items:center;gap:8px;font-weight:800;margin:6px 0">
+            <input type="checkbox" id="f_storeAll"> همه فروشگاه‌های فعال
+          </label>
           <div id="f_storeIds" class="note" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
-          <p class="note" style="margin-top:6px">اگر هیچ فروشگاهی انتخاب نشود، محصول در همه فروشگاه‌ها در دسترس است (سازگار با گذشته).</p>
+          <p class="note" style="margin-top:6px">«همه فروشگاه‌ها» یعنی محصول در هر فروشگاه فعال قابل تحویل حضوری است. اگر خاموش باشد، فقط فروشگاه‌های تیک‌خورده معتبرند (لیست خالی = هیچ فروشگاهی).</p>
         </div>
         <div class="field"><label>کتگوری</label>
           <select id="f_cat"></select>
@@ -1316,6 +1319,19 @@
 
     function renderReturnsAdmin(){
       var box=$("#returnsBody"); if(!box) return;
+      function normRetMethod(m){
+        var s=String(m||"").trim().toLowerCase().replace(/[\s-]+/g,"_");
+        if(!s) return "";
+        if(["pickup_customer","customer_address_pickup","pickup_from_address","customer_pickup","address_pickup","pickup_from_my_address"].indexOf(s)>=0) return "pickup_customer";
+        if(["pickup_store","store_dropoff","return_to_store","store_return","dropoff_store"].indexOf(s)>=0) return "pickup_store";
+        return s;
+      }
+      function methodLabelFa(m){
+        var n=normRetMethod(m);
+        if(n==="pickup_customer") return "جمع‌آوری از آدرس من";
+        if(n==="pickup_store") return "تحویل به فروشگاه";
+        return "— انتخاب نشده —";
+      }
       requireBackend(function(){
         var loadDrivers=MAHOApi.listDrivers?MAHOApi.listDrivers().then(function(r){ window._driverList=r.drivers||[]; }).catch(function(){ window._driverList=[]; }):Promise.resolve();
         loadDrivers.then(function(){
@@ -1324,26 +1340,42 @@
           if(!list.length){ box.innerHTML='<p class="note">درخواست برگشتی نیست.</p>'; return; }
           box.innerHTML=list.map(function(o){
             var rr=o.returnRequest||{};
+            var method=normRetMethod(rr.method);
             var pk=rr.pickup||{};
             var st=(MAHOApi.statusLabel?MAHOApi.statusLabel(o.status):o.status);
             var acts="";
-            if(o.status==="return_requested"){
+            if(o.status==="return_requested" || o.status==="partially_returned"){
               acts='<button class="btn btn-gold btn-sm" data-ret-st="return_approved" data-oid="'+esc(o.id)+'">تأیید برگشت</button> '+
                    '<button class="btn btn-danger btn-sm" data-ret-st="return_rejected" data-oid="'+esc(o.id)+'">رد برگشت</button>';
             } else if(o.status==="return_approved"){
               acts='<button class="btn btn-gold btn-sm" data-ret-st="return_completed" data-oid="'+esc(o.id)+'">تکمیل / دریافت</button>';
             }
+            var addrHtml="";
+            if(method==="pickup_customer"){
+              addrHtml='<div class="note">آدرس جمع‌آوری: '+esc(pk.address||((o.customer&&o.customer.address)||"—"))+
+                (pk.phone?(" · <span dir=\"ltr\">"+esc(pk.phone)+"</span>"):"")+
+                (pk.mapsUrl?(' · <a href="'+esc(pk.mapsUrl)+'" target="_blank" rel="noopener">نقشه</a>'):"")+
+                '</div>';
+            }
+            var showAssign = (method==="pickup_customer" && (o.status==="return_approved" || rr.returnPickupStatus==="assigned" || rr.returnDriverId));
+            var assignHtml = showAssign
+              ? '<div style="margin:8px 0"><label class="note">تعیین درایور</label><br><select class="ctrl" id="retDrv_'+esc(o.id)+'"></select> '+
+                '<button type="button" class="btn btn-outline btn-sm" data-assign-ret-drv="'+esc(o.id)+'">تعیین درایور</button></div>'
+              : "";
             return '<div class="adm-order" style="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:12px">'+
               '<div class="row-between"><b dir="ltr">'+esc(o.id)+'</b><span class="tag">'+esc(st)+'</span></div>'+
               '<div class="note">مشتری: '+esc((o.customer&&o.customer.name)||"")+' · <span dir="ltr">'+esc((o.customer&&o.customer.phone)||"")+'</span></div>'+
-              '<div class="note">روش: '+(rr.method==="pickup_customer"?"جمع‌آوری از آدرس مشتری":"تحویل به فروشگاه")+'</div>'+
+              '<div class="note"><b>روش برگشت:</b> '+esc(methodLabelFa(method))+'</div>'+
+              addrHtml+
               '<div class="note">دلیل: '+esc(rr.reasonTitleSnapshot||rr.reason||"")+'</div>'+
               '<div class="note">توضیح: '+esc(rr.details||"")+'</div>'+
               '<div class="note">Pickup status: '+esc(rr.returnPickupStatus||"—")+' · Refund: '+esc(rr.refundStatus||"—")+' · مبلغ: '+money(rr.approvedRefundAmount!=null?rr.approvedRefundAmount:o.total)+'</div>'+
-              '<div class="note">راننده برگشت: '+esc(rr.returnDriverName||"—")+(rr.photoRequired?' · عکس الزامی':'')+'</div>'+
+              '<div class="note">راننده برگشت: '+esc(rr.returnDriverName||"—")+(rr.photoRequired?' · عکس الزامی':'')+
+                (rr.returnDriverAssignedAt?(" · "+new Date(rr.returnDriverAssignedAt).toLocaleString("fa-AF")):"")+
+                '</div>'+
               ((rr.pickupPhotos&&rr.pickupPhotos.length)?'<div class="note">عکس‌ها: '+rr.pickupPhotos.map(function(p){return '<a href="'+esc(p.url)+'" target="_blank" rel="noopener">مشاهده</a>';}).join(" ")+'</div>':'')+
               '<div class="note">زمان: '+(rr.requestedAt?new Date(rr.requestedAt).toLocaleString("fa-AF"):"—")+'</div>'+
-              (rr.method==="pickup_customer"?'<div style="margin:8px 0"><select class="ctrl" id="retDrv_'+esc(o.id)+'"></select> <button type="button" class="btn btn-outline btn-sm" data-assign-ret-drv="'+esc(o.id)+'">تعیین درایور برای جمع‌آوری</button></div>':'')+
+              assignHtml+
               '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+acts+
               '<button type="button" class="btn btn-outline btn-sm" data-late-override="'+esc(o.id)+'">اجازه برگشت استثنایی</button>'+
               (o.status==="return_approved"?'<button type="button" class="btn btn-outline btn-sm" data-ret-store="'+esc(o.id)+'">رسید به فروشگاه</button>':'')+
@@ -2419,19 +2451,27 @@
       (function fillStoreIds(){
         var box=$("#f_storeIds"); if(!box) return;
         var stores=state.stores||[];
-        var selected=Array.isArray(p.storeIds)?p.storeIds.slice():[];
-        var stockMap=(p.storeStock&&typeof p.storeStock==="object")?p.storeStock:{};
-        if(!selected.length && Object.keys(stockMap).length){
-          selected=Object.keys(stockMap).filter(function(id){ return stockMap[id]&&stockMap[id].available!==false; });
+        var mode=p.storeAvailabilityMode;
+        if(mode!=="all" && mode!=="selected"){
+          if(!Object.prototype.hasOwnProperty.call(p,"storeIds")) mode="all";
+          else if(Array.isArray(p.storeIds) && p.storeIds.length) mode="selected";
+          else mode="all"; /* legacy empty storeIds => all */
+        }
+        var selected=Array.isArray(p.storeIds)?p.storeIds.map(String):[];
+        var allEl=$("#f_storeAll");
+        if(allEl){
+          allEl.checked = (mode==="all");
+          allEl.onchange=function(){
+            var on=!!allEl.checked;
+            box.querySelectorAll("input[data-store-id]").forEach(function(c){ c.disabled=on; if(on) c.checked=true; });
+          };
         }
         if(!stores.length){ box.innerHTML='<span class="note">هنوز فروشگاهی ثبت نشده.</span>'; return; }
         box.innerHTML=stores.map(function(s){
-          var id=s.id||"";
-          var checked=(!selected.length)||selected.indexOf(id)>=0; /* empty = all */
-          /* If product never had storeIds, default all checked; if had list, respect it */
-          if(Array.isArray(p.storeIds)&&p.storeIds.length) checked=selected.indexOf(id)>=0;
-          else checked=true;
-          return '<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+'> '+esc(s.name||id)+'</label>';
+          var id=String(s.id||"");
+          var checked = (mode==="all") ? true : (selected.indexOf(id)>=0);
+          var disabled = (mode==="all") ? " disabled" : "";
+          return '<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+'> '+esc(s.name||id)+'</label>';
         }).join("");
       })();
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
@@ -2515,21 +2555,30 @@
       (function(){
         var box=$("#f_storeIds");
         if(!box) return;
+        var allEl=$("#f_storeAll");
+        var allMode=!!(allEl && allEl.checked);
         var checks=box.querySelectorAll("input[data-store-id]");
-        if(!checks.length) return;
         var ids=[];
-        checks.forEach(function(c){ if(c.checked) ids.push(c.getAttribute("data-store-id")); });
-        var allStores=(state.stores||[]).map(function(s){return s.id;}).filter(Boolean);
-        /* If all selected or none selected → omit storeIds (all stores) for backward compat */
-        if(!ids.length || (allStores.length && ids.length===allStores.length)){
+        checks.forEach(function(c){ if(c.checked && !c.disabled) ids.push(String(c.getAttribute("data-store-id"))); });
+        /* If "all stores" checked, force all mode even if individual boxes are checked/disabled */
+        if(allMode){
+          p.storeAvailabilityMode="all";
           p.storeIds=[];
         } else {
-          p.storeIds=ids;
+          p.storeAvailabilityMode="selected";
+          p.storeIds=ids.slice(); /* may be empty => no pickup stores */
         }
+        /* storeStock availability flags only — do NOT write stock:0 here (p.stock not set yet).
+           Pickup eligibility uses storeIds + global stock unless per-store stock is set later. */
         p.storeStock=p.storeStock||{};
+        var allStores=(state.stores||[]).map(function(s){return String(s.id||"");}).filter(Boolean);
         allStores.forEach(function(id){
-          var on=(!p.storeIds.length)||p.storeIds.indexOf(id)>=0;
-          p.storeStock[id]=Object.assign({}, p.storeStock[id]||{}, { available: !!on, stock: (p.storeStock[id]&&p.storeStock[id].stock!=null)?p.storeStock[id].stock:(Number(p.stock)||0) });
+          var on = allMode || ids.indexOf(id)>=0;
+          var prevRow=(editIndex>=0 && state.products[editIndex] && state.products[editIndex].storeStock && state.products[editIndex].storeStock[id]) || {};
+          var row=Object.assign({}, prevRow, { available: !!on });
+          /* Keep prior positive per-store stock if present; never invent stock:0 from empty p.stock */
+          if(!(row.stock!=null && Number(row.stock)>0)){ delete row.stock; }
+          p.storeStock[id]=row;
         });
       })();
       var sizes = hasSizes ? parseList($("#f_sizes").value) : [];
@@ -2562,7 +2611,8 @@
         /* preserve unrelated fields (cost, lowStock, sku, ...) */
         var prev = state.products[editIndex] || {};
         if(prev.storeStock&&!Object.keys(p.storeStock||{}).length) p.storeStock=prev.storeStock;
-        if(Array.isArray(prev.storeIds)&&!p.storeIds) p.storeIds=prev.storeIds.slice();
+        if(Array.isArray(prev.storeIds) && !Array.isArray(p.storeIds)) p.storeIds=prev.storeIds.slice();
+        if(prev.storeAvailabilityMode && !p.storeAvailabilityMode) p.storeAvailabilityMode=prev.storeAvailabilityMode;
         Object.keys(prev).forEach(function(k){
           if(p[k] === undefined && ["cost","lowStock","sku","barcode","badgeText_en"].indexOf(k) >= 0) p[k] = prev[k];
         });

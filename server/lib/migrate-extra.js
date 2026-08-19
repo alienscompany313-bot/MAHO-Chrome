@@ -150,8 +150,19 @@ function extendMigrate(data) {
         changed = true;
       }
       if (o.returnRequest && !o.returnRequest.method) {
-        o.returnRequest.method = "pickup_store";
-        changed = true;
+        /* Prefer item-level method if present; else leave unset (do not invent store). */
+        let fromItem = null;
+        (o.items || []).some((it) => {
+          if (it && it.returnRequest && it.returnRequest.method) {
+            fromItem = it.returnRequest.method;
+            return true;
+          }
+          return false;
+        });
+        if (fromItem) {
+          o.returnRequest.method = fromItem;
+          changed = true;
+        }
       }
       if (o.lang == null) { o.lang = "fa"; changed = true; }
     });

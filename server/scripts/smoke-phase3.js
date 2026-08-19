@@ -174,12 +174,18 @@ async function main() {
     const ulogin = await req("POST", "/api/auth/login", { body: { id: email, password: "BuyerPass99" } });
     const utok = ulogin.data.token;
 
+    const enElig = await req("POST", "/api/checkout/pickup-stores", {
+      body: { items: [{ name: "شال تست", qty: 1 }] },
+    });
+    assert(enElig.status === 200 && (enElig.data.stores || []).length >= 1, "pickup stores available");
+    const pickupStoreId = enElig.data.stores[0].id;
+
     const enOrder = await req("POST", "/api/orders", {
       token: utok,
       body: {
         items: [{ name: "شال تست", qty: 1 }],
         customer: { name: "Aida", phone: "0700111222", email, address: "Kabul street" },
-        payment: "whatsapp", delivery: { method: "pickup" }, lang: "en",
+        payment: "whatsapp", delivery: { method: "pickup", storeId: pickupStoreId }, lang: "en",
         idempotencyKey: "en_" + Date.now(),
       },
     });
@@ -203,7 +209,7 @@ async function main() {
       body: {
         items: [{ name: "شال تست", qty: 1 }],
         customer: { name: "A", phone: "0700111222", email, address: "کابل" },
-        payment: "card", delivery: { method: "pickup" }, idempotencyKey: "cardoff_" + Date.now(),
+        payment: "card", delivery: { method: "pickup", storeId: pickupStoreId }, idempotencyKey: "cardoff_" + Date.now(),
       },
     });
     assert(cardOff.status === 400 && cardOff.data.error === "payment_disabled", "disabled payment rejected");

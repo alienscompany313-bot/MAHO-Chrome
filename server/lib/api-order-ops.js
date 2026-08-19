@@ -257,11 +257,13 @@ function mountOrderOps(app, ctx) {
     const body = req.body || {};
     let reasonTitle = "";
     if (body.reasonId) {
-      const snap = resolveReasonSnapshot(ctx.db, body.reasonId);
-      if (snap) {
-        body.reasonTitleSnapshot = snap.title;
-        reasonTitle = snap.title;
-        if (!body.reason) body.reason = snap.title;
+      const snap = resolveReasonSnapshot(ctx.db, body.reasonId, body.reason);
+      if (!snap.active) return res.status(400).json({ error: "inactive_reason" });
+      body.reasonTitleSnapshot = snap.reasonTitleSnapshot || body.reason;
+      reasonTitle = body.reasonTitleSnapshot;
+      if (!body.reason) body.reason = reasonTitle;
+      if (snap.requireNote && !String(body.details || "").trim()) {
+        return res.status(400).json({ error: "details_required" });
       }
     }
     const r = requestItemReturn(o, req.params.lineId, body, { by: "customer" });

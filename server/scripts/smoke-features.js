@@ -240,13 +240,18 @@ async function main() {
     ok("optional GPS delivery");
 
     /* member order + oversell */
+    const eligFeat = await req("POST", "/api/checkout/pickup-stores", {
+      body: { items: [{ name: "شال تست", qty: 1 }] },
+    });
+    assert(eligFeat.status === 200 && (eligFeat.data.stores || []).length >= 1, "pickup stores for features");
+    const featStoreId = eligFeat.data.stores[0].id;
     const memOrder = await req("POST", "/api/orders", {
       token: ulogin.data.token,
       body: {
         items: [{ name: "شال تست", qty: 1 }],
         customer: { name: "آیدا", phone: "0700111222", email, address: "کابل" },
         payment: "whatsapp",
-        delivery: { method: "pickup" },
+        delivery: { method: "pickup", storeId: featStoreId },
         idempotencyKey: "mem_" + Date.now(),
       },
     });
@@ -257,7 +262,7 @@ async function main() {
         items: [{ name: "شال تست", qty: 99 }],
         customer: { name: "آیدا", phone: "0700111222", email, address: "کابل" },
         payment: "whatsapp",
-        delivery: { method: "pickup" },
+        delivery: { method: "pickup", storeId: featStoreId },
         idempotencyKey: "over_" + Date.now(),
       },
     });
