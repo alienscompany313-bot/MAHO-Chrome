@@ -236,6 +236,11 @@
       "orders.returnPickupStore": "تحویل به فروشگاه", "orders.returnPickupCustomer": "جمع‌آوری از آدرس من",
       "orders.returnSubmit": "ثبت درخواست برگشت", "orders.returnNeedReason": "دلیل برگشت لازم است.",
       "order.deliveryTo": "ارسال به آدرس", "order.pickupAt": "دریافت حضوری",
+      "orders.fulfill": "روش دریافت",
+      "orders.pickupStore": "فروشگاه دریافت",
+      "orders.storeAddress": "آدرس",
+      "orders.storePhone": "شماره تماس",
+      "orders.viewMaps": "مشاهده در Google Maps",
     },
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
@@ -413,6 +418,11 @@
       "orders.returnPickupStore": "Drop off at store", "orders.returnPickupCustomer": "Pickup from my address",
       "orders.returnSubmit": "Submit return request", "orders.returnNeedReason": "A return reason is required.",
       "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
+      "orders.fulfill": "Fulfillment",
+      "orders.pickupStore": "Pickup store",
+      "orders.storeAddress": "Address",
+      "orders.storePhone": "Phone",
+      "orders.viewMaps": "View on Google Maps",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -1564,6 +1574,31 @@
   }
   function renderOrders() {
     const list = $("#ordersList"); if (!list) return;
+    function orderIsPickup(o) {
+      if (window.MAHOApi && typeof MAHOApi.isPickupOrder === "function") return !!MAHOApi.isPickupOrder(o);
+      const m = o && o.delivery && o.delivery.method;
+      return m === "pickup" || m === "store_pickup" || m === "store";
+    }
+    /** Exact store saved on the order — never invent/default another store. */
+    function pickupStoreBlockHtml(o) {
+      if (!orderIsPickup(o)) return "";
+      const s = (o && o.pickupStore) || {};
+      if (!s.name && !s.address && !s.area && !s.id) return "";
+      let mapsUrl = s.mapsUrl || "";
+      if (!mapsUrl && s.lat != null && s.lng != null) {
+        mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
+      }
+      const addr = s.address || s.area || "";
+      let html = `<div class="order-pickup-store note" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--cream,#fbf8f1);line-height:1.8;text-align:start">`;
+      html += `<div><b>${t("orders.pickupStore")}:</b> ${escHtml(s.name || "—")}</div>`;
+      if (addr) html += `<div><b>${t("orders.storeAddress")}:</b> ${escHtml(addr)}</div>`;
+      if (s.phone) html += `<div><b>${t("orders.storePhone")}:</b> <span dir="ltr">${escHtml(s.phone)}</span></div>`;
+      if (mapsUrl) {
+        html += `<div style="margin-top:4px"><a href="${escHtml(mapsUrl)}" target="_blank" rel="noopener" style="font-weight:800;color:var(--gold-deep,#a07a3a)">${t("orders.viewMaps")}</a></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
     const paint = (orders) => {
       if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; stopCancelCountdown(); return; }
       const pending = [];
@@ -1635,6 +1670,8 @@
         const d = new Date(o.date);
         const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
         const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
+        const fulfillLabel = orderIsPickup(o) ? t("order.pickupAt") : t("order.deliveryTo");
+        const pickupBlock = pickupStoreBlockHtml(o);
         const orderLabel = (LANG !== "en" && (o.statusLabelFa || display.statusLabelFa))
           ? (o.statusLabelFa || display.statusLabelFa)
           : (display.statusLabel || orderStatusText(code, o) || code || "");
@@ -1705,6 +1742,8 @@
               </span>
             </button>
             <div class="order-acc-body" data-order-body="${escHtml(o.id)}" ${isOpen ? "" : "hidden"}>
+              <div class="order-fulfill note" style="margin:4px 0 8px;font-weight:700">${t("orders.fulfill")}: ${escHtml(fulfillLabel)}</div>
+              ${pickupBlock}
               <ul class="oi-list">${items}</ul>
               <div class="order-foot">
                 <span>${t("orders.pay")}: ${payLabel}</span>

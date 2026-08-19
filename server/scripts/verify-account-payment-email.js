@@ -219,7 +219,7 @@ async function main() {
     assert(/https:\/\/mahomarket\.com\/uploads\/demo-product\.jpg/.test(conf.html), "absolute https image");
     assert(!/localhost/.test(conf.html), "no localhost image");
     assert(/فروشگاه A/.test(conf.html) && /کابل، کارته ۳/.test(conf.html), "pickup store A");
-    assert(/مشاهده موقعیت در Google Maps/.test(conf.html), "maps CTA");
+    assert(/مشاهده در Google Maps/.test(conf.html), "maps CTA");
     assert(!/آدرس مشتری نباید/.test(conf.html), "customer address not shown as store");
     ok("order confirmation Dari + product cards + images + store A");
 

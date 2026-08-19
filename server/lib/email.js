@@ -96,8 +96,8 @@ function orderItemsTable(order, lang) {
   const siteUrl = (order && order._siteUrl) || process.env.SITE_URL || "https://mahomarket.com";
   const logoUrl = (order && order._logoUrl) || "";
   const placeholder = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="" width="72" height="72" style="object-fit:contain;border-radius:8px;display:block;background:#fbf8f1">`
-    : `<div style="width:72px;height:72px;border-radius:8px;background:#fbf8f1;border:1px solid #e6e0d4;color:#c8a35f;font:700 22px Georgia,serif;text-align:center;line-height:72px">M</div>`;
+    ? `<img src="${escapeHtml(logoUrl)}" alt="" width="64" height="64" style="width:64px;height:64px;object-fit:contain;border-radius:8px;display:block;margin:0 auto 8px;background:#fbf8f1;border:0">`
+    : `<div style="width:64px;height:64px;border-radius:8px;background:#fbf8f1;border:1px solid #e6e0d4;color:#c8a35f;font:700 20px Georgia,serif;text-align:center;line-height:64px;margin:0 auto 8px">M</div>`;
 
   const cards = items.map((it) => {
     const qty = it.qty || 1;
@@ -108,7 +108,7 @@ function orderItemsTable(order, lang) {
       : (discPct > 0 ? unit * qty * (1 - discPct / 100) : unit * qty);
     const absImg = resolveProductImageUrl(it.image || it, { siteUrl: siteUrl, logoUrl: logoUrl });
     const img = absImg
-      ? `<img src="${escapeHtml(absImg)}" alt="" width="72" height="72" style="object-fit:cover;border-radius:8px;display:block;border:0">`
+      ? `<img src="${escapeHtml(absImg)}" alt="" width="64" height="64" style="width:64px;height:64px;object-fit:cover;border-radius:8px;display:block;margin:0 auto 8px;border:0">`
       : placeholder;
     const nm = isEn ? (it.name_en || it.name || "") : (it.name || it.name_en || "");
     const sizeLbl = isEn ? "Size" : "سایز";
@@ -121,23 +121,22 @@ function orderItemsTable(order, lang) {
     const discVal = discPct
       ? (isEn ? (discPct + "%") : (discPct + "٪"))
       : (it.discountAmount ? moneyAf(it.discountAmount, lang) : "—");
-    return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e6e0d4;border-radius:12px;margin:0 0 12px;background:#fff">
-<tr>
-<td style="padding:12px;width:84px;vertical-align:top">${img}</td>
-<td style="padding:12px 12px 12px 0;vertical-align:top;font-size:14px;line-height:1.7">
+    /* Stacked mobile-first card: image on top, then compact meta rows (no wide multi-column table). */
+    return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e6e0d4;border-radius:12px;margin:0 0 14px;background:#fff">
+<tr><td style="padding:14px 14px 6px;text-align:center">${img}</td></tr>
+<tr><td style="padding:0 14px 14px;font-size:14px;line-height:1.75;${isEn ? "text-align:left" : "text-align:right"}">
 <div style="font-weight:800;margin-bottom:6px">${escapeHtml(nameLbl)}: ${escapeHtml(nm)}</div>
-${it.size ? `<div>${escapeHtml(sizeLbl)}: ${escapeHtml(String(it.size))}</div>` : ""}
-${it.color ? `<div>${escapeHtml(colorLbl)}: ${escapeHtml(String(it.color))}</div>` : ""}
-<div>${escapeHtml(qtyLbl)}: <span dir="ltr">${escapeHtml(String(qty))}</span></div>
-<div>${escapeHtml(priceLbl)}: <span dir="ltr">${moneyAf(unit, lang)}</span></div>
-<div>${escapeHtml(discLbl)}: <span dir="ltr">${escapeHtml(String(discVal))}</span></div>
-<div style="font-weight:800;margin-top:4px">${escapeHtml(totalLbl)}: <span dir="ltr">${moneyAf(line, lang)}</span></div>
-</td>
-</tr>
+${it.size ? `<div style="margin:0 0 2px">${escapeHtml(sizeLbl)}: ${escapeHtml(String(it.size))}</div>` : ""}
+${it.color ? `<div style="margin:0 0 2px">${escapeHtml(colorLbl)}: ${escapeHtml(String(it.color))}</div>` : ""}
+<div style="margin:0 0 2px">${escapeHtml(qtyLbl)}: <span dir="ltr">${escapeHtml(String(qty))}</span></div>
+<div style="margin:0 0 2px">${escapeHtml(priceLbl)}: <span dir="ltr">${moneyAf(unit, lang)}</span></div>
+<div style="margin:0 0 2px">${escapeHtml(discLbl)}: <span dir="ltr">${escapeHtml(String(discVal))}</span></div>
+<div style="font-weight:800;margin-top:6px;padding-top:6px;border-top:1px solid #f0ebe3">${escapeHtml(totalLbl)}: <span dir="ltr">${moneyAf(line, lang)}</span></div>
+</td></tr>
 </table>`;
   }).join("");
 
-  return `<div style="margin:16px 0">${cards || ""}</div>`;
+  return `<div style="margin:18px 0 8px">${cards || ""}</div>`;
 }
 
 function orderTotalsBlock(order, lang) {
@@ -150,11 +149,12 @@ function orderTotalsBlock(order, lang) {
   const discLbl = isEn ? "Discount" : "تخفیف";
   const shipLbl = isEn ? "Delivery fee" : "هزینه ارسال";
   const grandLbl = isEn ? "Grand total" : "مبلغ نهایی";
-  return `<table role="presentation" width="100%" style="font-size:14px;margin:16px 0;border-top:1px solid #e6e0d4;padding-top:8px">
-<tr><td style="padding:4px 0">${itemsLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${moneyAf(itemsTotal, lang)}</td></tr>
-<tr><td style="padding:4px 0">${discLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${discount ? ("− " + moneyAf(discount, lang)) : (isEn ? "—" : "—")}</td></tr>
-<tr><td style="padding:4px 0">${shipLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${fee ? moneyAf(fee, lang) : (isEn ? "Free" : "رایگان")}</td></tr>
-<tr><td style="font-weight:800;font-size:16px;padding-top:10px;color:#141414">${grandLbl}</td><td style="text-align:left;direction:ltr;font-weight:800;font-size:16px;padding-top:10px;color:#141414">${moneyAf(total, lang)}</td></tr>
+  const align = isEn ? "left" : "right";
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;margin:18px 0 8px;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
+<tr><td style="padding:14px 16px 4px;text-align:${align}">${itemsLbl}</td><td style="padding:14px 16px 4px;text-align:left;direction:ltr">${moneyAf(itemsTotal, lang)}</td></tr>
+<tr><td style="padding:4px 16px;text-align:${align}">${discLbl}</td><td style="padding:4px 16px;text-align:left;direction:ltr">${discount ? ("− " + moneyAf(discount, lang)) : "—"}</td></tr>
+<tr><td style="padding:4px 16px;text-align:${align}">${shipLbl}</td><td style="padding:4px 16px;text-align:left;direction:ltr">${fee ? moneyAf(fee, lang) : (isEn ? "Free" : "رایگان")}</td></tr>
+<tr><td style="padding:12px 16px 16px;font-weight:800;font-size:17px;color:#141414;border-top:1px solid #e6e0d4;text-align:${align}">${grandLbl}</td><td style="padding:12px 16px 16px;text-align:left;direction:ltr;font-weight:800;font-size:17px;color:#141414;border-top:1px solid #e6e0d4">${moneyAf(total, lang)}</td></tr>
 </table>`;
 }
 
@@ -172,27 +172,25 @@ function storePickupBlock(order, lang) {
   if (!mapsUrl && s.lat != null && s.lng != null) {
     mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
   }
-  const intro = isEn
-    ? "Your order can be collected from the store below:"
-    : "سفارش شما از فروشگاه زیر قابل دریافت است:";
-  const nameLbl = isEn ? "Store name" : "نام فروشگاه";
+  const nameLbl = isEn ? "Pickup store" : "فروشگاه دریافت";
   const addrLbl = isEn ? "Address" : "آدرس";
   const phoneLbl = isEn ? "Phone" : "شماره تماس";
   const hoursLbl = isEn ? "Hours" : "ساعات کاری";
-  const mapsLbl = isEn ? "View location on Google Maps" : "مشاهده موقعیت در Google Maps";
+  const hoursVal = isEn ? (s.hours_en || s.hours || "") : (s.hours || s.hours_en || "");
+  const mapsLbl = isEn ? "View on Google Maps" : "مشاهده در Google Maps";
   const mapsBtn = mapsUrl
-    ? ctaBtn(mapsUrl, mapsLbl)
+    ? `<p style="margin:12px 0 0;text-align:center"><a href="${escapeHtml(mapsUrl)}" style="display:inline-block;background:#c8a35f;color:#1a1509;text-decoration:none;font-weight:800;padding:10px 18px;border-radius:999px">${escapeHtml(mapsLbl)}</a></p>`
     : "";
-  return `<div style="margin:18px 0;padding:14px;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
-<p style="margin:0 0 10px;font-weight:800">${intro}</p>
-<p style="margin:0;line-height:1.8">
-<strong>${nameLbl}:</strong> ${escapeHtml(s.name || "—")}<br>
-<strong>${addrLbl}:</strong> ${escapeHtml(s.address || s.area || "—")}<br>
-<strong>${phoneLbl}:</strong> <span dir="ltr">${escapeHtml(s.phone || "—")}</span>
-${s.hours ? "<br><strong>" + hoursLbl + ":</strong> " + escapeHtml(s.hours) : ""}
-</p>
+  const align = isEn ? "left" : "right";
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
+<tr><td style="padding:14px 16px;font-size:14px;line-height:1.85;text-align:${align}">
+<div style="font-weight:800;margin:0 0 8px"><strong>${nameLbl}:</strong> ${escapeHtml(s.name || "—")}</div>
+${(s.address || s.area) ? `<div style="margin:0 0 4px"><strong>${addrLbl}:</strong> ${escapeHtml(s.address || s.area)}</div>` : ""}
+${s.phone ? `<div style="margin:0 0 4px"><strong>${phoneLbl}:</strong> <span dir="ltr">${escapeHtml(s.phone)}</span></div>` : ""}
+${hoursVal ? `<div style="margin:0 0 4px"><strong>${hoursLbl}:</strong> ${escapeHtml(hoursVal)}</div>` : ""}
 ${mapsBtn}
-</div>`;
+</td></tr>
+</table>`;
 }
 
 function customerStatusCopy(status, lang) {
@@ -359,37 +357,43 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
 <strong>Phone:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>`
         : `<p><strong>آدرس دلیوری:</strong> ${escapeHtml(c.address || "—")}<br>
 <strong>شماره تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>`);
+    const orderInfoFa = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:14px 0 6px;font-size:14px;line-height:1.85">
+<tr><td style="padding:0">
+<strong>شماره سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>تاریخ:</strong> ${escapeHtml(dateStr)}<br>
+<strong>روش دریافت:</strong> ${escapeHtml(recv)}<br>
+<strong>روش پرداخت:</strong> ${escapeHtml(payLabel(order.payment, lang))}
+</td></tr>
+</table>`;
+    const orderInfoEn = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:14px 0 6px;font-size:14px;line-height:1.85">
+<tr><td style="padding:0">
+<strong>Order number:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>Date:</strong> ${escapeHtml(dateStr)}<br>
+<strong>Fulfillment:</strong> ${escapeHtml(recv)}<br>
+<strong>Payment:</strong> ${escapeHtml(payLabel(order.payment, lang))}
+</td></tr>
+</table>`;
     const html = wrap({
       title: isEn ? "Order confirmation" : "تأیید سفارش",
       preheader: (isEn ? "Order " : "سفارش ") + (order.id || ""),
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
-        ? `<p>Hello ${nameHtml},</p>
-<p>Thank you for shopping at MAHO Market.</p>
-<p>Your order was placed successfully and is under review.</p>
-<p><strong>Order number:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
-<strong>Date:</strong> ${escapeHtml(dateStr)}</p>
+        ? `<p style="margin:0 0 10px;font-size:15px;line-height:1.8">Hello ${nameHtml},</p>
+<p style="margin:0 0 8px;font-size:15px;line-height:1.8">Thank you for shopping at MAHO Market.</p>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.8">Your order was placed successfully and is under review.</p>
+${orderInfoEn}
+${pickupOrAddr}
 ${orderItemsTable(orderView, lang)}
 ${orderTotalsBlock(order, lang)}
-<p><strong>Payment:</strong> ${escapeHtml(payLabel(order.payment, lang))}<br>
-<strong>Payment status:</strong> ${escapeHtml(stFn(order.paymentStatus || (order.payment === "hesab" || order.payment === "bank" || order.payment === "card" ? "awaiting_payment" : "—")))}<br>
-<strong>Order status:</strong> ${escapeHtml(stFn(order.status))}<br>
-<strong>Fulfillment:</strong> ${escapeHtml(recv)}</p>
-${pickupOrAddr}
 ${trackUrl ? ctaBtn(trackUrl, "View / track order") : ""}
 ${supportContactHtml(getStorePhone(), lang)}`
-        : `<p>سلام ${nameHtml}،</p>
-<p>از خرید شما از MAHO Market سپاسگزاریم.</p>
-<p>سفارش شما با موفقیت ثبت شد و در حال بررسی است.</p>
-<p><strong>شماره سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
-<strong>تاریخ:</strong> ${escapeHtml(dateStr)}</p>
+        : `<p style="margin:0 0 10px;font-size:15px;line-height:1.85">سلام ${nameHtml}،</p>
+<p style="margin:0 0 8px;font-size:15px;line-height:1.85">از خرید شما از MAHO Market سپاسگزاریم.</p>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.85">سفارش شما با موفقیت ثبت شد و در حال بررسی است.</p>
+${orderInfoFa}
+${pickupOrAddr}
 ${orderItemsTable(orderView, lang)}
 ${orderTotalsBlock(order, lang)}
-<p><strong>روش پرداخت:</strong> ${escapeHtml(payLabel(order.payment, lang))}<br>
-<strong>وضعیت پرداخت:</strong> ${escapeHtml(stFn(order.paymentStatus || (order.payment === "hesab" || order.payment === "bank" || order.payment === "card" ? "awaiting_payment" : "—")))}<br>
-<strong>وضعیت سفارش:</strong> ${escapeHtml(stFn(order.status))}<br>
-<strong>روش دریافت:</strong> ${escapeHtml(recv)}</p>
-${pickupOrAddr}
 ${trackUrl ? ctaBtn(trackUrl, "مشاهده / پیگیری سفارش") : ""}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
