@@ -404,10 +404,13 @@ ${supportContactHtml(getStorePhone(), lang)}`,
       .map((p) => `<p>${escapeHtml(p)}</p>`).join("");
     const products = Array.isArray(opts.products) ? opts.products : [];
     const base = (siteUrl || "https://mahomarket.com").replace(/\/+$/, "");
+    const { resolveProductImageUrl } = require("./media-url");
     const productHtml = products.map((p) => {
       const url = p.url || (base + "/p/" + encodeURIComponent(p.code || ""));
-      const img = p.image
-        ? `<img src="${escapeHtml(p.image)}" alt="" style="width:100%;max-width:220px;height:auto;border-radius:10px;display:block;margin:0 auto 10px">`
+      const absImg = resolveProductImageUrl(p.image || p, { siteUrl: base, logoUrl });
+      const alt = (p.name || p.code || "MAHO product") + (p.code ? (" (" + p.code + ")") : "");
+      const img = absImg
+        ? `<img src="${escapeHtml(absImg)}" alt="${escapeHtml(alt)}" width="220" style="width:100%;max-width:220px;height:auto;border:0;border-radius:10px;display:block;margin:0 auto 10px;object-fit:contain">`
         : "";
       const priceLine = p.oldPrice
         ? `<span style="text-decoration:line-through;color:#7a7368;margin-inline-end:8px">${escapeHtml(moneyAf(p.oldPrice, "fa"))}</span><strong>${escapeHtml(moneyAf(p.price, "fa"))}</strong>`
@@ -442,27 +445,49 @@ ${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
     const lang = normalizeLang(langArg, order);
     const isEn = lang === "en";
     const c = order.customer || {};
-    const s = store || {};
-    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل است | MAHO";
+    const picked = (order && order.pickupStore) || store || {};
+    const s = Object.assign({}, picked, {
+      address: picked.address || picked.area || "",
+      hours: picked.hours || "",
+      phone: picked.phone || getStorePhone() || "",
+      mapsUrl: picked.mapsUrl || "",
+      instructions: picked.instructions || "",
+    });
+    if (!s.mapsUrl && s.lat != null && s.lng != null) {
+      s.mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(s.lat + "," + s.lng);
+    }
+    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل از فروشگاه است | MAHO";
+    const mapsBlock = s.mapsUrl
+      ? (isEn
+        ? `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">Open in Google Maps</a></p>`
+        : `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">مشاهده در Google Maps</a></p>`)
+      : "";
+    const instr = s.instructions
+      ? (isEn
+        ? `<p><strong>Pickup instructions:</strong> ${escapeHtml(s.instructions)}</p>`
+        : `<p><strong>راهنمای تحویل حضوری:</strong> ${escapeHtml(s.instructions)}</p>`)
+      : "";
     const html = wrap({
       title,
       preheader: title,
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
         ? `<p>Hello ${escapeHtml(c.name || "")},</p>
-<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready. You can pick it up at the MAHO store.</p>
+<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready for <strong>store pickup</strong>.</p>
 <p><strong>Store:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>Address:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
-${s.hours ? "<br><strong>Hours:</strong> " + escapeHtml(s.hours) : ""}</p>
+<strong>Full address:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
+${s.hours ? "<br><strong>Opening hours:</strong> " + escapeHtml(s.hours) : ""}</p>
+${mapsBlock}${instr}
 ${supportContactHtml(getStorePhone(), lang)}`
         : `<p>سلام ${escapeHtml(c.name || "")}،</p>
-<p>سفارش شما آماده است و می‌توانید آن را از فروشگاه MAHO تحویل بگیرید.</p>
+<p>سفارش شما برای <strong>تحویل حضوری از فروشگاه</strong> آماده است.</p>
 <p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
 <strong>فروشگاه:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>آدرس:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
+<strong>آدرس کامل:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
 ${s.hours ? "<br><strong>ساعات کاری:</strong> " + escapeHtml(s.hours) : ""}</p>
+${mapsBlock}${instr}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
     return send(to, title, html);

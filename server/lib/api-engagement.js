@@ -213,12 +213,15 @@ function mountEngagement(app, ctx) {
     }
     const unsubUrl = siteUrl() + "/unsubscribe.html?email=" + encodeURIComponent(to) + "&token=test";
     let products = Array.isArray(b.products) ? b.products : [];
-    if ((!products.length) && (Array.isArray(b.productCodes) || b.campaignType)) {
-      products = activeProductSnapshot(db(), b.productCodes || []);
-    }
     const base = siteUrl().replace(/\/+$/, "");
+    const { resolveProductImageUrl } = require("./media-url");
+    const logoUrl = (db().config && db().config.logo) || "";
+    if ((!products.length) && (Array.isArray(b.productCodes) || b.campaignType)) {
+      products = activeProductSnapshot(db(), b.productCodes || [], { siteUrl: base, logoUrl });
+    }
     products = products.map((p) => Object.assign({}, p, {
       url: p.url || (base + (p.urlPath || ("/p/" + encodeURIComponent(p.code || "")))),
+      image: resolveProductImageUrl(p.image || p, { siteUrl: base, logoUrl }),
     }));
     try {
       const ok = await m.campaignEmail(to, {
@@ -259,14 +262,10 @@ function mountEngagement(app, ctx) {
           });
         }
       }
-      c.products = live.map((p) => ({
-        code: p.code,
-        name: p.name || "",
-        image: (p.images && p.images[0]) || p.image || "",
-        price: Number(p.price) || 0,
-        oldPrice: p.oldPrice != null ? Number(p.oldPrice) : null,
-        urlPath: "/p/" + encodeURIComponent(p.code),
-      }));
+      c.products = activeProductSnapshot(db(), c.productCodes, {
+        siteUrl: siteUrl(),
+        logoUrl: (db().config && db().config.logo) || "",
+      });
     }
     const m = mail();
     if (!m || typeof m.campaignEmail !== "function") {
@@ -294,8 +293,11 @@ function mountEngagement(app, ctx) {
     setImmediate(async () => {
       try {
         const base = siteUrl().replace(/\/+$/, "");
+        const { resolveProductImageUrl } = require("./media-url");
+        const logoUrl = (db().config && db().config.logo) || "";
         const products = (c.products || []).map((p) => Object.assign({}, p, {
           url: base + (p.urlPath || ("/p/" + encodeURIComponent(p.code || ""))),
+          image: resolveProductImageUrl(p.image || p, { siteUrl: base, logoUrl }),
         }));
         for (let i = 0; i < recipients.length; i++) {
           const sub = recipients[i];

@@ -31,6 +31,10 @@ const { mountV2 } = require("./lib/api-v2");
 const { mountV3 } = require("./lib/api-v3");
 const { mountEngagement, maybeSendFeedbackRequest } = require("./lib/api-engagement");
 const { mountOpsSuite } = require("./lib/api-ops-suite");
+const { mountOrderOps } = require("./lib/api-order-ops");
+const { newLineId, normalizeOrderItems, mapOrderStatusToItem } = require("./lib/order-items");
+const { evaluateOrderValueDiscount } = require("./lib/order-discounts");
+const { resolvePickupStore, eligiblePickupStores } = require("./lib/store-inventory");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
@@ -328,6 +332,9 @@ function publicUser(u) {
     address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: u.payments || [],
     status: u.status || (u.verified ? "active" : "pending"), verified: !!u.verified,
     marketingConsent: u.marketingConsent === true,
+    blocked: u.blocked === true,
+    blockedAt: u.blockedAt || null,
+    blockReason: u.blockReason || "",
   } : null;
 }
 function publicConfig(c) {
@@ -746,6 +753,24 @@ app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) 
   if (next === "confirmed" && prev !== "confirmed") {
     applyApprovedCancelWindow(o);
   }
+  try {
+    const oi = require("./lib/order-items");
+    oi.normalizeOrderItems(o);
+    (o.items || []).forEach((it) => {
+      if (!it || !it.lineId) return;
+      if (next === "cancelled" && it.itemStatus !== "cancelled" && it.itemStatus !== "rejected") {
+        oi.setItemStatus(o, it.lineId, "cancelled", { by: "admin", note: "order_status" });
+      } else if (next === "confirmed" && it.itemStatus === "pending") {
+        oi.setItemStatus(o, it.lineId, "approved", { by: "admin", note: "order_confirm" });
+      } else if (next === "dispatched" && (it.itemStatus === "approved" || it.itemStatus === "pending")) {
+        oi.setItemStatus(o, it.lineId, "shipped", { by: "admin", note: "order_dispatch" });
+      } else if (next === "delivered" && (it.itemStatus === "shipped" || it.itemStatus === "approved")) {
+        oi.setItemStatus(o, it.lineId, "delivered", { by: "admin", note: "order_deliver" });
+      }
+    });
+    /* Keep explicit order status from admin action (aggregate may differ for mixed) */
+    o.status = next;
+  } catch (_) {}
   appendHistory(o, {
     status: next,
     paymentStatus: o.paymentStatus || null,
@@ -767,7 +792,7 @@ app.post("/api/admin/orders/:id/status", requireAdminPerm("orders"), (req, res) 
   saveDb();
   if (o.customer && o.customer.email && emailOk(o.customer.email) && mail) {
     if (isPickup && next === "dispatched" && typeof mail.pickupReady === "function") {
-      const store = (db.stores && db.stores[0]) || {};
+      const store = o.pickupStore || resolvePickupStore(db, o.delivery && o.delivery.storeId) || (db.stores && db.stores[0]) || {};
       mail.pickupReady(o.customer.email, o, store, o.lang || "fa").catch(() => {});
     } else if (isPickup && next === "delivered" && typeof mail.pickupCompleted === "function") {
       mail.pickupCompleted(o.customer.email, o, o.lang || "fa").catch(() => {});
@@ -979,6 +1004,13 @@ app.post("/api/orders", (req, res) => {
   if (userRow.verified === false || userRow.status === "pending") {
     return res.status(403).json({ error: "unverified" });
   }
+  if (userRow.blocked === true) {
+    return res.status(403).json({
+      error: "account_blocked",
+      message: "حساب شما مسدود است و امکان ثبت سفارش جدید ندارید.",
+      blockReason: userRow.blockReason || "",
+    });
+  }
   if (!customer.name || !customer.phone || !customer.address) {
     return res.status(400).json({ error: "missing customer" });
   }
@@ -1008,10 +1040,14 @@ app.post("/api/orders", (req, res) => {
     const unit = disc > 0 ? Math.round((p.price || 0) * (1 - disc / 100)) : (p.price || 0);
     const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
     items.push({
+      lineId: newLineId(),
       name: p.name, name_en: p.name_en || "", code: p.code || "",
       price: unit, listPrice: p.price || 0, discount: disc,
       qty: qty, size: size, color: color,
       image: imgs[0] || "",
+      itemStatus: "pending",
+      refundedAmount: 0,
+      stockRestored: false,
     });
   }
 
@@ -1096,13 +1132,40 @@ app.post("/api/orders", (req, res) => {
     b.delivery.fee = deliveryFee;
   }
 
+  const wantsPickup = b.delivery && (b.delivery.method === "pickup" || b.delivery.method === "store_pickup");
+  let pickupStore = null;
+  if (wantsPickup) {
+    const storeId = (b.delivery && (b.delivery.storeId || b.pickupStoreId)) || b.pickupStoreId;
+    if (storeId) {
+      pickupStore = resolvePickupStore(db, storeId);
+    }
+    if (!pickupStore) {
+      const eligible = eligiblePickupStores(db, items, customerLocation && customerLocation.lat, customerLocation && customerLocation.lng);
+      if (!eligible.length) {
+        return res.status(400).json({ error: "no_pickup_store", message: "فروشگاه واجد شرایط برای تحویل حضوری یافت نشد." });
+      }
+      pickupStore = resolvePickupStore(db, eligible[0].id) || eligible[0];
+    }
+    if (b.delivery) b.delivery.storeId = pickupStore.id;
+  }
+
+  const fulfillment = wantsDeliver ? "delivery" : "pickup";
+  const discEval = evaluateOrderValueDiscount(db, itemsTotal, fulfillment);
+  const discountTotal = Math.max(0, Number(discEval.amount) || 0);
+
   const orderLang = String(b.lang || b.locale || "fa").toLowerCase().indexOf("en") === 0 ? "en" : "fa";
+  const initialStatus = autoApprove && !needsPay ? "confirmed" : "new";
+  const initialItemStatus = mapOrderStatusToItem(initialStatus);
+  items.forEach((it) => { it.itemStatus = initialItemStatus; });
   const order = {
     id: nextOrderNo(), date: Date.now(),
     items: items,
-    itemsTotal: itemsTotal, deliveryFee: deliveryFee, discountTotal: 0,
-    total: itemsTotal + deliveryFee,
+    itemsTotal: itemsTotal, deliveryFee: deliveryFee, discountTotal: discountTotal,
+    total: Math.max(0, itemsTotal - discountTotal + deliveryFee),
+    discountSnapshot: discEval.snapshot || null,
+    discountMessage: discEval.messageFa || "",
     delivery: b.delivery || null,
+    pickupStore: pickupStore,
     customerLocation: customerLocation,
     customerNo: userRow.customerNo || "",
     customer: {
@@ -1117,16 +1180,18 @@ app.post("/api/orders", (req, res) => {
     },
     payment: payment,
     paymentStatus: needsPay ? "awaiting_payment" : null,
-    status: autoApprove && !needsPay ? "confirmed" : "new",
+    status: initialStatus,
     userId: userRow.id,
     guest: false,
     lang: orderLang,
     statusHistory: [],
     hesabReceipts: [],
+    shipments: [],
     deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
   };
   if (order.status === "confirmed") applyApprovedCancelWindow(order);
   appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: "user", note: "ثبت سفارش" });
+  normalizeOrderItems(order);
 
   /* decrement stock after building order (product + color + size when variants exist) */
   for (const it of items) {
@@ -1264,6 +1329,12 @@ mountOpsSuite(app, {
     req.driverSession = s;
     next();
   },
+});
+mountOrderOps(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireUser, publicUser,
+  sessions, findProduct,
+  get mail() { return mail; },
 });
 
 /* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */

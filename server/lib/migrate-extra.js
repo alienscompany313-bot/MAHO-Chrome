@@ -159,8 +159,39 @@ function extendMigrate(data) {
       }
       if (u.deletedAt === undefined) { u.deletedAt = null; changed = true; }
       if (u.marketingConsent == null) { u.marketingConsent = false; changed = true; }
+      if (u.blocked == null) { u.blocked = false; changed = true; }
+      if (u.blockedAt === undefined) { u.blockedAt = null; changed = true; }
+      if (u.blockReason === undefined) { u.blockReason = ""; changed = true; }
     });
   }
+
+  /* order-value discount rules + order item normalization */
+  try {
+    const { ensureDiscountRules } = require("./order-discounts");
+    if (ensureDiscountRules(data)) changed = true;
+  } catch (_) {}
+  try {
+    const { normalizeOrderItems } = require("./order-items");
+    if (Array.isArray(data.orders)) {
+      data.orders.forEach((o) => {
+        if (normalizeOrderItems(o)) changed = true;
+      });
+    }
+  } catch (_) {}
+  try {
+    const { ensureStoreStock } = require("./store-inventory");
+    if (Array.isArray(data.products)) {
+      data.products.forEach((p) => {
+        if (ensureStoreStock(p)) changed = true;
+      });
+    }
+    if (Array.isArray(data.stores)) {
+      data.stores.forEach((s, i) => {
+        if (s && !s.id) { s.id = "store_" + i; changed = true; }
+        if (s && s.address == null && s.area) { /* keep area; address optional */ }
+      });
+    }
+  } catch (_) {}
 
   return changed;
 }

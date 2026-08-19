@@ -57,3 +57,6 @@ jobs:
 
       - name: Smoke phase 4
         run: node scripts/smoke-phase4.js
+
+      - name: Smoke production ops suite
+        run: node scripts/smoke-production-ops.js
