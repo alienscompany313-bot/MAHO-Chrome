@@ -1861,9 +1861,27 @@
           var hist=(o.statusHistory||[]).slice(-6).map(function(h){ return '<li class="note">'+new Date(h.at||0).toLocaleString("fa-AF")+' — '+statusLabelFa(h.status)+(h.paymentStatus?(' / '+statusLabelFa(h.paymentStatus)):'')+(h.note?(' — '+esc(h.note)):'')+(h.driverName?(' — راننده: '+esc(h.driverName)):'')+'</li>'; }).join("");
           var custNo=o.customerNo||(c.customerNo)||"";
           var dl=o.delivery||{};
+          var isPickupOrder=dl.method==="pickup"||dl.method==="store_pickup"||dl.method==="store";
           var delLine=(dl.method==="deliver")
             ? ('دلیوری'+(dl.time==="urgent"?' (عاجل)':'')+' — هزینه: '+((o.deliveryFee||0)?money(o.deliveryFee):'رایگان')+(dl.km?(' — '+toFa(Math.round(dl.km))+' کیلومتر'):''))
             : 'دریافت حضوری';
+          var pickupStoreHtml="";
+          if(isPickupOrder){
+            var ps=o.pickupStore||{};
+            if(ps.name||ps.address||ps.area||ps.id){
+              var mapsUrl=ps.mapsUrl||"";
+              if(!mapsUrl&&ps.lat!=null&&ps.lng!=null){
+                mapsUrl="https://www.google.com/maps?q="+encodeURIComponent(String(ps.lat)+","+String(ps.lng));
+              }
+              var addr=ps.address||ps.area||"";
+              pickupStoreHtml='<div class="note" style="margin-top:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fbf8f1;line-height:1.85">'+
+                '<div><b>فروشگاه دریافت:</b> '+esc(ps.name||"—")+'</div>'+
+                (addr?('<div><b>آدرس:</b> '+esc(addr)+'</div>'):'')+
+                (ps.phone?('<div><b>شماره تماس:</b> <span dir="ltr">'+esc(ps.phone)+'</span></div>'):'')+
+                (mapsUrl?('<div style="margin-top:4px"><a href="'+esc(mapsUrl)+'" target="_blank" rel="noopener" style="font-weight:800">مشاهده در Google Maps</a></div>'):'')+
+                '</div>';
+            }
+          }
           var drvLine="";
           if(dl.method==="deliver"){
             var dlist=window._driverList||[];
@@ -1887,6 +1905,7 @@
             '<div class="note">تماس: <span dir="ltr">'+(c.phone||"")+'</span>'+(custNo?(' — <b dir="ltr">'+custNo+'</b>'):'')+(c.email?(' — <span dir="ltr">'+c.email+'</span>'):'')+'</div>'+
             '<div class="note">آدرس: '+(c.address||"-")+'</div>'+
             '<div class="note">دریافت: '+delLine+' — پرداخت: '+payLabelFa(o.payment)+(o.paymentStatus?(' / '+statusLabelFa(o.paymentStatus)):'')+'</div>'+
+            pickupStoreHtml+
             (o.hesabReceipt?('<div class="note">رسید حساب‌پی: '+(o.hesabReceipt.txnId||"")+' — '+(o.hesabReceipt.amount||"")+(o.hesabReceipt.url?(' — <a href="'+esc(o.hesabReceipt.url)+'" target="_blank" rel="noopener">مشاهده</a>'):'')+'</div>'):'')+
             drvLine+
             bulk+'<ul class="adm-items">'+items+'</ul>'+
@@ -2471,7 +2490,11 @@
           var id=String(s.id||"");
           var checked = (mode==="all") ? true : (selected.indexOf(id)>=0);
           var disabled = (mode==="all") ? " disabled" : "";
-          return '<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+'> '+esc(s.name||id)+'</label>';
+          var addr=String(s.address||s.area||"").trim();
+          var shortAddr=addr.length>72?addr.slice(0,69)+"…":addr;
+          var label=esc(s.name||id)+(shortAddr?(" — "+esc(shortAddr)):"");
+          var idHint=id?(' <span class="note" style="font-weight:500;font-size:11px" dir="ltr">('+esc(id)+')</span>'):'';
+          return '<label style="display:flex;align-items:flex-start;gap:8px;font-weight:700;margin:0 0 8px;line-height:1.45;max-width:100%"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+' style="margin-top:3px;flex-shrink:0"> <span>'+label+idHint+'</span></label>';
         }).join("");
       })();
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
