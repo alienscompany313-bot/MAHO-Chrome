@@ -132,6 +132,17 @@ function aggregateOrderStatus(order) {
   const some = (s) => counts[s] > 0;
   const nonePendingLike = counts.pending === 0;
 
+  /* Mixed aggregates — compute flags before early returns so labels stay accurate */
+  order.aggregateFlags = order.aggregateFlags || {};
+  order.aggregateFlags.partiallyApproved = some("approved") && (some("pending") || some("rejected") || some("cancelled"));
+  order.aggregateFlags.partiallyRejected = some("rejected") && !all("rejected");
+  order.aggregateFlags.partiallyFulfilled = some("shipped") || some("delivered");
+  order.aggregateFlags.partiallyCancelled = some("cancelled") && !all("cancelled");
+  order.aggregateFlags.partiallyReturned =
+    (some("return_completed") || some("return_requested") || some("return_approved"))
+    && !all("return_completed")
+    && !(all("return_requested") || all("return_approved"));
+
   if (all("cancelled")) return "cancelled";
   if (all("rejected")) return "cancelled";
   if (all("return_completed")) return "return_completed";
@@ -139,21 +150,24 @@ function aggregateOrderStatus(order) {
   if (all("shipped")) return "dispatched";
   if (all("approved")) return "confirmed";
   if (all("pending")) return "new";
+  if (all("return_requested")) return "return_requested";
+  if (all("return_approved")) return "return_approved";
 
-  if (some("return_requested") && !some("pending") && !some("approved") && !some("shipped")) {
+  /* Full return flow only when no active fulfillment lines remain */
+  if (some("return_requested") && !some("pending") && !some("approved") && !some("shipped") && !some("delivered")) {
     return "return_requested";
   }
   if (some("return_approved") && !some("pending") && !some("approved") && !some("shipped") && !some("delivered")) {
     return "return_approved";
   }
 
-  /* Mixed aggregates — keep order.status as closest primary + flag */
-  order.aggregateFlags = order.aggregateFlags || {};
-  order.aggregateFlags.partiallyApproved = some("approved") && (some("pending") || some("rejected") || some("cancelled"));
-  order.aggregateFlags.partiallyRejected = some("rejected") && !all("rejected");
-  order.aggregateFlags.partiallyFulfilled = some("shipped") || some("delivered");
-  order.aggregateFlags.partiallyCancelled = some("cancelled") && !all("cancelled");
-  order.aggregateFlags.partiallyReturned = some("return_completed") || some("return_requested");
+  /* Partial return with remaining delivered/shipped items */
+  if (order.aggregateFlags.partiallyReturned && some("delivered") && !some("pending") && !some("approved") && !some("shipped")) {
+    return "partially_returned";
+  }
+  if (order.aggregateFlags.partiallyReturned && (some("delivered") || some("shipped"))) {
+    return "partially_returned";
+  }
 
   if (some("delivered") && (some("shipped") || some("approved") || some("pending"))) return "dispatched";
   if (some("shipped") && (some("approved") || some("pending"))) return "dispatched";
