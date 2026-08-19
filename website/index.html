@@ -427,6 +427,12 @@
               <button type="button" class="pay-method active" data-recv="pickup" data-i18n="co.pickup">دریافت حضوری از فروشگاه</button>
               <button type="button" class="pay-method" data-recv="deliver" data-i18n="co.deliver">ارسال به آدرس (دلیوری)</button>
             </div>
+            <div id="pickupStoreBox" style="margin-top:10px">
+              <span class="qv-opt-label">فروشگاه تحویل حضوری</span>
+              <div id="pickupStoreList" class="pickup-store-list"></div>
+              <p class="note" id="pickupStoreNote" style="font-size:12px;margin-top:6px">موقعیت اختیاری است؛ بدون آن هم می‌توانید فروشگاه را دستی انتخاب کنید.</p>
+              <button type="button" class="btn btn-outline btn-sm" id="pickupNearBtn" style="margin-top:6px">مرتب‌سازی بر اساس نزدیک‌ترین (اختیاری)</button>
+            </div>
             <div id="deliverBox" hidden style="margin-top:10px">
               <span class="qv-opt-label" data-i18n="co.deliverTime">نوع دلیوری</span>
               <div class="pay-methods" id="deliverTime">
@@ -548,7 +554,9 @@
 
           <button class="btn btn-lg" id="ordersBtn" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
 
-          <h4 data-i18n="acct.profile" style="margin:16px 0 8px">مشخصات من</h4>
+          <details class="acct-acc" id="acctProfileAcc" open>
+            <summary class="acct-acc-sum"><span data-i18n="acct.profile">مشخصات من</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
+            <div class="acct-acc-body">
           <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="pf_name"></div>
           <div class="field"><label data-i18n="acct.phoneNum">نمبر تماس</label><input id="pf_phone" dir="ltr"></div>
           <div class="field"><label data-i18n="acct.email">ایمیل</label><input id="pf_email" type="email" dir="ltr"></div>
@@ -566,8 +574,12 @@
             <button class="btn btn-lg" id="pfVerifyBtn" style="width:100%" data-i18n="acct.verifyNewEmail">تایید ایمیل جدید</button>
           </div>
           <p class="qv-msg" id="pfMsg"></p>
+            </div>
+          </details>
 
-          <h4 data-i18n="acct.savedInfo" style="margin:16px 0 8px">معلومات پرداخت</h4>
+          <details class="acct-acc" id="acctPayAcc">
+            <summary class="acct-acc-sum"><span data-i18n="acct.savedInfo">معلومات پرداخت</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
+            <div class="acct-acc-body">
           <div id="payList"></div>
           <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="card" data-i18n="pay.tCard">کارت بانکی</option><option value="bank" data-i18n="pay.tBank">حساب بانکی</option></select></div>
           <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder"></div>
@@ -579,6 +591,8 @@
           </div>
           <button class="btn btn-outline" id="addPayBtn" style="width:100%" data-i18n="pay.add">افزودن معلومات پرداخت</button>
           <p class="note" data-i18n="pay.localNote" style="font-size:12px;color:var(--muted);margin-top:6px">این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.</p>
+            </div>
+          </details>
 
           <button class="btn btn-outline" id="logoutBtn" style="width:100%;margin-top:14px" data-i18n="acct.logout">خروج از حساب</button>
         </div>

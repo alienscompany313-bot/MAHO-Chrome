@@ -57,3 +57,12 @@ jobs:
 
       - name: Smoke phase 4
         run: node scripts/smoke-phase4.js
+
+      - name: Smoke production ops suite
+        run: node scripts/smoke-production-ops.js
+
+      - name: Smoke final additions
+        run: node scripts/smoke-final-additions.js
+
+      - name: Smoke data retention
+        run: node scripts/smoke-retention.js

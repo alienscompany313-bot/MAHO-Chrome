@@ -141,11 +141,19 @@
     .admin-sidebar.collapsed{width:72px}
     .admin-sidebar.collapsed .side-link span,.admin-sidebar.collapsed .side-title{display:none}
     .side-title{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.04em;padding:6px 10px 10px}
-    .side-nav{display:flex;flex-direction:column;gap:4px}
-    .side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 15.5px/1.45 inherit;padding:12px 14px;border-radius:10px;cursor:pointer;min-height:46px;letter-spacing:0}
+    .admin-sidebar{width:272px;background:#1a1612;color:#efe8dc;padding:14px 12px;position:sticky;top:0;height:100vh;overflow:auto;z-index:40;border-left:1px solid rgba(255,255,255,.06)}
+    .admin-sidebar.collapsed{width:72px}
+    .admin-sidebar.collapsed .side-link span:not(.si),.admin-sidebar.collapsed .side-title,.admin-sidebar.collapsed .side-group-label{display:none}
+    .side-title{font:800 12px/1.2 inherit;letter-spacing:.04em;color:#c8a35f;margin:4px 8px 10px;opacity:.95}
+    .side-group{margin:10px 0 6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+    .side-group:first-of-type{border-top:0;padding-top:0;margin-top:0}
+    .side-group-label{font:800 11px/1.2 inherit;color:#a89b88;margin:0 10px 6px;letter-spacing:.02em}
+    .side-nav{display:flex;flex-direction:column;gap:3px}
+    .side-link{display:flex;align-items:center;gap:12px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 16px/1.35 Tahoma,Arial,sans-serif;padding:13px 14px;border-radius:12px;cursor:pointer;min-height:50px;letter-spacing:0}
     .side-link:hover,.side-link:focus-visible{background:rgba(200,163,95,.18);outline:2px solid var(--gold);outline-offset:1px}
     .side-link.active{background:var(--gold);color:#1a1509;font-weight:800}
-    .side-link .si{width:24px;text-align:center;flex-shrink:0;font-size:16px}
+    .side-link .si{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;text-align:center;flex-shrink:0;font-size:17px;line-height:1}
+    .side-link span:not(.si){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .side-title{font-size:13.5px;font-weight:700;color:#c8a35f;padding:14px 12px 6px;letter-spacing:.02em}
     .side-collapse{width:100%;margin-top:14px;border-color:rgba(255,255,255,.25)}
     .admin-main{flex:1;min-width:0;margin:22px auto;padding:0 16px 96px;max-width:1050px}
@@ -220,32 +228,58 @@
   <div class="admin-shell" id="app" style="display:none" aria-hidden="true">
     <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
     <aside class="admin-sidebar" id="adminSidebar" aria-label="منوی مدیریت">
-      <div class="side-title">بخش‌ها</div>
+      <div class="side-title">منوی مدیریت MAHO</div>
       <nav class="side-nav" id="sideNav">
-        <button type="button" class="side-link active" data-panel="products" data-perm="products"><span class="si">◆</span><span>محصولات</span></button>
-        <button type="button" class="side-link" data-panel="categories" data-perm="products"><span class="si">▣</span><span>کتگوری‌ها</span></button>
-        <button type="button" class="side-link" data-panel="icons" data-perm="products"><span class="si">◇</span><span>آیکن‌ها</span></button>
-        <button type="button" class="side-link" data-panel="discounts" data-perm="products"><span class="si">%</span><span>تخفیف‌ها</span></button>
-        <button type="button" class="side-link" data-panel="showcase" data-perm="products"><span class="si">▦</span><span>کارت‌های دسته</span></button>
-        <button type="button" class="side-link" data-panel="orders" data-perm="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
-        <button type="button" class="side-link" data-panel="returns" data-perm="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
-        <button type="button" class="side-link" data-panel="customers" data-perm="customers"><span class="si">☺</span><span>مشتریان</span></button>
-        <button type="button" class="side-link" data-panel="subscribers" data-perm="marketing"><span class="si">✉</span><span>مشترکین ایمیل</span></button>
-        <button type="button" class="side-link" data-panel="campaigns" data-perm="marketing"><span class="si">📣</span><span>کمپین ایمیل</span></button>
-        <button type="button" class="side-link" data-panel="feedback" data-perm="marketing"><span class="si">★</span><span>بازخورد و امتیاز</span></button>
-        <button type="button" class="side-link" data-panel="giveaways" data-perm="marketing"><span class="si">🎁</span><span>قرعه‌کشی مشتریان</span></button>
-        <button type="button" class="side-link" data-panel="returnreasons" data-perm="returns"><span class="si">📋</span><span>دلایل برگشتی</span></button>
-        <button type="button" class="side-link" data-panel="driverperf" data-perm="drivers"><span class="si">📊</span><span>عملکرد راننده</span></button>
-        <button type="button" class="side-link" data-panel="staff" data-perm="staff"><span class="si">👤</span><span>کارمندان</span></button>
-        <button type="button" class="side-link" data-panel="drivers" data-perm="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
-        <a class="side-link" href="pos.html" target="_blank" rel="noopener" data-perm="pos"><span class="si">🖥</span><span>POS (ورود مستقل)</span></a>
-        <a class="side-link" href="driver.html" target="_blank" rel="noopener" data-perm="delivery"><span class="si">🗺</span><span>صفحه راننده</span></a>
-        <button type="button" class="side-link" data-panel="poslink" data-perm="pos"><span class="si">▣</span><span>POS فروش</span></button>
-        <button type="button" class="side-link" data-panel="reviews" data-perm="products"><span class="si">★</span><span>نظرات</span></button>
-        <button type="button" class="side-link" data-panel="stores" data-perm="settings"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
-        <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si">Aa</span><span>متن‌های سایت</span></button>
-        <button type="button" class="side-link" data-panel="settings" data-perm="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
-        <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
+        <div class="side-group" data-group="catalog">
+          <div class="side-group-label">فروشگاه‌ها / Inventory</div>
+          <button type="button" class="side-link active" data-panel="products" data-perm="products"><span class="si">◆</span><span>محصولات</span></button>
+          <button type="button" class="side-link" data-panel="categories" data-perm="products"><span class="si">▣</span><span>کتگوری‌ها</span></button>
+          <button type="button" class="side-link" data-panel="icons" data-perm="products"><span class="si">◇</span><span>آیکن‌ها</span></button>
+          <button type="button" class="side-link" data-panel="discounts" data-perm="products"><span class="si">%</span><span>تخفیف محصول</span></button>
+          <button type="button" class="side-link" data-panel="ovdiscounts" data-perm="settings"><span class="si">﷼</span><span>تخفیف مبلغ سفارش</span></button>
+          <button type="button" class="side-link" data-panel="showcase" data-perm="products"><span class="si">▦</span><span>کارت‌های دسته</span></button>
+          <button type="button" class="side-link" data-panel="stores" data-perm="settings"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
+          <button type="button" class="side-link" data-panel="reviews" data-perm="products"><span class="si">★</span><span>نظرات</span></button>
+        </div>
+        <div class="side-group" data-group="sales">
+          <div class="side-group-label">فروش / Orders &amp; Sales</div>
+          <button type="button" class="side-link" data-panel="orders" data-perm="orders"><span class="si">☰</span><span>سفارش‌ها <span class="badge-pill" id="badgeOrdersSide">0</span></span></button>
+          <a class="side-link" href="pos.html" target="_blank" rel="noopener" data-perm="pos"><span class="si">🖥</span><span>POS</span></a>
+          <button type="button" class="side-link" data-panel="poslink" data-perm="pos"><span class="si">▣</span><span>POS فروش</span></button>
+        </div>
+        <div class="side-group" data-group="customers">
+          <div class="side-group-label">مشتریان</div>
+          <button type="button" class="side-link" data-panel="customers" data-perm="customers"><span class="si">☺</span><span>مشتریان</span></button>
+        </div>
+        <div class="side-group" data-group="marketing">
+          <div class="side-group-label">بازاریابی</div>
+          <button type="button" class="side-link" data-panel="subscribers" data-perm="marketing"><span class="si">✉</span><span>مشترکین ایمیل</span></button>
+          <button type="button" class="side-link" data-panel="campaigns" data-perm="marketing"><span class="si">📣</span><span>کمپین ایمیل</span></button>
+          <button type="button" class="side-link" data-panel="feedback" data-perm="marketing"><span class="si">★</span><span>بازخورد و امتیاز</span></button>
+          <button type="button" class="side-link" data-panel="giveaways" data-perm="marketing"><span class="si">🎁</span><span>قرعه‌کشی مشتریان</span></button>
+        </div>
+        <div class="side-group" data-group="returns">
+          <div class="side-group-label">برگشتی‌ها</div>
+          <button type="button" class="side-link" data-panel="returns" data-perm="returns"><span class="si">↩</span><span>برگشتی‌ها <span class="badge-pill hot" id="badgeReturnsSide">0</span></span></button>
+          <button type="button" class="side-link" data-panel="returnreasons" data-perm="returns"><span class="si">📋</span><span>دلایل برگشتی</span></button>
+        </div>
+        <div class="side-group" data-group="delivery">
+          <div class="side-group-label">رانندگان / Delivery</div>
+          <button type="button" class="side-link" data-panel="drivers" data-perm="drivers"><span class="si">🚚</span><span>راننده‌ها</span></button>
+          <button type="button" class="side-link" data-panel="driverperf" data-perm="drivers"><span class="si">📊</span><span>عملکرد راننده</span></button>
+          <a class="side-link" href="driver.html" target="_blank" rel="noopener" data-perm="delivery"><span class="si">🗺</span><span>صفحه راننده</span></a>
+        </div>
+        <div class="side-group" data-group="staff">
+          <div class="side-group-label">کارمندان</div>
+          <button type="button" class="side-link" data-panel="staff" data-perm="staff"><span class="si">👤</span><span>کارمندان</span></button>
+        </div>
+        <div class="side-group" data-group="settings">
+          <div class="side-group-label">تنظیمات</div>
+          <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si">Aa</span><span>متن‌های سایت</span></button>
+          <button type="button" class="side-link" data-panel="settings" data-perm="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
+          <button type="button" class="side-link" data-panel="retention" data-perm="settings"><span class="si">🗄</span><span>مدیریت اطلاعات و پاک‌سازی</span></button>
+          <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
+        </div>
       </nav>
       <button type="button" class="btn btn-ghost btn-sm side-collapse" id="sidebarCollapse" aria-label="جمع‌کردن منو">« جمع‌کردن</button>
     </aside>
@@ -302,6 +336,16 @@
       </div>
       <div id="discRows"></div>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnDisc">ذخیره تغییرات</button></div>
+    </div>
+
+    <div class="card admin-panel" data-panel="ovdiscounts">
+      <div class="row-between">
+        <div><h2>تخفیف بر اساس مبلغ سفارش</h2>
+          <div class="sub">قوانین آستانه (مثلاً ۲۰۰۰ افغانی → ۵٪). محاسبه سمت سرور؛ اسنپ‌شات روی سفارش ذخیره می‌شود.</div>
+        </div>
+        <button type="button" class="btn btn-gold btn-sm" id="ovdAddBtn">+ قانون جدید</button>
+      </div>
+      <div id="ovdRows" class="note">در حال بارگذاری…</div>
     </div>
 
     <!-- SHOWCASE CARDS (below hero) -->
@@ -381,8 +425,9 @@
             <th data-sort="verified">تأیید</th>
             <th data-sort="orderCount">سفارش‌ها</th>
             <th data-sort="totalSpent">مجموع خرید</th>
+            <th>وضعیت</th>
             <th class="hide-sm" data-sort="createdAt">ثبت‌نام</th>
-            <th>حذف</th>
+            <th>عملیات</th>
           </tr></thead>
           <tbody id="custBody"></tbody>
         </table>
@@ -511,6 +556,10 @@
           </select>
         </div>
       </div>
+      <div class="grid2">
+        <div class="field"><label>فروشگاه دریافت جایزه</label><select id="gwClaimStore"><option value="">— انتخاب فروشگاه —</option></select></div>
+        <div class="field"><label>مهلت دریافت (اختیاری)</label><input id="gwClaimDeadline" type="date"></div>
+      </div>
       <div class="grid2" id="gwMetaRow">
         <div class="field"><label>از تاریخ (purchased_range)</label><input id="gwFrom" type="date"></div>
         <div class="field"><label>تا تاریخ</label><input id="gwTo" type="date"></div>
@@ -521,6 +570,17 @@
         <button type="button" class="btn btn-outline" id="gwPreview">پیش‌نمایش واجدین</button>
         <button type="button" class="btn btn-gold" id="gwCreate">ایجاد قرعه‌کشی</button>
         <a class="btn btn-outline" href="/api/admin/giveaways/export" id="gwExportLink">Export CSV</a>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0;background:#fbf8f1">
+        <h3 style="margin:0 0 8px;font-size:15px">تحویل جایزه (Claim)</h3>
+        <div class="grid2">
+          <div class="field"><label>کد دریافت</label><input id="gwClaimCode" dir="ltr" placeholder="MAHO-GIVE-..."></div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+            <button type="button" class="btn btn-outline" id="gwClaimLookup">بررسی کد</button>
+            <button type="button" class="btn btn-gold" id="gwClaimRedeem">تحویل جایزه</button>
+          </div>
+        </div>
+        <div id="gwClaimPreview" class="note"></div>
       </div>
       <div id="gwList"></div>
     </div>
@@ -683,10 +743,15 @@
       <div class="grid2">
         <div class="field"><label>توضیح فوتر (فارسی)</label><input id="c_footerDesc"></div>
         <div class="field"><label>توضیح فوتر (English)</label><input id="c_footerDesc_en" dir="ltr"></div>
+        <div class="field"><label>کپی‌رایت فوتر (فارسی)</label><input id="c_footerCopy" placeholder="MAHO — همه‌ی حقوق محفوظ است."></div>
+        <div class="field"><label>کپی‌رایت فوتر (English)</label><input id="c_footerCopy_en" dir="ltr"></div>
+        <div class="field"><label>متن پایین فوتر (فارسی)</label><input id="c_footerMade" placeholder="ساخته‌شده با ❤ برای مشتریان MAHO"></div>
+        <div class="field"><label>متن پایین فوتر (English)</label><input id="c_footerMade_en" dir="ltr"></div>
         <div class="field"><label>آدرس فوتر (فارسی)</label><input id="c_footerAddr"></div>
         <div class="field"><label>آدرس فوتر (English)</label><input id="c_footerAddr_en" dir="ltr"></div>
         <div class="field"><label>نمبر تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
         <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
+        <div class="field"><label>واتسپ رسمی MAHO</label><input id="c_officialWhatsAppNumber" dir="ltr" placeholder="+9379..."></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">شبکه‌های اجتماعی (لینک)</h3>
       <div class="sub">هر خانه‌ای که خالی بماند، آیکن آن در فوتر نمایش داده نمی‌شود.</div>
@@ -867,6 +932,40 @@
         <button class="btn btn-outline btn-sm" id="apiPullBtn" type="button">بارگذاری از سرور</button>
       </div>
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات روی سرور</button></div>
+    </div>
+
+    <!-- DATA RETENTION / CLEANUP -->
+    <div class="card admin-panel" data-panel="retention">
+      <div class="row-between">
+        <div>
+          <h2>مدیریت اطلاعات و پاک‌سازی</h2>
+          <div class="sub">نگهداری امن سوابق عملیاتی — پیش‌فرض: بدون حذف خودکار. آرشیف قبل از حذف دائمی. سوابق مالی فقط با مجوز صریح Owner حذف می‌شوند.</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="retRefreshBtn">Refresh</button>
+      </div>
+      <div class="note" style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fbf8f1">
+        <b>هشدار ایمنی:</b> پاک‌سازی دائمی ممکن است غیرقابل‌بازیابی باشد مگر پشتیبان جداگانه داشته باشید.
+        محصولات، مشتریان، فروشگاه‌ها، کارمندان، رانندگان و تنظیمات سایت هرگز پاک نمی‌شوند.
+        حساب مشتری با پاک‌سازی سفارش قدیمی حذف نمی‌شود.
+      </div>
+      <div id="retCounts" class="note" style="margin-bottom:12px">—</div>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retAuto"> پاک‌سازی خودکار (آرشیف) — پیش‌فرض خاموش</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retArchiveFirst" checked> آرشیف قبل از حذف دائمی</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retShowArchivedAdmin"> نمایش آرشیف در لیست سفارش‌های ادمین</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retShowArchivedCust"> نمایش سفارش‌های آرشیف‌شده برای مشتری</label>
+      <div class="field" style="max-width:220px;margin:8px 0"><label>اندازه دسته (batch)</label><input id="retBatch" type="number" min="1" max="200" value="50"></div>
+      <h3 style="margin:16px 0 8px;font-size:15px">دوره‌های نگهداری (روز)</h3>
+      <div id="retCatRows"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
+        <button type="button" class="btn btn-gold" id="retSaveCfg">ذخیره تنظیمات نگهداری</button>
+        <button type="button" class="btn btn-outline" id="retPreviewBtn">پیش‌نمایش پاک‌سازی</button>
+        <button type="button" class="btn btn-outline" id="retArchiveBtn">اجرای آرشیف واجد شرایط</button>
+        <button type="button" class="btn btn-danger" id="retDeleteBtn">حذف دائمی (Owner)</button>
+      </div>
+      <div id="retPreviewBox" class="note" style="white-space:pre-wrap;border:1px dashed var(--line);border-radius:10px;padding:10px;min-height:48px">پیش‌نمایش هنوز اجرا نشده است.</div>
+      <h3 style="margin:18px 0 8px;font-size:15px">تاریخچه پاک‌سازی</h3>
+      <div id="retHistory"></div>
+      <p class="note" style="margin-top:12px">Cron خارجی (اختیاری): <code>POST /api/cron/retention</code> با هدر <code>X-Retention-Cron: $RETENTION_CRON_SECRET</code>. فقط وقتی پاک‌سازی خودکار روشن باشد آرشیف می‌کند — هرگز حذف دائمی خودکار نیست.</p>
     </div>
 
     <!-- PUBLISH / MAHO / BACKUP -->
@@ -1104,9 +1203,9 @@
     var idleTimer=null, idleBound=false;
     var adminMe={ owner:false, permissions:[], name:"" };
     var PANEL_PERM={
-      products:"products", categories:"products", icons:"products", discounts:"products", showcase:"products",
+      products:"products", categories:"products", icons:"products", discounts:"products", ovdiscounts:"settings", showcase:"products",
       orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
-      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings",
+      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings", retention:"settings",
       subscribers:"marketing", campaigns:"marketing", feedback:"marketing", giveaways:"marketing", returnreasons:"returns", driverperf:"drivers"
     };
     function hasUiPerm(p){
@@ -1124,6 +1223,11 @@
         el.style.display=ok?"":"none";
         el.setAttribute("aria-hidden", ok?"false":"true");
         if(ok && !firstVisible && el.getAttribute("data-panel")) firstVisible=el;
+      });
+      document.querySelectorAll("#sideNav .side-group").forEach(function(g){
+        var any=false;
+        g.querySelectorAll(".side-link").forEach(function(el){ if(el.style.display!=="none") any=true; });
+        g.style.display=any?"":"none";
       });
       document.querySelectorAll(".admin-panel[data-panel]").forEach(function(panel){
         var id=panel.getAttribute("data-panel");
@@ -1200,6 +1304,7 @@
       if(id==="campaigns") { fillCmpProducts(); loadCampaigns(); }
       if(id==="feedback") loadFeedbackPanel();
       if(id==="giveaways") loadGiveaways();
+      if(id==="retention") loadRetention();
       if(id==="returnreasons") loadReturnReasons();
       if(id==="driverperf") loadDriverPerf();
     }
@@ -1642,13 +1747,15 @@
       };
       if(window.MAHOApi) MAHOApi.setConfiguredUrl(state.config.apiUrl||"");
     }
-    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
+    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerCopy","footerCopy_en","footerMade","footerMade_en","footerAddr","footerAddr_en","footerPhone","footerEmail","officialWhatsAppNumber","instagram","telegram","whatsappLink","facebook","tiktok",
       "hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en",
       "hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en",
       "hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
     function faPct(v){ return String(Math.round((parseFloat(v)||1)*100)).replace(/[0-9]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹"[d]})+"٪"; }
     function fillContent(){
       var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
+      var owa=$("#c_officialWhatsAppNumber");
+      if(owa && !owa.value && state.config && state.config.officialWhatsAppNumber) owa.value=state.config.officialWhatsAppNumber;
       var hs=$("#c_heroScale"); if(hs){ hs.value=(c.heroScale&&parseFloat(c.heroScale))?c.heroScale:"1"; var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); }
       var stats=c.stats||[];
       var box=$("#statsRows");
@@ -1667,6 +1774,7 @@
       [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:(val!==""?Number(val):""),label:lab,label_en:laben}; else stats[i]=null; });
       if(stats.some(function(x){return x;})) c.stats=stats;
       if(!state.config) state.config={}; state.config.content=c;
+      if(c.officialWhatsAppNumber) state.config.officialWhatsAppNumber=c.officialWhatsAppNumber;
     }
     var barcodeSeqA=0;
     function payLabelFa(p){ return p==="bank"?"انتقال بانکی":p==="card"?"کارت آنلاین":p==="hesab"?"حساب پی":"واتساپ"; }
@@ -1891,7 +1999,7 @@
       var slice=rows.slice(custPage*custPageSize,(custPage+1)*custPageSize);
       var ct=$("#custTitle"); if(ct) ct.textContent="مشتریان ("+toFa(rows.length)+")";
       if($("#custPageInfo")) $("#custPageInfo").textContent="صفحه "+toFa(custPage+1)+" از "+toFa(pages);
-      if(!slice.length){ b.innerHTML='<tr><td colspan="10" class="note">موردی یافت نشد.</td></tr>'; return; }
+      if(!slice.length){ b.innerHTML='<tr><td colspan="11" class="note">موردی یافت نشد.</td></tr>'; return; }
       b.innerHTML=slice.map(function(u){
         return '<tr>'+
           '<td dir="ltr">'+(u.customerNo||"—")+'</td>'+
@@ -1902,8 +2010,14 @@
           '<td>'+(u.verified?"✔":"—")+'</td>'+
           '<td>'+toFa(u.orderCount||0)+'</td>'+
           '<td>'+money(u.totalSpent||0)+'</td>'+
+          '<td>'+(u.blocked?'<span class="tag" style="background:#c44;color:#fff">مسدود</span>':'—')+'</td>'+
           '<td class="hide-sm">'+(u.createdAt?new Date(u.createdAt).toLocaleDateString("fa-AF"):"—")+'</td>'+
-          '<td>'+(u.guest||!u.id?'—':'<button type="button" class="btn btn-danger btn-sm" data-del-cust="'+esc(u.id)+'">حذف</button>')+'</td>'+
+          '<td style="white-space:nowrap">'+(u.guest||!u.id?'—':(
+            (u.blocked
+              ? '<button type="button" class="btn btn-outline btn-sm" data-unblock-cust="'+esc(u.id)+'">رفع مسدودی</button> '
+              : '<button type="button" class="btn btn-outline btn-sm" data-block-cust="'+esc(u.id)+'">مسدود</button> ')+
+            '<button type="button" class="btn btn-danger btn-sm" data-del-cust="'+esc(u.id)+'">حذف</button>'
+          ))+'</td>'+
           '</tr>';
       }).join("");
     }
@@ -2956,14 +3070,38 @@
       }
       var dis=e.target.getAttribute("data-disable-staff");
       if(dis){
-        if(!confirm("کارمند غیرفعال شود؟")) return;
+        if(!confirm("کارمند غیرفعال شود؟ تاریخچه حفظ می‌شود و ورود ممکن نیست.")) return;
         requireBackend(function(){
-          MAHOApi.saveStaff({active:false}, dis).then(function(){ renderStaffAdmin(); toast("غیرفعال شد"); })
+          var p=(typeof engFetch==="function")
+            ? engFetch("/api/admin/staff/"+encodeURIComponent(dis)+"/deactivate",{method:"POST",body:{}})
+            : MAHOApi.saveStaff({active:false}, dis).then(function(s){ return {ok:true,data:{staff:s}}; });
+          p.then(function(x){ if(x && x.ok===false) throw new Error((x.data&&x.data.error)||"fail"); renderStaffAdmin(); toast("غیرفعال شد"); })
             .catch(function(err){ alert((err&&err.message)||"خطا"); });
         });
       }
     });
     if($("#custBody")) $("#custBody").addEventListener("click",function(e){
+      var blockId=e.target.getAttribute("data-block-cust");
+      if(blockId){
+        var reason=prompt("دلیل مسدودسازی (اختیاری):","")||"";
+        if(!confirm("مشتری مسدود شود؟ دیگر نمی‌تواند سفارش جدید ثبت کند.")) return;
+        requireBackend(function(){
+          engFetch("/api/admin/customers/"+encodeURIComponent(blockId)+"/block",{method:"POST",body:{reason:reason}})
+            .then(function(x){ if(!x.ok) throw new Error((x.data&&x.data.error)||"fail"); toast("مسدود شد"); renderCustomers(); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+        return;
+      }
+      var unblockId=e.target.getAttribute("data-unblock-cust");
+      if(unblockId){
+        if(!confirm("رفع مسدودی مشتری؟")) return;
+        requireBackend(function(){
+          engFetch("/api/admin/customers/"+encodeURIComponent(unblockId)+"/unblock",{method:"POST",body:{}})
+            .then(function(x){ if(!x.ok) throw new Error((x.data&&x.data.error)||"fail"); toast("رفع مسدودی شد"); renderCustomers(); })
+            .catch(function(err){ alert((err&&err.message)||"خطا"); });
+        });
+        return;
+      }
       var id=e.target.getAttribute("data-del-cust"); if(!id) return;
       if(!confirm("حذف امن مشتری؟ سفارش‌ها و گزارش‌ها حفظ می‌شوند.")) return;
       if(!confirm("تأیید دوم: این عمل برگشت‌ناپذیر است (Soft Delete). ادامه؟")) return;
@@ -3321,21 +3459,51 @@
       });
     };
 
+    function loadGwStores(){
+      var sel=$("#gwClaimStore"); if(!sel) return;
+      engFetch("/api/admin/stores/pickup-options").then(function(x){
+        var stores=(x.data&&x.data.stores)||(state.stores||[]);
+        var cur=sel.value;
+        sel.innerHTML='<option value="">— انتخاب فروشگاه —</option>'+stores.map(function(s){
+          return '<option value="'+esc(s.id)+'">'+esc(s.name||s.id)+(s.address?(" — "+esc(s.address)):(""))+'</option>';
+        }).join("");
+        if(cur) sel.value=cur;
+      }).catch(function(){
+        var stores=state.stores||[];
+        sel.innerHTML='<option value="">— انتخاب فروشگاه —</option>'+stores.map(function(s,i){
+          var id=s.id||("store_"+i);
+          return '<option value="'+esc(id)+'">'+esc(s.name||id)+'</option>';
+        }).join("");
+      });
+    }
     function loadGiveaways(){
+      loadGwStores();
       engFetch("/api/admin/giveaways").then(function(x){
         var box=$("#gwList"); if(!box) return;
         var list=(x.data&&x.data.giveaways)||[];
         box.innerHTML=list.map(function(g){
+          var winnersHtml=(g.winners||[]).map(function(w){
+            return '<div class="note" style="border-top:1px dashed var(--line);padding-top:6px;margin-top:6px">'+
+              '<div><b>'+esc(w.name||w.email||"—")+'</b> · <span dir="ltr">'+esc(w.email||"")+'</span></div>'+
+              '<div>کد: <b dir="ltr">'+(w.claimCode?esc(w.claimCode):"—")+'</b> · وضعیت: <span class="tag">'+esc(w.claimStatus||"legacy")+'</span></div>'+
+              '<div>فروشگاه: '+esc(w.claimStoreName||g.claimStoreName||"—")+
+              (w.claimDeadline?(" · مهلت: "+new Date(w.claimDeadline).toLocaleDateString("fa-AF")):"")+
+              (w.claimedAt?(" · تحویل: "+new Date(w.claimedAt).toLocaleString("fa-AF")):"")+
+              '</div></div>';
+          }).join("");
           return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px" data-gwid="'+esc(g.id)+'">'+
             '<b>'+esc(g.title)+'</b> — '+esc(g.prize||"")+' <span class="tag">'+esc(g.status)+'</span>'+
             '<div class="note">rule: '+esc(g.eligibilityRule)+' · participants: '+toFa(g.participantCount||0)+
-            ' · winners: '+toFa((g.winners||[]).length)+'</div>'+
+            ' · winners: '+toFa((g.winners||[]).length)+
+            (g.drawnAt?(' · draw: '+new Date(g.drawnAt).toLocaleString("fa-AF")):"")+
+            (g.claimStoreName?(' · store: '+esc(g.claimStoreName)):"")+
+            '</div>'+
             '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
             (g.status==="draft"?'<button type="button" class="btn btn-gold btn-sm" data-gw-draw="'+esc(g.id)+'">Draw</button>':'')+
             (g.status==="drawn"?'<button type="button" class="btn btn-outline btn-sm" data-gw-notify="'+esc(g.id)+'">ایمیل به برندگان</button>':'')+
             (g.status!=="voided"?'<button type="button" class="btn btn-danger btn-sm" data-gw-void="'+esc(g.id)+'">Void</button>':'')+
             '</div>'+
-            ((g.winners&&g.winners.length)?'<div class="note" dir="ltr">Winners: '+esc(g.winners.map(function(w){return w.email;}).join(", "))+'</div>':'')+
+            winnersHtml+
             '</div>';
         }).join("")||'<p class="note">قرعه‌کشی ثبت نشده</p>';
       });
@@ -3363,16 +3531,54 @@
     };
     if ($("#gwCreate")) $("#gwCreate").onclick=function(){
       var base = gwEligibilityBody();
+      var deadlineVal = ($("#gwClaimDeadline")&&$("#gwClaimDeadline").value)||"";
       engFetch("/api/admin/giveaways",{method:"POST",body:{
         title:($("#gwTitle")&&$("#gwTitle").value)||"",
         prize:($("#gwPrize")&&$("#gwPrize").value)||"",
         description:($("#gwDesc")&&$("#gwDesc").value)||"",
         winnersCount:Number(($("#gwWinners")&&$("#gwWinners").value)||1),
         eligibilityRule: base.eligibilityRule,
-        eligibilityMeta: base.eligibilityMeta
+        eligibilityMeta: base.eligibilityMeta,
+        claimStoreId:($("#gwClaimStore")&&$("#gwClaimStore").value)||"",
+        claimDeadline: deadlineVal ? new Date(deadlineVal).getTime() + 86400000 - 1 : null
       }}).then(function(x){
         if(!x.ok){ alert((x.data&&x.data.error)||"خطا"); return; }
         toast("قرعه‌کشی ساخته شد"); loadGiveaways();
+      });
+    };
+    function renderClaimPreview(c){
+      var box=$("#gwClaimPreview"); if(!box||!c) return;
+      box.innerHTML='<div><b>برنده:</b> '+esc(c.winnerName||"—")+' · <span dir="ltr">'+esc(c.winnerEmail||"")+'</span></div>'+
+        '<div><b>قرعه‌کشی:</b> '+esc(c.giveawayTitle||"")+' · <b>جایزه:</b> '+esc(c.prize||"")+'</div>'+
+        '<div><b>کد:</b> <span dir="ltr">'+esc(c.claimCode||"")+'</span> · <b>وضعیت:</b> '+esc(c.claimStatus||"")+'</div>'+
+        '<div><b>فروشگاه:</b> '+esc(c.claimStoreName||"—")+'</div>'+
+        (c.claimedAt?('<div class="ok">تحویل‌شده در '+new Date(c.claimedAt).toLocaleString("fa-AF")+' توسط '+esc(c.claimedBy||"")+'</div>'):"");
+    }
+    if ($("#gwClaimLookup")) $("#gwClaimLookup").onclick=function(){
+      var code=($("#gwClaimCode")&&$("#gwClaimCode").value)||"";
+      engFetch("/api/admin/giveaways/claims/lookup",{method:"POST",body:{claimCode:code}}).then(function(x){
+        if(!x.ok){ alert((x.data&&x.data.error)||"یافت نشد"); if($("#gwClaimPreview")) $("#gwClaimPreview").textContent=""; return; }
+        renderClaimPreview(x.data.claim);
+      });
+    };
+    if ($("#gwClaimRedeem")) $("#gwClaimRedeem").onclick=function(){
+      var code=($("#gwClaimCode")&&$("#gwClaimCode").value)||"";
+      if(!code){ alert("کد را وارد کنید"); return; }
+      engFetch("/api/admin/giveaways/claims/lookup",{method:"POST",body:{claimCode:code}}).then(function(x){
+        if(!x.ok){ alert((x.data&&x.data.error)||"یافت نشد"); return; }
+        var c=x.data.claim;
+        renderClaimPreview(c);
+        var msg="تحویل جایزه تأیید شود؟\n"+
+          (c.winnerName||c.winnerEmail)+"\n"+
+          (c.giveawayTitle||"")+" — "+(c.prize||"")+"\n"+
+          "کد: "+(c.claimCode||"")+"\n"+
+          "فروشگاه: "+(c.claimStoreName||"—")+"\n"+
+          "وضعیت: "+(c.claimStatus||"");
+        if(!confirm(msg)) return;
+        return engFetch("/api/admin/giveaways/claims/redeem",{method:"POST",body:{claimCode:code,confirm:true}}).then(function(r){
+          if(!r.ok){ alert((r.data&&(r.data.message||r.data.error))||"خطا"); return; }
+          toast("جایزه تحویل شد"); renderClaimPreview(r.data.claim); loadGiveaways();
+        });
       });
     };
     if ($("#gwList")) $("#gwList").addEventListener("click",function(e){
@@ -3522,6 +3728,161 @@
     };
 
     window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+    function loadOvdRules(){
+      var box=$("#ovdRows"); if(!box) return;
+      engFetch("/api/admin/order-value-discounts").then(function(x){
+        var rules=(x.data&&x.data.rules)||[];
+        if(!rules.length){ box.innerHTML='<p class="note">هنوز قانونی نیست. «قانون جدید» را بزنید.</p>'; return; }
+        box.innerHTML=rules.map(function(r){
+          return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px" data-ovd="'+esc(r.id)+'">'+
+            '<div class="row-between"><b>'+esc(r.name||r.id)+'</b><span class="tag">'+(r.active!==false?"فعال":"غیرفعال")+'</span></div>'+
+            '<div class="note">حداقل مبلغ: '+toFa(r.minAmount||0)+' · '+(r.type==="fixed"? (toFa(r.value)+" AFN ثابت"):(toFa(r.value)+"٪"))+
+            ' · اعمال روی: '+esc(r.appliesTo||"both")+'</div>'+
+            '<div style="display:flex;gap:8px;margin-top:8px">'+
+            '<button type="button" class="btn btn-outline btn-sm" data-ovd-edit="'+esc(r.id)+'">ویرایش</button>'+
+            '<button type="button" class="btn btn-danger btn-sm" data-ovd-del="'+esc(r.id)+'">حذف</button></div></div>';
+        }).join("");
+      });
+    }
+    if($("#ovdAddBtn")) $("#ovdAddBtn").onclick=function(){
+      var minAmount=Number(prompt("حداقل مبلغ سفارش (افغانی):","2000")||0);
+      var value=Number(prompt("مقدار تخفیف (٪ یا مبلغ ثابت):","5")||0);
+      var type=confirm("OK = درصدی، Cancel = مبلغ ثابت")?"percent":"fixed";
+      var name=prompt("نام قانون:","تخفیف "+minAmount)||"";
+      engFetch("/api/admin/order-value-discounts",{method:"POST",body:{name:name,minAmount:minAmount,value:value,type:type,appliesTo:"both",active:true}})
+        .then(function(x){ toast(x.ok?"اضافه شد":"ناموفق"); loadOvdRules(); });
+    };
+    if($("#ovdRows")) $("#ovdRows").addEventListener("click",function(e){
+      var del=e.target.getAttribute("data-ovd-del");
+      var edit=e.target.getAttribute("data-ovd-edit");
+      if(del){
+        if(!confirm("حذف این قانون؟")) return;
+        fetch("/api/admin/order-value-discounts/"+encodeURIComponent(del),{method:"DELETE",headers:adminAuthHeaders()})
+          .then(function(){ loadOvdRules(); });
+      }
+      if(edit){
+        var minAmount=Number(prompt("حداقل مبلغ:", "")||"");
+        var value=Number(prompt("مقدار:", "")||"");
+        engFetch("/api/admin/order-value-discounts/"+encodeURIComponent(edit),{method:"PUT",body:{minAmount:minAmount,value:value}})
+          .then(function(){ loadOvdRules(); });
+      }
+    });
+    var _showPanel=typeof showPanel==="function"?showPanel:null;
+    /* hook panel switch via existing sideNav listener — load when ovdiscounts opened */
+    document.querySelectorAll('#sideNav [data-panel="ovdiscounts"]').forEach(function(btn){
+      btn.addEventListener("click", function(){ setTimeout(loadOvdRules, 50); });
+    });
+
+    /* ---- Data Retention / Cleanup ---- */
+    var _retBusy=false;
+    var _retCats=[];
+    function loadRetention(){
+      engFetch("/api/admin/retention").then(function(x){
+        if(!x.ok){ if($("#retCounts")) $("#retCounts").textContent="دسترسی یا خطا: "+((x.data&&x.data.error)||x.status); return; }
+        var d=x.data||{};
+        var r=d.retention||{};
+        var c=d.counts||{};
+        if($("#retAuto")) $("#retAuto").checked=!!r.automaticCleanupEnabled;
+        if($("#retArchiveFirst")) $("#retArchiveFirst").checked=r.archiveBeforeDelete!==false;
+        if($("#retShowArchivedAdmin")) $("#retShowArchivedAdmin").checked=!!r.showArchivedInAdmin;
+        if($("#retShowArchivedCust")) $("#retShowArchivedCust").checked=!!r.showArchivedToCustomers;
+        if($("#retBatch")) $("#retBatch").value=r.batchSize||50;
+        if($("#retCounts")){
+          $("#retCounts").textContent=
+            "سفارش فعال: "+toFa(c.ordersActive||0)+" · آرشیف: "+toFa(c.ordersArchived||0)+
+            " · کمپین: "+toFa(c.campaignsActive||0)+"/"+toFa(c.campaignsArchived||0)+
+            " · کاربران: "+toFa(c.users||0)+" · محصولات: "+toFa(c.products||0)+
+            " · فروشگاه: "+toFa(c.stores||0)+" — "+(c.note||"");
+        }
+        _retCats=r.categories||[];
+        var box=$("#retCatRows");
+        if(box){
+          box.innerHTML=_retCats.map(function(cat){
+            return '<div class="grid2" style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px" data-ret-cat="'+esc(cat.id)+'">'+
+              '<div><b>'+esc(cat.titleFa)+'</b>'+(cat.financial?' <span class="tag">مالی</span>':'')+
+              '<div class="note">'+esc(cat.id)+'</div></div>'+
+              '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ret-en" '+(cat.enabled?"checked":"")+'> فعال</label>'+
+              '<div class="field"><label>روز نگهداری</label><input class="ret-days" type="number" min="1" max="3650" value="'+esc(cat.days)+'"></div>'+
+              '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ret-perm" '+(cat.permanentDeleteAllowed?"checked":"")+'> اجازه حذف دائمی</label>'+
+              '</div>';
+          }).join("");
+        }
+      });
+      engFetch("/api/admin/retention/history?limit=30").then(function(x){
+        var box=$("#retHistory"); if(!box) return;
+        var list=(x.data&&x.data.history)||[];
+        box.innerHTML=list.map(function(h){
+          return '<div class="note" style="border-bottom:1px dashed var(--line);padding:6px 0">'+
+            new Date(h.at).toLocaleString("fa-AF")+' — <b>'+esc(h.action)+'</b> · '+esc(h.actor)+
+            ' · '+toFa(h.affected||0)+' رکورد · '+(h.success?"موفق":("خطا: "+esc(h.error||"")))+
+            '</div>';
+        }).join("")||'<p class="note">تاریخی ثبت نشده</p>';
+      });
+    }
+    function collectRetBody(){
+      var categories={};
+      document.querySelectorAll("[data-ret-cat]").forEach(function(row){
+        var id=row.getAttribute("data-ret-cat");
+        categories[id]={
+          enabled:!!(row.querySelector(".ret-en")&&row.querySelector(".ret-en").checked),
+          days:Number((row.querySelector(".ret-days")&&row.querySelector(".ret-days").value)||365),
+          permanentDeleteAllowed:!!(row.querySelector(".ret-perm")&&row.querySelector(".ret-perm").checked),
+          archiveBeforeDelete:!!($("#retArchiveFirst")&&$("#retArchiveFirst").checked)
+        };
+      });
+      return {
+        automaticCleanupEnabled:!!($("#retAuto")&&$("#retAuto").checked),
+        archiveBeforeDelete:!!($("#retArchiveFirst")&&$("#retArchiveFirst").checked),
+        showArchivedInAdmin:!!($("#retShowArchivedAdmin")&&$("#retShowArchivedAdmin").checked),
+        showArchivedToCustomers:!!($("#retShowArchivedCust")&&$("#retShowArchivedCust").checked),
+        batchSize:Number(($("#retBatch")&&$("#retBatch").value)||50),
+        categories:categories
+      };
+    }
+    if($("#retRefreshBtn")) $("#retRefreshBtn").onclick=loadRetention;
+    if($("#retSaveCfg")) $("#retSaveCfg").onclick=function(){
+      engFetch("/api/admin/retention",{method:"PUT",body:collectRetBody()}).then(function(x){
+        toast(x.ok?"تنظیمات نگهداری ذخیره شد":((x.data&&x.data.error)||"ناموفق"));
+        if(x.ok) loadRetention();
+      });
+    };
+    if($("#retPreviewBtn")) $("#retPreviewBtn").onclick=function(){
+      engFetch("/api/admin/retention/preview").then(function(x){
+        var box=$("#retPreviewBox"); if(!box) return;
+        if(!x.ok){ box.textContent=(x.data&&x.data.error)||"خطا"; return; }
+        var d=x.data||{};
+        var lines=["پیش‌نمایش پاک‌سازی — هیچ داده‌ای حذف نشد.","کل واجد شرایط: "+toFa(d.totalEligible||0),""];
+        Object.keys(d.categories||{}).forEach(function(id){
+          var c=d.categories[id];
+          lines.push(c.titleFa+": "+toFa(c.eligible||0)+(c.enabled?"":" (غیرفعال)"));
+        });
+        box.textContent=lines.join("\n");
+      });
+    };
+    if($("#retArchiveBtn")) $("#retArchiveBtn").onclick=function(){
+      if(_retBusy) return;
+      if(!confirm("آرشیف رکوردهای واجد شرایط اجرا شود؟ (حذف دائمی نیست)")) return;
+      _retBusy=true;
+      engFetch("/api/admin/retention/archive",{method:"POST",body:{}}).then(function(x){
+        _retBusy=false;
+        alert(x.ok?("آرشیف: "+((x.data&&x.data.affected)||0)+" رکورد"):((x.data&&(x.data.message||x.data.error))||"خطا"));
+        loadRetention();
+      }).catch(function(){ _retBusy=false; });
+    };
+    if($("#retDeleteBtn")) $("#retDeleteBtn").onclick=function(){
+      if(_retBusy) return;
+      if(!confirm("هشدار: حذف دائمی. فقط رکوردهای آرشیف‌شده/واجدشرایط دسته‌های مجاز. ادامه؟")) return;
+      var phrase=prompt('برای تأیید، عبارت DELETE یا «حذف» را تایپ کنید:');
+      if(phrase!=="DELETE" && phrase!=="حذف"){ alert("لغو شد"); return; }
+      if(!confirm("تأیید نهایی حذف دائمی؟ این عمل ممکن است غیرقابل‌بازیابی باشد.")) return;
+      _retBusy=true;
+      engFetch("/api/admin/retention/delete",{method:"POST",body:{confirm:true,confirmPhrase:phrase}}).then(function(x){
+        _retBusy=false;
+        alert(x.ok?("حذف: "+((x.data&&x.data.affected)||0)):((x.data&&(x.data.message||x.data.error))||"خطا / بدون مجوز"));
+        loadRetention();
+      }).catch(function(){ _retBusy=false; });
+    };
   })();
   </script>
   <div class="print-sheet label-a4" id="printSheet" aria-hidden="true"></div>
