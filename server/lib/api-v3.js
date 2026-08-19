@@ -268,14 +268,6 @@ function mountV3(app, ctx) {
     const proofRequired = !!(ctx.db.config.delivery && ctx.db.config.delivery.proofPhotoRequired);
     const out = applyDriverStatus(ctx.db, o, driver, req.body || {}, { proofRequired });
     if (out.error) return res.status(out.status || 400).json({ error: out.error });
-    if (out.noop) {
-      return res.json({
-        ok: true,
-        noop: true,
-        message: "این وضعیت قبلاً ثبت شده است.",
-        order: driverFacingOrder(o),
-      });
-    }
     pushAudit(ctx.db, {
       actor: driver.id, action: "driver_status", entityType: "order", entityId: o.id,
       meta: { driverStatus: o.driverStatus, note: (req.body || {}).note || "" },

@@ -31,16 +31,11 @@ const {
   drawGiveaway,
   voidGiveaway,
   giveawaysToCsv,
-  lookupClaim,
-  redeemClaim,
-  voidClaim,
-  winnerEmailPayload,
 } = require("./giveaway");
 const { sanitizeText, createRateLimiter, clientIp } = require("./security");
 const { pushAudit } = require("./audit");
 const { normalizeOrderStatus, appendHistory } = require("./orders");
 const { normalizeEmail, isValidEmail } = require("./engagement");
-const { resolvePickupStore } = require("./store-inventory");
 
 function mountOpsSuite(app, ctx) {
   const db = () => ctx.db;
@@ -261,12 +256,12 @@ function mountOpsSuite(app, ctx) {
   });
 
   /* ---------- Giveaways ---------- */
-  app.get("/api/admin/giveaways", requireAdminAnyPerm(["marketing", "marketing_giveaway", "customers"]), (req, res) => {
+  app.get("/api/admin/giveaways", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     ensureGiveaways(db());
     res.json({ giveaways: (db().giveaways || []).map(publicGiveaway) });
   });
 
-  app.post("/api/admin/giveaways", requireAdminAnyPerm(["marketing", "marketing_giveaway", "customers"]), (req, res) => {
+  app.post("/api/admin/giveaways", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     const result = createGiveaway(db(), req.body || {}, actorName(req));
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
     saveDb();
@@ -274,11 +269,11 @@ function mountOpsSuite(app, ctx) {
     res.json(result);
   });
 
-  app.post("/api/admin/giveaways/preview", requireAdminAnyPerm(["marketing", "marketing_giveaway", "customers"]), (req, res) => {
+  app.post("/api/admin/giveaways/preview", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     res.json(previewGiveaway(db(), req.body || {}));
   });
 
-  app.post("/api/admin/giveaways/:id/draw", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_draw"]), (req, res) => {
+  app.post("/api/admin/giveaways/:id/draw", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     const result = drawGiveaway(db(), req.params.id, actorName(req));
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
     saveDb();
@@ -287,16 +282,12 @@ function mountOpsSuite(app, ctx) {
       action: "giveaway_drawn",
       entityType: "giveaway",
       entityId: req.params.id,
-      meta: {
-        winners: (result.giveaway.winners || []).map((w) => w.email),
-        claimCodes: (result.giveaway.winners || []).map((w) => w.claimCode).filter(Boolean),
-        claimStoreId: result.giveaway.claimStoreId || null,
-      },
+      meta: { winners: (result.giveaway.winners || []).map((w) => w.email) },
     });
     res.json(result);
   });
 
-  app.post("/api/admin/giveaways/:id/void", requireAdminAnyPerm(["marketing", "marketing_giveaway"]), (req, res) => {
+  app.post("/api/admin/giveaways/:id/void", requireAdminAnyPerm(["marketing", "customers"]), (req, res) => {
     const result = voidGiveaway(db(), req.params.id, (req.body || {}).reason, actorName(req));
     if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
     saveDb();
@@ -304,7 +295,7 @@ function mountOpsSuite(app, ctx) {
     res.json(result);
   });
 
-  app.post("/api/admin/giveaways/:id/notify-winners", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_notify"]), async (req, res) => {
+  app.post("/api/admin/giveaways/:id/notify-winners", requireAdminAnyPerm(["marketing", "customers"]), async (req, res) => {
     const g = (db().giveaways || []).find((x) => x && x.id === req.params.id);
     if (!g) return res.status(404).json({ error: "not_found" });
     if (g.status !== "drawn") return res.status(400).json({ error: "not_drawn" });
@@ -313,95 +304,18 @@ function mountOpsSuite(app, ctx) {
     let ok = 0;
     for (const w of g.winners || []) {
       try {
-        const payload = winnerEmailPayload(db(), g, w);
-        if (await m.giveawayWinner(w.email, payload)) {
-          ok++;
-          w.notifiedAt = Date.now();
-          pushAudit(db(), {
-            actor: actorName(req),
-            action: "giveaway_winner_email_sent",
-            entityType: "giveaway",
-            entityId: g.id,
-            meta: { email: w.email, claimCode: w.claimCode || null },
-          });
-        }
+        if (await m.giveawayWinner(w.email, { name: w.name, title: g.title, prize: w.prize || g.prize })) ok++;
       } catch (_) {}
     }
-    saveDb();
     res.json({ ok: true, emailed: ok });
   });
 
-  app.get("/api/admin/giveaways/claims/lookup", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_claim"]), (req, res) => {
-    const code = (req.query && req.query.code) || (req.body && req.body.claimCode) || "";
-    const result = lookupClaim(db(), code);
-    if (!result.ok) return res.status(result.status || 404).json({ error: result.error });
-    res.json(result);
-  });
-
-  app.post("/api/admin/giveaways/claims/lookup", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_claim"]), (req, res) => {
-    const code = (req.body || {}).claimCode || (req.body || {}).code || "";
-    const result = lookupClaim(db(), code);
-    if (!result.ok) return res.status(result.status || 404).json({ error: result.error });
-    res.json(result);
-  });
-
-  app.post("/api/admin/giveaways/claims/redeem", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_claim"]), (req, res) => {
-    const code = (req.body || {}).claimCode || (req.body || {}).code || "";
-    const confirm = !!(req.body || {}).confirm;
-    if (!confirm) return res.status(400).json({ error: "confirm_required", message: "تأیید تحویل جایزه لازم است." });
-    const preview = lookupClaim(db(), code);
-    if (!preview.ok) return res.status(preview.status || 404).json({ error: preview.error });
-    const result = redeemClaim(db(), code, actorName(req));
-    if (!result.ok) {
-      pushAudit(db(), {
-        actor: actorName(req),
-        action: "giveaway_claim_rejected",
-        entityType: "giveaway",
-        entityId: (preview.claim && preview.claim.giveawayId) || null,
-        meta: { claimCode: code, error: result.error },
-      });
-      return res.status(result.status || 409).json({ error: result.error, message: result.message, claim: result.claim || preview.claim });
-    }
-    saveDb();
-    pushAudit(db(), {
-      actor: actorName(req),
-      action: "giveaway_prize_claimed",
-      entityType: "giveaway",
-      entityId: result.claim.giveawayId,
-      meta: { claimCode: result.claim.claimCode, winnerEmail: result.claim.winnerEmail },
-    });
-    res.json(result);
-  });
-
-  app.post("/api/admin/giveaways/claims/void", requireAdminAnyPerm(["marketing", "marketing_giveaway", "marketing_giveaway_claim"]), (req, res) => {
-    const code = (req.body || {}).claimCode || "";
-    const result = voidClaim(db(), code, (req.body || {}).reason, actorName(req));
-    if (!result.ok) return res.status(result.status || 400).json({ error: result.error });
-    saveDb();
-    pushAudit(db(), {
-      actor: actorName(req),
-      action: "giveaway_claim_voided",
-      entityType: "giveaway",
-      entityId: result.claim.giveawayId,
-      meta: { claimCode: code },
-    });
-    res.json(result);
-  });
-
-  app.get("/api/admin/giveaways/export", requireAdminAnyPerm(["marketing", "marketing_giveaway", "customers", "reports"]), (req, res) => {
+  app.get("/api/admin/giveaways/export", requireAdminAnyPerm(["marketing", "customers", "reports"]), (req, res) => {
     ensureGiveaways(db());
     const csv = giveawaysToCsv((db().giveaways || []).map(publicGiveaway));
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", 'attachment; filename="maho-giveaways.csv"');
     res.send(csv);
-  });
-
-  app.get("/api/admin/stores/pickup-options", requireAdminAnyPerm(["marketing", "marketing_giveaway", "stores", "settings", "orders"]), (req, res) => {
-    const stores = (db().stores || []).map((s, i) => {
-      const resolved = resolvePickupStore(db(), s.id || ("store_" + i));
-      return resolved;
-    }).filter(Boolean);
-    res.json({ stores });
   });
 
   /* ---------- Marketing consent (registered) ---------- */
@@ -461,12 +375,6 @@ function mountOpsSuite(app, ctx) {
       cashEligible: isCashPayment(o),
       refundStatus: o.returnRequest.refundStatus || "approved",
       photos: o.returnRequest.pickupPhotos || [],
-      pickupConfirmed: !!o.returnRequest.pickupConfirmed,
-      pickedUpAt: o.returnRequest.pickedUpAt || null,
-      collectionId: o.returnRequest.collectionId || null,
-      collectedQty: o.returnRequest.collectedQty || null,
-      cashRefundPaid: !!o.returnRequest.cashRefundPaid,
-      alreadyCollectedMessage: "این کالا قبلاً دریافت شده است.",
     }));
     res.json({ pickups: list });
   });
@@ -477,85 +385,14 @@ function mountOpsSuite(app, ctx) {
     if (o.returnRequest.returnDriverId !== req.driverSession.driverId) {
       return res.status(403).json({ error: "not_your_job" });
     }
-    /* Idempotent: fully collected — do not re-audit, re-notify, or re-touch inventory/refund */
-    const approvedQtyEarly = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0) || 1;
-    const collectedEarly = Number(o.returnRequest.collectedQty || 0) || 0;
-    const fullyCollected =
-      o.returnRequest.pickupConfirmed === true ||
-      collectedEarly >= approvedQtyEarly ||
-      o.returnRequest.returnPickupStatus === "returned_to_store" ||
-      o.returnRequest.returnPickupStatus === "completed";
-    if (fullyCollected) {
-      pushAudit(db(), {
-        actor: req.driverSession.driverId,
-        action: "return_pickup_duplicate_attempt",
-        entityType: "order",
-        entityId: o.id,
-        meta: {
-          collectionId: o.returnRequest.collectionId || null,
-          returnPickupStatus: o.returnRequest.returnPickupStatus,
-          collectedQty: collectedEarly,
-          approvedQty: approvedQtyEarly,
-        },
-      });
-      saveDb();
-      return res.status(409).json({
-        ok: false,
-        error: "already_collected",
-        message: "این کالا قبلاً دریافت شده است.",
-        returnPickupStatus: o.returnRequest.returnPickupStatus,
-        pickedUpAt: o.returnRequest.pickedUpAt || null,
-        collectionId: o.returnRequest.collectionId || null,
-        collectedQty: collectedEarly,
-        approvedQty: approvedQtyEarly,
-      });
-    }
     const photos = o.returnRequest.pickupPhotos || [];
     if (o.returnRequest.photoRequired && !photos.length) {
       return res.status(400).json({ error: "photo_required" });
     }
-    const approvedQty = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0) || 1;
-    const alreadyQty = Number(o.returnRequest.collectedQty || 0) || 0;
-    if (alreadyQty >= approvedQty) {
-      pushAudit(db(), {
-        actor: req.driverSession.driverId,
-        action: "return_pickup_duplicate_attempt",
-        entityType: "order",
-        entityId: o.id,
-        meta: { reason: "qty_exhausted", collectedQty: alreadyQty, approvedQty },
-      });
-      saveDb();
-      return res.status(409).json({
-        ok: false,
-        error: "already_collected",
-        message: "این کالا قبلاً دریافت شده است.",
-        collectedQty: alreadyQty,
-        approvedQty,
-      });
-    }
-    let requestQty = Number((req.body || {}).qty);
-    if (!Number.isFinite(requestQty) || requestQty <= 0) requestQty = approvedQty - alreadyQty;
-    requestQty = Math.floor(requestQty);
-    const remaining = approvedQty - alreadyQty;
-    if (requestQty > remaining) {
-      return res.status(400).json({
-        error: "qty_exceeds_approved",
-        message: "مقدار درخواستی از مقدار تأییدشده برگشت بیشتر است.",
-        remaining,
-        approvedQty,
-        collectedQty: alreadyQty,
-      });
-    }
-    const collectionId = o.returnRequest.collectionId
-      || ("rpc_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8));
-    const newCollected = alreadyQty + requestQty;
     o.returnRequest.returnPickupStatus = "picked_up";
-    o.returnRequest.pickedUpAt = o.returnRequest.pickedUpAt || Date.now();
+    o.returnRequest.pickedUpAt = Date.now();
     o.returnRequest.pickedUpByDriverId = req.driverSession.driverId;
-    o.returnRequest.pickupConfirmed = newCollected >= approvedQty;
-    o.returnRequest.collectionId = collectionId;
-    o.returnRequest.collectedQty = newCollected;
-    o.returnRequest.approvedReturnQty = approvedQty;
+    o.returnRequest.pickupConfirmed = true;
     /* Inventory must NOT restore here */
     saveDb();
     pushAudit(db(), {
@@ -563,21 +400,11 @@ function mountOpsSuite(app, ctx) {
       action: "return_pickup_confirmed",
       entityType: "order",
       entityId: o.id,
-      meta: { collectionId, qty: requestQty, collectedQty: newCollected, approvedQty },
     });
-    if (mail() && o.customer && o.customer.email && newCollected >= approvedQty) {
+    if (mail() && o.customer && o.customer.email) {
       mail().orderStatus(o.customer.email, o, "کالای برگشتی دریافت شد", o.lang || "fa").catch(() => {});
     }
-    res.json({
-      ok: true,
-      returnPickupStatus: "picked_up",
-      pickedUpAt: o.returnRequest.pickedUpAt,
-      collectionId,
-      collectedQty: newCollected,
-      approvedQty,
-      remaining: Math.max(0, approvedQty - newCollected),
-      pickupConfirmed: !!o.returnRequest.pickupConfirmed,
-    });
+    res.json({ ok: true, returnPickupStatus: "picked_up", pickedUpAt: o.returnRequest.pickedUpAt });
   });
 
   app.post("/api/driver/return-pickups/:id/photo", requireDriverLocal, (req, res) => {
