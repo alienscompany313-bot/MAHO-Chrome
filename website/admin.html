@@ -63,6 +63,11 @@
     .stockcell{font-weight:700}.stockcell.low{color:var(--gold-deep)}.stockcell.out{color:var(--red)}
     .field{margin-bottom:12px}
     .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
+    /* Product store assignment: full-width compact rows (override .field label{display:block}). */
+    #f_storeIds{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:100%;gap:8px;margin-top:6px;box-sizing:border-box}
+    #f_storeIds label.store-pick-row{display:flex !important;flex-direction:row;align-items:flex-start;gap:8px;width:100%;max-width:100%;margin:0;font-weight:700;font-size:13px;line-height:1.5;box-sizing:border-box}
+    #f_storeIds label.store-pick-row > input[type="checkbox"]{flex:0 0 auto;margin-top:4px}
+    #f_storeIds label.store-pick-row > span{flex:1 1 auto;min-width:12rem;max-width:100%;white-space:normal;overflow-wrap:break-word;word-break:normal}
     .field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
     .field input:focus,.field select:focus{outline:none;border-color:var(--gold)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
@@ -945,7 +950,7 @@
           <label style="display:inline-flex;align-items:center;gap:8px;font-weight:800;margin:6px 0">
             <input type="checkbox" id="f_storeAll"> همه فروشگاه‌های فعال
           </label>
-          <div id="f_storeIds" class="note" style="display:block;width:100%;max-width:100%;margin-top:6px;box-sizing:border-box"></div>
+          <div id="f_storeIds" class="note"></div>
           <p class="note" style="margin-top:6px">«همه فروشگاه‌ها» یعنی محصول در هر فروشگاه فعال قابل تحویل حضوری است. اگر خاموش باشد، فقط فروشگاه‌های تیک‌خورده معتبرند (لیست خالی = هیچ فروشگاهی).</p>
         </div>
         <div class="field"><label>کتگوری</label>
@@ -2499,7 +2504,7 @@
           var shortAddr=addr.length>72?addr.slice(0,69)+"…":addr;
           var label=esc(s.name||id)+(shortAddr?(" — "+esc(shortAddr)):"");
           var idHint=id?('<div class="note" style="font-weight:500;font-size:11px;margin-top:2px" dir="ltr">'+esc(id)+'</div>'):'';
-          return '<label style="display:flex;align-items:flex-start;gap:8px;font-weight:700;margin:0 0 10px;line-height:1.5;width:100%;max-width:100%;box-sizing:border-box"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+' style="margin-top:4px;flex:0 0 auto"> <span style="flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:break-word;word-break:normal">'+label+idHint+'</span></label>';
+          return '<label class="store-pick-row"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+'> <span>'+label+idHint+'</span></label>';
         }).join("");
       })();
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";
