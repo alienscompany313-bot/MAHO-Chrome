@@ -1319,6 +1319,19 @@
 
     function renderReturnsAdmin(){
       var box=$("#returnsBody"); if(!box) return;
+      function normRetMethod(m){
+        var s=String(m||"").trim().toLowerCase().replace(/[\s-]+/g,"_");
+        if(!s) return "";
+        if(["pickup_customer","customer_address_pickup","pickup_from_address","customer_pickup","address_pickup","pickup_from_my_address"].indexOf(s)>=0) return "pickup_customer";
+        if(["pickup_store","store_dropoff","return_to_store","store_return","dropoff_store"].indexOf(s)>=0) return "pickup_store";
+        return s;
+      }
+      function methodLabelFa(m){
+        var n=normRetMethod(m);
+        if(n==="pickup_customer") return "جمع‌آوری از آدرس من";
+        if(n==="pickup_store") return "تحویل به فروشگاه";
+        return "— انتخاب نشده —";
+      }
       requireBackend(function(){
         var loadDrivers=MAHOApi.listDrivers?MAHOApi.listDrivers().then(function(r){ window._driverList=r.drivers||[]; }).catch(function(){ window._driverList=[]; }):Promise.resolve();
         loadDrivers.then(function(){
@@ -1327,26 +1340,42 @@
           if(!list.length){ box.innerHTML='<p class="note">درخواست برگشتی نیست.</p>'; return; }
           box.innerHTML=list.map(function(o){
             var rr=o.returnRequest||{};
+            var method=normRetMethod(rr.method);
             var pk=rr.pickup||{};
             var st=(MAHOApi.statusLabel?MAHOApi.statusLabel(o.status):o.status);
             var acts="";
-            if(o.status==="return_requested"){
+            if(o.status==="return_requested" || o.status==="partially_returned"){
               acts='<button class="btn btn-gold btn-sm" data-ret-st="return_approved" data-oid="'+esc(o.id)+'">تأیید برگشت</button> '+
                    '<button class="btn btn-danger btn-sm" data-ret-st="return_rejected" data-oid="'+esc(o.id)+'">رد برگشت</button>';
             } else if(o.status==="return_approved"){
               acts='<button class="btn btn-gold btn-sm" data-ret-st="return_completed" data-oid="'+esc(o.id)+'">تکمیل / دریافت</button>';
             }
+            var addrHtml="";
+            if(method==="pickup_customer"){
+              addrHtml='<div class="note">آدرس جمع‌آوری: '+esc(pk.address||((o.customer&&o.customer.address)||"—"))+
+                (pk.phone?(" · <span dir=\"ltr\">"+esc(pk.phone)+"</span>"):"")+
+                (pk.mapsUrl?(' · <a href="'+esc(pk.mapsUrl)+'" target="_blank" rel="noopener">نقشه</a>'):"")+
+                '</div>';
+            }
+            var showAssign = (method==="pickup_customer" && (o.status==="return_approved" || rr.returnPickupStatus==="assigned" || rr.returnDriverId));
+            var assignHtml = showAssign
+              ? '<div style="margin:8px 0"><label class="note">تعیین درایور</label><br><select class="ctrl" id="retDrv_'+esc(o.id)+'"></select> '+
+                '<button type="button" class="btn btn-outline btn-sm" data-assign-ret-drv="'+esc(o.id)+'">تعیین درایور</button></div>'
+              : "";
             return '<div class="adm-order" style="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:12px">'+
               '<div class="row-between"><b dir="ltr">'+esc(o.id)+'</b><span class="tag">'+esc(st)+'</span></div>'+
               '<div class="note">مشتری: '+esc((o.customer&&o.customer.name)||"")+' · <span dir="ltr">'+esc((o.customer&&o.customer.phone)||"")+'</span></div>'+
-              '<div class="note">روش: '+(rr.method==="pickup_customer"?"جمع‌آوری از آدرس مشتری":(rr.method==="pickup_store"?"تحویل به فروشگاه":"— انتخاب نشده —"))+'</div>'+
+              '<div class="note"><b>روش برگشت:</b> '+esc(methodLabelFa(method))+'</div>'+
+              addrHtml+
               '<div class="note">دلیل: '+esc(rr.reasonTitleSnapshot||rr.reason||"")+'</div>'+
               '<div class="note">توضیح: '+esc(rr.details||"")+'</div>'+
               '<div class="note">Pickup status: '+esc(rr.returnPickupStatus||"—")+' · Refund: '+esc(rr.refundStatus||"—")+' · مبلغ: '+money(rr.approvedRefundAmount!=null?rr.approvedRefundAmount:o.total)+'</div>'+
-              '<div class="note">راننده برگشت: '+esc(rr.returnDriverName||"—")+(rr.photoRequired?' · عکس الزامی':'')+'</div>'+
+              '<div class="note">راننده برگشت: '+esc(rr.returnDriverName||"—")+(rr.photoRequired?' · عکس الزامی':'')+
+                (rr.returnDriverAssignedAt?(" · "+new Date(rr.returnDriverAssignedAt).toLocaleString("fa-AF")):"")+
+                '</div>'+
               ((rr.pickupPhotos&&rr.pickupPhotos.length)?'<div class="note">عکس‌ها: '+rr.pickupPhotos.map(function(p){return '<a href="'+esc(p.url)+'" target="_blank" rel="noopener">مشاهده</a>';}).join(" ")+'</div>':'')+
               '<div class="note">زمان: '+(rr.requestedAt?new Date(rr.requestedAt).toLocaleString("fa-AF"):"—")+'</div>'+
-              (rr.method==="pickup_customer"?'<div style="margin:8px 0"><select class="ctrl" id="retDrv_'+esc(o.id)+'"></select> <button type="button" class="btn btn-outline btn-sm" data-assign-ret-drv="'+esc(o.id)+'">تعیین درایور برای جمع‌آوری</button></div>':'')+
+              assignHtml+
               '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+acts+
               '<button type="button" class="btn btn-outline btn-sm" data-late-override="'+esc(o.id)+'">اجازه برگشت استثنایی</button>'+
               (o.status==="return_approved"?'<button type="button" class="btn btn-outline btn-sm" data-ret-store="'+esc(o.id)+'">رسید به فروشگاه</button>':'')+

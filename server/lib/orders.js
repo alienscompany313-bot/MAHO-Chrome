@@ -118,11 +118,11 @@ function canTransition(from, to, { force, actor } = {}) {
   }
 
   if (b === "return_approved") {
-    if (a === "return_requested") return { ok: true };
+    if (a === "return_requested" || a === "partially_returned") return { ok: true };
     return { ok: false, error: "invalid_return_approve" };
   }
   if (b === "return_rejected") {
-    if (a === "return_requested" || a === "return_approved") return { ok: true };
+    if (a === "return_requested" || a === "return_approved" || a === "partially_returned") return { ok: true };
     return { ok: false, error: "invalid_return_reject" };
   }
   if (b === "return_completed") {

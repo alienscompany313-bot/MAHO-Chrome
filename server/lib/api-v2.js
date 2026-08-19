@@ -79,8 +79,15 @@ function mountV2(app, ctx) {
 
   /* ---------- returns list ---------- */
   app.get("/api/admin/returns", guard("returns"), (req, res) => {
+    const { resolveOrderReturnRequest } = require("./returns-ops");
     const list = (ctx.db.orders || [])
-      .filter((o) => o.returnRequest || ["return_requested", "return_approved", "return_rejected", "return_completed"].indexOf(normalizeOrderStatus(o.status)) >= 0)
+      .filter((o) => {
+        if (!o) return false;
+        if (o.returnRequest) return true;
+        const st = normalizeOrderStatus(o.status);
+        if (["return_requested", "return_approved", "return_rejected", "return_completed", "partially_returned"].indexOf(st) >= 0) return true;
+        return (o.items || []).some((it) => it && it.returnRequest && it.returnRequest.requestedAt);
+      })
       .map((o) => ({
         id: o.id,
         status: o.status,
@@ -88,7 +95,7 @@ function mountV2(app, ctx) {
         total: o.total,
         customer: o.customer,
         items: o.items,
-        returnRequest: o.returnRequest || null,
+        returnRequest: resolveOrderReturnRequest(o),
         customerLocation: o.customerLocation || null,
       }));
     res.json({ returns: list });
@@ -97,6 +104,12 @@ function mountV2(app, ctx) {
   app.post("/api/admin/orders/:id/return-resolve", guard("returns"), (req, res) => {
     const o = ctx.db.orders.find((x) => x.id === req.params.id);
     if (!o) return res.status(404).json({ error: "not_found" });
+    const { resolveOrderReturnRequest, normalizeReturnMethod } = require("./returns-ops");
+    /* Ensure order.returnRequest exists from item returns before approve */
+    if (!o.returnRequest) {
+      const resolved = resolveOrderReturnRequest(o);
+      if (resolved) o.returnRequest = Object.assign({}, resolved);
+    }
     const next = normalizeOrderStatus((req.body || {}).status);
     const check = canTransition(o.status, next, { actor: "admin" });
     if (!check.ok) return res.status(400).json({ error: check.error });
@@ -104,7 +117,7 @@ function mountV2(app, ctx) {
     if (next === "return_completed") {
       const rr = o.returnRequest;
       if (rr && !rr.stockRestored) {
-        const method = rr.method || "pickup_store";
+        const method = normalizeReturnMethod(rr.method) || rr.method || "pickup_store";
         const atStore = method === "pickup_store"
           || rr.returnPickupStatus === "returned_to_store"
           || rr.returnPickupStatus === "completed"
@@ -120,6 +133,10 @@ function mountV2(app, ctx) {
     const prev = o.status;
     o.status = next;
     if (o.returnRequest) {
+      /* Preserve method / pickup / reason — only annotate resolution */
+      if (o.returnRequest.method) {
+        o.returnRequest.method = normalizeReturnMethod(o.returnRequest.method) || o.returnRequest.method;
+      }
       o.returnRequest.resolvedAt = Date.now();
       o.returnRequest.resolvedBy = (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin";
       o.returnRequest.resolveNote = sanitizeText((req.body || {}).note, 500);
@@ -153,15 +170,15 @@ function mountV2(app, ctx) {
     if (!o) return res.status(404).json({ error: "not_found" });
     const s = auth(req);
     if (!(s && s.type === "admin") && o.userId !== s.userId) return res.status(403).json({ error: "forbidden" });
-    const { customerMayRequestReturn, resolveReasonSnapshot } = require("./returns-ops");
+    const { customerMayRequestReturn, resolveReasonSnapshot, normalizeReturnMethod } = require("./returns-ops");
     const win = customerMayRequestReturn(o);
     if (!win.ok) return res.status(400).json({ error: win.error || "return_not_allowed" });
     const b = req.body || {};
     /* No silent default — customer must explicitly choose a return method. */
-    if (b.method !== "pickup_customer" && b.method !== "pickup_store") {
+    const method = normalizeReturnMethod(b.method);
+    if (method !== "pickup_customer" && method !== "pickup_store") {
       return res.status(400).json({ error: "return_method_required" });
     }
-    const method = b.method;
     const reasonId = sanitizeText(b.reasonId, 40);
     let reason = sanitizeText(b.reason, 200);
     let reasonTitleSnapshot = reason;
