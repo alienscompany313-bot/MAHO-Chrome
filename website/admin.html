@@ -945,7 +945,7 @@
           <label style="display:inline-flex;align-items:center;gap:8px;font-weight:800;margin:6px 0">
             <input type="checkbox" id="f_storeAll"> همه فروشگاه‌های فعال
           </label>
-          <div id="f_storeIds" class="note" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
+          <div id="f_storeIds" class="note" style="display:block;width:100%;max-width:100%;margin-top:6px;box-sizing:border-box"></div>
           <p class="note" style="margin-top:6px">«همه فروشگاه‌ها» یعنی محصول در هر فروشگاه فعال قابل تحویل حضوری است. اگر خاموش باشد، فقط فروشگاه‌های تیک‌خورده معتبرند (لیست خالی = هیچ فروشگاهی).</p>
         </div>
         <div class="field"><label>کتگوری</label>
@@ -1018,7 +1018,7 @@
         <div class="field"><label>نمبر تماس (فارسی)</label><input id="st_phone" dir="ltr"></div>
         <div class="field"><label>نمبر تماس (English)</label><input id="st_phone_en" dir="ltr"></div>
       </div>
-      <div class="field"><label>لینک پروفایل Google Maps</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
+      <div class="field"><label>لینک پروفایل فروشگاه در Google Maps</label><input id="st_map" dir="ltr" placeholder="https://maps.app.goo.gl/..."></div>
       <div class="grid2">
         <div class="field"><label>Latitude (عرض جغرافیایی)</label><input id="st_lat" dir="ltr" inputmode="decimal" placeholder="مثلاً 34.5116"></div>
         <div class="field"><label>Longitude (طول جغرافیایی)</label><input id="st_lng" dir="ltr" inputmode="decimal" placeholder="مثلاً 69.1205"></div>
@@ -1869,16 +1869,21 @@
           if(isPickupOrder){
             var ps=o.pickupStore||{};
             if(ps.name||ps.address||ps.area||ps.id){
-              var mapsUrl=ps.mapsUrl||"";
-              if(!mapsUrl&&ps.lat!=null&&ps.lng!=null){
-                mapsUrl="https://www.google.com/maps?q="+encodeURIComponent(String(ps.lat)+","+String(ps.lng));
+              var mapsUrl="";
+              var profile=[ps.googleMapsUrl,ps.googleMapsPlaceUrl,ps.map,ps.mapUrl].map(function(x){return String(x||"").trim();}).filter(function(u){return /^https?:\/\//i.test(u);})[0]||"";
+              if(profile) mapsUrl=profile;
+              else {
+                mapsUrl=ps.mapsUrl||"";
+                if(!mapsUrl&&ps.lat!=null&&ps.lng!=null){
+                  mapsUrl="https://www.google.com/maps?q="+encodeURIComponent(String(ps.lat)+","+String(ps.lng));
+                }
               }
               var addr=ps.address||ps.area||"";
               pickupStoreHtml='<div class="note" style="margin-top:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fbf8f1;line-height:1.85">'+
                 '<div><b>فروشگاه دریافت:</b> '+esc(ps.name||"—")+'</div>'+
                 (addr?('<div><b>آدرس:</b> '+esc(addr)+'</div>'):'')+
                 (ps.phone?('<div><b>شماره تماس:</b> <span dir="ltr">'+esc(ps.phone)+'</span></div>'):'')+
-                (mapsUrl?('<div style="margin-top:4px"><a href="'+esc(mapsUrl)+'" target="_blank" rel="noopener" style="font-weight:800">مشاهده در Google Maps</a></div>'):'')+
+                (mapsUrl?('<div style="margin-top:4px"><a href="'+esc(mapsUrl)+'" target="_blank" rel="noopener noreferrer" style="font-weight:800">مشاهده فروشگاه در Google Maps</a></div>'):'')+
                 '</div>';
             }
           }
@@ -2493,8 +2498,8 @@
           var addr=String(s.address||s.area||"").trim();
           var shortAddr=addr.length>72?addr.slice(0,69)+"…":addr;
           var label=esc(s.name||id)+(shortAddr?(" — "+esc(shortAddr)):"");
-          var idHint=id?(' <span class="note" style="font-weight:500;font-size:11px" dir="ltr">('+esc(id)+')</span>'):'';
-          return '<label style="display:flex;align-items:flex-start;gap:8px;font-weight:700;margin:0 0 8px;line-height:1.45;max-width:100%"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+' style="margin-top:3px;flex-shrink:0"> <span>'+label+idHint+'</span></label>';
+          var idHint=id?('<div class="note" style="font-weight:500;font-size:11px;margin-top:2px" dir="ltr">'+esc(id)+'</div>'):'';
+          return '<label style="display:flex;align-items:flex-start;gap:8px;font-weight:700;margin:0 0 10px;line-height:1.5;width:100%;max-width:100%;box-sizing:border-box"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+' style="margin-top:4px;flex:0 0 auto"> <span style="flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:break-word;word-break:normal">'+label+idHint+'</span></label>';
         }).join("");
       })();
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";

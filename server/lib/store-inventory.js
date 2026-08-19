@@ -12,7 +12,7 @@
  * Historical empty storeIds array (pre-mode): treat as "all".
  * Explicit mode "selected" + empty storeIds: NO pickup stores.
  */
-const { haversineKm, parseCoord } = require("./geo");
+const { haversineKm, parseCoord, resolveStoreMapsUrl } = require("./geo");
 const {
   availableStock, applyStockDelta, colorKey, sizeKey, usesVariantStock, variantKey,
 } = require("./variant-stock");
@@ -205,6 +205,7 @@ function eligiblePickupStores(db, cartItems, customerLat, customerLng) {
       distanceKm = Math.round(haversineKm(customerLat, customerLng, lat, lng) * 100) / 100;
     }
     const address = store.address || store.area || "";
+    const profileMap = String(store.googleMapsUrl || store.googleMapsPlaceUrl || store.map || store.mapUrl || "").trim();
     out.push({
       id: storeId,
       name: store.name || "",
@@ -217,9 +218,8 @@ function eligiblePickupStores(db, cartItems, customerLat, customerLng) {
       lat,
       lng,
       distanceKm,
-      mapsUrl: (lat != null && lng != null)
-        ? ("https://www.google.com/maps?q=" + encodeURIComponent(lat + "," + lng))
-        : (store.map || ""),
+      map: profileMap || undefined,
+      mapsUrl: resolveStoreMapsUrl(store) || "",
     });
   });
   out.sort((a, b) => {
@@ -239,6 +239,7 @@ function resolvePickupStore(db, storeId) {
   const id = store.id || ("store_" + idx);
   const lat = parseCoord(store.lat);
   const lng = parseCoord(store.lng);
+  const profileMap = String(store.googleMapsUrl || store.googleMapsPlaceUrl || store.map || store.mapUrl || "").trim();
   return {
     id,
     name: store.name || "MAHO",
@@ -248,9 +249,8 @@ function resolvePickupStore(db, storeId) {
     hours_en: store.hours_en || "",
     lat,
     lng,
-    mapsUrl: (lat != null && lng != null)
-      ? ("https://www.google.com/maps?q=" + encodeURIComponent(lat + "," + lng))
-      : (store.map || ""),
+    map: profileMap || undefined,
+    mapsUrl: resolveStoreMapsUrl(store) || "",
   };
 }
 

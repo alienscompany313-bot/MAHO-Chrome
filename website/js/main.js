@@ -240,7 +240,7 @@
       "orders.pickupStore": "فروشگاه دریافت",
       "orders.storeAddress": "آدرس",
       "orders.storePhone": "شماره تماس",
-      "orders.viewMaps": "مشاهده در Google Maps",
+      "orders.viewMaps": "مشاهده فروشگاه در Google Maps",
     },
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
@@ -422,7 +422,7 @@
       "orders.pickupStore": "Pickup store",
       "orders.storeAddress": "Address",
       "orders.storePhone": "Phone",
-      "orders.viewMaps": "View on Google Maps",
+      "orders.viewMaps": "View store on Google Maps",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -1580,21 +1580,32 @@
       return m === "pickup" || m === "store_pickup" || m === "store";
     }
     /** Exact store saved on the order — never invent/default another store. */
+    function resolveOrderStoreMapsUrl(s) {
+      const store = s || {};
+      const profile = [store.googleMapsUrl, store.googleMapsPlaceUrl, store.map, store.mapUrl]
+        .map(function (x) { return String(x || "").trim(); })
+        .find(function (u) { return /^https?:\/\//i.test(u); });
+      if (profile) return profile;
+      const existing = String(store.mapsUrl || "").trim();
+      const coordOnly = existing && /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(existing);
+      if (existing && !coordOnly) return existing;
+      if (store.lat != null && store.lng != null) {
+        return "https://www.google.com/maps?q=" + encodeURIComponent(String(store.lat) + "," + String(store.lng));
+      }
+      return existing || "";
+    }
     function pickupStoreBlockHtml(o) {
       if (!orderIsPickup(o)) return "";
       const s = (o && o.pickupStore) || {};
       if (!s.name && !s.address && !s.area && !s.id) return "";
-      let mapsUrl = s.mapsUrl || "";
-      if (!mapsUrl && s.lat != null && s.lng != null) {
-        mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
-      }
+      const mapsUrl = resolveOrderStoreMapsUrl(s);
       const addr = s.address || s.area || "";
       let html = `<div class="order-pickup-store note" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--cream,#fbf8f1);line-height:1.8;text-align:start">`;
       html += `<div><b>${t("orders.pickupStore")}:</b> ${escHtml(s.name || "—")}</div>`;
       if (addr) html += `<div><b>${t("orders.storeAddress")}:</b> ${escHtml(addr)}</div>`;
       if (s.phone) html += `<div><b>${t("orders.storePhone")}:</b> <span dir="ltr">${escHtml(s.phone)}</span></div>`;
       if (mapsUrl) {
-        html += `<div style="margin-top:4px"><a href="${escHtml(mapsUrl)}" target="_blank" rel="noopener" style="font-weight:800;color:var(--gold-deep,#a07a3a)">${t("orders.viewMaps")}</a></div>`;
+        html += `<div style="margin-top:4px"><a href="${escHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer" style="font-weight:800;color:var(--gold-deep,#a07a3a)">${t("orders.viewMaps")}</a></div>`;
       }
       html += `</div>`;
       return html;

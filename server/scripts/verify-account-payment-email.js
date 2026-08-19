@@ -211,7 +211,7 @@ async function main() {
     captured.length = 0;
     await mail.orderConfirmation(email, sample, "https://mahomarket.com/#orders", "fa");
     const conf = captured[0];
-    assert(conf && /از خرید شما از MAHO Market سپاسگزاریم/.test(conf.html), "natural dari thanks");
+    assert(conf && /از خرید شما سپاسگزاریم/.test(conf.html), "natural dari thanks");
     assert(/سفارش شما با موفقیت ثبت شد و در حال بررسی است/.test(conf.html), "placed copy");
     assert(/شماره سفارش/.test(conf.html), "order number label");
     assert(/نام محصول:/.test(conf.html) && /سایز:/.test(conf.html) && /رنگ:/.test(conf.html), "product card fields");
@@ -219,8 +219,11 @@ async function main() {
     assert(/https:\/\/mahomarket\.com\/uploads\/demo-product\.jpg/.test(conf.html), "absolute https image");
     assert(!/localhost/.test(conf.html), "no localhost image");
     assert(/فروشگاه A/.test(conf.html) && /کابل، کارته ۳/.test(conf.html), "pickup store A");
-    assert(/مشاهده در Google Maps/.test(conf.html), "maps CTA");
+    assert(/مشاهده فروشگاه در/.test(conf.html) && /Google Maps/.test(conf.html), "maps CTA");
     assert(!/آدرس مشتری نباید/.test(conf.html), "customer address not shown as store");
+    /* Regression: charged unit already discounted — do not show 1620 for 1800×10% */
+    assert(/1,800|1800/.test(conf.html), "email total 1800");
+    assert(!/1,620|1620/.test(conf.html), "no double discount 1620");
     ok("order confirmation Dari + product cards + images + store A");
 
     /* Store B only */
