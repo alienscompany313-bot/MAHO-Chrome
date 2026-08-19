@@ -8,15 +8,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="js/api.js"></script>
   <style>
-    :root{--black:#141414;--gold:#c8a35f;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32}
+    :root{--black:#141414;--gold:#c8a35f;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--panel:#fff;--soft:#f7f3eb}
     *{box-sizing:border-box} body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#f3efe7;color:var(--ink)}
     .top{background:var(--black);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
     .btn{font:700 13px inherit;border-radius:999px;border:1.5px solid transparent;padding:9px 14px;cursor:pointer;min-height:42px}
     .btn:disabled{opacity:.55;cursor:wait}
     .btn-gold{background:var(--gold);color:#1a1509}.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
     .btn-outline{background:#fff;border-color:var(--line)}.btn-danger{background:#fdecec;color:var(--red)}
-    .wrap{max-width:720px;margin:0 auto;padding:14px}
-    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+    .wrap{max-width:1120px;margin:0 auto;padding:14px}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+    .col{min-width:0;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:12px}
+    .col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;padding:4px 2px 10px;border-bottom:1px solid var(--line)}
+    .col-head h2{margin:0;font-size:16px;font-weight:800;line-height:1.35}
+    .col-count{font-size:12px;font-weight:800;background:#efe6d4;border-radius:999px;padding:4px 10px;white-space:nowrap}
+    .col-delivery{border-top:3px solid var(--gold)}
+    .col-returns{border-top:3px solid #6d8f71}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+    .card:last-child{margin-bottom:0}
+    .empty{margin:0;padding:18px 12px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;background:rgba(255,255,255,.55);border:1px dashed var(--line);border-radius:12px}
     .gate{position:fixed;inset:0;background:#141414;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
     .gate .box{background:#1e1a15;border:1px solid #3a3020;border-radius:16px;padding:24px;max-width:360px;width:100%;color:#fff}
     .gate input{width:100%;padding:12px;border-radius:10px;border:1px solid #4a3f2a;background:#141414;color:#fff;margin:10px 0;font:inherit}
@@ -24,7 +33,12 @@
     .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
     .badge{display:inline-block;padding:3px 10px;border-radius:999px;background:#efe6d4;font-size:12px;font-weight:800}
     .badge.done{background:#e4f5e8;color:var(--green)}.badge.fail{background:#fdecec;color:var(--red)}
-    .sec-title{font-size:15px;font-weight:800;margin:18px 0 8px}
+    .sec-sub{font-size:13px;font-weight:800;margin:14px 0 8px;color:var(--muted)}
+    .mission-type{display:none} /* classification marker for tests; not shown as UI chrome */
+    @media (max-width:820px){
+      .cols{grid-template-columns:1fr}
+      .wrap{padding:12px}
+    }
   </style>
 </head>
 <body>
@@ -43,19 +57,39 @@
     <button class="btn btn-ghost" id="logoutBtn">خروج</button>
   </div>
   <div class="wrap" id="app" hidden>
-    <div class="sec-title">تحویل سفارش</div>
-    <div id="activeList"></div>
-    <div class="sec-title" id="retTitle">جمع‌آوری برگشتی</div>
-    <div id="returnList"></div>
-    <div class="sec-title" id="doneTitle" hidden>تحویل‌شده / ناموفق</div>
-    <div id="doneList"></div>
+    <div class="cols" id="driverCols">
+      <section class="col col-delivery" id="deliveryCol" aria-labelledby="deliveryTitle">
+        <div class="col-head">
+          <h2 id="deliveryTitle">تحویل سفارش‌ها</h2>
+          <span class="col-count" id="deliveryCount">0</span>
+        </div>
+        <div id="activeList"></div>
+        <div class="sec-sub" id="doneTitle" hidden>تحویل‌شده / ناموفق</div>
+        <div id="doneList"></div>
+      </section>
+      <section class="col col-returns" id="returnsCol" aria-labelledby="returnsTitle">
+        <div class="col-head">
+          <h2 id="returnsTitle">برگشتی‌ها / جمع‌آوری برگشت</h2>
+          <span class="col-count" id="returnsCount">0</span>
+        </div>
+        <div id="returnList"></div>
+      </section>
+    </div>
   </div>
   <script>
   (function(){
     function $(s){return document.querySelector(s)}
     var busy=false;
     var STATUS_FA={ assigned:"Assign‌شده", picked_up:"دریافت‌شده", in_transit:"در مسیر", delivered:"تحویل‌شده", failed:"تحویل ناموفق" };
+    var METHOD_FA={ pickup_customer:"جمع‌آوری از آدرس من", pickup_store:"تحویل به فروشگاه" };
     function statusLabel(st){ return STATUS_FA[st]||st||"—"; }
+    function methodLabel(m){
+      var s=String(m||"").toLowerCase().trim();
+      if(METHOD_FA[s]) return METHOD_FA[s];
+      if(s==="customer_address_pickup"||s==="pickup_from_address"||s==="customer_pickup"||s==="address_pickup") return METHOD_FA.pickup_customer;
+      if(s==="store_dropoff"||s==="return_to_store"||s==="pickup_store") return METHOD_FA.pickup_store;
+      return m||"—";
+    }
     function openApp(){
       $("#gate").style.display="none"; $("#top").hidden=false; $("#app").hidden=false;
       reloadOrders();
@@ -64,6 +98,7 @@
       return Promise.all([
         MAHOApi.driverOrders().then(render).catch(function(e){
           $("#activeList").innerHTML="<p class='err'>"+(e.message||"خطا")+"</p>";
+          $("#deliveryCount").textContent="0";
         }),
         loadReturnPickups()
       ]);
@@ -72,7 +107,11 @@
       return MAHOApi.request("/api/driver/return-pickups",{ token: MAHOApi.getToken("driver") }).then(function(res){
         var list=res.pickups||[];
         var box=$("#returnList");
-        if(!list.length){ box.innerHTML="<p class='muted'>ماموریت برگشتی نیست.</p>"; return; }
+        $("#returnsCount").textContent=String(list.length);
+        if(!list.length){
+          box.innerHTML="<p class='empty'>برگشتی برای جمع‌آوری موجود نیست</p>";
+          return;
+        }
         box.innerHTML=list.map(function(p){
           var collected = p.returnPickupStatus === "picked_up" || p.returnPickupStatus === "returned_to_store" || p.returnPickupStatus === "completed" || p.pickupConfirmed;
           var cash = "";
@@ -97,24 +136,35 @@
           var photoBlock = collected ? "" :
             '<div style="margin-top:8px"><label class="muted">عکس Pickup</label><input type="file" class="ret-photo" accept="image/*" capture="environment">'+
             '<button class="btn btn-outline" data-ret-photo="'+p.orderId+'">آپلود عکس</button></div>';
-          return '<div class="card" data-ret="'+p.orderId+'">'+
-            '<div><b dir="ltr">#'+p.orderId+'</b> · <span class="badge">'+ (p.returnPickupStatus||"") +'</span> '+photoNote+'</div>'+
+          var maps = p.mapsUrl
+            ? ('<div class="acts"><a class="btn btn-outline" target="_blank" rel="noopener" href="'+p.mapsUrl+'">نقشه / Google Maps</a></div>')
+            : '';
+          var notes = p.notes ? ('<div class="muted">یادداشت: '+p.notes+'</div>') : '';
+          var ref = p.returnNumber || p.orderId;
+          return '<div class="card" data-mission-type="return_pickup" data-ret="'+p.orderId+'">'+
+            '<span class="mission-type">return_pickup</span>'+
+            '<div><b dir="ltr">#'+ref+'</b> · <span class="badge">'+ (p.returnPickupStatus||"") +'</span> '+photoNote+'</div>'+
             '<div>'+ (p.customerName||"") +' · <span dir="ltr">'+ (p.phone||"") +'</span></div>'+
-            '<div class="muted">'+ (p.pickupAddress||"") +'</div>'+
-            '<div class="muted">دلیل: '+ (p.reason||"") +'</div>'+
+            '<div class="muted">آدرس جمع‌آوری: '+ (p.pickupAddress||"—") +'</div>'+
+            '<div class="muted">روش برگشت: '+ methodLabel(p.method) +'</div>'+
+            '<div class="muted">دلیل: '+ (p.reason||"—") +'</div>'+
+            notes+
             '<div class="muted">اقلام: '+ (p.items||[]).map(function(it){return (it.name||"")+" × "+(it.qty||1);}).join("، ") +'</div>'+
             '<div>روش پرداخت اصلی: '+ (p.payment||"—") +'</div>'+
             '<div>مبلغ قابل برگشت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
-            (p.mapsUrl?('<div class="acts"><a class="btn btn-outline" target="_blank" rel="noopener" href="'+p.mapsUrl+'">نقشه</a></div>'):'')+
+            maps+
             photoBlock+
             confirmBlock+
             cash+'<p class="muted msg"></p></div>';
         }).join("");
-      }).catch(function(){ $("#returnList").innerHTML=""; });
+      }).catch(function(e){
+        $("#returnsCount").textContent="0";
+        $("#returnList").innerHTML="<p class='err'>"+((e&&e.message)||"خطا در بارگذاری برگشتی‌ها")+"</p>";
+      });
     }
     function cardHtml(o, done){
       var loc=o.customerLocation||{};
-      var maps=loc.mapsUrl?('<a class="btn btn-outline" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه</a>'):"";
+      var maps=loc.mapsUrl?('<a class="btn btn-outline" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه / Google Maps</a>'):"";
       var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join("، ");
       var st=o.driverStatus||"assigned";
       var badgeCls=st==="delivered"?"done":(st==="failed"?"fail":"");
@@ -130,7 +180,7 @@
       } else {
         acts=maps?'<div class="acts">'+maps+'</div>':"";
       }
-      return '<div class="card" data-oid="'+o.id+'"><div><b dir="ltr">#'+o.id+'</b> · <span class="badge '+badgeCls+'" data-status-badge>'+statusLabel(st)+'</span></div>'+
+      return '<div class="card" data-mission-type="delivery" data-oid="'+o.id+'"><span class="mission-type">delivery</span><div><b dir="ltr">#'+o.id+'</b> · <span class="badge '+badgeCls+'" data-status-badge>'+statusLabel(st)+'</span></div>'+
         '<div>'+(o.customer&&o.customer.name||"")+' · <span dir="ltr">'+(o.customer&&o.customer.phone||"")+'</span></div>'+
         '<div class="muted">'+(o.customer&&o.customer.address||"")+'</div>'+
         '<div class="muted">اقلام: '+items+'</div>'+
@@ -144,7 +194,10 @@
         var st=o.driverStatus||"";
         if(st==="delivered"||st==="failed") done.push(o); else active.push(o);
       });
-      $("#activeList").innerHTML=active.length?active.map(function(o){return cardHtml(o,false);}).join(""):"<p class='muted'>سفارش فعالی نیست.</p>";
+      $("#deliveryCount").textContent=String(active.length + done.length);
+      $("#activeList").innerHTML=active.length
+        ? active.map(function(o){return cardHtml(o,false);}).join("")
+        : "<p class='empty'>سفارشی برای تحویل موجود نیست</p>";
       $("#doneTitle").hidden=!done.length;
       $("#doneList").innerHTML=done.map(function(o){return cardHtml(o,true);}).join("");
     }
