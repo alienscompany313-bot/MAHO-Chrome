@@ -1200,12 +1200,36 @@
     if (it && it.statusLabelFa) return it.statusLabelFa;
     const st = (it && it.itemStatus) || "";
     const map = {
-      pending: "در انتظار تأیید", approved: "تأیید شد", rejected: "رد شد", cancelled: "لغو شد",
-      shipped: "ارسال شد", delivered: "تحویل داده شد",
-      return_requested: "درخواست برگشت ثبت شد", return_approved: "برگشت تأیید شد",
-      return_rejected: "برگشت رد شد", return_completed: "برگشت تکمیل شد",
+      pending: "در انتظار تأیید",
+      approved: "تأیید شد",
+      rejected: "رد شد",
+      cancel_requested: "درخواست لغو ثبت شد",
+      cancelled: "لغو شد",
+      preparing: "در حال آماده‌سازی",
+      shipped: "ارسال شد",
+      delivered: "تحویل داده شد",
+      return_requested: "درخواست برگشت ثبت شد",
+      return_approved: "برگشت تأیید شد",
+      return_rejected: "برگشت رد شد",
+      return_in_progress: "برگشت در حال انجام",
+      return_awaiting_pickup: "در انتظار جمع‌آوری",
+      return_driver_en_route: "درایور در مسیر جمع‌آوری",
+      return_collected: "جنس برگشتی جمع‌آوری شد",
+      return_completed: "برگشت تکمیل شد",
     };
     return map[st] || st || "";
+  }
+  let openOrderIds = new Set();
+  function cancelUnavailableReason(cancelUi, code) {
+    if (cancelUi && cancelUi.canCancel) return "";
+    if (code === "dispatched" || code === "delivered") {
+      return LANG === "en" ? "Cancellation is no longer available after shipping/delivery." : "پس از ارسال یا تحویل، لغو امکان‌پذیر نیست.";
+    }
+    if (cancelUi && (cancelUi.error === "cancel_window_expired" || (cancelUi.deadline && cancelUi.remainingMs === 0))) {
+      return LANG === "en" ? "The cancellation window has expired." : "مهلت لغو سفارش به پایان رسیده است.";
+    }
+    if (code === "cancelled") return "";
+    return LANG === "en" ? "Cancellation is not available for this order right now." : "در حال حاضر لغو برای این سفارش در دسترس نیست.";
   }
   function withApiOrderStatus(order) {
     if (!order) return order;
@@ -1487,14 +1511,19 @@
     const paint = (orders) => {
       if (!orders.length) { list.innerHTML = `<p class="orders-empty">${t("orders.empty")}</p>`; stopCancelCountdown(); return; }
       const pending = [];
+      if (!openOrderIds.size && orders[0] && orders[0].id) openOrderIds.add(String(orders[0].id));
       list.innerHTML = orders.map((o) => {
         const display = withApiOrderStatus(o);
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
         const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
         const canCancel = !!cancelUi.canCancel;
-        const canReturn = code === "delivered" && (
-          o.lateReturnApproved || !o.returnDeadlineAt || Date.now() <= Number(o.returnDeadlineAt)
-        );
+        const returnWindowOk = !!(o.lateReturnApproved || !o.returnDeadlineAt || Date.now() <= Number(o.returnDeadlineAt));
+        const canReturnOrder = (code === "delivered" || (o.items || []).some((it) => it && it.itemStatus === "delivered")) && returnWindowOk;
+        const cancelBlockedMsg = !canCancel ? cancelUnavailableReason(Object.assign({}, cancelUi, {
+          error: (!cancelUi.canCancel && cancelUi.deadline && cancelUi.remainingMs === 0) ? "cancel_window_expired" : (cancelUi.error || "")
+        }), code) : "";
+        const itemCount = (o.items || []).length;
+        const isOpen = openOrderIds.has(String(o.id));
         const items = (o.items || []).map((it) => {
           const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
           const variant = [];
@@ -1507,31 +1536,43 @@
             pending.push({ id: bid, code: it.code });
             bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
           }
-          const itemLabel = it.statusLabelFa || itemStatusLabelLocal(o, it);
-          const ts = it.statusAt || it.deliveredAt || it.shippedAt || null;
-          const tsStr = ts ? formatStatusWhen(ts) : "";
-          const statusLine = itemLabel
-            ? `<div class="item-status note" style="margin-top:4px;font-weight:700">${escHtml(itemLabel)}${tsStr ? " — " + escHtml(tsStr) : ""}</div>`
-            : "";
-          const img = it.image
-            ? `<img src="${escHtml(it.image)}" alt="" width="52" height="52" style="object-fit:cover;border-radius:10px;flex-shrink:0">`
-            : `<div style="width:52px;height:52px;border-radius:10px;background:var(--line);flex-shrink:0"></div>`;
           const st = it.itemStatus || "";
+          const itemLabel = it.statusLabelFa || itemStatusLabelLocal(o, it);
+          const ts = it.statusAt || it.deliveredAt || it.shippedAt || it.cancelledAt || null;
+          const tsStr = ts ? formatStatusWhen(ts) : "";
+          const img = it.image
+            ? `<img class="oi-img" src="${escHtml(it.image)}" alt="">`
+            : `<div class="oi-img oi-img-ph" aria-hidden="true"></div>`;
           const cancelableItem = canCancel && (st === "pending" || st === "approved" || (!st && (code === "new" || code === "confirmed")));
-          const returnableItem = canReturn && (st === "delivered" || (!st && code === "delivered")) && st !== "return_requested" && st !== "return_completed";
-          const checks = (cancelableItem || returnableItem)
-            ? `<label class="note" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-weight:700">
-                <input type="checkbox" data-line-pick="${escHtml(it.lineId || "")}" data-oid="${escHtml(o.id)}" ${cancelableItem ? 'data-can-cancel="1"' : ""} ${returnableItem ? 'data-can-return="1"' : ""}>
-                انتخاب برای ${cancelableItem && returnableItem ? "لغو/برگشت" : (cancelableItem ? "لغو" : "برگشت")}
-              </label>`
+          const returnableItem = canReturnOrder && (st === "delivered" || (!st && code === "delivered"))
+            && st !== "return_requested" && st !== "return_approved" && st !== "return_completed" && st !== "return_rejected";
+          const reorderable = st !== "rejected";
+          const lid = escHtml(it.lineId || "");
+          const oid = escHtml(o.id);
+          const check = (cancelableItem || returnableItem)
+            ? `<label class="oi-check"><input type="checkbox" data-line-pick="${lid}" data-oid="${oid}" ${cancelableItem ? 'data-can-cancel="1"' : ""} ${returnableItem ? 'data-can-return="1"' : ""}><span>${LANG === "en" ? "Select" : "انتخاب"}</span></label>`
             : "";
-          return `<li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--line)">
+          let itemActs = `<div class="oi-actions">`;
+          if (cancelableItem) itemActs += `<button type="button" class="btn btn-danger-sm oi-btn" data-cancel-line="${oid}" data-line="${lid}">${LANG === "en" ? "Cancel item" : "لغو این کالا"}</button>`;
+          if (returnableItem) itemActs += `<button type="button" class="btn btn-outline btn-sm oi-btn" data-return-line="${oid}" data-line="${lid}">${LANG === "en" ? "Return item" : "برگشت این کالا"}</button>`;
+          if (reorderable) itemActs += `<button type="button" class="btn btn-gold btn-sm oi-btn" data-reorder-line="${oid}" data-line="${lid}">${LANG === "en" ? "Reorder item" : "سفارش مجدد این کالا"}</button>`;
+          itemActs += `</div>`;
+          let why = "";
+          if (!cancelableItem && !canCancel && (st === "pending" || st === "approved" || !st) && cancelBlockedMsg) {
+            why = `<p class="oi-why note">${escHtml(cancelBlockedMsg)}</p>`;
+          } else if (st === "shipped") {
+            why = `<p class="oi-why note">${LANG === "en" ? "This item is already shipped and cannot be cancelled." : "این کالا ارسال شده و قابل لغو نیست."}</p>`;
+          } else if (code === "delivered" && st === "delivered" && !returnableItem && !returnWindowOk) {
+            why = `<p class="oi-why note">${LANG === "en" ? "Return window has expired for this item." : "مهلت برگشت این کالا به پایان رسیده است."}</p>`;
+          }
+          return `<li class="oi-row" data-line-row="${lid}">
             ${img}
-            <div style="flex:1;min-width:0">
-              <div><b>${inm}</b>${vs}</div>
-              <div class="note" dir="ltr">${escHtml(it.code || "—")}</div>
-              <div>${t("qv.qty") || "تعداد"}: ${toDigits(it.qty)} · ${money(it.price)} · ${money(it.price * it.qty)}</div>
-              ${statusLine}${checks}${bc}
+            <div class="oi-body">
+              <div class="oi-title"><b>${escHtml(inm || "")}</b>${escHtml(vs)}</div>
+              <div class="oi-meta note" dir="ltr">${escHtml(it.code || "—")}</div>
+              <div class="oi-price">${t("qv.qty") || "تعداد"}: ${toDigits(it.qty)} · ${money(it.price)} · <b>${money((it.price || 0) * (it.qty || 1))}</b></div>
+              <div class="oi-status"><span class="oi-status-pill">${escHtml(itemLabel || "—")}</span>${tsStr ? `<span class="note"> — ${escHtml(tsStr)}</span>` : ""}</div>
+              ${check}${itemActs}${why}${bc}
             </div>
           </li>`;
         }).join("");
@@ -1542,14 +1583,23 @@
         let cancelMeta = "";
         if (canCancel && cancelUi.deadline) {
           cancelMeta = `<div class="cancel-countdown note" style="margin-top:6px">${t("orders.cancelCountdown")} <span class="cancel-countdown-time" dir="ltr">${formatCancelCountdown(cancelUi.remainingMs)}</span></div>`;
+        } else if (cancelBlockedMsg) {
+          cancelMeta = `<div class="note oi-why" style="margin-top:6px">${escHtml(cancelBlockedMsg)}</div>`;
         }
-        let actions = "";
-        const itemCancelBtn = canCancel ? `<button class="btn btn-danger-sm" data-cancel-lines="${o.id}">لغو آیتم‌های انتخاب‌شده</button>` : "";
-        const itemReturnBtn = canReturn ? `<button class="btn btn-outline btn-sm" data-return-lines="${o.id}">برگشت آیتم‌های انتخاب‌شده</button>` : "";
-        const wholeCancel = canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : "";
-        const wholeReturn = canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : "";
-        const reorderBtn = `<button class="btn btn-gold btn-sm" data-reorder="${o.id}">سفارش مجدد</button>`;
-        actions = `<div class="order-actions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>${cancelMeta}${reorderBtn}${itemCancelBtn}${itemReturnBtn}${wholeCancel}${wholeReturn}</div>`;
+        const hasCancelable = (o.items || []).some((it) => {
+          const st = it.itemStatus || "";
+          return canCancel && (st === "pending" || st === "approved" || (!st && (code === "new" || code === "confirmed")));
+        });
+        const hasReturnable = (o.items || []).some((it) => it && it.itemStatus === "delivered" && canReturnOrder);
+        const bulk = `<div class="oi-bulk">
+            ${(hasCancelable || hasReturnable) ? `<label class="oi-check oi-check-all"><input type="checkbox" data-select-all-lines="${escHtml(o.id)}"><span>${LANG === "en" ? "Select all eligible" : "انتخاب همه واجد شرایط"}</span></label>` : ""}
+            <div class="order-actions"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>
+              ${cancelMeta}
+              ${hasCancelable ? `<button type="button" class="btn btn-danger-sm" data-cancel-lines="${escHtml(o.id)}">${LANG === "en" ? "Cancel selected" : "لغو انتخاب‌شده‌ها"}</button>` : ""}
+              ${hasReturnable ? `<button type="button" class="btn btn-outline btn-sm" data-return-lines="${escHtml(o.id)}">${LANG === "en" ? "Return selected" : "برگشت انتخاب‌شده‌ها"}</button>` : ""}
+              <button type="button" class="btn btn-gold btn-sm" data-reorder="${escHtml(o.id)}">${LANG === "en" ? "Reorder all available" : "سفارش مجدد همه موجود"}</button>
+            </div>
+          </div>`;
         let hesabForm = "";
         if (o.payment === "hesab" && o.paymentStatus !== "payment_confirmed") {
           const ps = (window.MAHOApi && MAHOApi.statusLabel) ? MAHOApi.statusLabel(o.paymentStatus || "awaiting_payment", LANG) : (o.paymentStatus || "");
@@ -1584,19 +1634,26 @@
           </div>`;
         }
         return `
-          <div class="order-card" data-order-card="${escHtml(o.id)}">
-            <button type="button" class="order-top order-acc-head" data-toggle-order="${escHtml(o.id)}" style="width:100%;background:transparent;border:0;cursor:pointer;text-align:inherit;font:inherit;color:inherit;display:flex;justify-content:space-between;gap:8px;align-items:center">
-              <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
-              <span class="order-status">${escHtml(orderLabel || "")}</span>
+          <div class="order-card ${isOpen ? "is-open" : ""}" data-order-card="${escHtml(o.id)}">
+            <button type="button" class="order-acc-head" data-toggle-order="${escHtml(o.id)}" aria-expanded="${isOpen ? "true" : "false"}">
+              <span class="order-acc-main">
+                <span class="order-acc-id" dir="ltr">#${escHtml(o.id)}</span>
+                <span class="order-acc-date">${t("orders.date")}: ${dateStr}</span>
+                <span class="order-acc-count note">${toDigits(itemCount)} ${LANG === "en" ? "items" : "کالا"} · ${isOpen ? (LANG === "en" ? "Tap to collapse" : "برای بستن بزنید") : (LANG === "en" ? "Tap to view items" : "برای مشاهده کالاها بزنید")}</span>
+              </span>
+              <span class="order-acc-side">
+                <span class="order-status">${escHtml(orderLabel || "")}</span>
+                <span class="order-acc-caret" aria-hidden="true">${isOpen ? "▴" : "▾"}</span>
+              </span>
             </button>
-            <div class="order-acc-body" data-order-body="${escHtml(o.id)}" hidden>
-              <ul style="list-style:none;padding:0;margin:8px 0">${items}</ul>
-              <div class="order-top">
+            <div class="order-acc-body" data-order-body="${escHtml(o.id)}" ${isOpen ? "" : "hidden"}>
+              <ul class="oi-list">${items}</ul>
+              <div class="order-foot">
                 <span>${t("orders.pay")}: ${payLabel}</span>
                 <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
               </div>
               ${hesabForm}
-              ${actions}
+              ${bulk}
             </div>
           </div>`;
       }).join("");
@@ -1669,16 +1726,111 @@
     }
     const toggleOrder = e.target.closest("[data-toggle-order]");
     if (toggleOrder) {
-      const oid = toggleOrder.getAttribute("data-toggle-order");
-      const body = list.querySelector('[data-order-body="' + oid + '"]');
-      if (body) body.hidden = !body.hidden;
+      const oid = String(toggleOrder.getAttribute("data-toggle-order") || "");
+      if (!oid) return;
+      if (openOrderIds.has(oid)) openOrderIds.delete(oid);
+      else openOrderIds.add(oid);
+      const card = ordersListEl.querySelector('[data-order-card="' + oid + '"]');
+      const body = ordersListEl.querySelector('[data-order-body="' + oid + '"]');
+      const caret = toggleOrder.querySelector(".order-acc-caret");
+      const count = toggleOrder.querySelector(".order-acc-count");
+      const isOpen = openOrderIds.has(oid);
+      if (card) card.classList.toggle("is-open", isOpen);
+      if (body) body.hidden = !isOpen;
+      toggleOrder.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      if (caret) caret.textContent = isOpen ? "▴" : "▾";
+      if (count) {
+        const n = (count.textContent || "").split("·")[0].trim();
+        count.textContent = n + " · " + (isOpen
+          ? (LANG === "en" ? "Tap to collapse" : "برای بستن بزنید")
+          : (LANG === "en" ? "Tap to view items" : "برای مشاهده کالاها بزنید"));
+      }
+      return;
+    }
+    const selectAll = e.target.closest("[data-select-all-lines]");
+    if (selectAll && selectAll.matches("input[type=checkbox]")) {
+      const oid = selectAll.getAttribute("data-select-all-lines");
+      const card = selectAll.closest(".order-card") || ordersListEl.querySelector('[data-order-card="' + oid + '"]');
+      const on = !!selectAll.checked;
+      if (card) {
+        card.querySelectorAll("input[data-line-pick]:not(:disabled)").forEach((el) => { el.checked = on; });
+      }
+      return;
+    }
+    const cancelLineBtn = e.target.closest("[data-cancel-line]");
+    if (cancelLineBtn) {
+      const id = cancelLineBtn.getAttribute("data-cancel-line");
+      const lid = cancelLineBtn.getAttribute("data-line");
+      if (!id || !lid) return;
+      if (!confirm(LANG === "en" ? "Cancel this item only?" : "فقط همین کالا لغو شود؟")) return;
+      if (!window.MAHOApi || !MAHOApi.cancelOrderItem) { showToast("API unavailable"); return; }
+      MAHOApi.cancelOrderItem(id, lid, { reason: LANG === "en" ? "Customer cancel item" : "لغو توسط مشتری" })
+        .then(() => { showToast(LANG === "en" ? "Item cancelled" : "کالا لغو شد"); renderOrders(); })
+        .catch((err) => alert((err && err.message) || (err && err.error) || "خطا"));
+      return;
+    }
+    const returnLineBtn = e.target.closest("[data-return-line]");
+    if (returnLineBtn) {
+      const id = returnLineBtn.getAttribute("data-return-line");
+      const lid = returnLineBtn.getAttribute("data-line");
+      if (!id || !lid) return;
+      const reason = prompt(LANG === "en" ? "Return reason for this item:" : "دلیل برگشت این کالا:", "") || "";
+      if (!reason) { alert(LANG === "en" ? "Return reason is required" : "دلیل برگشت لازم است"); return; }
+      if (!window.MAHOApi || !MAHOApi.returnOrderItem) { showToast("API unavailable"); return; }
+      MAHOApi.returnOrderItem(id, lid, { reason: reason, method: "pickup_store" })
+        .then(() => { showToast(LANG === "en" ? "Return requested" : "درخواست برگشت ثبت شد"); renderOrders(); })
+        .catch((err) => alert((err && err.message) || (err && err.error) || "خطا"));
+      return;
+    }
+    const reorderLineBtn = e.target.closest("[data-reorder-line]");
+    if (reorderLineBtn) {
+      const id = reorderLineBtn.getAttribute("data-reorder-line");
+      const lid = reorderLineBtn.getAttribute("data-line");
+      if (!id || !lid) return;
+      if (!window.MAHOApi || !MAHOApi.reorder) { showToast("API unavailable"); return; }
+      const applyReorder = (res) => {
+        const added = res.items || [];
+        const skipped = res.skipped || [];
+        added.forEach((it) => {
+          const key = it.name + "|" + (it.size || "") + "|" + (it.color || "");
+          const found = CART.find((x) => x.key === key);
+          if (found) found.qty += (it.qty || 1);
+          else {
+            CART.push({
+              key: key,
+              name: it.name,
+              name_en: it.name_en,
+              price: it.price,
+              code: it.code || "",
+              cat: "",
+              image: it.image || "",
+              icon: "",
+              size: it.size || "",
+              color: it.color || "",
+              qty: it.qty || 1,
+            });
+          }
+        });
+        saveCart(); updateCartBadge(); renderCart();
+        let msg = added.length ? ("افزوده شد به سبد: " + added.length) : "هیچ کالای موجودی اضافه نشد";
+        if (skipped.length) {
+          msg += "\nغيرقابل سفارش: " + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join("، ");
+        }
+        alert(msg);
+        if (added.length) openCart();
+      };
+      MAHOApi.reorder(id, { lineIds: [lid] }).then(applyReorder).catch((err) => alert((err && err.message) || "خطا"));
       return;
     }
     const reorderBtn = e.target.closest("[data-reorder]");
     if (reorderBtn) {
       const id = reorderBtn.getAttribute("data-reorder");
       if (!window.MAHOApi || !MAHOApi.reorder) { showToast("API unavailable"); return; }
-      MAHOApi.reorder(id, {}).then((res) => {
+      const card = reorderBtn.closest(".order-card");
+      const picks = card ? Array.from(card.querySelectorAll("input[data-line-pick]:checked")) : [];
+      const selectedIds = picks.map((el) => el.getAttribute("data-line-pick")).filter(Boolean);
+      const body = selectedIds.length ? { lineIds: selectedIds } : {};
+      MAHOApi.reorder(id, body).then((res) => {
         const added = res.items || [];
         const skipped = res.skipped || [];
         added.forEach((it) => {
@@ -1721,8 +1873,9 @@
       if (!confirm("آیتم‌های انتخاب‌شده لغو شوند؟")) return;
       const run = async () => {
         for (const lid of lineIds) {
-          await MAHOApi.cancelOrderItem(id, lid, {});
+          await MAHOApi.cancelOrderItem(id, lid, { reason: "لغو انتخاب‌شده توسط مشتری" });
         }
+        showToast(LANG === "en" ? "Selected items cancelled" : "اقلام انتخاب‌شده لغو شدند");
         renderOrders();
       };
       run().catch((err) => alert((err && err.message) || "خطا"));

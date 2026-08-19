@@ -98,42 +98,84 @@ function renderAdminOrderHtml(o) {
     bulk + '<ul style="list-style:none;padding:0">' + items + '</ul></div></body></html>';
 }
 
-/** Mirror customer My Orders item detail markup from website/js/main.js */
+/** Mirror customer My Orders expandable accordion + per-item actions from website/js/main.js */
 function renderCustomerOrderHtml(o, opts) {
   opts = opts || {};
   const canCancel = !!opts.canCancel;
   const canReturn = !!opts.canReturn;
+  const cancelBlockedMsg = opts.cancelBlockedMsg || "";
   const code = o.status;
+  const itemCount = (o.items || []).length;
   const items = (o.items || []).map((it) => {
     const st = it.itemStatus || "";
     const label = it.statusLabelFa || st;
     const cancelableItem = canCancel && (st === "pending" || st === "approved");
     const returnableItem = canReturn && st === "delivered";
-    const checks = (cancelableItem || returnableItem)
-      ? '<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-weight:700">' +
-        '<input type="checkbox" data-line-pick="' + esc(it.lineId) + '" ' +
+    const lid = esc(it.lineId || "");
+    const oid = esc(o.id);
+    const img = it.image
+      ? '<img class="oi-img" src="' + esc(it.image) + '" alt="" width="72" height="72">'
+      : '<div class="oi-img oi-img-ph" aria-hidden="true"></div>';
+    const check = (cancelableItem || returnableItem)
+      ? '<label class="oi-check"><input type="checkbox" data-line-pick="' + lid + '" data-oid="' + oid + '" ' +
         (cancelableItem ? 'data-can-cancel="1" ' : "") +
-        (returnableItem ? 'data-can-return="1" ' : "") + "checked> " +
-        "انتخاب برای " + (cancelableItem ? "لغو" : "برگشت") + "</label>"
-      : '<div class="note" style="margin-top:6px;color:#7a7368">اقدام آیتم در این وضعیت در دسترس نیست</div>';
-    return '<li style="display:flex;gap:10px;margin:10px 0;padding:12px;border:1px solid #e6e0d4;border-radius:12px;background:#fff">' +
-      '<div style="flex:1"><b>' + esc(it.name) + '</b><div class="note" dir="ltr">' + esc(it.code) + " · " + esc(it.lineId) + "</div>" +
-      '<div>وضعیت: <b>' + esc(label) + '</b> <span dir="ltr">(' + esc(st) + ")</span></div>" + checks + "</div></li>";
+        (returnableItem ? 'data-can-return="1" ' : "") + "checked>" +
+        "<span>انتخاب</span></label>"
+      : "";
+    let acts = '<div class="oi-actions">';
+    if (cancelableItem) acts += '<button type="button" class="btn btn-danger oi-btn" data-cancel-line="' + oid + '" data-line="' + lid + '">لغو این کالا</button>';
+    if (returnableItem) acts += '<button type="button" class="btn btn-outline oi-btn" data-return-line="' + oid + '" data-line="' + lid + '">برگشت این کالا</button>';
+    if (st !== "rejected") acts += '<button type="button" class="btn btn-gold oi-btn" data-reorder-line="' + oid + '" data-line="' + lid + '">سفارش مجدد این کالا</button>';
+    acts += "</div>";
+    let why = "";
+    if (!cancelableItem && !canCancel && cancelBlockedMsg && (st === "pending" || st === "approved" || !st)) {
+      why = '<p class="oi-why">' + esc(cancelBlockedMsg) + "</p>";
+    }
+    return '<li class="oi-row" data-line-row="' + lid + '">' + img +
+      '<div class="oi-body"><div class="oi-title"><b>' + esc(it.name) + "</b></div>" +
+      '<div class="oi-meta note" dir="ltr">' + esc(it.code || "—") + "</div>" +
+      "<div class=\"oi-price\">تعداد: " + esc(it.qty) + " · " + esc(it.price) + "</div>" +
+      '<div class="oi-status"><span class="oi-status-pill">' + esc(label) + '</span> <span dir="ltr">(' + esc(st) + ")</span></div>" +
+      check + acts + why + "</div></li>";
   }).join("");
-  const actions =
-    (canCancel ? '<button class="btn btn-danger" data-cancel-lines="' + esc(o.id) + '">لغو آیتم‌های انتخاب‌شده</button> ' : "") +
-    (canReturn ? '<button class="btn btn-outline" data-return-lines="' + esc(o.id) + '">برگشت آیتم‌های انتخاب‌شده</button> ' : "") +
-    '<button class="btn btn-gold" data-reorder="' + esc(o.id) + '">سفارش مجدد</button>';
-  return '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>Customer item actions evidence</title>' +
-    '<style>body{font-family:Tahoma,sans-serif;background:#f7f3ea;padding:24px}' +
-    '.btn{border:0;border-radius:10px;padding:8px 12px;font-weight:800;margin:4px}' +
-    '.btn-gold{background:#c8a35f}.btn-danger{background:#b33;color:#fff}.btn-outline{background:#fff;border:1px solid #c8a35f}' +
-    '.card{background:#fbf8f1;border:1px solid #e6e0d4;border-radius:16px;padding:18px;max-width:820px;margin:0 auto}</style></head><body>' +
-    '<div class="card"><h1>Customer · سفارشات من · جزئیات آیتم</h1>' +
-    '<p>File: <code>website/js/main.js</code> → <code>renderOrders()</code></p>' +
-    '<p>Order <b dir="ltr">' + esc(o.id) + '</b> · aggregate: <b>' + esc(o.statusLabelFa || o.status) + '</b> <span dir="ltr">(' + esc(code) + ")</span></p>" +
-    '<ul style="list-style:none;padding:0">' + items + "</ul>" +
-    '<div style="margin-top:12px">' + actions + "</div></div></body></html>";
+  const hasCancelable = (o.items || []).some((it) => canCancel && (it.itemStatus === "pending" || it.itemStatus === "approved"));
+  const hasReturnable = (o.items || []).some((it) => canReturn && it.itemStatus === "delivered");
+  const bulk =
+    '<div class="oi-bulk">' +
+    ((hasCancelable || hasReturnable)
+      ? '<label class="oi-check oi-check-all"><input type="checkbox" data-select-all-lines="' + esc(o.id) + '"><span>انتخاب همه واجد شرایط</span></label>'
+      : "") +
+    '<div class="order-actions">' +
+    (cancelBlockedMsg && !canCancel ? '<div class="oi-why">' + esc(cancelBlockedMsg) + "</div>" : "") +
+    (hasCancelable ? '<button type="button" class="btn btn-danger" data-cancel-lines="' + esc(o.id) + '">لغو انتخاب‌شده‌ها</button> ' : "") +
+    (hasReturnable ? '<button type="button" class="btn btn-outline" data-return-lines="' + esc(o.id) + '">برگشت انتخاب‌شده‌ها</button> ' : "") +
+    '<button type="button" class="btn btn-gold" data-reorder="' + esc(o.id) + '">سفارش مجدد همه موجود</button>' +
+    "</div></div>";
+  return '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    "<title>Customer My Orders evidence</title>" +
+    "<style>body{font-family:Tahoma,sans-serif;background:#f7f3ea;padding:16px;margin:0;color:#1a1509}" +
+    ".btn{border:0;border-radius:12px;padding:10px 12px;font-weight:800;margin:4px 0;min-height:44px;font-family:inherit}" +
+    ".btn-gold{background:#c8a35f}.btn-danger{background:#b33;color:#fff}.btn-outline{background:#fff;border:1px solid #c8a35f}" +
+    ".order-card{background:#fff;border:1px solid #e6e0d4;border-radius:14px;max-width:420px;margin:0 auto;overflow:hidden}" +
+    ".order-acc-head{width:100%;display:flex;justify-content:space-between;gap:12px;padding:14px;border:0;background:#fbf8f1;text-align:start;font-family:inherit}" +
+    ".order-acc-main{display:flex;flex-direction:column;gap:4px}.order-acc-id{font-weight:800}.order-acc-count{color:#8a6a2f;font-weight:700;font-size:12.5px}" +
+    ".order-status{font-weight:800;color:#8a6a2f;font-size:13px}.oi-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}" +
+    ".oi-row{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:12px;border:1px solid #e6e0d4;border-radius:12px;background:#fff}" +
+    ".oi-img,.oi-img-ph{width:72px;height:72px;border-radius:10px;background:#f3eee4;object-fit:cover}" +
+    ".oi-body{min-width:0;display:flex;flex-direction:column;gap:6px}.oi-status-pill{display:inline-block;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:#f3eee4}" +
+    ".oi-check{display:inline-flex;align-items:center;gap:8px;font-weight:700;min-height:40px}.oi-check input{width:20px;height:20px}" +
+    ".oi-actions{display:flex;flex-wrap:wrap;gap:8px}.oi-btn{flex:1 1 calc(50% - 8px)}.oi-why{font-size:12.5px;color:#7a7368}" +
+    ".order-acc-body{padding:0 12px 14px;border-top:1px solid #e6e0d4}.mobile-frame{max-width:390px;margin:0 auto}</style></head><body>" +
+    '<div class="mobile-frame"><h1 style="font-size:20px;margin:8px 0 14px">Customer · سفارشات من</h1>' +
+    '<p style="font-size:13px">Source: <code>website/js/main.js</code> → <code>renderOrders()</code> (accordion + per-item actions)</p>' +
+    '<div class="order-card is-open" data-order-card="' + esc(o.id) + '">' +
+    '<button type="button" class="order-acc-head" data-toggle-order="' + esc(o.id) + '" aria-expanded="true">' +
+    '<span class="order-acc-main"><span class="order-acc-id" dir="ltr">#' + esc(o.id) + "</span>" +
+    '<span class="order-acc-count">' + itemCount + " کالا · برای بستن بزنید</span></span>" +
+    '<span class="order-acc-side"><span class="order-status">' + esc(o.statusLabelFa || o.status) + '</span><span class="order-acc-caret">▴</span></span></button>' +
+    '<div class="order-acc-body" data-order-body="' + esc(o.id) + '">' +
+    '<ul class="oi-list">' + items + "</ul>" + bulk +
+    "</div></div></div></body></html>";
 }
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
@@ -354,6 +396,7 @@ async function main() {
   assert(co.items.find((x) => x.lineId === cA.lineId).itemStatus === "cancelled", "A cancelled");
   assert(co.items.find((x) => x.lineId === cB.lineId).itemStatus === "approved", "B sibling unchanged");
   fs.writeFileSync(path.join(ART, "customer_cancel_after.html"), renderCustomerOrderHtml(co, { canCancel: true, canReturn: false }));
+  fs.writeFileSync(path.join(ART, "customer_my_orders_expanded.html"), renderCustomerOrderHtml(co, { canCancel: true, canReturn: false }));
   report.customer.cancel = {
     orderId: co.id,
     after: co.items.map((it) => ({ code: it.code, status: it.itemStatus })),
@@ -392,6 +435,25 @@ async function main() {
     httpAfterShip: { status: cancelShipped.status, error: cancelShipped.data.error },
     unitExpired: eligCancel,
   };
+  fs.writeFileSync(
+    path.join(ART, "customer_cancel_window_expired.html"),
+    renderCustomerOrderHtml(
+      {
+        id: "ORD-WINDOW",
+        status: "confirmed",
+        statusLabelFa: "تأیید شد",
+        items: [
+          { lineId: "li_a", code: "PUI-A", name: "کالای A", qty: 1, price: 100, itemStatus: "approved", statusLabelFa: "تأیید شد" },
+          { lineId: "li_b", code: "PUI-B", name: "کالای B", qty: 1, price: 120, itemStatus: "approved", statusLabelFa: "تأیید شد" },
+        ],
+      },
+      {
+        canCancel: false,
+        canReturn: false,
+        cancelBlockedMsg: "مهلت لغو سفارش به پایان رسیده است.",
+      }
+    )
+  );
 
   /* ========== CUSTOMER item return ========== */
   const retOrder = await req("POST", "/api/orders", {
@@ -455,9 +517,24 @@ async function main() {
   assert(!eligRet.ok, "return window unit reject");
   report.customer.returnWindow = eligRet;
 
-  /* Customer UI source markers */
+  /* Customer UI source markers — expandable + per-item actions */
   const mainSrc = fs.readFileSync(path.join(ROOT, "..", "website", "js/main.js"), "utf8");
-  assert(/data-cancel-lines/.test(mainSrc) && /data-return-lines/.test(mainSrc) && /data-line-pick/.test(mainSrc), "customer UI markers");
+  const cssSrc = fs.readFileSync(path.join(ROOT, "..", "website", "css/styles.css"), "utf8");
+  assert(/data-toggle-order/.test(mainSrc), "toggle marker");
+  assert(/openOrderIds/.test(mainSrc), "openOrderIds state");
+  assert(/data-cancel-line/.test(mainSrc) && /data-return-line/.test(mainSrc) && /data-reorder-line/.test(mainSrc), "per-item action markers");
+  assert(/data-cancel-lines/.test(mainSrc) && /data-return-lines/.test(mainSrc) && /data-line-pick/.test(mainSrc), "multi-select markers");
+  assert(/data-select-all-lines/.test(mainSrc), "select-all marker");
+  assert(/ordersListEl\.querySelector/.test(mainSrc), "expand uses ordersListEl");
+  assert(!/const body = list\.querySelector\('\[data-order-body=/.test(mainSrc), "old broken list toggle removed");
+  assert(/\.order-acc-head/.test(cssSrc) && /\.oi-row/.test(cssSrc) && /\.oi-actions/.test(cssSrc), "mobile accordion CSS");
+  report.customer.uiMarkers = {
+    toggle: true,
+    perItemCancelReturnReorder: true,
+    multiSelect: true,
+    expandBugFixed: true,
+    mobileCss: true,
+  };
 
   fs.writeFileSync(path.join(ART, "item_ui_evidence_report.json"), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ ok: true, report }, null, 2));

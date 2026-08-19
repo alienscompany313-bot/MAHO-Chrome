@@ -247,19 +247,73 @@ p { margin: 0 0 1em; }
 .pay-info b { color: var(--ink); }
 
 /* Orders list */
-.order-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.order-card { border: 1px solid var(--line); border-radius: 14px; padding: 0; margin-bottom: 12px; overflow: hidden; background: #fff; }
 .order-card .order-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-.order-card .order-status { font-weight: 800; color: var(--gold-deep); }
+.order-card .order-status { font-weight: 800; color: var(--gold-deep); font-size: 13px; line-height: 1.35; text-align: end; max-width: 42vw; }
 .order-card ul { margin: 8px 0; padding-inline-start: 18px; font-size: 14px; }
 .order-card .order-total { font-weight: 800; }
 .orders-empty { color: var(--muted); text-align: center; margin: 30px 0; }
-.order-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.order-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin-top: 10px; align-items: center; }
 .btn-sm { padding: 7px 13px; font-size: 13px; }
-.btn-danger-sm { border: 1.5px solid #f4c9c9; background: #fdecec; color: var(--red); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.btn-danger-sm { border: 1.5px solid #f4c9c9; background: #fdecec; color: var(--red); border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; min-height: 44px; }
 .btn-danger-sm:hover { background: #f9dada; }
-.bc-wrap { margin-top: 6px; }
+.bc-wrap { margin-top: 6px; overflow: hidden; max-width: 100%; }
 .bc-code { display: block; font-size: 11px; color: var(--muted); }
-.barcode { max-width: 180px; height: auto; background: #fff; border-radius: 6px; }
+.barcode { max-width: 100%; height: auto; background: #fff; border-radius: 6px; }
+
+/* Customer My Orders accordion + per-item rows */
+.order-acc-head {
+  width: 100%; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 14px 14px 12px; border: 0; background: transparent; cursor: pointer; text-align: start;
+  font-family: inherit; color: inherit; -webkit-tap-highlight-color: transparent;
+}
+.order-acc-head:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.order-acc-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.order-acc-id { font-weight: 800; font-size: 15px; letter-spacing: .02em; }
+.order-acc-date { font-size: 12.5px; color: var(--muted); }
+.order-acc-count { font-size: 12.5px; color: var(--gold-deep); font-weight: 700; }
+.order-acc-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.order-acc-caret { font-size: 16px; color: var(--muted); line-height: 1; }
+.order-acc-body { padding: 0 12px 14px; border-top: 1px solid var(--line); }
+.order-card.is-open .order-acc-head { background: #fbf8f1; }
+.oi-list { list-style: none !important; margin: 12px 0 0 !important; padding: 0 !important; display: flex; flex-direction: column; gap: 10px; }
+.oi-row {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: start;
+  padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+  max-width: 100%; box-sizing: border-box;
+}
+.oi-img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; background: #f3eee4; display: block; }
+.oi-img-ph { width: 72px; height: 72px; border-radius: 10px; background: linear-gradient(135deg, #f3eee4, #e8e0d2); }
+.oi-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.oi-title { font-size: 14px; line-height: 1.45; word-break: break-word; }
+.oi-meta { font-size: 12px; overflow-wrap: anywhere; }
+.oi-price { font-size: 13px; }
+.oi-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.oi-status-pill {
+  display: inline-block; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: #f3eee4; color: var(--ink); max-width: 100%;
+}
+.oi-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-top: 2px; min-height: 40px; }
+.oi-check input { width: 20px; height: 20px; accent-color: var(--gold-deep); flex-shrink: 0; }
+.oi-check-all { margin: 10px 0 4px; }
+.oi-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.oi-btn { min-height: 44px; border-radius: 12px !important; padding: 10px 12px !important; font-size: 13px !important; white-space: normal; text-align: center; max-width: 100%; }
+.oi-why { font-size: 12.5px; line-height: 1.55; margin: 4px 0 0; color: var(--muted); }
+.oi-bulk { margin-top: 8px; padding-top: 4px; }
+.order-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 12px; font-size: 13.5px; }
+.cancel-countdown { width: 100%; }
+
+@media (max-width: 480px) {
+  .oi-row { grid-template-columns: 64px minmax(0, 1fr); padding: 10px; gap: 8px; }
+  .oi-img, .oi-img-ph { width: 64px; height: 64px; }
+  .order-card .order-status { max-width: 46vw; font-size: 12.5px; }
+  .order-acc-head { padding: 12px; }
+  .order-acc-body { padding: 0 10px 12px; }
+  .oi-actions .oi-btn { flex: 1 1 calc(50% - 8px); }
+  .order-actions .btn, .order-actions .btn-danger-sm, .order-actions .btn-sm {
+    flex: 1 1 100%; min-height: 44px; justify-content: center;
+  }
+}
 
 /* Fix quick-view zoom + make modals scrollable (also fixes account scroll) */
 .qv-modal { overflow-y: auto; }
