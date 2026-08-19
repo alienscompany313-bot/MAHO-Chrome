@@ -141,6 +141,26 @@ async function main() {
       },
     });
     assert(cmp.status === 200 && cmp.data.campaign.productCodes[0] === "P0008", "single product campaign");
+    assert(cmp.data.campaign.products && cmp.data.campaign.products[0].urlPath === "/p/P0008", "canonical product urlPath");
+    const cmpEmpty = await req("POST", "/api/admin/campaigns", {
+      token: tok,
+      body: { name: "Empty", subject: "x", message: "y", campaignType: "single_product", productCodes: [] },
+    });
+    assert(cmpEmpty.status === 400, "single product requires selection");
+    const cmpMulti = await req("POST", "/api/admin/campaigns", {
+      token: tok,
+      body: {
+        name: "Multi", subject: "Hi", message: "Body",
+        campaignType: "multiple_products", productCodes: ["P0008", "P0009"],
+        recipientMode: "newsletter", mode: "newsletter",
+      },
+    });
+    assert(cmpMulti.status === 200 && (cmpMulti.data.campaign.productCodes || []).length === 2, "multiple products campaign");
+    const cmpGen = await req("POST", "/api/admin/campaigns", {
+      token: tok,
+      body: { name: "Gen", subject: "G", message: "M", campaignType: "general" },
+    });
+    assert(cmpGen.status === 200 && (!(cmpGen.data.campaign.productCodes || []).length), "general without products ok");
     const badProd = await req("POST", "/api/admin/campaigns", {
       token: tok,
       body: {
@@ -150,6 +170,12 @@ async function main() {
     });
     assert(badProd.status === 400, "inactive product blocked");
     ok("product campaign + inactive blocked");
+
+    /* Admin campaign picker must bind to state.products (not undefined S.products) */
+    const adminHtml = fs.readFileSync(path.join(ROOT, "..", "website", "admin.html"), "utf8");
+    assert(/state\.products/.test(adminHtml) && /fillCmpProducts/.test(adminHtml), "picker uses state.products");
+    assert(!/\(S\.products\s*\|\|/.test(adminHtml), "no broken S.products reference");
+    ok("admin campaign product picker source");
 
     const unsubReg = await req("POST", "/api/newsletter/unsubscribe-registered", { body: { email: emailYes } });
     assert(unsubReg.status === 200 && unsubReg.data.marketingConsent === false, "registered unsub");
