@@ -508,7 +508,7 @@
           </div>
           <div id="loginPane">
             <div class="field"><label data-i18n="acct.phone">نمبر تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
-            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password"></div>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password" autocomplete="current-password"></div>
             <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
             <button type="button" class="link-back" id="forgotLink" style="margin-top:8px" data-i18n="acct.forgot">پسورد را فراموش کرده‌اید؟</button>
           </div>
@@ -517,7 +517,7 @@
             <button class="btn btn-lg" id="resetSendBtn" style="width:100%" data-i18n="acct.reset">ارسال کود بازیابی</button>
             <div id="resetStep2" hidden style="margin-top:10px">
               <div class="field"><label data-i18n="acct.code">کود تایید</label><input id="rs_code" dir="ltr" inputmode="numeric"></div>
-              <div class="field"><label data-i18n="acct.newPassPh">پسورد جدید</label><input id="rs_pass" type="password"></div>
+              <div class="field"><label data-i18n="acct.newPassPh">پسورد جدید</label><input id="rs_pass" type="password" autocomplete="new-password"></div>
               <button class="btn btn-lg" id="resetDoneBtn" style="width:100%" data-i18n="acct.reset">تغییر پسورد</button>
             </div>
             <button type="button" class="link-back" id="resetBack" style="margin-top:8px" data-i18n="acct.backLogin">→ بازگشت به ورود</button>
@@ -532,7 +532,7 @@
             <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="su_street"></div>
             <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="su_area"></div>
             <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
-            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password"></div>
+            <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password" autocomplete="new-password"></div>
             <label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:13px;line-height:1.5">
               <input type="checkbox" id="su_marketing" style="margin-top:4px">
               <span>می‌خواهم پیشنهادها، تخفیف‌ها و محصولات جدید MAHO را از طریق ایمیل دریافت کنم.</span>
@@ -567,7 +567,7 @@
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="pf_street"></div>
           <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="pf_area"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="pf_house" dir="ltr"></div>
-          <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password"></div>
+          <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password" autocomplete="new-password"></div>
           <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>
           <div id="pfVerify" hidden style="margin-top:10px">
             <p class="muted" data-i18n="acct.emailChangeCode">برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.</p>
@@ -582,16 +582,21 @@
             <summary class="acct-acc-sum"><span data-i18n="acct.savedInfo">معلومات پرداخت</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
             <div class="acct-acc-body">
           <div id="payList"></div>
-          <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="card" data-i18n="pay.tCard">کارت بانکی</option><option value="bank" data-i18n="pay.tBank">حساب بانکی</option></select></div>
-          <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder"></div>
-          <div class="field"><label data-i18n="pay.accountNo">نمبر حساب / کارت</label><input id="pay_number" dir="ltr" inputmode="numeric"></div>
-          <div id="payCardExtra">
-            <div class="field"><label data-i18n="pay.cvv">کود امنیتی (CVV)</label><input id="pay_cvv" dir="ltr" inputmode="numeric" maxlength="4"></div>
-            <div class="field"><label data-i18n="pay.expiry">تاریخ انقضا (MM/YY)</label><input id="pay_expiry" dir="ltr" placeholder="MM/YY"></div>
-            <div class="field"><label data-i18n="pay.cardAddr">آدرس کارت</label><input id="pay_cardaddr"></div>
+          <div class="field"><label data-i18n="pay.type">نوع</label><select id="pay_type"><option value="bank" data-i18n="pay.tBank">حساب بانکی</option><option value="card" data-i18n="pay.tCard">کارت بانکی</option></select></div>
+          <div id="payBankFields">
+            <div class="field"><label data-i18n="pay.bankAccNo">شماره حساب</label><input id="pay_bank_account" dir="ltr" autocomplete="off"></div>
+            <div class="field"><label data-i18n="pay.bankRouting">Routing Number / شماره مسیر بانکی</label><input id="pay_bank_routing" dir="ltr" autocomplete="off"></div>
+            <div class="field"><label data-i18n="pay.bankHolder">نام صاحب حساب</label><input id="pay_bank_holder" autocomplete="off"></div>
           </div>
-          <button class="btn btn-outline" id="addPayBtn" style="width:100%" data-i18n="pay.add">افزودن معلومات پرداخت</button>
-          <p class="note" data-i18n="pay.localNote" style="font-size:12px;color:var(--muted);margin-top:6px">این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.</p>
+          <div id="payCardFields" hidden>
+            <div class="field"><label data-i18n="pay.holder">به نام</label><input id="pay_holder" autocomplete="off"></div>
+            <div class="field"><label data-i18n="pay.cardNo">شماره کارت</label><input id="pay_number" dir="ltr" inputmode="numeric" autocomplete="off"></div>
+            <div class="field"><label data-i18n="pay.expiry">تاریخ انقضا (MM/YY)</label><input id="pay_expiry" dir="ltr" placeholder="MM/YY" autocomplete="off"></div>
+            <div class="field"><label data-i18n="pay.cardAddr">آدرس کارت</label><input id="pay_cardaddr" autocomplete="off"></div>
+            <p class="note" data-i18n="pay.cardSafeNote" style="font-size:12px;color:var(--muted);margin:4px 0 8px">فقط ۴ رقم آخر کارت پس از ذخیره نمایش داده می‌شود. CVV ذخیره نمی‌شود.</p>
+          </div>
+          <button class="btn btn-outline" id="addPayBtn" style="width:100%" data-i18n="pay.add">ذخیره معلومات پرداخت</button>
+          <p class="note" data-i18n="pay.localNote" style="font-size:12px;color:var(--muted);margin-top:6px">اطلاعات بانکی در حساب شما ذخیره می‌شود. CVV/رمز کارت هرگز ذخیره نمی‌شود.</p>
             </div>
           </details>
 

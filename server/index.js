@@ -334,13 +334,56 @@ const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ""));
 function publicUser(u) {
   return u ? {
     id: u.id, name: u.name, phone: u.phone, email: u.email,
-    address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: u.payments || [],
+    address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: sanitizePaymentsForClient(u.payments || []),
     status: u.status || (u.verified ? "active" : "pending"), verified: !!u.verified,
     marketingConsent: u.marketingConsent === true,
     blocked: u.blocked === true,
     blockedAt: u.blockedAt || null,
     blockReason: u.blockReason || "",
   } : null;
+}
+
+/** Never persist CVV/PIN; store bank fields canonically; mask card PAN. Additive / backward compatible. */
+function sanitizePaymentEntry(p) {
+  if (!p || typeof p !== "object") return null;
+  const type = p.type === "bank" ? "bank" : (p.type === "card" ? "card" : null);
+  if (!type) return null;
+  const id = p.id != null ? String(p.id).slice(0, 64) : (type + "_" + Date.now());
+  if (type === "bank") {
+    const account = String(p.bankAccountNumber || p.number || "").trim().slice(0, 64);
+    const routing = String(p.bankRoutingNumber || p.routing || "").trim().slice(0, 64);
+    const holder = String(p.bankAccountHolderName || p.holder || "").trim().slice(0, 120);
+    if (!account || !holder) return null;
+    return {
+      id: id,
+      type: "bank",
+      bankAccountNumber: account,
+      bankRoutingNumber: routing,
+      bankAccountHolderName: holder,
+      number: account,
+      routing: routing,
+      holder: holder,
+    };
+  }
+  const raw = String(p.number || p.cardNumber || p.maskedNumber || "").replace(/[\s-]/g, "");
+  const digits = raw.replace(/[^0-9]/g, "");
+  const last4 = String(p.last4 || (digits.length >= 4 ? digits.slice(-4) : "")).replace(/[^0-9]/g, "").slice(-4);
+  if (!last4) return null;
+  const masked = "**** **** **** " + last4;
+  return {
+    id: id,
+    type: "card",
+    holder: String(p.holder || "").trim().slice(0, 120),
+    number: masked,
+    maskedNumber: masked,
+    last4: last4,
+    expiry: String(p.expiry || "").trim().slice(0, 7),
+    cardAddr: String(p.cardAddr || "").trim().slice(0, 200),
+  };
+}
+function sanitizePaymentsForClient(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(sanitizePaymentEntry).filter(Boolean).slice(0, 20);
 }
 function publicConfig(c) {
   const out = Object.assign({}, c || {});
@@ -971,7 +1014,7 @@ app.put("/api/me", requireUser, (req, res) => {
   if (b.address != null) u.address = String(b.address).trim();
   if (b.addr && typeof b.addr === "object") u.addr = b.addr;
   if (b.password) u.pass = hashPw(String(b.password));
-  if (Array.isArray(b.payments)) u.payments = b.payments;
+  if (Array.isArray(b.payments)) u.payments = sanitizePaymentsForClient(b.payments);
   if (b.email && String(b.email).trim().toLowerCase() !== (u.email || "").toLowerCase()) {
     const email = String(b.email).trim();
     if (!emailOk(email)) return res.status(400).json({ error: "bad email" });

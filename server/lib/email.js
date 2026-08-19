@@ -92,38 +92,52 @@ function ctaBtn(href, label) {
 function orderItemsTable(order, lang) {
   const items = order.items || [];
   const isEn = lang === "en";
-  let rows = items.map((it) => {
-    const line = (it.price || 0) * (it.qty || 1);
-    const img = it.image
-      ? `<img src="${escapeHtml(it.image)}" alt="" width="48" height="48" style="object-fit:cover;border-radius:8px;display:block">`
-      : "";
-    const disc = it.discount ? escapeHtml(String(it.discount)) + (isEn ? "%" : "٪") : "—";
-    const nm = isEn ? (it.name_en || it.name || "") : (it.name || "");
+  const { resolveProductImageUrl } = require("./media-url");
+  const siteUrl = (order && order._siteUrl) || process.env.SITE_URL || "https://mahomarket.com";
+  const logoUrl = (order && order._logoUrl) || "";
+  const placeholder = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="" width="72" height="72" style="object-fit:contain;border-radius:8px;display:block;background:#fbf8f1">`
+    : `<div style="width:72px;height:72px;border-radius:8px;background:#fbf8f1;border:1px solid #e6e0d4;color:#c8a35f;font:700 22px Georgia,serif;text-align:center;line-height:72px">M</div>`;
+
+  const cards = items.map((it) => {
+    const qty = it.qty || 1;
+    const unit = Number(it.price) || 0;
+    const discPct = Number(it.discount) || 0;
+    const line = it.lineTotal != null
+      ? Number(it.lineTotal)
+      : (discPct > 0 ? unit * qty * (1 - discPct / 100) : unit * qty);
+    const absImg = resolveProductImageUrl(it.image || it, { siteUrl: siteUrl, logoUrl: logoUrl });
+    const img = absImg
+      ? `<img src="${escapeHtml(absImg)}" alt="" width="72" height="72" style="object-fit:cover;border-radius:8px;display:block;border:0">`
+      : placeholder;
+    const nm = isEn ? (it.name_en || it.name || "") : (it.name || it.name_en || "");
     const sizeLbl = isEn ? "Size" : "سایز";
     const colorLbl = isEn ? "Color" : "رنگ";
-    return `<tr>
-<td style="padding:8px;border-bottom:1px solid #eee;vertical-align:top">${img}</td>
-<td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(nm)}${it.size ? "<br><small>" + sizeLbl + ": " + escapeHtml(it.size) + "</small>" : ""}${it.color ? "<br><small>" + colorLbl + ": " + escapeHtml(it.color) + "</small>" : ""}</td>
-<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${escapeHtml(String(it.qty || 1))}</td>
-<td style="padding:8px;border-bottom:1px solid #eee;text-align:left;direction:ltr">${moneyAf(it.price, lang)}</td>
-<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${disc}</td>
-<td style="padding:8px;border-bottom:1px solid #eee;text-align:left;direction:ltr">${moneyAf(line, lang)}</td>
-</tr>`;
-  }).join("");
-  const th = isEn
-    ? ["Photo", "Product", "Qty", "Price", "Discount", "Total"]
-    : ["عکس", "محصول", "تعداد", "قیمت", "تخفیف", "مجموع"];
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:13px;margin:16px 0">
-<thead><tr style="background:#fbf8f1">
-<th style="padding:8px;text-align:${isEn ? "left" : "right"}">${th[0]}</th>
-<th style="padding:8px;text-align:${isEn ? "left" : "right"}">${th[1]}</th>
-<th style="padding:8px;text-align:center">${th[2]}</th>
-<th style="padding:8px;text-align:left">${th[3]}</th>
-<th style="padding:8px;text-align:center">${th[4]}</th>
-<th style="padding:8px;text-align:left">${th[5]}</th>
-</tr></thead>
-<tbody>${rows}</tbody>
+    const qtyLbl = isEn ? "Qty" : "تعداد";
+    const priceLbl = isEn ? "Unit price" : "قیمت";
+    const discLbl = isEn ? "Discount" : "تخفیف";
+    const totalLbl = isEn ? "Line total" : "مجموع";
+    const nameLbl = isEn ? "Product" : "نام محصول";
+    const discVal = discPct
+      ? (isEn ? (discPct + "%") : (discPct + "٪"))
+      : (it.discountAmount ? moneyAf(it.discountAmount, lang) : "—");
+    return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e6e0d4;border-radius:12px;margin:0 0 12px;background:#fff">
+<tr>
+<td style="padding:12px;width:84px;vertical-align:top">${img}</td>
+<td style="padding:12px 12px 12px 0;vertical-align:top;font-size:14px;line-height:1.7">
+<div style="font-weight:800;margin-bottom:6px">${escapeHtml(nameLbl)}: ${escapeHtml(nm)}</div>
+${it.size ? `<div>${escapeHtml(sizeLbl)}: ${escapeHtml(String(it.size))}</div>` : ""}
+${it.color ? `<div>${escapeHtml(colorLbl)}: ${escapeHtml(String(it.color))}</div>` : ""}
+<div>${escapeHtml(qtyLbl)}: <span dir="ltr">${escapeHtml(String(qty))}</span></div>
+<div>${escapeHtml(priceLbl)}: <span dir="ltr">${moneyAf(unit, lang)}</span></div>
+<div>${escapeHtml(discLbl)}: <span dir="ltr">${escapeHtml(String(discVal))}</span></div>
+<div style="font-weight:800;margin-top:4px">${escapeHtml(totalLbl)}: <span dir="ltr">${moneyAf(line, lang)}</span></div>
+</td>
+</tr>
 </table>`;
+  }).join("");
+
+  return `<div style="margin:16px 0">${cards || ""}</div>`;
 }
 
 function orderTotalsBlock(order, lang) {
@@ -132,12 +146,85 @@ function orderTotalsBlock(order, lang) {
   const fee = order.deliveryFee || 0;
   const discount = order.discountTotal || 0;
   const total = order.total != null ? order.total : itemsTotal + fee - discount;
-  return `<table role="presentation" width="100%" style="font-size:14px;margin:12px 0">
-<tr><td>${isEn ? "Subtotal" : "جمع محصولات (Subtotal)"}</td><td style="text-align:left;direction:ltr">${moneyAf(itemsTotal, lang)}</td></tr>
-<tr><td>${isEn ? "Delivery fee" : "هزینهٔ دلیوری"}</td><td style="text-align:left;direction:ltr">${fee ? moneyAf(fee, lang) : (isEn ? "Free" : "رایگان")}</td></tr>
-${discount ? `<tr><td>${isEn ? "Discount" : "تخفیف نهایی"}</td><td style="text-align:left;direction:ltr">− ${moneyAf(discount, lang)}</td></tr>` : ""}
-<tr><td style="font-weight:800;padding-top:8px">${isEn ? "Grand total" : "مبلغ نهایی"}</td><td style="text-align:left;direction:ltr;font-weight:800;padding-top:8px">${moneyAf(total, lang)}</td></tr>
+  const itemsLbl = isEn ? "Items subtotal" : "جمع اقلام";
+  const discLbl = isEn ? "Discount" : "تخفیف";
+  const shipLbl = isEn ? "Delivery fee" : "هزینه ارسال";
+  const grandLbl = isEn ? "Grand total" : "مبلغ نهایی";
+  return `<table role="presentation" width="100%" style="font-size:14px;margin:16px 0;border-top:1px solid #e6e0d4;padding-top:8px">
+<tr><td style="padding:4px 0">${itemsLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${moneyAf(itemsTotal, lang)}</td></tr>
+<tr><td style="padding:4px 0">${discLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${discount ? ("− " + moneyAf(discount, lang)) : (isEn ? "—" : "—")}</td></tr>
+<tr><td style="padding:4px 0">${shipLbl}</td><td style="text-align:left;direction:ltr;padding:4px 0">${fee ? moneyAf(fee, lang) : (isEn ? "Free" : "رایگان")}</td></tr>
+<tr><td style="font-weight:800;font-size:16px;padding-top:10px;color:#141414">${grandLbl}</td><td style="text-align:left;direction:ltr;font-weight:800;font-size:16px;padding-top:10px;color:#141414">${moneyAf(total, lang)}</td></tr>
 </table>`;
+}
+
+function isStorePickupOrder(order) {
+  const m = (order && order.delivery && order.delivery.method) || "";
+  return m === "pickup" || m === "store_pickup" || m === "store" || m === "حضوری";
+}
+
+function storePickupBlock(order, lang) {
+  if (!isStorePickupOrder(order)) return "";
+  const isEn = lang === "en";
+  const s = (order && order.pickupStore) || {};
+  if (!s || (!s.name && !s.address && !s.id)) return "";
+  let mapsUrl = s.mapsUrl || "";
+  if (!mapsUrl && s.lat != null && s.lng != null) {
+    mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
+  }
+  const intro = isEn
+    ? "Your order can be collected from the store below:"
+    : "سفارش شما از فروشگاه زیر قابل دریافت است:";
+  const nameLbl = isEn ? "Store name" : "نام فروشگاه";
+  const addrLbl = isEn ? "Address" : "آدرس";
+  const phoneLbl = isEn ? "Phone" : "شماره تماس";
+  const hoursLbl = isEn ? "Hours" : "ساعات کاری";
+  const mapsLbl = isEn ? "View location on Google Maps" : "مشاهده موقعیت در Google Maps";
+  const mapsBtn = mapsUrl
+    ? ctaBtn(mapsUrl, mapsLbl)
+    : "";
+  return `<div style="margin:18px 0;padding:14px;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
+<p style="margin:0 0 10px;font-weight:800">${intro}</p>
+<p style="margin:0;line-height:1.8">
+<strong>${nameLbl}:</strong> ${escapeHtml(s.name || "—")}<br>
+<strong>${addrLbl}:</strong> ${escapeHtml(s.address || s.area || "—")}<br>
+<strong>${phoneLbl}:</strong> <span dir="ltr">${escapeHtml(s.phone || "—")}</span>
+${s.hours ? "<br><strong>" + hoursLbl + ":</strong> " + escapeHtml(s.hours) : ""}
+</p>
+${mapsBtn}
+</div>`;
+}
+
+function customerStatusCopy(status, lang) {
+  const isEn = lang === "en";
+  const fa = {
+    confirmed: "سفارش شما با موفقیت تأیید شد و در حال آماده‌سازی است.",
+    ready_for_pickup: "سفارش شما آماده دریافت است.",
+    dispatched: "سفارش شما برای تحویل ارسال شده است.",
+    out_for_delivery: "سفارش شما برای تحویل ارسال شده است.",
+    delivered: "سفارش شما با موفقیت تحویل داده شد.",
+    cancelled: "سفارش شما لغو شد.",
+    partially_cancelled: "بخشی از سفارش شما لغو شد.",
+    return_requested: "درخواست برگشت شما ثبت شد.",
+    return_completed: "فرآیند برگشت شما با موفقیت تکمیل شد.",
+    return_approved: "درخواست برگشت شما تأیید شد.",
+    return_rejected: "درخواست برگشت شما رد شد.",
+  };
+  const en = {
+    confirmed: "Your order was confirmed and is being prepared.",
+    ready_for_pickup: "Your order is ready for pickup.",
+    dispatched: "Your order is out for delivery.",
+    out_for_delivery: "Your order is out for delivery.",
+    delivered: "Your order was delivered successfully.",
+    cancelled: "Your order was cancelled.",
+    partially_cancelled: "Part of your order was cancelled.",
+    return_requested: "Your return request was submitted.",
+    return_completed: "Your return was completed successfully.",
+    return_approved: "Your return request was approved.",
+    return_rejected: "Your return request was rejected.",
+  };
+  const map = isEn ? en : fa;
+  return map[status] || "";
 }
 
 function payLabel(p, lang) {
@@ -257,40 +344,52 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     const isEn = lang === "en";
     const c = order.customer || {};
     const stFn = isEn ? statusLabelEn : statusLabelFa;
-    const recv = (order.delivery && (order.delivery.method === "deliver" || order.delivery.method === "delivery"))
-      ? (isEn ? "Delivery" : "دلیوری")
-      : (isEn ? "Store pickup" : "حضوری");
+    const orderView = Object.assign({}, order, { _siteUrl: siteUrl, _logoUrl: logoUrl });
+    const recv = isStorePickupOrder(order)
+      ? (isEn ? "Store pickup" : "دریافت حضوری از فروشگاه")
+      : (isEn ? "Delivery" : "دلیوری");
+    const dateStr = isEn
+      ? new Date(order.date || Date.now()).toLocaleString("en-US")
+      : new Date(order.date || Date.now()).toLocaleString("fa-AF");
+    const nameHtml = `<span dir="auto">${escapeHtml(c.name || "")}</span>`;
+    const pickupOrAddr = isStorePickupOrder(order)
+      ? storePickupBlock(orderView, lang)
+      : (isEn
+        ? `<p><strong>Delivery address:</strong> ${escapeHtml(c.address || "—")}<br>
+<strong>Phone:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>`
+        : `<p><strong>آدرس دلیوری:</strong> ${escapeHtml(c.address || "—")}<br>
+<strong>شماره تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>`);
     const html = wrap({
       title: isEn ? "Order confirmation" : "تأیید سفارش",
       preheader: (isEn ? "Order " : "سفارش ") + (order.id || ""),
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
-        ? `<p>Hello ${escapeHtml(c.name || "")},</p>
-<p>Thank you for shopping at MAHO Market. Your order has been placed.</p>
-<p><strong>Order no:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
-<strong>Date:</strong> ${escapeHtml(new Date(order.date || Date.now()).toLocaleString("en-US"))}</p>
-${orderItemsTable(order, lang)}
+        ? `<p>Hello ${nameHtml},</p>
+<p>Thank you for shopping at MAHO Market.</p>
+<p>Your order was placed successfully and is under review.</p>
+<p><strong>Order number:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>Date:</strong> ${escapeHtml(dateStr)}</p>
+${orderItemsTable(orderView, lang)}
 ${orderTotalsBlock(order, lang)}
 <p><strong>Payment:</strong> ${escapeHtml(payLabel(order.payment, lang))}<br>
 <strong>Payment status:</strong> ${escapeHtml(stFn(order.paymentStatus || (order.payment === "hesab" || order.payment === "bank" || order.payment === "card" ? "awaiting_payment" : "—")))}<br>
 <strong>Order status:</strong> ${escapeHtml(stFn(order.status))}<br>
 <strong>Fulfillment:</strong> ${escapeHtml(recv)}</p>
-<p><strong>Delivery address:</strong> ${escapeHtml(c.address || "—")}<br>
-<strong>Phone:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>
+${pickupOrAddr}
 ${trackUrl ? ctaBtn(trackUrl, "View / track order") : ""}
 ${supportContactHtml(getStorePhone(), lang)}`
-        : `<p>سلام ${escapeHtml(c.name || "")}،</p>
-<p>از خرید شما در MAHO Market سپاس‌گزاریم. سفارش شما ثبت شد.</p>
-<p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
-<strong>تاریخ:</strong> ${escapeHtml(new Date(order.date || Date.now()).toLocaleString("fa-AF"))}</p>
-${orderItemsTable(order, lang)}
+        : `<p>سلام ${nameHtml}،</p>
+<p>از خرید شما از MAHO Market سپاسگزاریم.</p>
+<p>سفارش شما با موفقیت ثبت شد و در حال بررسی است.</p>
+<p><strong>شماره سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>تاریخ:</strong> ${escapeHtml(dateStr)}</p>
+${orderItemsTable(orderView, lang)}
 ${orderTotalsBlock(order, lang)}
 <p><strong>روش پرداخت:</strong> ${escapeHtml(payLabel(order.payment, lang))}<br>
 <strong>وضعیت پرداخت:</strong> ${escapeHtml(stFn(order.paymentStatus || (order.payment === "hesab" || order.payment === "bank" || order.payment === "card" ? "awaiting_payment" : "—")))}<br>
 <strong>وضعیت سفارش:</strong> ${escapeHtml(stFn(order.status))}<br>
 <strong>روش دریافت:</strong> ${escapeHtml(recv)}</p>
-<p><strong>آدرس دلیوری:</strong> ${escapeHtml(c.address || "—")}<br>
-<strong>نمبر تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span></p>
+${pickupOrAddr}
 ${trackUrl ? ctaBtn(trackUrl, "مشاهده / پیگیری سفارش") : ""}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
@@ -330,7 +429,7 @@ ${loc.lat != null ? `<strong>مختصات:</strong> <span dir="ltr">${escapeHtml
 ${maps ? `<strong>نقشه:</strong> <a href="${escapeHtml(maps)}">${escapeHtml(maps)}</a><br>` : ""}
 <strong>یادداشت:</strong> ${escapeHtml(c.note || order.deliveryNote || "—")}<br>
 <strong>مبلغ:</strong> ${moneyAf(order.total, "fa")}</p>
-${orderItemsTable(order, "fa")}
+${orderItemsTable(Object.assign({}, order, { _siteUrl: siteUrl, _logoUrl: logoUrl }), "fa")}
 ${orderTotalsBlock(order, "fa")}
 ${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن پنل مدیر")}`,
     });
@@ -374,21 +473,29 @@ ${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن 
     };
     const titles = isEn ? titlesEn : titlesFa;
     const title = titles[order.status] || titles[order.paymentStatus] || (isEn ? "Order update" : "به‌روزرسانی سفارش");
+    const statusMsg = customerStatusCopy(order.status, lang);
+    const nameHtml = `<span dir="auto">${escapeHtml(c.name || "")}</span>`;
+    const orderView = Object.assign({}, order, { _siteUrl: siteUrl, _logoUrl: logoUrl });
+    const pickupExtra = (order.status === "confirmed" || order.status === "ready_for_pickup")
+      ? storePickupBlock(orderView, lang)
+      : "";
     const html = wrap({
       title,
       preheader: order.id || "",
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
-        ? `<p>Hello ${escapeHtml(c.name || "")},</p>
-<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> was updated:</p>
-<p style="font-size:18px;font-weight:800">${escapeHtml(stFn(order.status))}${order.paymentStatus ? " / payment: " + escapeHtml(stFn(order.paymentStatus)) : ""}</p>
+        ? `<p>Hello ${nameHtml},</p>
+<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> was updated.</p>
+${statusMsg ? `<p style="font-size:16px;font-weight:700">${escapeHtml(statusMsg)}</p>` : `<p style="font-size:18px;font-weight:800">${escapeHtml(stFn(order.status))}${order.paymentStatus ? " / payment: " + escapeHtml(stFn(order.paymentStatus)) : ""}</p>`}
 ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+${pickupExtra}
 ${orderTotalsBlock(order, lang)}
 ${supportContactHtml(getStorePhone(), lang)}`
-        : `<p>سلام ${escapeHtml(c.name || "")}،</p>
-<p>وضعیت سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> به‌روزرسانی شد:</p>
-<p style="font-size:18px;font-weight:800">${escapeHtml(stFn(order.status))}${order.paymentStatus ? " / پرداخت: " + escapeHtml(stFn(order.paymentStatus)) : ""}</p>
+        : `<p>سلام ${nameHtml}،</p>
+<p>وضعیت سفارش <strong dir="ltr">${escapeHtml(order.id || "")}</strong> به‌روزرسانی شد.</p>
+${statusMsg ? `<p style="font-size:16px;font-weight:700">${escapeHtml(statusMsg)}</p>` : `<p style="font-size:18px;font-weight:800">${escapeHtml(stFn(order.status))}${order.paymentStatus ? " / پرداخت: " + escapeHtml(stFn(order.paymentStatus)) : ""}</p>`}
 ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+${pickupExtra}
 ${orderTotalsBlock(order, lang)}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
@@ -459,38 +566,28 @@ ${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
     if (!s.mapsUrl && s.lat != null && s.lng != null) {
       s.mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(s.lat + "," + s.lng);
     }
-    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل از فروشگاه است | MAHO";
-    const mapsBlock = s.mapsUrl
-      ? (isEn
-        ? `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">Open in Google Maps</a></p>`
-        : `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">مشاهده در Google Maps</a></p>`)
-      : "";
-    const instr = s.instructions
-      ? (isEn
-        ? `<p><strong>Pickup instructions:</strong> ${escapeHtml(s.instructions)}</p>`
-        : `<p><strong>راهنمای تحویل حضوری:</strong> ${escapeHtml(s.instructions)}</p>`)
-      : "";
+    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده دریافت است | MAHO";
+    const orderForBlock = Object.assign({}, order, {
+      pickupStore: s,
+      delivery: Object.assign({}, order.delivery || {}, { method: "pickup" }),
+      _siteUrl: siteUrl,
+      _logoUrl: logoUrl,
+    });
+    const nameHtml = `<span dir="auto">${escapeHtml(c.name || "")}</span>`;
     const html = wrap({
       title,
       preheader: title,
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
-        ? `<p>Hello ${escapeHtml(c.name || "")},</p>
-<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready for <strong>store pickup</strong>.</p>
-<p><strong>Store:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>Full address:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
-${s.hours ? "<br><strong>Opening hours:</strong> " + escapeHtml(s.hours) : ""}</p>
-${mapsBlock}${instr}
+        ? `<p>Hello ${nameHtml},</p>
+<p>${escapeHtml(customerStatusCopy("ready_for_pickup", lang))}</p>
+<p><strong>Order number:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span></p>
+${storePickupBlock(orderForBlock, lang)}
 ${supportContactHtml(getStorePhone(), lang)}`
-        : `<p>سلام ${escapeHtml(c.name || "")}،</p>
-<p>سفارش شما برای <strong>تحویل حضوری از فروشگاه</strong> آماده است.</p>
-<p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
-<strong>فروشگاه:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>آدرس کامل:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
-${s.hours ? "<br><strong>ساعات کاری:</strong> " + escapeHtml(s.hours) : ""}</p>
-${mapsBlock}${instr}
+        : `<p>سلام ${nameHtml}،</p>
+<p>${escapeHtml(customerStatusCopy("ready_for_pickup", lang))}</p>
+<p><strong>شماره سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span></p>
+${storePickupBlock(orderForBlock, lang)}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
     return send(to, title, html);

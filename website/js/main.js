@@ -142,6 +142,9 @@
       "co.name": "نام و تخلص *", "co.phone": "نمبر تماس *", "co.address": "آدرس تحویل *", "co.note": "توضیحات (اختیاری)",
       "co.err": "لطفاً نام، نمبر تماس و آدرس را وارد کنید.",
       "acct.login": "ورود", "acct.signup": "ساخت حساب", "acct.create": "ساخت حساب", "acct.logout": "خروج از حساب",
+      "acct.sessionExpired": "جلسه شما پایان یافته است. لطفاً دوباره وارد حساب شوید.",
+      "acct.validating": "در حال بررسی ورود…",
+      "pass.show": "نمایش رمز عبور", "pass.hide": "پنهان کردن رمز عبور",
       "acct.name": "نام و تخلص", "acct.phone": "نمبر تماس یا ایمیل", "acct.pass": "پسورد",
       "acct.exists": "این حساب قبلاً ساخته شده است.", "acct.bad": "اطلاعات ورود درست نیست.",
       "acct.created": "حساب شما ساخته و تایید شد ✓", "acct.hi": "خوش آمدید",
@@ -187,8 +190,14 @@
       "acct.emailChangeCode": "برای تغییر ایمیل، کود فرستاده‌شده به ایمیل جدید را وارد کنید.",
       "acct.verifyNewEmail": "تایید ایمیل جدید", "acct.emailUpdated": "ایمیل شما به‌روزرسانی شد ✓",
       "pay.type": "نوع", "pay.tCard": "کارت بانکی", "pay.tBank": "حساب بانکی",
-      "pay.add": "افزودن معلومات پرداخت", "pay.none": "هنوز معلومات پرداختی اضافه نکرده‌اید.",
-      "pay.localNote": "این اطلاعات فقط روی همین دستگاه شما ذخیره می‌شود.",
+      "pay.add": "ذخیره معلومات پرداخت", "pay.none": "هنوز معلومات پرداختی اضافه نکرده‌اید.",
+      "pay.localNote": "اطلاعات بانکی در حساب شما ذخیره می‌شود. CVV/رمز کارت هرگز ذخیره نمی‌شود.",
+      "pay.bankAccNo": "شماره حساب",
+      "pay.bankRouting": "Routing Number / شماره مسیر بانکی",
+      "pay.bankHolder": "نام صاحب حساب",
+      "pay.cardNo": "شماره کارت",
+      "pay.cardSafeNote": "فقط ۴ رقم آخر کارت پس از ذخیره نمایش داده می‌شود. CVV ذخیره نمی‌شود.",
+      "pay.savedOk": "معلومات پرداخت ذخیره شد ✓",
       "co.email": "ایمیل (برای تایید سفارش)",
       "order.number": "نمبر سفارش", "order.emailSent": "ایمیل تایید سفارش برای شما فرستاده شد.",
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
@@ -310,6 +319,9 @@
       "co.name": "Full name *", "co.phone": "Phone *", "co.address": "Delivery address *", "co.note": "Notes (optional)",
       "co.err": "Please enter your name, phone and address.",
       "acct.login": "Log in", "acct.signup": "Sign up", "acct.create": "Create account", "acct.logout": "Log out",
+      "acct.sessionExpired": "Your session has ended. Please sign in again.",
+      "acct.validating": "Checking sign-in…",
+      "pass.show": "Show password", "pass.hide": "Hide password",
       "acct.name": "Full name", "acct.phone": "Phone or email", "acct.pass": "Password",
       "acct.exists": "This account already exists.", "acct.bad": "Incorrect login details.",
       "acct.created": "Your account was created & verified ✓", "acct.hi": "Welcome",
@@ -355,8 +367,14 @@
       "acct.emailChangeCode": "To change your email, enter the code sent to the new address.",
       "acct.verifyNewEmail": "Verify new email", "acct.emailUpdated": "Your email was updated ✓",
       "pay.type": "Type", "pay.tCard": "Bank card", "pay.tBank": "Bank account",
-      "pay.add": "Add payment info", "pay.none": "No saved payment info yet.",
-      "pay.localNote": "This info is stored only on your device.",
+      "pay.add": "Save payment info", "pay.none": "No saved payment info yet.",
+      "pay.localNote": "Bank details are saved to your account. Card CVV is never stored.",
+      "pay.bankAccNo": "Account Number",
+      "pay.bankRouting": "Routing Number",
+      "pay.bankHolder": "Account Holder Name",
+      "pay.cardNo": "Card number",
+      "pay.cardSafeNote": "Only the last 4 digits are shown after save. CVV is never stored.",
+      "pay.savedOk": "Payment info saved ✓",
       "co.email": "Email (for order confirmation)",
       "order.number": "Order number", "order.emailSent": "An order confirmation email was sent to you.",
       "order.emailIntro": "Your order at MAHO is confirmed. Details:",
@@ -1438,6 +1456,10 @@
           syncStockFromApi();
         });
       }).catch((err) => {
+        if (err && err.status === 401) {
+          handleCustomerSessionExpired(err, { showMessage: true, checkoutMsg: true, openAccount: true });
+          return;
+        }
         if ($("#coMsg")) $("#coMsg").textContent = (err && err.message) || t("acct.sendFail");
       });
       return null;
@@ -1703,7 +1725,10 @@
         const orders = (res.orders || []).map(withApiOrderStatus);
         saveOrders(orders);
         paint(orders);
-      }).catch(() => paint(getOrders()));
+      }).catch((err) => {
+        if (err && err.status === 401) { paint([]); return; }
+        paint(getOrders());
+      });
       return;
     }
     paint(getOrders());
@@ -2222,6 +2247,50 @@
   const getSession = () => { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch (_) { return null; } };
   const setSession = (s) => { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {} };
   const CUST_SEQ_KEY = "maho_cust_seq";
+  let sessionExpiryToastAt = 0;
+  function clearPrivateOrdersCache() {
+    try { localStorage.removeItem(ORDERS_KEY); } catch (_) {}
+    const ol = $("#ordersList");
+    if (ol) ol.innerHTML = "";
+  }
+  /** Clear authenticated customer UI state. Does NOT clear cart. */
+  function clearCustomerAuthState(opts) {
+    opts = opts || {};
+    const hadAuth = !!(getSession() || (window.MAHOApi && MAHOApi.getToken("user")));
+    setSession(null);
+    if (window.MAHOApi) MAHOApi.logoutUser();
+    clearPrivateOrdersCache();
+    try { closeOrders(); } catch (_) {}
+    if (typeof selectTab === "function") selectTab(true);
+    paintLoggedOutAccount();
+    if (opts.checkoutMsg !== false && $("#coMsg")) {
+      $("#coMsg").textContent = t("acct.sessionExpired");
+    }
+    if (opts.showMessage !== false && hadAuth) {
+      const now = Date.now();
+      if (now - sessionExpiryToastAt > 2500) {
+        sessionExpiryToastAt = now;
+        showToast(t("acct.sessionExpired"));
+      }
+    }
+    if (opts.openAccount) {
+      try { openAcct(); } catch (_) {}
+    }
+    return hadAuth;
+  }
+  function handleCustomerSessionExpired(err, opts) {
+    opts = opts || {};
+    clearCustomerAuthState({
+      showMessage: opts.showMessage !== false,
+      checkoutMsg: opts.checkoutMsg !== false,
+      openAccount: !!opts.openAccount,
+    });
+  }
+  if (window.MAHOApi && typeof MAHOApi.onUserSessionExpired === "function") {
+    MAHOApi.onUserSessionExpired(function () {
+      handleCustomerSessionExpired(null, { showMessage: true, checkoutMsg: true });
+    });
+  }
   function nextCustomerNo() {
     let n = 0; try { n = parseInt(localStorage.getItem(CUST_SEQ_KEY) || "0", 10) || 0; } catch (_) {}
     n += 1; try { localStorage.setItem(CUST_SEQ_KEY, String(n)); } catch (_) {}
@@ -2241,7 +2310,21 @@
     if (!users[idx].customerNo) { users[idx].customerNo = nextCustomerNo(); saveUsers(users); }
     return users[idx];
   }
-  const maskNum = (n) => { const d = toEnDigits(n).replace(/[^0-9]/g, ""); return d.length > 4 ? "•••• " + d.slice(-4) : d; };
+  const maskNum = (n) => {
+    const raw = String(n || "");
+    if (/\*{2,}|•{2,}/.test(raw)) return raw;
+    const d = toEnDigits(raw).replace(/[^0-9]/g, "");
+    return d.length > 4 ? "•••• " + d.slice(-4) : d;
+  };
+  function paymentDisplayNumber(p) {
+    if (!p) return "";
+    if (p.type === "bank") return p.bankAccountNumber || p.number || "";
+    return p.maskedNumber || p.number || (p.last4 ? ("**** **** **** " + p.last4) : "");
+  }
+  function paymentDisplayHolder(p) {
+    if (!p) return "";
+    return p.bankAccountHolderName || p.holder || "";
+  }
   const acctOverlay = $("#acctOverlay");
   function renderPayList(u) {
     const list = $("#payList"); if (!list) return;
@@ -2249,44 +2332,81 @@
     if (!pays.length) { list.innerHTML = `<p class="pay-none">${t("pay.none")}</p>`; return; }
     list.innerHTML = pays.map((p) => {
       const typeLabel = p.type === "bank" ? t("pay.tBank") : t("pay.tCard");
-      return `<div class="pay-item"><span><b>${typeLabel}</b>${p.holder ? " — " + p.holder : ""} <span class="pi-num" dir="ltr">${maskNum(p.number)}</span></span><button type="button" data-delpay="${p.id}">${t("cart.remove")}</button></div>`;
+      const extra = p.type === "bank" && (p.bankRoutingNumber || p.routing)
+        ? ` <span class="pi-num" dir="ltr">(${escapeHtmlAttr(p.bankRoutingNumber || p.routing)})</span>`
+        : "";
+      return `<div class="pay-item"><span><b>${typeLabel}</b>${paymentDisplayHolder(p) ? " — " + escapeHtmlAttr(paymentDisplayHolder(p)) : ""} <span class="pi-num" dir="ltr">${escapeHtmlAttr(maskNum(paymentDisplayNumber(p)))}</span>${extra}</span><button type="button" data-delpay="${escapeHtmlAttr(String(p.id))}">${t("cart.remove")}</button></div>`;
     }).join("");
   }
+  function escapeHtmlAttr(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function paintLoggedOutAccount() {
+    const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
+    if (out) out.hidden = false;
+    if (inn) inn.hidden = true;
+  }
+  function paintLoggedInAccount(u, s) {
+    const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
+    if (!out || !inn) return;
+    s = s || getSession() || {};
+    u = u || s;
+    out.hidden = true; inn.hidden = false;
+    if ($("#acctName")) $("#acctName").textContent = u.name || s.name || "";
+    if ($("#acctCustNo")) $("#acctCustNo").textContent = (u.customerNo || s.customerNo) ? (t("acct.custNo") + ": " + (u.customerNo || s.customerNo)) : "";
+    if ($("#acctId")) $("#acctId").textContent = u.email || s.email || s.id || "";
+    if ($("#acctAvatar")) $("#acctAvatar").textContent = (u.name || s.name || "M").trim().charAt(0).toUpperCase();
+    if ($("#pf_name")) $("#pf_name").value = u.name || "";
+    if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
+    if ($("#pf_email")) $("#pf_email").value = u.email || "";
+    fillAddr("pf", u.addr || s.addr);
+    if ($("#pf_pass")) { $("#pf_pass").value = ""; $("#pf_pass").type = "password"; }
+    if ($("#pfVerify")) $("#pfVerify").hidden = true;
+    if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
+    renderPayList(u);
+  }
+  let acctValidateSeq = 0;
   function renderAccount() {
     const s = getSession();
     const out = $("#acctLoggedOut"), inn = $("#acctLoggedIn");
     if (!out || !inn) return;
-    if (s) {
-      const u = currentUser() || s;
-      out.hidden = true; inn.hidden = false;
-      $("#acctName").textContent = u.name || s.name || "";
-      $("#acctCustNo").textContent = (u.customerNo || s.customerNo) ? (t("acct.custNo") + ": " + (u.customerNo || s.customerNo)) : "";
-      $("#acctId").textContent = u.email || s.email || s.id || "";
-      $("#acctAvatar").textContent = (u.name || s.name || "M").trim().charAt(0).toUpperCase();
-      if ($("#pf_name")) $("#pf_name").value = u.name || "";
-      if ($("#pf_phone")) $("#pf_phone").value = u.phone || "";
-      if ($("#pf_email")) $("#pf_email").value = u.email || "";
-      fillAddr("pf", u.addr || s.addr);
-      if ($("#pf_pass")) $("#pf_pass").value = "";
-      if ($("#pfVerify")) $("#pfVerify").hidden = true;
-      if ($("#pfMsg")) { $("#pfMsg").textContent = ""; $("#pfMsg").className = "qv-msg"; }
-      renderPayList(u);
-      if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
-        MAHOApi.me().then((res) => {
-          if (!res.user) return;
-          setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
-          const nu = res.user;
-          $("#acctName").textContent = nu.name || "";
-          $("#acctCustNo").textContent = nu.customerNo ? (t("acct.custNo") + ": " + nu.customerNo) : "";
-          $("#acctId").textContent = nu.email || "";
-          if ($("#pf_name")) $("#pf_name").value = nu.name || "";
-          if ($("#pf_phone")) $("#pf_phone").value = nu.phone || "";
-          if ($("#pf_email")) $("#pf_email").value = nu.email || "";
-          fillAddr("pf", nu.addr);
-          renderPayList(nu);
-        }).catch(() => {});
+    if (!s) {
+      paintLoggedOutAccount();
+      return;
+    }
+    if (apiOnline && window.MAHOApi) {
+      if (!MAHOApi.getToken("user")) {
+        handleCustomerSessionExpired(null, { showMessage: true });
+        return;
       }
-    } else { out.hidden = false; inn.hidden = true; }
+      const seq = ++acctValidateSeq;
+      out.hidden = true;
+      inn.hidden = true;
+      if ($("#acctMsg")) { $("#acctMsg").textContent = t("acct.validating"); $("#acctMsg").className = "qv-msg"; }
+      MAHOApi.me().then((res) => {
+        if (seq !== acctValidateSeq) return;
+        if (!res.user) {
+          handleCustomerSessionExpired(null, { showMessage: true });
+          return;
+        }
+        setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
+        if ($("#acctMsg")) { $("#acctMsg").textContent = ""; $("#acctMsg").className = "qv-msg"; }
+        paintLoggedInAccount(res.user);
+      }).catch((err) => {
+        if (seq !== acctValidateSeq) return;
+        if (err && err.status === 401) {
+          paintLoggedOutAccount();
+          if ($("#acctMsg")) { $("#acctMsg").textContent = t("acct.sessionExpired"); $("#acctMsg").className = "qv-msg"; }
+          return;
+        }
+        /* Transient network error — keep session; show last known profile until revalidated. */
+        if ($("#acctMsg")) { $("#acctMsg").textContent = ""; $("#acctMsg").className = "qv-msg"; }
+        paintLoggedInAccount(currentUser() || s, s);
+      });
+      return;
+    }
+    paintLoggedInAccount(currentUser() || s, s);
   }
   function openAcct() { renderAccount(); if (acctOverlay) acctOverlay.classList.add("show"); }
   function closeAcct() { if (acctOverlay) acctOverlay.classList.remove("show"); }
@@ -2310,6 +2430,41 @@
   if (tabLogin) tabLogin.addEventListener("click", () => selectTab(true));
   if (tabSignup) tabSignup.addEventListener("click", () => selectTab(false));
   function acctMsg(text, ok) { const m = $("#acctMsg"); if (m) { m.textContent = text; m.className = "qv-msg" + (ok ? " ok" : ""); } }
+
+  /* Password visibility toggles (default hidden; never persist state) */
+  function wirePasswordToggle(input) {
+    if (!input || input.dataset.passToggleWired === "1") return;
+    input.dataset.passToggleWired = "1";
+    let wrap = input.parentElement;
+    if (!wrap || !wrap.classList.contains("pass-wrap")) {
+      wrap = document.createElement("div");
+      wrap.className = "pass-wrap";
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pass-toggle";
+    btn.setAttribute("aria-label", t("pass.show"));
+    btn.title = t("pass.show");
+    btn.innerHTML = '<svg class="pass-eye" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 5c-5 0-9.3 3.1-11 7 1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5z"/></svg>';
+    wrap.appendChild(btn);
+    btn.addEventListener("click", () => {
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      const label = show ? t("pass.hide") : t("pass.show");
+      btn.setAttribute("aria-label", label);
+      btn.title = label;
+      btn.setAttribute("aria-pressed", show ? "true" : "false");
+    });
+  }
+  function wireAllPasswordToggles() {
+    ["#lg_pass", "#su_pass", "#rs_pass", "#pf_pass", "#co_pass"].forEach((sel) => {
+      const el = $(sel);
+      if (el) wirePasswordToggle(el);
+    });
+  }
+  wireAllPasswordToggles();
 
   const emailCfg = () => CONFIG.emailjs || {};
   const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
@@ -2412,22 +2567,23 @@
     if (apiOnline && window.MAHOApi) {
       MAHOApi.login({ id: id, password: pass }).then((res) => {
         setSession(sessionFromApiUser(res.user, res.token));
-        renderAccount();
+        paintLoggedInAccount(res.user);
         acctMsg(t("acct.hi") + "، " + (res.user && res.user.name), true);
         showToast(t("acct.hi") + "، " + (res.user && res.user.name));
+        if ($("#coMsg") && /جلسه|session/i.test($("#coMsg").textContent || "")) $("#coMsg").textContent = "";
       }).catch(() => acctMsg(t("acct.bad")));
       return;
     }
     const u = getUsers().find((x) => pass === x.pass && [x.email, x.phone, x.id].some((v) => v && v.toLowerCase() === id.toLowerCase()));
     if (!u) { acctMsg(t("acct.bad")); return; }
-    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone, customerNo: u.customerNo }); renderAccount();
+    setSession({ name: u.name, id: u.email || u.id, email: u.email, phone: u.phone, customerNo: u.customerNo }); paintLoggedInAccount(u);
     acctMsg(t("acct.hi") + "، " + u.name, true); showToast(t("acct.hi") + "، " + u.name);
   });
   const logoutBtn = $("#logoutBtn");
   if (logoutBtn) logoutBtn.addEventListener("click", () => {
-    setSession(null);
-    if (window.MAHOApi) MAHOApi.logoutUser();
-    selectTab(true); renderAccount();
+    clearCustomerAuthState({ showMessage: false, checkoutMsg: false });
+    selectTab(true);
+    paintLoggedOutAccount();
   });
 
   /* forgot password */
@@ -2498,7 +2654,7 @@
           if ($("#pfVerify")) $("#pfVerify").hidden = false;
           pfMsg(res.devCode ? (t("acct.emailChangeCode") + " — " + t("acct.demoNote").replace("{code}", res.devCode)) : t("acct.emailChangeCode"), true);
         } else {
-          renderAccount(); pfMsg(t("acct.saved"), true); showToast(t("acct.saved"));
+          paintLoggedInAccount(res.user); pfMsg(t("acct.saved"), true); showToast(t("acct.saved"));
         }
       }).catch((err) => pfMsg((err && err.status === 409) ? t("acct.emailExists") : ((err && err.message) || t("acct.sendFail"))));
       return;
@@ -2516,7 +2672,7 @@
         if (res.sent) pfMsg(t("acct.emailChangeCode"), true);
         else pfMsg(t("acct.emailChangeCode") + " — " + t("acct.demoNote").replace("{code}", code), true);
       }).catch(() => pfMsg(t("acct.sendFail")));
-    } else { renderAccount(); pfMsg(t("acct.saved"), true); showToast(t("acct.saved")); }
+    } else { paintLoggedInAccount(currentUser()); pfMsg(t("acct.saved"), true); showToast(t("acct.saved")); }
   });
   const pfVerifyBtn = $("#pfVerifyBtn");
   if (pfVerifyBtn) pfVerifyBtn.addEventListener("click", () => {
@@ -2526,7 +2682,7 @@
       MAHOApi.verifyEmailChange({ code: entered }).then((res) => {
         setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
         pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
-        renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
+        paintLoggedInAccount(res.user); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
       }).catch(() => pfMsg(t("acct.badCode")));
       return;
     }
@@ -2535,35 +2691,125 @@
     updateUser((usr) => { usr.email = newEmail; usr.id = newEmail; });
     setSession(Object.assign({}, getSession(), { email: newEmail, id: newEmail }));
     pendingEmailChange = null; if ($("#pf_code")) $("#pf_code").value = "";
-    renderAccount(); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
+    paintLoggedInAccount(currentUser()); pfMsg(t("acct.emailUpdated"), true); showToast(t("acct.emailUpdated"));
   });
   const payTypeEl = $("#pay_type");
-  function togglePayCardExtra() { const ex = $("#payCardExtra"); if (ex) ex.hidden = (payTypeEl && payTypeEl.value !== "card"); }
-  if (payTypeEl) payTypeEl.addEventListener("change", togglePayCardExtra);
-  togglePayCardExtra();
+  function togglePayFields() {
+    const type = (payTypeEl && payTypeEl.value) || "bank";
+    const bank = $("#payBankFields");
+    const card = $("#payCardFields");
+    if (bank) bank.hidden = type !== "bank";
+    if (card) card.hidden = type !== "card";
+  }
+  if (payTypeEl) payTypeEl.addEventListener("change", togglePayFields);
+  togglePayFields();
+  function buildPaymentEntry(type) {
+    if (type === "bank") {
+      const account = (($("#pay_bank_account") && $("#pay_bank_account").value) || "").trim();
+      const routing = (($("#pay_bank_routing") && $("#pay_bank_routing").value) || "").trim();
+      const holder = (($("#pay_bank_holder") && $("#pay_bank_holder").value) || "").trim();
+      if (!account || !holder) return null;
+      if (account.length > 64 || routing.length > 64 || holder.length > 120) return null;
+      return {
+        id: "bank_" + Date.now(),
+        type: "bank",
+        bankAccountNumber: account,
+        bankRoutingNumber: routing,
+        bankAccountHolderName: holder,
+        number: account,
+        routing: routing,
+        holder: holder,
+      };
+    }
+    const holder = (($("#pay_holder") && $("#pay_holder").value) || "").trim();
+    const number = toEnDigits((($("#pay_number") && $("#pay_number").value) || "").trim()).replace(/[\s-]/g, "");
+    const digits = number.replace(/[^0-9]/g, "");
+    if (digits.length < 4) return null;
+    const last4 = digits.slice(-4);
+    const masked = "**** **** **** " + last4;
+    return {
+      id: "card_" + Date.now(),
+      type: "card",
+      holder: holder,
+      number: masked,
+      maskedNumber: masked,
+      last4: last4,
+      expiry: (($("#pay_expiry") && $("#pay_expiry").value) || "").trim().slice(0, 7),
+      cardAddr: (($("#pay_cardaddr") && $("#pay_cardaddr").value) || "").trim().slice(0, 200),
+    };
+  }
+  function clearPayForm() {
+    ["#pay_bank_account", "#pay_bank_routing", "#pay_bank_holder", "#pay_holder", "#pay_number", "#pay_expiry", "#pay_cardaddr", "#pay_cvv"].forEach((s) => {
+      if ($(s)) $(s).value = "";
+    });
+  }
+  function upsertPayments(list, entry) {
+    const pays = Array.isArray(list) ? list.slice() : [];
+    const idx = pays.findIndex((p) => p && p.type === entry.type);
+    if (idx >= 0) {
+      entry.id = pays[idx].id || entry.id;
+      pays[idx] = entry;
+    } else {
+      pays.push(entry);
+    }
+    return pays;
+  }
   const addPayBtn = $("#addPayBtn");
   if (addPayBtn) addPayBtn.addEventListener("click", () => {
-    const u = currentUser(); if (!u) return;
-    const type = $("#pay_type").value;
-    const holder = ($("#pay_holder").value || "").trim();
-    const number = ($("#pay_number").value || "").trim();
-    if (!number) { pfMsg(t("acct.needAll")); return; }
-    const entry = { id: Date.now(), type: type, holder: holder, number: number };
-    if (type === "card") {
-      entry.cvv = ($("#pay_cvv").value || "").trim();
-      entry.expiry = ($("#pay_expiry").value || "").trim();
-      entry.cardAddr = ($("#pay_cardaddr").value || "").trim();
+    const type = (payTypeEl && payTypeEl.value) || "bank";
+    const entry = buildPaymentEntry(type);
+    if (!entry) { pfMsg(t("acct.needAll")); return; }
+    const applyLocal = (payments) => {
+      updateUser((usr) => { usr.payments = payments; });
+      const u = currentUser();
+      if (u) renderPayList(u);
+    };
+    if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+      MAHOApi.me().then((res) => {
+        const payments = upsertPayments((res.user && res.user.payments) || [], entry);
+        return MAHOApi.updateMe({ payments: payments }).then((saved) => {
+          setSession(sessionFromApiUser(saved.user, MAHOApi.getToken("user")));
+          clearPayForm();
+          paintLoggedInAccount(saved.user);
+          pfMsg(t("pay.savedOk"), true);
+          showToast(t("pay.savedOk"));
+        });
+      }).catch((err) => {
+        if (err && err.status === 401) return;
+        pfMsg((err && err.message) || t("acct.sendFail"));
+      });
+      return;
     }
-    updateUser((usr) => { usr.payments = usr.payments || []; usr.payments.push(entry); });
-    ["#pay_holder", "#pay_number", "#pay_cvv", "#pay_expiry", "#pay_cardaddr"].forEach((s) => { if ($(s)) $(s).value = ""; });
-    renderPayList(currentUser()); showToast(t("acct.saved"));
+    const u = currentUser();
+    if (!u) { pfMsg(t("acct.sessionExpired")); return; }
+    const payments = upsertPayments(u.payments || [], entry);
+    applyLocal(payments);
+    clearPayForm();
+    pfMsg(t("pay.savedOk"), true);
+    showToast(t("pay.savedOk"));
   });
   const payListEl = $("#payList");
   if (payListEl) payListEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-delpay]"); if (!b) return;
     const id = b.getAttribute("data-delpay");
-    updateUser((usr) => { usr.payments = (usr.payments || []).filter((p) => String(p.id) !== String(id)); });
-    renderPayList(currentUser());
+    const removeLocal = () => {
+      updateUser((usr) => { usr.payments = (usr.payments || []).filter((p) => String(p.id) !== String(id)); });
+      renderPayList(currentUser());
+    };
+    if (apiOnline && window.MAHOApi && MAHOApi.getToken("user")) {
+      MAHOApi.me().then((res) => {
+        const payments = ((res.user && res.user.payments) || []).filter((p) => String(p.id) !== String(id));
+        return MAHOApi.updateMe({ payments: payments }).then((saved) => {
+          setSession(sessionFromApiUser(saved.user, MAHOApi.getToken("user")));
+          paintLoggedInAccount(saved.user);
+        });
+      }).catch((err) => {
+        if (err && err.status === 401) return;
+        removeLocal();
+      });
+      return;
+    }
+    removeLocal();
   });
 
   /* category cards -> filter + scroll to products */
