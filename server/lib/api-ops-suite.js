@@ -473,6 +473,9 @@ function mountOpsSuite(app, ctx) {
       returnNumber: o.returnRequest.id || o.id + "-R",
       status: o.status,
       returnPickupStatus: o.returnRequest.returnPickupStatus || "assigned",
+      /* Canonical method for UI classification/display (additive; no behavior change) */
+      method: normalizeReturnMethod(o.returnRequest.method) || o.returnRequest.method || null,
+      missionType: "return_pickup",
       customerName: (o.customer && o.customer.name) || "",
       phone: (o.returnRequest.pickup && o.returnRequest.pickup.phone) || (o.customer && o.customer.phone) || "",
       pickupAddress: (o.returnRequest.pickup && o.returnRequest.pickup.address) || "",
