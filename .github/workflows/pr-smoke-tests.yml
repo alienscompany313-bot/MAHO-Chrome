@@ -60,3 +60,6 @@ jobs:
 
       - name: Smoke production ops suite
         run: node scripts/smoke-production-ops.js
+
+      - name: Smoke final additions
+        run: node scripts/smoke-final-additions.js

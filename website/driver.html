@@ -74,11 +74,16 @@
         var box=$("#returnList");
         if(!list.length){ box.innerHTML="<p class='muted'>ماموریت برگشتی نیست.</p>"; return; }
         box.innerHTML=list.map(function(p){
+          var collected = p.returnPickupStatus === "picked_up" || p.returnPickupStatus === "returned_to_store" || p.returnPickupStatus === "completed" || p.pickupConfirmed;
           var cash = "";
           if (p.cashEligible) {
-            if (p.returnPickupStatus === "picked_up" || p.returnPickupStatus === "returned_to_store" || p.returnPickupStatus === "completed") {
-              cash = '<div class="ok">مبلغ نقدی قابل پرداخت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
-                '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">پول نقد به مشتری پرداخت شد</button>';
+            if (collected) {
+              if (p.refundStatus === "paid" || p.cashRefundPaid) {
+                cash = '<div class="ok">بازپرداخت نقدی قبلاً ثبت شده است.</div>';
+              } else {
+                cash = '<div class="ok">مبلغ نقدی قابل پرداخت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+                  '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">پول نقد به مشتری پرداخت شد</button>';
+              }
             } else {
               cash = '<div class="muted">پس از تأیید «جنس برگشتی را دریافت کردم» می‌توانید refund نقدی را ثبت کنید.</div>';
             }
@@ -86,6 +91,12 @@
             cash = '<div class="muted">Refund غیرنقدی — فقط جمع‌آوری کالا</div>';
           }
           var photoNote=p.photoRequired?'<span class="badge fail">عکس الزامی</span>':'<span class="badge">عکس اختیاری</span>';
+          var confirmBlock = collected
+            ? '<div class="ok" style="margin-top:8px">این کالا قبلاً دریافت شده است.'+(p.pickedUpAt?(' — '+new Date(p.pickedUpAt).toLocaleString("fa-AF")):"")+'</div>'
+            : '<div class="acts" style="margin-top:8px"><button class="btn btn-gold" data-ret-confirm="'+p.orderId+'">جنس برگشتی را دریافت کردم</button></div>';
+          var photoBlock = collected ? "" :
+            '<div style="margin-top:8px"><label class="muted">عکس Pickup</label><input type="file" class="ret-photo" accept="image/*" capture="environment">'+
+            '<button class="btn btn-outline" data-ret-photo="'+p.orderId+'">آپلود عکس</button></div>';
           return '<div class="card" data-ret="'+p.orderId+'">'+
             '<div><b dir="ltr">#'+p.orderId+'</b> · <span class="badge">'+ (p.returnPickupStatus||"") +'</span> '+photoNote+'</div>'+
             '<div>'+ (p.customerName||"") +' · <span dir="ltr">'+ (p.phone||"") +'</span></div>'+
@@ -95,9 +106,8 @@
             '<div>روش پرداخت اصلی: '+ (p.payment||"—") +'</div>'+
             '<div>مبلغ قابل برگشت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
             (p.mapsUrl?('<div class="acts"><a class="btn btn-outline" target="_blank" rel="noopener" href="'+p.mapsUrl+'">نقشه</a></div>'):'')+
-            '<div style="margin-top:8px"><label class="muted">عکس Pickup</label><input type="file" class="ret-photo" accept="image/*" capture="environment">'+
-            '<button class="btn btn-outline" data-ret-photo="'+p.orderId+'">آپلود عکس</button></div>'+
-            '<div class="acts" style="margin-top:8px"><button class="btn btn-gold" data-ret-confirm="'+p.orderId+'">جنس برگشتی را دریافت کردم</button></div>'+
+            photoBlock+
+            confirmBlock+
             cash+'<p class="muted msg"></p></div>';
         }).join("");
       }).catch(function(){ $("#returnList").innerHTML=""; });
@@ -174,9 +184,19 @@
         }
         if(retConfirm){
           if(!confirm("تأیید دریافت کالای برگشتی؟")) return;
+          var btnC = e.target.closest("[data-ret-confirm]");
+          if(btnC){ btnC.disabled=true; btnC.textContent="در حال ثبت…"; }
           MAHOApi.request("/api/driver/return-pickups/"+encodeURIComponent(retConfirm)+"/confirm",{ method:"POST", body:{}, token:MAHOApi.getToken("driver") })
             .then(function(){ if(msg){ msg.className="ok"; msg.textContent="ثبت شد"; } loadReturnPickups(); })
-            .catch(function(err){ if(msg){ msg.className="err"; msg.textContent=(err&&err.message)||"خطا"; } });
+            .catch(function(err){
+              var m=(err&&err.message)||"خطا";
+              var data=err&&err.data;
+              if((data&&data.error==="already_collected") || /already_collected|قبلاً دریافت/i.test(m)) {
+                m=(data&&data.message)||"این کالا قبلاً دریافت شده است.";
+              }
+              if(msg){ msg.className="err"; msg.textContent=m; }
+              loadReturnPickups();
+            });
           return;
         }
         if(cash){
@@ -202,7 +222,11 @@
         return MAHOApi.driverSetStatus(id,{ status:st, note:note, reason:note }).then(function(res){
           var ord=(res&&res.order)||{ driverStatus:st, id:id };
           applyLocalStatus(card, ord.driverStatus||st);
-          msg.className="ok"; msg.textContent="ثبت شد ✓";
+          if(res && res.noop){
+            msg.className="ok"; msg.textContent=res.message||"این وضعیت قبلاً ثبت شده است.";
+          } else {
+            msg.className="ok"; msg.textContent="ثبت شد ✓";
+          }
           return reloadOrders();
         });
       };

@@ -1165,8 +1165,27 @@
     };
   }
   function orderStatusText(code, order) {
+    if (LANG !== "en" && order && order.statusLabelFa) return order.statusLabelFa;
     if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG, order);
     return code || "";
+  }
+  function formatStatusWhen(ts) {
+    try {
+      return new Date(ts).toLocaleString(LANG === "en" ? "en-US" : "fa-AF", {
+        day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+      });
+    } catch (_) { return ""; }
+  }
+  function itemStatusLabelLocal(order, it) {
+    if (it && it.statusLabelFa) return it.statusLabelFa;
+    const st = (it && it.itemStatus) || "";
+    const map = {
+      pending: "در انتظار تأیید", approved: "تأیید شد", rejected: "رد شد", cancelled: "لغو شد",
+      shipped: "ارسال شد", delivered: "تحویل داده شد",
+      return_requested: "درخواست برگشت ثبت شد", return_approved: "برگشت تأیید شد",
+      return_rejected: "برگشت رد شد", return_completed: "برگشت تکمیل شد",
+    };
+    return map[st] || st || "";
   }
   function withApiOrderStatus(order) {
     if (!order) return order;
@@ -1462,12 +1481,19 @@
             pending.push({ id: bid, code: it.code });
             bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
           }
-          return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
+          const itemLabel = it.statusLabelFa || itemStatusLabelLocal(o, it);
+          const ts = it.statusAt || it.deliveredAt || it.shippedAt || null;
+          const tsStr = ts ? formatStatusWhen(ts) : "";
+          const statusLine = itemLabel
+            ? `<div class="item-status note" style="margin-top:4px;font-weight:700">${escHtml(itemLabel)}${tsStr ? " — " + escHtml(tsStr) : ""}</div>`
+            : "";
+          return `<li><div>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}</div>${statusLine}${bc}</li>`;
         }).join("");
         const d = new Date(o.date);
         const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
         const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
         const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
+        const orderLabel = (LANG !== "en" && o.statusLabelFa) ? o.statusLabelFa : (display.status || "");
         const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
         const canCancel = !!cancelUi.canCancel;
         const canReturn = code === "delivered" && !o.returnRequest && (
@@ -1518,7 +1544,7 @@
           <div class="order-card">
             <div class="order-top">
               <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
-              <span class="order-status">${display.status || ""}</span>
+              <span class="order-status">${escHtml(orderLabel || "")}</span>
             </div>
             <ul>${items}</ul>
             <div class="order-top">
@@ -2340,6 +2366,8 @@
     setSel("#home .lead", pick("heroLead"));
     setSel('[data-i18n="footer.desc"]', pick("footerDesc"));
     setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
+    setSel('[data-i18n="footer.copy"]', pick("footerCopy"));
+    setSel('[data-i18n="footer.made"]', pick("footerMade"));
     /* Phone: never run through RTL textContent alone — keep LTR isolate */
     const phoneRaw = String(c.footerPhone || t("footer.phone") || "+93791505454").trim();
     setFooterPhone(phoneRaw);

@@ -15,6 +15,7 @@ const ALL_PERMS = [
   "returns_reasons", "returns_assign", "returns_refund", "returns_analytics",
   "customers_block", "customers_edit",
   "marketing_send", "marketing_export", "marketing_giveaway",
+  "marketing_giveaway_draw", "marketing_giveaway_notify", "marketing_giveaway_claim",
   "stores", "inventory", "discounts_rules", "staff_manage",
 ];
 
@@ -33,6 +34,9 @@ const PERM_PARENT = {
   marketing_send: "marketing",
   marketing_export: "marketing",
   marketing_giveaway: "marketing",
+  marketing_giveaway_draw: "marketing_giveaway",
+  marketing_giveaway_notify: "marketing_giveaway",
+  marketing_giveaway_claim: "marketing_giveaway",
   stores: "settings",
   inventory: "products",
   discounts_rules: "settings",
@@ -42,7 +46,7 @@ const PERM_PARENT = {
 const PERM_GROUPS = [
   { id: "sales", title: "فروش / Orders & Sales", keys: ["orders", "orders_approve", "orders_reject", "orders_fulfill", "orders_cancel", "orders_ship", "pos", "reports"] },
   { id: "customers", title: "مشتریان", keys: ["customers", "customers_edit", "customers_block"] },
-  { id: "marketing", title: "بازاریابی", keys: ["marketing", "marketing_send", "marketing_export", "marketing_giveaway"] },
+  { id: "marketing", title: "بازاریابی", keys: ["marketing", "marketing_send", "marketing_export", "marketing_giveaway", "marketing_giveaway_draw", "marketing_giveaway_notify", "marketing_giveaway_claim"] },
   { id: "returns", title: "برگشتی‌ها", keys: ["returns", "returns_reasons", "returns_assign", "returns_refund", "returns_analytics"] },
   { id: "delivery", title: "رانندگان / Delivery", keys: ["drivers", "delivery"] },
   { id: "staff", title: "کارمندان", keys: ["staff", "staff_manage"] },
@@ -91,8 +95,14 @@ function hasPerm(session, perm) {
   if (perm === "any") return true;
   const need = String(perm || "").toLowerCase();
   if (perms.indexOf(need) >= 0) return true;
-  const parent = PERM_PARENT[need];
-  if (parent && perms.indexOf(parent) >= 0) return true;
+  /* Walk parent chain so marketing grants marketing_giveaway_claim, etc. */
+  let parent = PERM_PARENT[need];
+  const seen = new Set();
+  while (parent && !seen.has(parent)) {
+    if (perms.indexOf(parent) >= 0) return true;
+    seen.add(parent);
+    parent = PERM_PARENT[parent];
+  }
   return false;
 }
 

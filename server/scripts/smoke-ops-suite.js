@@ -193,6 +193,8 @@ async function main() {
     const draw = await req("POST", "/api/admin/giveaways/" + gw.data.giveaway.id + "/draw", { token: tok, body: {} });
     assert(draw.status === 200 && draw.data.giveaway.status === "drawn", "draw");
     assert(draw.data.giveaway.winners.length === 1, "one winner");
+    assert(draw.data.giveaway.winners[0].claimCode && /^MAHO-GIVE-/.test(draw.data.giveaway.winners[0].claimCode), "claim code issued");
+    assert(draw.data.giveaway.winners[0].claimStatus === "unclaimed", "claim unclaimed");
     const draw2 = await req("POST", "/api/admin/giveaways/" + gw.data.giveaway.id + "/draw", { token: tok, body: {} });
     assert(draw2.status === 409, "no re-draw");
     ok("giveaway draw + finalize");

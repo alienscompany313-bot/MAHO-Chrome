@@ -101,6 +101,36 @@ function extendMigrate(data) {
   /* payment method toggles */
   if (ensurePaymentMethods(data.config)) changed = true;
 
+  /* Official MAHO WhatsApp (giveaway / support) — additive */
+  if (data.config.officialWhatsAppNumber == null) {
+    data.config.officialWhatsAppNumber = data.config.whatsapp
+      || (data.config.content && data.config.content.footerPhone)
+      || "";
+    changed = true;
+  }
+
+  /* Editable footer / brand content defaults so live footer never blanks */
+  if (!data.config.content || typeof data.config.content !== "object") {
+    data.config.content = {};
+    changed = true;
+  }
+  const contentDefaults = {
+    brandSub: "لباس و لوازم بانوان",
+    brandSub_en: "Women's fashion & essentials",
+    footerDesc: "لباس و لوازم بانوان MAHO — پوشاک و لوازم زنانه با کیفیت ممتاز، ضمانت اصالت و خدمات پس از فروش قابل اعتماد.",
+    footerDesc_en: "MAHO women's fashion & essentials — quality apparel with authenticity guarantee and trusted after-sales support.",
+    footerCopy: "MAHO — همه‌ی حقوق محفوظ است.",
+    footerCopy_en: "MAHO — All rights reserved.",
+    footerMade: "ساخته‌شده با ❤ برای مشتریان MAHO",
+    footerMade_en: "Made with ❤ for MAHO customers",
+  };
+  Object.keys(contentDefaults).forEach((k) => {
+    if (data.config.content[k] == null || data.config.content[k] === "") {
+      data.config.content[k] = contentDefaults[k];
+      changed = true;
+    }
+  });
+
   /* delivery defaults */
   if (!data.config.delivery || typeof data.config.delivery !== "object") {
     data.config.delivery = { enabled: true, perKm: 20, freeKm: 0, urgentFee: 50, minOrder: 0, maxKm: 0, timeslots: [] };

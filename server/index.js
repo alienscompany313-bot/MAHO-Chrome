@@ -146,6 +146,11 @@ function initMail(siteFallback) {
       const s = (db.stores && db.stores[0]) || {};
       return s.phone || (db.config && db.config.footerPhone) || (db.config && db.config.content && db.config.content.footerPhone) || "";
     },
+    getOfficialWhatsApp: () => {
+      const cfg = db.config || {};
+      const c = cfg.content || {};
+      return String(cfg.officialWhatsAppNumber || cfg.whatsapp || c.officialWhatsAppNumber || c.footerPhone || "").trim();
+    },
   });
 }
 
@@ -684,6 +689,41 @@ app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (re
     if (b.config.hesabBanner && b.config.hesabBanner.link) {
       const { ensureHttpsUrl: httpsU } = require("./lib/geo");
       b.config.hesabBanner.link = httpsU(b.config.hesabBanner.link);
+    }
+    /* Sanitize editable site content — plain text only (XSS-safe) */
+    if (b.config.content && typeof b.config.content === "object") {
+      const { sanitizeText: st } = require("./lib/security");
+      const clean = {};
+      Object.keys(b.config.content).forEach((k) => {
+        const v = b.config.content[k];
+        if (typeof v === "string") clean[k] = st(v, 2000);
+        else if (Array.isArray(v)) {
+          clean[k] = v.map((row) => {
+            if (!row || typeof row !== "object") return row;
+            const out = {};
+            Object.keys(row).forEach((rk) => {
+              out[rk] = typeof row[rk] === "string" ? st(row[rk], 500) : row[rk];
+            });
+            return out;
+          });
+        } else clean[k] = v;
+      });
+      b.config.content = clean;
+      const prev = JSON.stringify((db.config && db.config.content) || {});
+      const next = JSON.stringify(clean);
+      if (prev !== next) {
+        const { pushAudit } = require("./lib/audit");
+        pushAudit(db, {
+          actor: (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin",
+          action: "site_content_updated",
+          entityType: "config",
+          entityId: "content",
+          meta: { keys: Object.keys(clean) },
+        });
+      }
+    }
+    if (b.config.officialWhatsAppNumber != null) {
+      b.config.officialWhatsAppNumber = sanitizeText(String(b.config.officialWhatsAppNumber), 40);
     }
     db.config = Object.assign({}, db.config, b.config);
   }
@@ -1237,9 +1277,34 @@ app.post("/api/orders", (req, res) => {
 
   res.json({ order: order, warning: deliveryWarning || undefined });
 });
-app.get("/api/orders", requireUser, (req, res) =>
-  res.json({ orders: db.orders.filter((o) => o.userId === req.user.id) })
-);
+app.get("/api/orders", requireUser, (req, res) => {
+  const {
+    normalizeOrderItems,
+    customerItemStatusLabel,
+    customerOrderAggregateLabel,
+    itemStatusTimestamp,
+    publicItem,
+  } = require("./lib/order-items");
+  const list = (db.orders || []).filter((o) => o && o.userId === req.user.id).map((o) => {
+    normalizeOrderItems(o);
+    const aggregateLabel = customerOrderAggregateLabel(o);
+    const items = (o.items || []).map((it) => {
+      const pub = publicItem(it) || it;
+      const label = customerItemStatusLabel(o, it);
+      const ts = itemStatusTimestamp(it, o);
+      return Object.assign({}, pub, {
+        statusLabelFa: label,
+        statusAt: ts,
+      });
+    });
+    return Object.assign({}, o, {
+      items,
+      statusLabelFa: aggregateLabel,
+      aggregateFlags: o.aggregateFlags || {},
+    });
+  });
+  res.json({ orders: list });
+});
 function findOrderForReq(req) {
   const s = auth(req);
   const o = db.orders.find((x) => x.id === req.params.id);

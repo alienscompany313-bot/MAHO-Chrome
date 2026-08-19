@@ -555,6 +555,10 @@
           </select>
         </div>
       </div>
+      <div class="grid2">
+        <div class="field"><label>فروشگاه دریافت جایزه</label><select id="gwClaimStore"><option value="">— انتخاب فروشگاه —</option></select></div>
+        <div class="field"><label>مهلت دریافت (اختیاری)</label><input id="gwClaimDeadline" type="date"></div>
+      </div>
       <div class="grid2" id="gwMetaRow">
         <div class="field"><label>از تاریخ (purchased_range)</label><input id="gwFrom" type="date"></div>
         <div class="field"><label>تا تاریخ</label><input id="gwTo" type="date"></div>
@@ -565,6 +569,17 @@
         <button type="button" class="btn btn-outline" id="gwPreview">پیش‌نمایش واجدین</button>
         <button type="button" class="btn btn-gold" id="gwCreate">ایجاد قرعه‌کشی</button>
         <a class="btn btn-outline" href="/api/admin/giveaways/export" id="gwExportLink">Export CSV</a>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0;background:#fbf8f1">
+        <h3 style="margin:0 0 8px;font-size:15px">تحویل جایزه (Claim)</h3>
+        <div class="grid2">
+          <div class="field"><label>کد دریافت</label><input id="gwClaimCode" dir="ltr" placeholder="MAHO-GIVE-..."></div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+            <button type="button" class="btn btn-outline" id="gwClaimLookup">بررسی کد</button>
+            <button type="button" class="btn btn-gold" id="gwClaimRedeem">تحویل جایزه</button>
+          </div>
+        </div>
+        <div id="gwClaimPreview" class="note"></div>
       </div>
       <div id="gwList"></div>
     </div>
@@ -727,10 +742,15 @@
       <div class="grid2">
         <div class="field"><label>توضیح فوتر (فارسی)</label><input id="c_footerDesc"></div>
         <div class="field"><label>توضیح فوتر (English)</label><input id="c_footerDesc_en" dir="ltr"></div>
+        <div class="field"><label>کپی‌رایت فوتر (فارسی)</label><input id="c_footerCopy" placeholder="MAHO — همه‌ی حقوق محفوظ است."></div>
+        <div class="field"><label>کپی‌رایت فوتر (English)</label><input id="c_footerCopy_en" dir="ltr"></div>
+        <div class="field"><label>متن پایین فوتر (فارسی)</label><input id="c_footerMade" placeholder="ساخته‌شده با ❤ برای مشتریان MAHO"></div>
+        <div class="field"><label>متن پایین فوتر (English)</label><input id="c_footerMade_en" dir="ltr"></div>
         <div class="field"><label>آدرس فوتر (فارسی)</label><input id="c_footerAddr"></div>
         <div class="field"><label>آدرس فوتر (English)</label><input id="c_footerAddr_en" dir="ltr"></div>
         <div class="field"><label>نمبر تماس فوتر</label><input id="c_footerPhone" dir="ltr"></div>
         <div class="field"><label>ایمیل فوتر</label><input id="c_footerEmail" dir="ltr"></div>
+        <div class="field"><label>واتسپ رسمی MAHO</label><input id="c_officialWhatsAppNumber" dir="ltr" placeholder="+9379..."></div>
       </div>
       <h3 style="margin:14px 0 6px;font-size:16px">شبکه‌های اجتماعی (لینک)</h3>
       <div class="sub">هر خانه‌ای که خالی بماند، آیکن آن در فوتر نمایش داده نمی‌شود.</div>
@@ -1691,13 +1711,15 @@
       };
       if(window.MAHOApi) MAHOApi.setConfiguredUrl(state.config.apiUrl||"");
     }
-    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","instagram","telegram","whatsappLink","facebook","tiktok",
+    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerCopy","footerCopy_en","footerMade","footerMade_en","footerAddr","footerAddr_en","footerPhone","footerEmail","officialWhatsAppNumber","instagram","telegram","whatsappLink","facebook","tiktok",
       "hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en",
       "hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en",
       "hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
     function faPct(v){ return String(Math.round((parseFloat(v)||1)*100)).replace(/[0-9]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹"[d]})+"٪"; }
     function fillContent(){
       var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
+      var owa=$("#c_officialWhatsAppNumber");
+      if(owa && !owa.value && state.config && state.config.officialWhatsAppNumber) owa.value=state.config.officialWhatsAppNumber;
       var hs=$("#c_heroScale"); if(hs){ hs.value=(c.heroScale&&parseFloat(c.heroScale))?c.heroScale:"1"; var lbl=$("#heroScaleVal"); if(lbl) lbl.textContent=faPct(hs.value); }
       var stats=c.stats||[];
       var box=$("#statsRows");
@@ -1716,6 +1738,7 @@
       [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:(val!==""?Number(val):""),label:lab,label_en:laben}; else stats[i]=null; });
       if(stats.some(function(x){return x;})) c.stats=stats;
       if(!state.config) state.config={}; state.config.content=c;
+      if(c.officialWhatsAppNumber) state.config.officialWhatsAppNumber=c.officialWhatsAppNumber;
     }
     var barcodeSeqA=0;
     function payLabelFa(p){ return p==="bank"?"انتقال بانکی":p==="card"?"کارت آنلاین":p==="hesab"?"حساب پی":"واتساپ"; }
@@ -3400,21 +3423,51 @@
       });
     };
 
+    function loadGwStores(){
+      var sel=$("#gwClaimStore"); if(!sel) return;
+      engFetch("/api/admin/stores/pickup-options").then(function(x){
+        var stores=(x.data&&x.data.stores)||(state.stores||[]);
+        var cur=sel.value;
+        sel.innerHTML='<option value="">— انتخاب فروشگاه —</option>'+stores.map(function(s){
+          return '<option value="'+esc(s.id)+'">'+esc(s.name||s.id)+(s.address?(" — "+esc(s.address)):(""))+'</option>';
+        }).join("");
+        if(cur) sel.value=cur;
+      }).catch(function(){
+        var stores=state.stores||[];
+        sel.innerHTML='<option value="">— انتخاب فروشگاه —</option>'+stores.map(function(s,i){
+          var id=s.id||("store_"+i);
+          return '<option value="'+esc(id)+'">'+esc(s.name||id)+'</option>';
+        }).join("");
+      });
+    }
     function loadGiveaways(){
+      loadGwStores();
       engFetch("/api/admin/giveaways").then(function(x){
         var box=$("#gwList"); if(!box) return;
         var list=(x.data&&x.data.giveaways)||[];
         box.innerHTML=list.map(function(g){
+          var winnersHtml=(g.winners||[]).map(function(w){
+            return '<div class="note" style="border-top:1px dashed var(--line);padding-top:6px;margin-top:6px">'+
+              '<div><b>'+esc(w.name||w.email||"—")+'</b> · <span dir="ltr">'+esc(w.email||"")+'</span></div>'+
+              '<div>کد: <b dir="ltr">'+(w.claimCode?esc(w.claimCode):"—")+'</b> · وضعیت: <span class="tag">'+esc(w.claimStatus||"legacy")+'</span></div>'+
+              '<div>فروشگاه: '+esc(w.claimStoreName||g.claimStoreName||"—")+
+              (w.claimDeadline?(" · مهلت: "+new Date(w.claimDeadline).toLocaleDateString("fa-AF")):"")+
+              (w.claimedAt?(" · تحویل: "+new Date(w.claimedAt).toLocaleString("fa-AF")):"")+
+              '</div></div>';
+          }).join("");
           return '<div class="order-card" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px" data-gwid="'+esc(g.id)+'">'+
             '<b>'+esc(g.title)+'</b> — '+esc(g.prize||"")+' <span class="tag">'+esc(g.status)+'</span>'+
             '<div class="note">rule: '+esc(g.eligibilityRule)+' · participants: '+toFa(g.participantCount||0)+
-            ' · winners: '+toFa((g.winners||[]).length)+'</div>'+
+            ' · winners: '+toFa((g.winners||[]).length)+
+            (g.drawnAt?(' · draw: '+new Date(g.drawnAt).toLocaleString("fa-AF")):"")+
+            (g.claimStoreName?(' · store: '+esc(g.claimStoreName)):"")+
+            '</div>'+
             '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
             (g.status==="draft"?'<button type="button" class="btn btn-gold btn-sm" data-gw-draw="'+esc(g.id)+'">Draw</button>':'')+
             (g.status==="drawn"?'<button type="button" class="btn btn-outline btn-sm" data-gw-notify="'+esc(g.id)+'">ایمیل به برندگان</button>':'')+
             (g.status!=="voided"?'<button type="button" class="btn btn-danger btn-sm" data-gw-void="'+esc(g.id)+'">Void</button>':'')+
             '</div>'+
-            ((g.winners&&g.winners.length)?'<div class="note" dir="ltr">Winners: '+esc(g.winners.map(function(w){return w.email;}).join(", "))+'</div>':'')+
+            winnersHtml+
             '</div>';
         }).join("")||'<p class="note">قرعه‌کشی ثبت نشده</p>';
       });
@@ -3442,16 +3495,54 @@
     };
     if ($("#gwCreate")) $("#gwCreate").onclick=function(){
       var base = gwEligibilityBody();
+      var deadlineVal = ($("#gwClaimDeadline")&&$("#gwClaimDeadline").value)||"";
       engFetch("/api/admin/giveaways",{method:"POST",body:{
         title:($("#gwTitle")&&$("#gwTitle").value)||"",
         prize:($("#gwPrize")&&$("#gwPrize").value)||"",
         description:($("#gwDesc")&&$("#gwDesc").value)||"",
         winnersCount:Number(($("#gwWinners")&&$("#gwWinners").value)||1),
         eligibilityRule: base.eligibilityRule,
-        eligibilityMeta: base.eligibilityMeta
+        eligibilityMeta: base.eligibilityMeta,
+        claimStoreId:($("#gwClaimStore")&&$("#gwClaimStore").value)||"",
+        claimDeadline: deadlineVal ? new Date(deadlineVal).getTime() + 86400000 - 1 : null
       }}).then(function(x){
         if(!x.ok){ alert((x.data&&x.data.error)||"خطا"); return; }
         toast("قرعه‌کشی ساخته شد"); loadGiveaways();
+      });
+    };
+    function renderClaimPreview(c){
+      var box=$("#gwClaimPreview"); if(!box||!c) return;
+      box.innerHTML='<div><b>برنده:</b> '+esc(c.winnerName||"—")+' · <span dir="ltr">'+esc(c.winnerEmail||"")+'</span></div>'+
+        '<div><b>قرعه‌کشی:</b> '+esc(c.giveawayTitle||"")+' · <b>جایزه:</b> '+esc(c.prize||"")+'</div>'+
+        '<div><b>کد:</b> <span dir="ltr">'+esc(c.claimCode||"")+'</span> · <b>وضعیت:</b> '+esc(c.claimStatus||"")+'</div>'+
+        '<div><b>فروشگاه:</b> '+esc(c.claimStoreName||"—")+'</div>'+
+        (c.claimedAt?('<div class="ok">تحویل‌شده در '+new Date(c.claimedAt).toLocaleString("fa-AF")+' توسط '+esc(c.claimedBy||"")+'</div>'):"");
+    }
+    if ($("#gwClaimLookup")) $("#gwClaimLookup").onclick=function(){
+      var code=($("#gwClaimCode")&&$("#gwClaimCode").value)||"";
+      engFetch("/api/admin/giveaways/claims/lookup",{method:"POST",body:{claimCode:code}}).then(function(x){
+        if(!x.ok){ alert((x.data&&x.data.error)||"یافت نشد"); if($("#gwClaimPreview")) $("#gwClaimPreview").textContent=""; return; }
+        renderClaimPreview(x.data.claim);
+      });
+    };
+    if ($("#gwClaimRedeem")) $("#gwClaimRedeem").onclick=function(){
+      var code=($("#gwClaimCode")&&$("#gwClaimCode").value)||"";
+      if(!code){ alert("کد را وارد کنید"); return; }
+      engFetch("/api/admin/giveaways/claims/lookup",{method:"POST",body:{claimCode:code}}).then(function(x){
+        if(!x.ok){ alert((x.data&&x.data.error)||"یافت نشد"); return; }
+        var c=x.data.claim;
+        renderClaimPreview(c);
+        var msg="تحویل جایزه تأیید شود؟\n"+
+          (c.winnerName||c.winnerEmail)+"\n"+
+          (c.giveawayTitle||"")+" — "+(c.prize||"")+"\n"+
+          "کد: "+(c.claimCode||"")+"\n"+
+          "فروشگاه: "+(c.claimStoreName||"—")+"\n"+
+          "وضعیت: "+(c.claimStatus||"");
+        if(!confirm(msg)) return;
+        return engFetch("/api/admin/giveaways/claims/redeem",{method:"POST",body:{claimCode:code,confirm:true}}).then(function(r){
+          if(!r.ok){ alert((r.data&&(r.data.message||r.data.error))||"خطا"); return; }
+          toast("جایزه تحویل شد"); renderClaimPreview(r.data.claim); loadGiveaways();
+        });
       });
     };
     if ($("#gwList")) $("#gwList").addEventListener("click",function(e){

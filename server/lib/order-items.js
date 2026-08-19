@@ -402,6 +402,142 @@ function markShipmentDelivered(order, shipmentId, meta) {
   return { ok: true, shipment: shp, order };
 }
 
+function statusLabelItemFa(code) {
+  const m = {
+    pending: "در انتظار تأیید",
+    approved: "تأیید شد",
+    rejected: "رد شد",
+    cancelled: "لغو شد",
+    preparing: "در حال آماده‌سازی",
+    ready_pickup: "آماده تحویل از فروشگاه",
+    ready_ship: "آماده ارسال",
+    handed_to_driver: "تحویل به درایور",
+    in_transit: "در مسیر",
+    shipped: "ارسال شد",
+    delivered: "تحویل داده شد",
+    return_requested: "درخواست برگشت ثبت شد",
+    return_approved: "برگشت تأیید شد",
+    return_awaiting_pickup: "در انتظار جمع‌آوری",
+    return_driver_en_route: "درایور در مسیر جمع‌آوری",
+    return_collected: "جنس برگشتی جمع‌آوری شد",
+    return_to_store: "به فروشگاه برگشت",
+    return_reviewing: "در حال بررسی برگشتی",
+    return_rejected: "برگشت رد شد",
+    return_completed: "برگشت تکمیل شد",
+    refund_pending: "بازپرداخت در انتظار",
+    refund_completed: "بازپرداخت انجام شد",
+  };
+  return m[code] || code;
+}
+
+/**
+ * Human-readable Dari status for one line, considering order-level return/driver context.
+ */
+function customerItemStatusLabel(order, item) {
+  if (!item) return "";
+  normalizeOrderItems(order);
+  const st = item.itemStatus || mapOrderStatusToItem(order && order.status);
+  const rr = (order && order.returnRequest) || (item && item.returnRequest) || null;
+  const isPickup = order && order.delivery && (
+    order.delivery.method === "pickup" || order.delivery.method === "store_pickup" || order.delivery.method === "store"
+  );
+
+  if (rr && (st === "return_requested" || st === "return_approved" || st === "return_completed" || st.indexOf("return") === 0)) {
+    const rps = rr.returnPickupStatus || "";
+    if (rr.refundStatus === "paid" || rr.cashRefundPaid) return statusLabelItemFa("refund_completed");
+    if (st === "return_completed") return statusLabelItemFa("return_completed");
+    if (rps === "returned_to_store") return statusLabelItemFa("return_to_store");
+    if (rps === "picked_up" || rr.pickupConfirmed) return statusLabelItemFa("return_collected");
+    if (rps === "on_the_way") return statusLabelItemFa("return_driver_en_route");
+    if (rps === "assigned" || rps === "not_assigned") return statusLabelItemFa("return_awaiting_pickup");
+    if (st === "return_approved") return statusLabelItemFa("return_approved");
+    if (st === "return_requested") return statusLabelItemFa("return_requested");
+    if (rr.refundStatus === "approved" || rr.refundStatus === "pending") return statusLabelItemFa("refund_pending");
+  }
+
+  if (st === "approved" && isPickup) return statusLabelItemFa("preparing");
+  if (st === "shipped" && isPickup) return statusLabelItemFa("ready_pickup");
+  if (st === "approved" && !isPickup) {
+    if (order && order.driverStatus === "picked_up") return statusLabelItemFa("handed_to_driver");
+    if (order && order.driverStatus === "in_transit") return statusLabelItemFa("in_transit");
+    return statusLabelItemFa("ready_ship");
+  }
+  if (st === "shipped") {
+    if (order && order.driverStatus === "in_transit") return statusLabelItemFa("in_transit");
+    if (order && order.driverStatus === "picked_up") return statusLabelItemFa("handed_to_driver");
+    return statusLabelItemFa("shipped");
+  }
+  return statusLabelItemFa(st);
+}
+
+function itemStatusTimestamp(item, order) {
+  if (!item) return null;
+  const st = item.itemStatus;
+  if (st === "delivered" && item.deliveredAt) return item.deliveredAt;
+  if (st === "shipped" && item.shippedAt) return item.shippedAt;
+  if (st === "cancelled" && item.cancelledAt) return item.cancelledAt;
+  if (st === "rejected" && item.rejectedAt) return item.rejectedAt;
+  if (st === "return_completed" && item.returnRequest && item.returnRequest.completedAt) {
+    return item.returnRequest.completedAt;
+  }
+  const rr = order && order.returnRequest;
+  if (rr) {
+    if (rr.cashRefundPaidAt) return rr.cashRefundPaidAt;
+    if (rr.pickedUpAt) return rr.pickedUpAt;
+    if (rr.completedAt) return rr.completedAt;
+  }
+  return null;
+}
+
+/** Aggregate Dari label for mixed multi-item orders. */
+function customerOrderAggregateLabel(order) {
+  if (!order) return "";
+  normalizeOrderItems(order);
+  aggregateOrderStatus(order);
+  const flags = order.aggregateFlags || {};
+  const items = order.items || [];
+  const statuses = items.map((it) => it.itemStatus);
+  const some = (s) => statuses.indexOf(s) >= 0;
+  const allSame = statuses.length && statuses.every((s) => s === statuses[0]);
+
+  if (flags.partiallyReturned || (some("return_completed") && !statuses.every((s) => s === "return_completed"))) {
+    return "بخشی برگشت داده شد";
+  }
+  if (flags.partiallyCancelled || (some("cancelled") && !statuses.every((s) => s === "cancelled"))) {
+    return "بخشی لغو شد";
+  }
+  if (some("delivered") && (some("shipped") || some("approved") || some("pending"))) {
+    return "بخشی تحویل داده شد";
+  }
+  if (some("shipped") && (some("approved") || some("pending"))) {
+    return "بخشی ارسال شد";
+  }
+  if (flags.partiallyRejected || (some("rejected") && !statuses.every((s) => s === "rejected"))) {
+    return "بخشی رد شد";
+  }
+  if (flags.partiallyApproved || (some("approved") && some("pending"))) {
+    return "بخشی تأیید شد";
+  }
+  if (allSame) {
+    return customerItemStatusLabel(order, items[0]);
+  }
+  /* Fallback to order-level mapping */
+  const code = order.status || aggregateOrderStatus(order);
+  const orderMap = {
+    new: "در انتظار تأیید",
+    pending: "در انتظار تأیید",
+    confirmed: "تأیید شد",
+    dispatched: "ارسال شد",
+    delivered: "تحویل داده شد",
+    cancelled: "لغو شد",
+    return_requested: "درخواست برگشت ثبت شد",
+    return_approved: "برگشت تأیید شد",
+    return_rejected: "برگشت رد شد",
+    return_completed: "برگشت تکمیل شد",
+  };
+  return orderMap[code] || statusLabelItemFa(code) || String(code || "");
+}
+
 function publicItem(it) {
   if (!it) return null;
   return {
@@ -427,22 +563,6 @@ function publicItem(it) {
   };
 }
 
-function statusLabelItemFa(code) {
-  const m = {
-    pending: "در انتظار تأیید",
-    approved: "تأییدشده",
-    rejected: "ردشده",
-    cancelled: "لغوشده",
-    shipped: "ارسال‌شده",
-    delivered: "تحویل‌شده",
-    return_requested: "درخواست برگشت",
-    return_approved: "برگشت تأییدشده",
-    return_rejected: "برگشت ردشده",
-    return_completed: "برگشت تکمیل‌شده",
-  };
-  return m[code] || code;
-}
-
 module.exports = {
   ITEM_STATUSES,
   CUSTOMER_CANCEL_WINDOW_MS,
@@ -465,6 +585,9 @@ module.exports = {
   markShipmentDelivered,
   publicItem,
   statusLabelItemFa,
+  customerItemStatusLabel,
+  customerOrderAggregateLabel,
+  itemStatusTimestamp,
   mapOrderStatusToItem,
   FINAL_NEGATIVE,
   ACTIVE_FULFILL,
