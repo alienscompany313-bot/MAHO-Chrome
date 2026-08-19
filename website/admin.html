@@ -63,11 +63,12 @@
     .stockcell{font-weight:700}.stockcell.low{color:var(--gold-deep)}.stockcell.out{color:var(--red)}
     .field{margin-bottom:12px}
     .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
-    /* Product store assignment: full-width compact rows (override .field label{display:block}). */
-    #f_storeIds{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:100%;gap:8px;margin-top:6px;box-sizing:border-box}
-    #f_storeIds label.store-pick-row{display:flex !important;flex-direction:row;align-items:flex-start;gap:8px;width:100%;max-width:100%;margin:0;font-weight:700;font-size:13px;line-height:1.5;box-sizing:border-box}
-    #f_storeIds label.store-pick-row > input[type="checkbox"]{flex:0 0 auto;margin-top:4px}
-    #f_storeIds label.store-pick-row > span{flex:1 1 auto;min-width:12rem;max-width:100%;white-space:normal;overflow-wrap:break-word;word-break:normal}
+    /* Product store assignment: full-width readable rows (avoid flex span collapse). */
+    #f_storeIds{display:block;width:100%;max-width:100%;margin-top:6px;box-sizing:border-box}
+    #f_storeIds .store-pick-row{display:block;width:100%;max-width:100%;margin:0 0 10px;box-sizing:border-box}
+    #f_storeIds .store-pick-row > label{display:block !important;width:100%;max-width:100%;margin:0;font-weight:700;font-size:13px;line-height:1.55;white-space:normal;overflow-wrap:break-word;word-break:normal}
+    #f_storeIds .store-pick-row > label > input[type="checkbox"]{vertical-align:top;margin:3px 0 0;margin-inline-end:8px}
+    #f_storeIds .store-pick-row .store-pick-id{display:block;margin:2px 0 0 1.6em;font-weight:500;font-size:11px;color:var(--muted)}
     .field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
     .field input:focus,.field select:focus{outline:none;border-color:var(--gold)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
@@ -2503,8 +2504,8 @@
           var addr=String(s.address||s.area||"").trim();
           var shortAddr=addr.length>72?addr.slice(0,69)+"…":addr;
           var label=esc(s.name||id)+(shortAddr?(" — "+esc(shortAddr)):"");
-          var idHint=id?('<div class="note" style="font-weight:500;font-size:11px;margin-top:2px" dir="ltr">'+esc(id)+'</div>'):'';
-          return '<label class="store-pick-row"><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+'> <span>'+label+idHint+'</span></label>';
+          var idHint=id?('<span class="store-pick-id note" dir="ltr">'+esc(id)+'</span>'):'';
+          return '<div class="store-pick-row"><label><input type="checkbox" data-store-id="'+esc(id)+'"'+(checked?" checked":"")+disabled+'> '+label+'</label>'+idHint+'</div>';
         }).join("");
       })();
       $("#f_cat").value=p.cat||firstCat; $("#f_icon").value=p.icon||"dress";

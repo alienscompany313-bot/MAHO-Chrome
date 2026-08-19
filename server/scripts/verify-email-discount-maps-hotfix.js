@@ -125,8 +125,9 @@ const { buildMailer } = require("../lib/email");
 
   /* ---- C. Store selector compact layout markers ---- */
   const admin = fs.readFileSync(path.join(ROOT, "website", "admin.html"), "utf8");
-  assert(/#f_storeIds\s*\{[^}]*flex-direction:\s*column/.test(admin), "store list column flex");
-  assert(/label\.store-pick-row/.test(admin) && /min-width:\s*12rem/.test(admin), "store row min-width prevents collapse");
+  assert(/#f_storeIds\s*\{[^}]*display:\s*block/.test(admin), "store list block full width");
+  assert(/store-pick-row/.test(admin) && /store-pick-id/.test(admin), "store row markers");
+  assert(/white-space:\s*normal/.test(admin) && /overflow-wrap:\s*break-word/.test(admin), "normal wrapping");
   assert(/لینک پروفایل فروشگاه در Google Maps/.test(admin), "admin maps profile field label");
   assert(/مشاهده فروشگاه در Google Maps/.test(admin), "admin orders maps label");
   assert(/data-store-id/.test(admin) && /f_storeAll/.test(admin), "assignment controls preserved");
