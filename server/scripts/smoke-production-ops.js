@@ -405,7 +405,7 @@ async function main() {
       siteUrl: SITE, logoUrl: SITE + "/social-preview.jpg",
     });
     await mail2.pickupReady("a@b.com", unblockedOrder.data.order, unblockedOrder.data.order.pickupStore, "fa");
-    assert(/تحویل حضوری/.test(pickupHtml), "pickup terminology");
+    assert(/آماده دریافت|قابل دریافت/.test(pickupHtml), "pickup terminology");
     assert(/Google Maps/.test(pickupHtml), "maps link");
     assert(/مرکز/.test(pickupHtml), "selected store name");
     assert(!/راننده|دلیوری ارسال/.test(pickupHtml), "no driver shipping wording");

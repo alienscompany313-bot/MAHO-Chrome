@@ -25,6 +25,10 @@
     .field{margin:10px 0;text-align:right}
     .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
     .field input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit}
+    .pass-wrap{position:relative;display:block}
+    .pass-wrap input{padding-inline-end:44px}
+    .pass-toggle{position:absolute;inset-inline-end:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:8px;padding:0}
+    .pass-toggle:hover,.pass-toggle:focus-visible{color:var(--ink);outline:none;background:rgba(0,0,0,.04)}
     .err{color:#c62828;font-size:13px;min-height:18px}
     [hidden]{display:none!important}
   </style>
@@ -53,8 +57,8 @@
     <h1>تنظیم رمز جدید</h1>
     <p class="lead">رمز قبلی یا جدید در ایمیل فرستاده نمی‌شود.</p>
     <div class="field"><label>ایمیل</label><input id="rsEmail" dir="ltr"></div>
-    <div class="field"><label>رمز جدید (حداقل ۸ حرف)</label><input id="rsPass" type="password"></div>
-    <div class="field"><label>تکرار رمز</label><input id="rsPass2" type="password"></div>
+    <div class="field"><label>رمز جدید (حداقل ۸ حرف)</label><input id="rsPass" type="password" autocomplete="new-password"></div>
+    <div class="field"><label>تکرار رمز</label><input id="rsPass2" type="password" autocomplete="new-password"></div>
     <p class="err" id="rsErr"></p>
     <div class="btns">
       <button class="btn btn-gold" type="button" id="rsSubmit">ذخیره رمز</button>
@@ -74,6 +78,31 @@
       document.getElementById("welcomeCard").hidden = true;
       document.getElementById("resetCard").hidden = false;
       document.getElementById("rsEmail").value = email;
+      function wirePass(id) {
+        var input = document.getElementById(id);
+        if (!input || input.dataset.wired === "1") return;
+        input.dataset.wired = "1";
+        var wrap = document.createElement("div");
+        wrap.className = "pass-wrap";
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pass-toggle";
+        btn.setAttribute("aria-label", "نمایش رمز عبور");
+        btn.title = "نمایش رمز عبور";
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 5c-5 0-9.3 3.1-11 7 1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5z"/></svg>';
+        wrap.appendChild(btn);
+        btn.addEventListener("click", function () {
+          var show = input.type === "password";
+          input.type = show ? "text" : "password";
+          var label = show ? "پنهان کردن رمز عبور" : "نمایش رمز عبور";
+          btn.setAttribute("aria-label", label);
+          btn.title = label;
+        });
+      }
+      wirePass("rsPass");
+      wirePass("rsPass2");
       document.getElementById("rsSubmit").onclick = function(){
         var em = document.getElementById("rsEmail").value.trim();
         var p1 = document.getElementById("rsPass").value;

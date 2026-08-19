@@ -76,6 +76,33 @@
     }
   }
 
+  var userSessionExpiredHandlers = [];
+  var userSessionExpiredEmitting = false;
+
+  function onUserSessionExpired(fn) {
+    if (typeof fn === "function") userSessionExpiredHandlers.push(fn);
+    return function unsubscribe() {
+      userSessionExpiredHandlers = userSessionExpiredHandlers.filter(function (h) {
+        return h !== fn;
+      });
+    };
+  }
+
+  function emitUserSessionExpired(err) {
+    if (userSessionExpiredEmitting) return;
+    userSessionExpiredEmitting = true;
+    try {
+      setToken("user", null);
+      userSessionExpiredHandlers.slice().forEach(function (fn) {
+        try {
+          fn(err || { status: 401 });
+        } catch (_) {}
+      });
+    } finally {
+      userSessionExpiredEmitting = false;
+    }
+  }
+
   function request(path, opts) {
     opts = opts || {};
     var headers = Object.assign({ Accept: "application/json" }, opts.headers || {});
@@ -99,6 +126,16 @@
             err.status = r.status;
             err.data = data;
             err.error = data && data.error;
+            /* Customer session is authoritative on the server: clear stale client auth on 401. */
+            if (r.status === 401 && opts.token) {
+              var userTok = "";
+              try {
+                userTok = localStorage.getItem(USER_TOKEN_KEY) || "";
+              } catch (_) {}
+              if (userTok && opts.token === userTok) {
+                emitUserSessionExpired(err);
+              }
+            }
             throw err;
           }
           return data;
@@ -637,6 +674,8 @@
     setToken: setToken,
     isOnlineCached: isOnlineCached,
     markOnline: markOnline,
+    onUserSessionExpired: onUserSessionExpired,
+    emitUserSessionExpired: emitUserSessionExpired,
     request: request,
     health: health,
     probe: probe,

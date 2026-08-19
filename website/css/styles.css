@@ -226,6 +226,16 @@ p { margin: 0 0 1em; }
 .cart-items .field label, .qv-body .field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 5px; }
 .cart-items .field input, .qv-body .field input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; }
 .cart-items .field input:focus, .qv-body .field input:focus { outline: none; border-color: var(--gold); }
+.pass-wrap { position: relative; display: block; }
+.pass-wrap input { padding-inline-end: 44px !important; }
+.pass-toggle {
+  position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; border: 0; background: transparent; color: var(--muted);
+  cursor: pointer; display: grid; place-items: center; border-radius: 8px; padding: 0;
+}
+.pass-toggle:hover, .pass-toggle:focus-visible { color: var(--ink); outline: none; background: rgba(0,0,0,.04); }
+.pass-toggle:focus-visible { box-shadow: 0 0 0 2px var(--gold); }
+.pass-eye { display: block; pointer-events: none; }
 .qv-body .field select { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 14px; background: #fff; }
 .qv-body .field select:focus { outline: none; border-color: var(--gold); }
 .qv-body h4 { font-size: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
