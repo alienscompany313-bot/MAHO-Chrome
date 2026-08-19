@@ -183,9 +183,6 @@ function buildMailer(opts) {
   const getStorePhone = typeof opts.getStorePhone === "function"
     ? opts.getStorePhone
     : () => opts.storePhone || "";
-  const getOfficialWhatsApp = typeof opts.getOfficialWhatsApp === "function"
-    ? opts.getOfficialWhatsApp
-    : () => opts.officialWhatsApp || opts.whatsapp || "";
 
   function wrap(args) {
     return brandWrap(Object.assign({ storePhone: getStorePhone(), lang: args.lang || "fa" }, args));
@@ -407,13 +404,10 @@ ${supportContactHtml(getStorePhone(), lang)}`,
       .map((p) => `<p>${escapeHtml(p)}</p>`).join("");
     const products = Array.isArray(opts.products) ? opts.products : [];
     const base = (siteUrl || "https://mahomarket.com").replace(/\/+$/, "");
-    const { resolveProductImageUrl } = require("./media-url");
     const productHtml = products.map((p) => {
       const url = p.url || (base + "/p/" + encodeURIComponent(p.code || ""));
-      const absImg = resolveProductImageUrl(p.image || p, { siteUrl: base, logoUrl });
-      const alt = (p.name || p.code || "MAHO product") + (p.code ? (" (" + p.code + ")") : "");
-      const img = absImg
-        ? `<img src="${escapeHtml(absImg)}" alt="${escapeHtml(alt)}" width="220" style="width:100%;max-width:220px;height:auto;border:0;border-radius:10px;display:block;margin:0 auto 10px;object-fit:contain">`
+      const img = p.image
+        ? `<img src="${escapeHtml(p.image)}" alt="" style="width:100%;max-width:220px;height:auto;border-radius:10px;display:block;margin:0 auto 10px">`
         : "";
       const priceLine = p.oldPrice
         ? `<span style="text-decoration:line-through;color:#7a7368;margin-inline-end:8px">${escapeHtml(moneyAf(p.oldPrice, "fa"))}</span><strong>${escapeHtml(moneyAf(p.price, "fa"))}</strong>`
@@ -448,49 +442,27 @@ ${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
     const lang = normalizeLang(langArg, order);
     const isEn = lang === "en";
     const c = order.customer || {};
-    const picked = (order && order.pickupStore) || store || {};
-    const s = Object.assign({}, picked, {
-      address: picked.address || picked.area || "",
-      hours: picked.hours || "",
-      phone: picked.phone || getStorePhone() || "",
-      mapsUrl: picked.mapsUrl || "",
-      instructions: picked.instructions || "",
-    });
-    if (!s.mapsUrl && s.lat != null && s.lng != null) {
-      s.mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(s.lat + "," + s.lng);
-    }
-    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل از فروشگاه است | MAHO";
-    const mapsBlock = s.mapsUrl
-      ? (isEn
-        ? `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">Open in Google Maps</a></p>`
-        : `<p><a href="${escapeHtml(s.mapsUrl)}" style="color:#c8a35f;font-weight:700">مشاهده در Google Maps</a></p>`)
-      : "";
-    const instr = s.instructions
-      ? (isEn
-        ? `<p><strong>Pickup instructions:</strong> ${escapeHtml(s.instructions)}</p>`
-        : `<p><strong>راهنمای تحویل حضوری:</strong> ${escapeHtml(s.instructions)}</p>`)
-      : "";
+    const s = store || {};
+    const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده تحویل است | MAHO";
     const html = wrap({
       title,
       preheader: title,
       siteUrl, logoUrl, lang,
       bodyHtml: isEn
         ? `<p>Hello ${escapeHtml(c.name || "")},</p>
-<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready for <strong>store pickup</strong>.</p>
+<p>Your order <strong dir="ltr">${escapeHtml(order.id || "")}</strong> is ready. You can pick it up at the MAHO store.</p>
 <p><strong>Store:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>Full address:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
-${s.hours ? "<br><strong>Opening hours:</strong> " + escapeHtml(s.hours) : ""}</p>
-${mapsBlock}${instr}
+<strong>Address:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>Phone:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
+${s.hours ? "<br><strong>Hours:</strong> " + escapeHtml(s.hours) : ""}</p>
 ${supportContactHtml(getStorePhone(), lang)}`
         : `<p>سلام ${escapeHtml(c.name || "")}،</p>
-<p>سفارش شما برای <strong>تحویل حضوری از فروشگاه</strong> آماده است.</p>
+<p>سفارش شما آماده است و می‌توانید آن را از فروشگاه MAHO تحویل بگیرید.</p>
 <p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
 <strong>فروشگاه:</strong> ${escapeHtml(s.name || "MAHO")}<br>
-<strong>آدرس کامل:</strong> ${escapeHtml(s.address || "—")}<br>
-<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || "")}</span>
+<strong>آدرس:</strong> ${escapeHtml(s.address || "—")}<br>
+<strong>تلفن:</strong> <span dir="ltr">${escapeHtml(s.phone || getStorePhone() || "")}</span>
 ${s.hours ? "<br><strong>ساعات کاری:</strong> " + escapeHtml(s.hours) : ""}</p>
-${mapsBlock}${instr}
 ${supportContactHtml(getStorePhone(), lang)}`,
     });
     return send(to, title, html);
@@ -520,52 +492,14 @@ ${supportContactHtml(getStorePhone(), lang)}`,
   function giveawayWinner(to, opts) {
     opts = opts || {};
     const title = "تبریک! برنده قرعه‌کشی MAHO";
-    const store = opts.store || {};
-    const claimCode = String(opts.claimCode || "").trim();
-    const wa = String(opts.whatsapp || getOfficialWhatsApp() || "").trim();
-    const deadline = opts.claimDeadline ? Number(opts.claimDeadline) : null;
-    const deadlineStr = deadline && Number.isFinite(deadline)
-      ? new Date(deadline).toLocaleString("fa-AF", { dateStyle: "medium", timeStyle: "short" })
-      : "";
-    const hours = store.hours ? `<p><strong>ساعات کار:</strong> ${escapeHtml(store.hours)}</p>` : "";
-    const maps = store.mapsUrl
-      ? `<p><a href="${escapeHtml(store.mapsUrl)}" style="color:#c8a35f;font-weight:700" target="_blank" rel="noopener">موقعیت روی Google Maps</a></p>`
-      : "";
-    const codeBlock = claimCode
-      ? `<div style="margin:20px 0;padding:16px;border:2px dashed #c8a35f;border-radius:12px;text-align:center;background:#fbf8f1">
-<div style="font-size:13px;color:#7a7368;margin-bottom:6px">کد دریافت جایزه</div>
-<div style="font-size:22px;font-weight:800;letter-spacing:1px;direction:ltr">${escapeHtml(claimCode)}</div>
-</div>
-<p style="font-weight:700">برای دریافت جایزه، لطفاً کد زیر را هنگام مراجعه یا تماس ارائه کنید.</p>`
-      : "";
-    const waBlock = wa
-      ? `<p><strong>واتسپ MAHO:</strong> <span dir="ltr">${escapeHtml(wa)}</span></p>`
-      : "";
-    const phoneBlock = store.phone
-      ? `<p><strong>تلفن فروشگاه:</strong> <span dir="ltr">${escapeHtml(store.phone)}</span></p>`
-      : "";
-    const storeBlock = store.name
-      ? `<div style="margin:16px 0;padding:14px;border:1px solid #e6e0d4;border-radius:12px">
-<p style="margin:0 0 6px"><strong>فروشگاه دریافت جایزه:</strong> ${escapeHtml(store.name)}</p>
-${store.address ? `<p style="margin:0 0 6px"><strong>آدرس:</strong> ${escapeHtml(store.address)}</p>` : ""}
-${phoneBlock}${hours}${maps}
-</div>`
-      : "";
-    const deadlineBlock = deadlineStr
-      ? `<p><strong>مهلت دریافت:</strong> ${escapeHtml(deadlineStr)}</p>`
-      : "";
     const html = wrap({
       title,
-      preheader: title + (claimCode ? (" — " + claimCode) : ""),
+      preheader: title,
       siteUrl, logoUrl, lang: "fa",
       bodyHtml: `<p>سلام ${escapeHtml(opts.name || "")}،</p>
 <p>تبریک! شما در قرعه‌کشی <strong>${escapeHtml(opts.title || "")}</strong> برنده شدید.</p>
 <p>جایزه: <strong>${escapeHtml(opts.prize || "")}</strong></p>
-${codeBlock}
-${storeBlock}
-${deadlineBlock}
-${waBlock}
-${supportContactHtml(store.phone || getStorePhone(), "fa")}`,
+${supportContactHtml(getStorePhone(), "fa")}`,
     });
     return send(to, "MAHO Market — " + title, html);
   }

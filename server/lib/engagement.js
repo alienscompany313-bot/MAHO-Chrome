@@ -195,22 +195,18 @@ function normalizeCampaignType(t) {
   return "general";
 }
 
-function activeProductSnapshot(db, codes, opts) {
+function activeProductSnapshot(db, codes) {
   const list = Array.isArray(codes) ? codes : [];
   const out = [];
-  const { resolveProductImageUrl } = require("./media-url");
-  const siteUrl = (opts && opts.siteUrl) || process.env.SITE_URL || "https://mahomarket.com";
-  const logoUrl = (opts && opts.logoUrl) || (db.config && db.config.logo) || "";
   (db.products || []).forEach((p) => {
     if (!p || p.active === false || p.deleted) return;
     const code = String(p.code || "").trim();
     if (!code) return;
     if (list.length && list.map(String).indexOf(code) < 0 && list.map(String).indexOf(p.id) < 0) return;
-    const rawImg = (p.images && p.images[0]) || p.image || "";
     out.push({
       code,
       name: p.name || "",
-      image: resolveProductImageUrl(rawImg || p, { siteUrl, logoUrl }),
+      image: (p.images && p.images[0]) || p.image || "",
       price: Number(p.price) || 0,
       oldPrice: p.oldPrice != null ? Number(p.oldPrice) : (p.compareAt != null ? Number(p.compareAt) : null),
       discount: p.discount || null,
@@ -260,9 +256,7 @@ function createCampaign(db, body, createdBy) {
     return { ok: false, error: "product_required", status: 400 };
   }
   /* Empty codes must NOT expand to all catalog products (snapshot is opt-in by code list). */
-  const siteUrl = process.env.SITE_URL || "https://mahomarket.com";
-  const logoUrl = (db.config && db.config.logo) || "";
-  const products = productCodes.length ? activeProductSnapshot(db, productCodes, { siteUrl, logoUrl }) : [];
+  const products = productCodes.length ? activeProductSnapshot(db, productCodes) : [];
   if ((campaignType === "single_product" || campaignType === "multiple_products") && !products.length) {
     return { ok: false, error: "no_active_products", status: 400 };
   }

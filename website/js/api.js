@@ -95,10 +95,9 @@
         })
         .then(function (data) {
           if (!r.ok) {
-            var err = new Error((data && (data.message || data.error)) || r.statusText || "request failed");
+            var err = new Error((data && data.error) || r.statusText || "request failed");
             err.status = r.status;
             err.data = data;
-            err.error = data && data.error;
             throw err;
           }
           return data;
@@ -353,14 +352,14 @@
   }
 
   var STATUS_FA = {
-    new: "در انتظار تأیید",
-    pending: "در انتظار تأیید",
+    new: "جدید",
+    pending: "جدید",
     confirmed: "تأیید شد",
     dispatched: "ارسال شد",
-    delivered: "تحویل داده شد",
+    delivered: "تحویل شد",
     awaiting_payment: "در انتظار پرداخت",
     cancelled: "لغو شد",
-    return_requested: "درخواست برگشت ثبت شد",
+    return_requested: "درخواست برگشت",
     return_approved: "برگشت تأیید شد",
     return_rejected: "برگشت رد شد",
     return_completed: "برگشت تکمیل شد",
@@ -368,12 +367,6 @@
     under_review: "در حال بررسی",
     payment_confirmed: "پرداخت تأیید شد",
     payment_rejected: "پرداخت رد شد",
-    partially_approved: "بخشی تأیید شد",
-    partially_rejected: "بخشی رد شد",
-    partially_shipped: "بخشی ارسال شد",
-    partially_delivered: "بخشی تحویل داده شد",
-    partially_cancelled: "بخشی لغو شد",
-    partially_returned: "بخشی برگشت داده شد",
   };
   var STATUS_FA_PICKUP = {
     confirmed: "در حال آماده‌سازی",

@@ -2,64 +2,11 @@
 /**
  * Staff accounts + permission checks.
  * Owner = env ADMIN_PASSWORD (full access). Staff = db.staff[] with hashed passwords.
- *
- * Coarse keys (legacy) remain authoritative. Granular keys refine when assigned;
- * having the parent coarse key grants related granular actions.
  */
 const { hashPassword, verifyPassword, sanitizeText } = require("./security");
 
 const ALL_PERMS = [
   "orders", "delivery", "pos", "products", "customers", "returns", "reports", "settings", "staff", "drivers", "marketing",
-  /* granular (additive) */
-  "orders_approve", "orders_reject", "orders_fulfill", "orders_cancel", "orders_ship",
-  "returns_reasons", "returns_assign", "returns_refund", "returns_analytics",
-  "customers_block", "customers_edit",
-  "marketing_send", "marketing_export", "marketing_giveaway",
-  "marketing_giveaway_draw", "marketing_giveaway_notify", "marketing_giveaway_claim",
-  "stores", "inventory", "discounts_rules", "staff_manage",
-  /* data retention */
-  "retention_view", "retention_edit", "retention_preview", "retention_archive", "retention_delete", "retention_history",
-];
-
-const PERM_PARENT = {
-  orders_approve: "orders",
-  orders_reject: "orders",
-  orders_fulfill: "orders",
-  orders_cancel: "orders",
-  orders_ship: "orders",
-  returns_reasons: "returns",
-  returns_assign: "returns",
-  returns_refund: "returns",
-  returns_analytics: "returns",
-  customers_block: "customers",
-  customers_edit: "customers",
-  marketing_send: "marketing",
-  marketing_export: "marketing",
-  marketing_giveaway: "marketing",
-  marketing_giveaway_draw: "marketing_giveaway",
-  marketing_giveaway_notify: "marketing_giveaway",
-  marketing_giveaway_claim: "marketing_giveaway",
-  stores: "settings",
-  inventory: "products",
-  discounts_rules: "settings",
-  staff_manage: "staff",
-  retention_view: "settings",
-  retention_edit: "settings",
-  retention_preview: "settings",
-  retention_archive: "settings",
-  retention_history: "settings",
-  /* permanent delete has NO parent — Owner or explicit grant only */
-};
-
-const PERM_GROUPS = [
-  { id: "sales", title: "فروش / Orders & Sales", keys: ["orders", "orders_approve", "orders_reject", "orders_fulfill", "orders_cancel", "orders_ship", "pos", "reports"] },
-  { id: "customers", title: "مشتریان", keys: ["customers", "customers_edit", "customers_block"] },
-  { id: "marketing", title: "بازاریابی", keys: ["marketing", "marketing_send", "marketing_export", "marketing_giveaway", "marketing_giveaway_draw", "marketing_giveaway_notify", "marketing_giveaway_claim"] },
-  { id: "returns", title: "برگشتی‌ها", keys: ["returns", "returns_reasons", "returns_assign", "returns_refund", "returns_analytics"] },
-  { id: "delivery", title: "رانندگان / Delivery", keys: ["drivers", "delivery"] },
-  { id: "staff", title: "کارمندان", keys: ["staff", "staff_manage"] },
-  { id: "stores", title: "فروشگاه‌ها / Inventory", keys: ["products", "inventory", "stores", "settings", "discounts_rules"] },
-  { id: "retention", title: "مدیریت اطلاعات و پاک‌سازی", keys: ["retention_view", "retention_edit", "retention_preview", "retention_archive", "retention_delete", "retention_history"] },
 ];
 
 function normalizePerms(list) {
@@ -82,8 +29,6 @@ function publicStaff(s) {
     permissions: normalizePerms(s.permissions),
     active: s.active !== false,
     createdAt: s.createdAt || null,
-    deactivatedAt: s.deactivatedAt || null,
-    deactivatedBy: s.deactivatedBy || null,
   };
 }
 
@@ -97,22 +42,12 @@ function hasPerm(session, perm) {
     return String(perm || "").toLowerCase() === "delivery" || perm === "any";
   }
   if (session.type !== "admin") return false;
-  if (session.owner) return true;
+  if (session.owner) return true; /* bootstrap ADMIN_PASSWORD */
   if (session.role === "owner") return true;
   const perms = normalizePerms(session.permissions);
-  if (!perms.length) return false;
+  if (!perms.length) return false; /* default: no access */
   if (perm === "any") return true;
-  const need = String(perm || "").toLowerCase();
-  if (perms.indexOf(need) >= 0) return true;
-  /* Walk parent chain so marketing grants marketing_giveaway_claim, etc. */
-  let parent = PERM_PARENT[need];
-  const seen = new Set();
-  while (parent && !seen.has(parent)) {
-    if (perms.indexOf(parent) >= 0) return true;
-    seen.add(parent);
-    parent = PERM_PARENT[parent];
-  }
-  return false;
+  return perms.indexOf(String(perm || "").toLowerCase()) >= 0;
 }
 
 function requirePerm(getSession, perm) {
@@ -157,12 +92,7 @@ function updateStaff(db, id, body, { allowPerms }) {
   if (body.name != null) s.name = sanitizeText(body.name, 80);
   if (body.email != null) s.email = String(body.email || "").trim().toLowerCase();
   if (body.phone != null) s.phone = sanitizeText(body.phone, 40);
-  if (body.active != null) {
-    s.active = !!body.active;
-    if (!s.active) {
-      s.deactivatedAt = s.deactivatedAt || Date.now();
-    }
-  }
+  if (body.active != null) s.active = !!body.active;
   if (allowPerms && body.permissions != null) s.permissions = normalizePerms(body.permissions);
   if (body.password && String(body.password).length >= 8) s.pass = hashPassword(String(body.password));
   return { staff: publicStaff(s) };
@@ -179,8 +109,6 @@ function authenticateStaff(db, login, password) {
 
 module.exports = {
   ALL_PERMS,
-  PERM_GROUPS,
-  PERM_PARENT,
   normalizePerms,
   publicStaff,
   hasPerm,
