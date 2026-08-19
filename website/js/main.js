@@ -738,6 +738,7 @@
     const total = money(cartPriceTotal());
     if (cartTotalEl) cartTotalEl.textContent = total;
     if (cartTotal2El) cartTotal2El.textContent = total;
+    try { refreshCheckoutDiscount(); } catch (_) {}
     if (!CART.length) {
       cartItemsEl.innerHTML = `<p class="cart-empty">${t("cart.empty")}</p>`;
       if (cartFootEl) cartFootEl.style.display = "none";
@@ -827,6 +828,26 @@
 
   /* -------------------- delivery -------------------- */
   let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
+  let selectedPickupStoreId = null;
+  let checkoutDiscountAmt = 0;
+  function refreshCheckoutDiscount() {
+    const row = $("#coDiscountRow"); const amtEl = $("#coDiscountAmt");
+    const itemsTotal = cartPriceTotal();
+    const fulfillment = recvMethod === "pickup" ? "pickup" : "delivery";
+    const applyLocal = (amount) => {
+      checkoutDiscountAmt = Math.max(0, Number(amount) || 0);
+      if (row) row.hidden = !(checkoutDiscountAmt > 0);
+      if (amtEl) amtEl.textContent = checkoutDiscountAmt > 0 ? ("− " + money(checkoutDiscountAmt)) : "";
+      const fee = deliveryFee();
+      const grand = Math.max(0, itemsTotal - checkoutDiscountAmt + fee);
+      if (cartTotal2El) cartTotal2El.textContent = money(grand);
+    };
+    if (!(window.MAHOApi && MAHOApi.previewOrderValueDiscount)) { applyLocal(0); return; }
+    MAHOApi.previewOrderValueDiscount({ itemsTotal: itemsTotal, fulfillment: fulfillment })
+      .then((d) => applyLocal(d && d.amount))
+      .catch(() => applyLocal(0));
+  }
+
   let customerLocation = null;
   let deliveryAllowed = true;
   function getTimeslots() { const ts = (CONFIG.delivery && CONFIG.delivery.timeslots) || []; return (ts.length ? ts : DEFAULT_TIMESLOTS).filter((x) => x && (x.fa || x.en)); }
@@ -913,8 +934,57 @@
     $$(".pay-method", recvMethodsEl).forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
     const box = $("#deliverBox"); if (box) box.hidden = (recvMethod !== "deliver");
+    const pbox = $("#pickupStoreBox"); if (pbox) pbox.hidden = (recvMethod !== "pickup");
+    if (recvMethod === "pickup") refreshPickupStores(false);
     updateCheckoutTotals();
   });
+  let pickupStoresCache = [];
+  function refreshPickupStores(useLoc) {
+    const list = $("#pickupStoreList"); if (!list) return;
+    const items = (CART || []).map((it) => ({
+      code: it.code, name: it.name, qty: it.qty || 1, size: it.size || "", color: it.color || "",
+    }));
+    const body = { items };
+    const run = (lat, lng) => {
+      if (lat != null && lng != null) { body.lat = lat; body.lng = lng; }
+      fetch("/api/checkout/pickup-stores", {
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      }).then((r) => r.json()).then((d) => {
+        pickupStoresCache = (d && d.stores) || [];
+        if (!pickupStoresCache.length) {
+          list.innerHTML = '<p class="note">فروشگاه واجد شرایط یافت نشد.</p>';
+          selectedPickupStoreId = null;
+          return;
+        }
+        if (!selectedPickupStoreId || !pickupStoresCache.some((s) => String(s.id) === String(selectedPickupStoreId))) {
+          selectedPickupStoreId = pickupStoresCache[0].id;
+        }
+        list.innerHTML = pickupStoresCache.map((s) => {
+          const dist = s.distanceKm != null ? (" · " + s.distanceKm + " km") : "";
+          return '<button type="button" class="pickup-store-card'+(String(s.id)===String(selectedPickupStoreId)?" active":"")+'" data-store-id="'+String(s.id).replace(/"/g,"")+'" >'+
+            "<b>"+escapeAttr(s.name||"")+"</b>"+
+            '<div class="meta">'+escapeAttr(s.address||s.area||"")+(s.phone?(" · "+escapeAttr(s.phone)):"")+dist+
+            (s.hours?("<br>"+escapeAttr(s.hours)):"")+"</div></button>";
+        }).join("");
+      }).catch(() => { list.innerHTML = '<p class="note">خطا در بارگذاری فروشگاه‌ها</p>'; });
+    };
+    if (useLoc && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => run(pos.coords.latitude, pos.coords.longitude),
+        () => run(null, null),
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else run(null, null);
+  }
+  const pickupListEl = $("#pickupStoreList");
+  if (pickupListEl) pickupListEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-store-id]"); if (!btn) return;
+    selectedPickupStoreId = btn.getAttribute("data-store-id");
+    $$(".pickup-store-card", pickupListEl).forEach((x) => x.classList.toggle("active", x.getAttribute("data-store-id") === selectedPickupStoreId));
+  });
+  const pickupNearBtn = $("#pickupNearBtn");
+  if (pickupNearBtn) pickupNearBtn.addEventListener("click", () => refreshPickupStores(true));
   const deliverTimeEl = $("#deliverTime");
   if (deliverTimeEl) deliverTimeEl.addEventListener("click", (e) => { const b = e.target.closest(".pay-method"); if (!b) return; deliverTime = b.dataset.time; $$(".pay-method", deliverTimeEl).forEach((x) => x.classList.remove("active")); b.classList.add("active"); updateCheckoutTotals(); });
   const deliverSlotsEl = $("#deliverSlots");
@@ -1115,8 +1185,27 @@
     };
   }
   function orderStatusText(code, order) {
+    if (LANG !== "en" && order && order.statusLabelFa) return order.statusLabelFa;
     if (window.MAHOApi && MAHOApi.statusLabel) return MAHOApi.statusLabel(code, LANG, order);
     return code || "";
+  }
+  function formatStatusWhen(ts) {
+    try {
+      return new Date(ts).toLocaleString(LANG === "en" ? "en-US" : "fa-AF", {
+        day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+      });
+    } catch (_) { return ""; }
+  }
+  function itemStatusLabelLocal(order, it) {
+    if (it && it.statusLabelFa) return it.statusLabelFa;
+    const st = (it && it.itemStatus) || "";
+    const map = {
+      pending: "در انتظار تأیید", approved: "تأیید شد", rejected: "رد شد", cancelled: "لغو شد",
+      shipped: "ارسال شد", delivered: "تحویل داده شد",
+      return_requested: "درخواست برگشت ثبت شد", return_approved: "برگشت تأیید شد",
+      return_rejected: "برگشت رد شد", return_completed: "برگشت تکمیل شد",
+    };
+    return map[st] || st || "";
   }
   function withApiOrderStatus(order) {
     if (!order) return order;
@@ -1353,6 +1442,7 @@
     const s = getSession();
     const customer = { name: f.nm, phone: f.ph, address: f.ad, addr: f.addrParts, note: f.note, email: f.email, customerNo: (s && s.customerNo) || "" };
     const delivery = { method: recvMethod, time: deliverTime, km: currentKm(), fee: deliveryFee(), timeslot: f.ts.label, timeslotKey: f.ts.key };
+    if (recvMethod === "pickup" && selectedPickupStoreId) delivery.storeId = selectedPickupStoreId;
     finalizeOrder(customer, delivery);
   });
   const coVerifyBtn = $("#coVerifyBtn");
@@ -1399,6 +1489,12 @@
       const pending = [];
       list.innerHTML = orders.map((o) => {
         const display = withApiOrderStatus(o);
+        const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
+        const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
+        const canCancel = !!cancelUi.canCancel;
+        const canReturn = code === "delivered" && (
+          o.lateReturnApproved || !o.returnDeadlineAt || Date.now() <= Number(o.returnDeadlineAt)
+        );
         const items = (o.items || []).map((it) => {
           const inm = LANG === "en" ? (it.name_en || it.name) : it.name;
           const variant = [];
@@ -1411,25 +1507,49 @@
             pending.push({ id: bid, code: it.code });
             bc = `<div class="bc-wrap"><span class="bc-code">${t("orders.code")}: ${it.code}</span><svg class="barcode" id="${bid}"></svg></div>`;
           }
-          return `<li>${inm}${vs} × ${toDigits(it.qty)} = ${money(it.price * it.qty)}${bc}</li>`;
+          const itemLabel = it.statusLabelFa || itemStatusLabelLocal(o, it);
+          const ts = it.statusAt || it.deliveredAt || it.shippedAt || null;
+          const tsStr = ts ? formatStatusWhen(ts) : "";
+          const statusLine = itemLabel
+            ? `<div class="item-status note" style="margin-top:4px;font-weight:700">${escHtml(itemLabel)}${tsStr ? " — " + escHtml(tsStr) : ""}</div>`
+            : "";
+          const img = it.image
+            ? `<img src="${escHtml(it.image)}" alt="" width="52" height="52" style="object-fit:cover;border-radius:10px;flex-shrink:0">`
+            : `<div style="width:52px;height:52px;border-radius:10px;background:var(--line);flex-shrink:0"></div>`;
+          const st = it.itemStatus || "";
+          const cancelableItem = canCancel && (st === "pending" || st === "approved" || (!st && (code === "new" || code === "confirmed")));
+          const returnableItem = canReturn && (st === "delivered" || (!st && code === "delivered")) && st !== "return_requested" && st !== "return_completed";
+          const checks = (cancelableItem || returnableItem)
+            ? `<label class="note" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-weight:700">
+                <input type="checkbox" data-line-pick="${escHtml(it.lineId || "")}" data-oid="${escHtml(o.id)}" ${cancelableItem ? 'data-can-cancel="1"' : ""} ${returnableItem ? 'data-can-return="1"' : ""}>
+                انتخاب برای ${cancelableItem && returnableItem ? "لغو/برگشت" : (cancelableItem ? "لغو" : "برگشت")}
+              </label>`
+            : "";
+          return `<li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--line)">
+            ${img}
+            <div style="flex:1;min-width:0">
+              <div><b>${inm}</b>${vs}</div>
+              <div class="note" dir="ltr">${escHtml(it.code || "—")}</div>
+              <div>${t("qv.qty") || "تعداد"}: ${toDigits(it.qty)} · ${money(it.price)} · ${money(it.price * it.qty)}</div>
+              ${statusLine}${checks}${bc}
+            </div>
+          </li>`;
         }).join("");
         const d = new Date(o.date);
         const dateStr = d.toLocaleDateString(LANG === "en" ? "en-US" : "fa-AF") + " " + d.toLocaleTimeString(LANG === "en" ? "en-US" : "fa-AF", { hour: "2-digit", minute: "2-digit" });
         const payLabel = o.payment === "bank" ? t("pay.bank") : o.payment === "card" ? t("pay.card") : o.payment === "hesab" ? t("pay.hesab") : t("pay.whatsapp");
-        const code = display.statusCode || ((window.MAHOApi && MAHOApi.statusCode) ? MAHOApi.statusCode(o.status) : o.status);
-        const cancelUi = orderCancelUi(Object.assign({}, o, { statusCode: code }));
-        const canCancel = !!cancelUi.canCancel;
-        const canReturn = code === "delivered" && !o.returnRequest && (
-          o.lateReturnApproved || !o.returnDeadlineAt || Date.now() <= Number(o.returnDeadlineAt)
-        );
+        const orderLabel = (LANG !== "en" && o.statusLabelFa) ? o.statusLabelFa : (display.status || "");
         let cancelMeta = "";
         if (canCancel && cancelUi.deadline) {
           cancelMeta = `<div class="cancel-countdown note" style="margin-top:6px">${t("orders.cancelCountdown")} <span class="cancel-countdown-time" dir="ltr">${formatCancelCountdown(cancelUi.remainingMs)}</span></div>`;
         }
         let actions = "";
-        if (canCancel || canReturn || cancelMeta) {
-          actions = `<div class="order-actions"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>${cancelMeta}${canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : ""}${canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : ""}</div>`;
-        }
+        const itemCancelBtn = canCancel ? `<button class="btn btn-danger-sm" data-cancel-lines="${o.id}">لغو آیتم‌های انتخاب‌شده</button>` : "";
+        const itemReturnBtn = canReturn ? `<button class="btn btn-outline btn-sm" data-return-lines="${o.id}">برگشت آیتم‌های انتخاب‌شده</button>` : "";
+        const wholeCancel = canCancel ? `<button class="btn btn-danger-sm" data-cancel="${o.id}">${t("orders.cancel")}</button>` : "";
+        const wholeReturn = canReturn ? `<button class="btn btn-outline btn-sm" data-return="${o.id}">${t("orders.return")}</button>` : "";
+        const reorderBtn = `<button class="btn btn-gold btn-sm" data-reorder="${o.id}">سفارش مجدد</button>`;
+        actions = `<div class="order-actions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>${cancelMeta}${reorderBtn}${itemCancelBtn}${itemReturnBtn}${wholeCancel}${wholeReturn}</div>`;
         let hesabForm = "";
         if (o.payment === "hesab" && o.paymentStatus !== "payment_confirmed") {
           const ps = (window.MAHOApi && MAHOApi.statusLabel) ? MAHOApi.statusLabel(o.paymentStatus || "awaiting_payment", LANG) : (o.paymentStatus || "");
@@ -1464,18 +1584,20 @@
           </div>`;
         }
         return `
-          <div class="order-card">
-            <div class="order-top">
+          <div class="order-card" data-order-card="${escHtml(o.id)}">
+            <button type="button" class="order-top order-acc-head" data-toggle-order="${escHtml(o.id)}" style="width:100%;background:transparent;border:0;cursor:pointer;text-align:inherit;font:inherit;color:inherit;display:flex;justify-content:space-between;gap:8px;align-items:center">
               <span>#${o.id} · ${t("orders.date")}: ${dateStr}</span>
-              <span class="order-status">${display.status || ""}</span>
+              <span class="order-status">${escHtml(orderLabel || "")}</span>
+            </button>
+            <div class="order-acc-body" data-order-body="${escHtml(o.id)}" hidden>
+              <ul style="list-style:none;padding:0;margin:8px 0">${items}</ul>
+              <div class="order-top">
+                <span>${t("orders.pay")}: ${payLabel}</span>
+                <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
+              </div>
+              ${hesabForm}
+              ${actions}
             </div>
-            <ul>${items}</ul>
-            <div class="order-top">
-              <span>${t("orders.pay")}: ${payLabel}</span>
-              <span class="order-total">${t("cart.total")}: ${money(o.total)}</span>
-            </div>
-            ${hesabForm}
-            ${actions}
           </div>`;
       }).join("");
       if (typeof JsBarcode !== "undefined") {
@@ -1543,6 +1665,86 @@
       } else {
         MAHOApi.submitHesabReceipt(id, { email: email, txnId: txn, amount: amt, note: note }).then(done).catch(fail);
       }
+      return;
+    }
+    const toggleOrder = e.target.closest("[data-toggle-order]");
+    if (toggleOrder) {
+      const oid = toggleOrder.getAttribute("data-toggle-order");
+      const body = list.querySelector('[data-order-body="' + oid + '"]');
+      if (body) body.hidden = !body.hidden;
+      return;
+    }
+    const reorderBtn = e.target.closest("[data-reorder]");
+    if (reorderBtn) {
+      const id = reorderBtn.getAttribute("data-reorder");
+      if (!window.MAHOApi || !MAHOApi.reorder) { showToast("API unavailable"); return; }
+      MAHOApi.reorder(id, {}).then((res) => {
+        const added = res.items || [];
+        const skipped = res.skipped || [];
+        added.forEach((it) => {
+          const key = it.name + "|" + (it.size || "") + "|" + (it.color || "");
+          const found = CART.find((x) => x.key === key);
+          if (found) found.qty += (it.qty || 1);
+          else {
+            CART.push({
+              key: key,
+              name: it.name,
+              name_en: it.name_en,
+              price: it.price,
+              code: it.code || "",
+              cat: "",
+              image: it.image || "",
+              icon: "",
+              size: it.size || "",
+              color: it.color || "",
+              qty: it.qty || 1,
+            });
+          }
+        });
+        saveCart(); updateCartBadge(); renderCart();
+        let msg = added.length ? ("افزوده شد به سبد: " + added.length) : "هیچ کالای موجودی اضافه نشد";
+        if (skipped.length) {
+          msg += "\nغيرقابل سفارش: " + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join("، ");
+        }
+        alert(msg);
+        openCart();
+      }).catch((err) => alert((err && err.message) || "خطا"));
+      return;
+    }
+    const cancelLinesBtn = e.target.closest("[data-cancel-lines]");
+    if (cancelLinesBtn) {
+      const id = cancelLinesBtn.getAttribute("data-cancel-lines");
+      const card = cancelLinesBtn.closest(".order-card");
+      const picks = card ? Array.from(card.querySelectorAll('input[data-line-pick][data-can-cancel="1"]:checked')) : [];
+      const lineIds = picks.map((el) => el.getAttribute("data-line-pick")).filter(Boolean);
+      if (!lineIds.length) { alert("حداقل یک آیتم را انتخاب کنید"); return; }
+      if (!confirm("آیتم‌های انتخاب‌شده لغو شوند؟")) return;
+      const run = async () => {
+        for (const lid of lineIds) {
+          await MAHOApi.cancelOrderItem(id, lid, {});
+        }
+        renderOrders();
+      };
+      run().catch((err) => alert((err && err.message) || "خطا"));
+      return;
+    }
+    const returnLinesBtn = e.target.closest("[data-return-lines]");
+    if (returnLinesBtn) {
+      const id = returnLinesBtn.getAttribute("data-return-lines");
+      const card = returnLinesBtn.closest(".order-card");
+      const picks = card ? Array.from(card.querySelectorAll('input[data-line-pick][data-can-return="1"]:checked')) : [];
+      const lineIds = picks.map((el) => el.getAttribute("data-line-pick")).filter(Boolean);
+      if (!lineIds.length) { alert("حداقل یک آیتم را انتخاب کنید"); return; }
+      const reason = prompt("دلیل برگشت:", "") || "";
+      if (!reason) { alert("دلیل برگشت لازم است"); return; }
+      const run = async () => {
+        for (const lid of lineIds) {
+          await MAHOApi.returnOrderItem(id, lid, { reason: reason, method: "pickup_store" });
+        }
+        renderOrders();
+        showToast("درخواست برگشت ثبت شد");
+      };
+      run().catch((err) => alert((err && err.message) || "خطا"));
       return;
     }
     const cancelBtn = e.target.closest("[data-cancel]"), returnBtn = e.target.closest("[data-return]");
@@ -2289,6 +2491,8 @@
     setSel("#home .lead", pick("heroLead"));
     setSel('[data-i18n="footer.desc"]', pick("footerDesc"));
     setSel('[data-i18n="footer.addr"]', pick("footerAddr"));
+    setSel('[data-i18n="footer.copy"]', pick("footerCopy"));
+    setSel('[data-i18n="footer.made"]', pick("footerMade"));
     /* Phone: never run through RTL textContent alone — keep LTR isolate */
     const phoneRaw = String(c.footerPhone || t("footer.phone") || "+93791505454").trim();
     setFooterPhone(phoneRaw);
