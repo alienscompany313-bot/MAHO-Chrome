@@ -95,9 +95,10 @@
         })
         .then(function (data) {
           if (!r.ok) {
-            var err = new Error((data && data.error) || r.statusText || "request failed");
+            var err = new Error((data && (data.message || data.error)) || r.statusText || "request failed");
             err.status = r.status;
             err.data = data;
+            err.error = data && data.error;
             throw err;
           }
           return data;
@@ -264,6 +265,54 @@
     return request("/api/delivery/check", { method: "POST", body: body || {} });
   }
 
+  function cancelOrderItem(orderId, lineId, body) {
+    return request("/api/orders/" + encodeURIComponent(orderId) + "/items/" + encodeURIComponent(lineId) + "/cancel", {
+      method: "POST",
+      body: body || {},
+      token: getToken("user") || undefined,
+    });
+  }
+  function returnOrderItem(orderId, lineId, body) {
+    return request("/api/orders/" + encodeURIComponent(orderId) + "/items/" + encodeURIComponent(lineId) + "/return-request", {
+      method: "POST",
+      body: body || {},
+      token: getToken("user") || undefined,
+    });
+  }
+  function reorder(orderId, body) {
+    return request("/api/orders/" + encodeURIComponent(orderId) + "/reorder", {
+      method: "POST",
+      body: body || {},
+      token: getToken("user") || undefined,
+    });
+  }
+  function previewOrderValueDiscount(body) {
+    return request("/api/checkout/order-value-discount", {
+      method: "POST",
+      body: body || {},
+    });
+  }
+  function pickupStores(body) {
+    return request("/api/checkout/pickup-stores", {
+      method: "POST",
+      body: body || {},
+    });
+  }
+  function adminApproveItems(orderId, lineIds) {
+    return request("/api/admin/orders/" + encodeURIComponent(orderId) + "/items/approve", {
+      method: "POST",
+      body: { lineIds: lineIds || [] },
+      token: getToken("admin"),
+    });
+  }
+  function adminRejectItems(orderId, lineIds, reason) {
+    return request("/api/admin/orders/" + encodeURIComponent(orderId) + "/items/reject", {
+      method: "POST",
+      body: { lineIds: lineIds || [], reason: reason || "" },
+      token: getToken("admin"),
+    });
+  }
+
   /* ---- admin ---- */
   function adminLogin(password) {
     return request("/api/admin/login", { method: "POST", body: { password: password } }).then(function (d) {
@@ -352,14 +401,14 @@
   }
 
   var STATUS_FA = {
-    new: "جدید",
-    pending: "جدید",
+    new: "در انتظار تأیید",
+    pending: "در انتظار تأیید",
     confirmed: "تأیید شد",
     dispatched: "ارسال شد",
-    delivered: "تحویل شد",
+    delivered: "تحویل داده شد",
     awaiting_payment: "در انتظار پرداخت",
     cancelled: "لغو شد",
-    return_requested: "درخواست برگشت",
+    return_requested: "درخواست برگشت ثبت شد",
     return_approved: "برگشت تأیید شد",
     return_rejected: "برگشت رد شد",
     return_completed: "برگشت تکمیل شد",
@@ -367,6 +416,12 @@
     under_review: "در حال بررسی",
     payment_confirmed: "پرداخت تأیید شد",
     payment_rejected: "پرداخت رد شد",
+    partially_approved: "بخشی تأیید شد",
+    partially_rejected: "بخشی رد شد",
+    partially_shipped: "بخشی ارسال شد",
+    partially_delivered: "بخشی تحویل داده شد",
+    partially_cancelled: "بخشی لغو شد",
+    partially_returned: "بخشی برگشت داده شد",
   };
   var STATUS_FA_PICKUP = {
     confirmed: "در حال آماده‌سازی",
@@ -616,6 +671,13 @@
     saveDriver: saveDriver,
     assignDriver: assignDriver,
     savePaymentMethods: savePaymentMethods,
+    cancelOrderItem: cancelOrderItem,
+    returnOrderItem: returnOrderItem,
+    reorder: reorder,
+    previewOrderValueDiscount: previewOrderValueDiscount,
+    pickupStores: pickupStores,
+    adminApproveItems: adminApproveItems,
+    adminRejectItems: adminRejectItems,
     adminLogin: adminLogin,
     adminState: adminState,
     adminSaveCatalog: adminSaveCatalog,
