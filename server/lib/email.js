@@ -19,6 +19,39 @@ function moneyAf(n, lang) {
   return lang === "en" ? num + " AFN" : num + " افغانی";
 }
 
+/**
+ * Order item `price` is the charged unit (discount already applied at checkout).
+ * Never re-apply `discount` % to that price. Prefer stored lineTotal when present.
+ */
+function orderItemLineTotal(it) {
+  if (!it) return 0;
+  if (it.lineTotal != null && it.lineTotal !== "") {
+    const lt = Number(it.lineTotal);
+    if (Number.isFinite(lt)) return lt;
+  }
+  const qty = Math.max(1, parseInt(it.qty, 10) || 1);
+  const unit = Number(it.price) || 0;
+  return unit * qty;
+}
+
+function resolveEmailStoreMapsUrl(store) {
+  try {
+    const { resolveStoreMapsUrl } = require("./geo");
+    return resolveStoreMapsUrl(store) || "";
+  } catch (_) {
+    const s = store || {};
+    const profile = [s.googleMapsUrl, s.googleMapsPlaceUrl, s.map, s.mapUrl]
+      .map((x) => String(x || "").trim())
+      .find((u) => /^https?:\/\//i.test(u));
+    if (profile) return profile;
+    if (s.mapsUrl) return String(s.mapsUrl);
+    if (s.lat != null && s.lng != null) {
+      return "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
+    }
+    return "";
+  }
+}
+
 function supportContactHtml(storePhone, lang) {
   const phone = String(storePhone || "").trim();
   if (lang === "en") {
@@ -71,7 +104,7 @@ ${logo}
 <div style="color:${brand};font-weight:800;letter-spacing:2px;font-size:13px">MAHO MARKET</div>
 <div style="color:#fff;font-size:20px;font-weight:800;margin-top:8px">${escapeHtml(title)}</div>
 </td></tr>
-<tr><td style="padding:28px 24px;font-size:15px">${bodyHtml}</td></tr>
+<tr><td style="padding:28px 24px;font-size:15px;text-align:${isEn ? "left" : "right"};direction:${isEn ? "ltr" : "rtl"}">${bodyHtml}</td></tr>
 <tr><td style="padding:18px 24px;background:#fbf8f1;border-top:1px solid #e6e0d4;font-size:12px;color:#7a7368;text-align:center">
 <div>${tagline}</div>
 <div>${supportLbl}: <a href="mailto:support@mahomarket.com" style="color:${brand}">support@mahomarket.com</a></div>
@@ -101,11 +134,12 @@ function orderItemsTable(order, lang) {
 
   const cards = items.map((it) => {
     const qty = it.qty || 1;
-    const unit = Number(it.price) || 0;
+    /* `price` is already the charged unit after product discount (see checkout). */
+    const unitCharged = Number(it.price) || 0;
+    const listPrice = it.listPrice != null ? Number(it.listPrice) : null;
     const discPct = Number(it.discount) || 0;
-    const line = it.lineTotal != null
-      ? Number(it.lineTotal)
-      : (discPct > 0 ? unit * qty * (1 - discPct / 100) : unit * qty);
+    const line = orderItemLineTotal(it);
+    const showOriginal = listPrice != null && Number.isFinite(listPrice) && listPrice > unitCharged;
     const absImg = resolveProductImageUrl(it.image || it, { siteUrl: siteUrl, logoUrl: logoUrl });
     const img = absImg
       ? `<img src="${escapeHtml(absImg)}" alt="" width="64" height="64" style="width:64px;height:64px;object-fit:cover;border-radius:8px;display:block;margin:0 auto 8px;border:0">`
@@ -114,13 +148,14 @@ function orderItemsTable(order, lang) {
     const sizeLbl = isEn ? "Size" : "سایز";
     const colorLbl = isEn ? "Color" : "رنگ";
     const qtyLbl = isEn ? "Qty" : "تعداد";
-    const priceLbl = isEn ? "Unit price" : "قیمت";
+    const priceLbl = isEn ? (showOriginal ? "Original price" : "Unit price") : (showOriginal ? "قیمت اصلی" : "قیمت");
     const discLbl = isEn ? "Discount" : "تخفیف";
     const totalLbl = isEn ? "Line total" : "مجموع";
     const nameLbl = isEn ? "Product" : "نام محصول";
     const discVal = discPct
       ? (isEn ? (discPct + "%") : (discPct + "٪"))
       : (it.discountAmount ? moneyAf(it.discountAmount, lang) : "—");
+    const priceShown = showOriginal ? listPrice : unitCharged;
     /* Stacked mobile-first card: image on top, then compact meta rows (no wide multi-column table). */
     return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e6e0d4;border-radius:12px;margin:0 0 14px;background:#fff">
 <tr><td style="padding:14px 14px 6px;text-align:center">${img}</td></tr>
@@ -129,8 +164,8 @@ function orderItemsTable(order, lang) {
 ${it.size ? `<div style="margin:0 0 2px">${escapeHtml(sizeLbl)}: ${escapeHtml(String(it.size))}</div>` : ""}
 ${it.color ? `<div style="margin:0 0 2px">${escapeHtml(colorLbl)}: ${escapeHtml(String(it.color))}</div>` : ""}
 <div style="margin:0 0 2px">${escapeHtml(qtyLbl)}: <span dir="ltr">${escapeHtml(String(qty))}</span></div>
-<div style="margin:0 0 2px">${escapeHtml(priceLbl)}: <span dir="ltr">${moneyAf(unit, lang)}</span></div>
-<div style="margin:0 0 2px">${escapeHtml(discLbl)}: <span dir="ltr">${escapeHtml(String(discVal))}</span></div>
+<div style="margin:0 0 2px">${escapeHtml(priceLbl)}: <span dir="ltr">${moneyAf(priceShown, lang)}</span></div>
+${(discPct || it.discountAmount) ? `<div style="margin:0 0 2px">${escapeHtml(discLbl)}: <span dir="ltr">${escapeHtml(String(discVal))}</span></div>` : ""}
 <div style="font-weight:800;margin-top:6px;padding-top:6px;border-top:1px solid #f0ebe3">${escapeHtml(totalLbl)}: <span dir="ltr">${moneyAf(line, lang)}</span></div>
 </td></tr>
 </table>`;
@@ -141,10 +176,13 @@ ${it.color ? `<div style="margin:0 0 2px">${escapeHtml(colorLbl)}: ${escapeHtml(
 
 function orderTotalsBlock(order, lang) {
   const isEn = lang === "en";
-  const itemsTotal = order.itemsTotal != null ? order.itemsTotal : (order.items || []).reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  /* Prefer authoritative stored totals — never recompute product discounts. */
+  const itemsTotal = order.itemsTotal != null
+    ? order.itemsTotal
+    : (order.items || []).reduce((s, it) => s + orderItemLineTotal(it), 0);
   const fee = order.deliveryFee || 0;
   const discount = order.discountTotal || 0;
-  const total = order.total != null ? order.total : itemsTotal + fee - discount;
+  const total = order.total != null ? order.total : Math.max(0, itemsTotal + fee - discount);
   const itemsLbl = isEn ? "Items subtotal" : "جمع اقلام";
   const discLbl = isEn ? "Discount" : "تخفیف";
   const shipLbl = isEn ? "Delivery fee" : "هزینه ارسال";
@@ -168,22 +206,21 @@ function storePickupBlock(order, lang) {
   const isEn = lang === "en";
   const s = (order && order.pickupStore) || {};
   if (!s || (!s.name && !s.address && !s.id)) return "";
-  let mapsUrl = s.mapsUrl || "";
-  if (!mapsUrl && s.lat != null && s.lng != null) {
-    mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
-  }
+  const mapsUrl = resolveEmailStoreMapsUrl(s);
   const nameLbl = isEn ? "Pickup store" : "فروشگاه دریافت";
   const addrLbl = isEn ? "Address" : "آدرس";
   const phoneLbl = isEn ? "Phone" : "شماره تماس";
   const hoursLbl = isEn ? "Hours" : "ساعات کاری";
   const hoursVal = isEn ? (s.hours_en || s.hours || "") : (s.hours || s.hours_en || "");
-  const mapsLbl = isEn ? "View on Google Maps" : "مشاهده در Google Maps";
+  const mapsLbl = isEn
+    ? 'View store on <span dir="ltr">Google Maps</span>'
+    : 'مشاهده فروشگاه در <span dir="ltr">Google Maps</span>';
   const mapsBtn = mapsUrl
-    ? `<p style="margin:12px 0 0;text-align:center"><a href="${escapeHtml(mapsUrl)}" style="display:inline-block;background:#c8a35f;color:#1a1509;text-decoration:none;font-weight:800;padding:10px 18px;border-radius:999px">${escapeHtml(mapsLbl)}</a></p>`
+    ? `<p style="margin:12px 0 0;text-align:center"><a href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#c8a35f;color:#1a1509;text-decoration:none;font-weight:800;padding:10px 18px;border-radius:999px;direction:${isEn ? "ltr" : "rtl"}">${mapsLbl}</a></p>`
     : "";
   const align = isEn ? "left" : "right";
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
-<tr><td style="padding:14px 16px;font-size:14px;line-height:1.85;text-align:${align}">
+<tr><td style="padding:14px 16px;font-size:14px;line-height:1.85;text-align:${align};direction:${isEn ? "ltr" : "rtl"}">
 <div style="font-weight:800;margin:0 0 8px"><strong>${nameLbl}:</strong> ${escapeHtml(s.name || "—")}</div>
 ${(s.address || s.area) ? `<div style="margin:0 0 4px"><strong>${addrLbl}:</strong> ${escapeHtml(s.address || s.area)}</div>` : ""}
 ${s.phone ? `<div style="margin:0 0 4px"><strong>${phoneLbl}:</strong> <span dir="ltr">${escapeHtml(s.phone)}</span></div>` : ""}
@@ -387,9 +424,9 @@ ${orderItemsTable(orderView, lang)}
 ${orderTotalsBlock(order, lang)}
 ${trackUrl ? ctaBtn(trackUrl, "View / track order") : ""}
 ${supportContactHtml(getStorePhone(), lang)}`
-        : `<p style="margin:0 0 10px;font-size:15px;line-height:1.85">سلام ${nameHtml}،</p>
-<p style="margin:0 0 8px;font-size:15px;line-height:1.85">از خرید شما از MAHO Market سپاسگزاریم.</p>
-<p style="margin:0 0 14px;font-size:15px;line-height:1.85">سفارش شما با موفقیت ثبت شد و در حال بررسی است.</p>
+        : `<p style="margin:0 0 10px;font-size:15px;line-height:1.85;text-align:right">سلام ${nameHtml}،</p>
+<p style="margin:0 0 8px;font-size:15px;line-height:1.85;text-align:right">از خرید شما سپاسگزاریم.</p>
+<p style="margin:0 0 14px;font-size:15px;line-height:1.85;text-align:right">سفارش شما با موفقیت ثبت شد و در حال بررسی است.</p>
 ${orderInfoFa}
 ${pickupOrAddr}
 ${orderItemsTable(orderView, lang)}
@@ -564,12 +601,10 @@ ${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
       address: picked.address || picked.area || "",
       hours: picked.hours || "",
       phone: picked.phone || getStorePhone() || "",
-      mapsUrl: picked.mapsUrl || "",
+      map: picked.map || picked.mapUrl || picked.googleMapsUrl || picked.googleMapsPlaceUrl || "",
+      mapsUrl: resolveEmailStoreMapsUrl(picked),
       instructions: picked.instructions || "",
     });
-    if (!s.mapsUrl && s.lat != null && s.lng != null) {
-      s.mapsUrl = "https://www.google.com/maps?q=" + encodeURIComponent(s.lat + "," + s.lng);
-    }
     const title = isEn ? "Your order is ready for pickup | MAHO" : "سفارش شما آماده دریافت است | MAHO";
     const orderForBlock = Object.assign({}, order, {
       pickupStore: s,

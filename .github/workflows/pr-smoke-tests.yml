@@ -63,3 +63,12 @@ jobs:
 
       - name: Smoke final additions
         run: node scripts/smoke-final-additions.js
+
+      - name: Verify email discount + maps hotfix
+        run: node scripts/verify-email-discount-maps-hotfix.js
+
+      - name: Verify store display email polish
+        run: node scripts/verify-store-display-email-polish.js
+
+      - name: Verify account payment email
+        run: node scripts/verify-account-payment-email.js

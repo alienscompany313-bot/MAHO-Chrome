@@ -37,12 +37,12 @@ const { buildMailer } = require("../lib/email");
   await mail.orderConfirmation("a@test.com", Object.assign({}, base, {
     delivery: { method: "pickup", storeId: storeA.id }, pickupStore: storeA,
   }), "https://mahomarket.com/#orders", "fa");
-  assert(/از خرید شما از MAHO Market سپاسگزاریم/.test(html), "dari thanks");
+  assert(/از خرید شما سپاسگزاریم/.test(html), "dari thanks");
   assert(/روش دریافت:/.test(html) && /دریافت حضوری/.test(html), "fulfillment in order info");
   assert(/روش پرداخت:/.test(html), "payment in order info");
   assert(html.indexOf("روش دریافت") < html.indexOf("نام محصول"), "order info before products");
   assert(/فروشگاه دریافت:/.test(html) && /کارته نو، کابل/.test(html), "pickup store A");
-  assert(/مشاهده در Google Maps/.test(html), "maps link");
+  assert(/مشاهده فروشگاه در/.test(html) && /Google Maps/.test(html), "maps link");
   assert(!/آدرس دلیوری مشتری/.test(html), "customer address not as store");
   assert(/نام محصول:/.test(html) && /سایز:/.test(html) && /مجموع:/.test(html), "stacked product fields");
   assert(/جمع اقلام/.test(html) && /مبلغ نهایی/.test(html), "summary labels");

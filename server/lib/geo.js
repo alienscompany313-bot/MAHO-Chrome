@@ -42,4 +42,34 @@ function ensureHttpsUrl(u) {
   return "https://" + s.replace(/^\/+/, "");
 }
 
-module.exports = { haversineKm, parseCoord, storeCoords, mapsLink, ensureHttpsUrl };
+/** True when URL is a bare coordinate pin (not a business/place/profile link). */
+function isRawCoordMapsUrl(u) {
+  const s = String(u || "").trim();
+  if (!s) return false;
+  return /(?:google\.[^/\s]+\/maps|maps\.google\.[^/\s]+|maps\.app\.goo\.gl)[^<\s"']*\bq=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(s)
+    || /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?\s*$/i.test(s);
+}
+
+/**
+ * Prefer a real Google Maps business/place/profile/share URL over raw lat/lng pins.
+ * Priority: googleMapsUrl → googleMapsPlaceUrl → map → mapUrl → non-coord mapsUrl → lat/lng.
+ */
+function resolveStoreMapsUrl(store) {
+  const s = store || {};
+  const profileKeys = ["googleMapsUrl", "googleMapsPlaceUrl", "map", "mapUrl"];
+  for (let i = 0; i < profileKeys.length; i++) {
+    const raw = String(s[profileKeys[i]] || "").trim();
+    if (/^https?:\/\//i.test(raw)) return ensureHttpsUrl(raw);
+  }
+  const existing = String(s.mapsUrl || "").trim();
+  if (existing && !isRawCoordMapsUrl(existing)) return ensureHttpsUrl(existing);
+  const lat = parseCoord(s.lat);
+  const lng = parseCoord(s.lng);
+  if (lat != null && lng != null) return mapsLink(lat, lng);
+  return existing ? ensureHttpsUrl(existing) : "";
+}
+
+module.exports = {
+  haversineKm, parseCoord, storeCoords, mapsLink, ensureHttpsUrl,
+  isRawCoordMapsUrl, resolveStoreMapsUrl,
+};
