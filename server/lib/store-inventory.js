@@ -94,16 +94,24 @@ function storeAvailableStock(product, storeId, color, size) {
   const row = product.storeStock[id];
   if (!row) return availableStock(product, color, size);
   if (row.available === false) return 0;
-  if (row.variantStock && typeof row.variantStock === "object") {
+  if (row.variantStock && typeof row.variantStock === "object" && Object.keys(row.variantStock).length) {
     const key = variantKey(color, size);
     if (Object.prototype.hasOwnProperty.call(row.variantStock, key)) {
       const n = parseInt(row.variantStock[key], 10);
       return isNaN(n) ? 0 : Math.max(0, n);
     }
   }
-  if (row.stock == null) return availableStock(product, color, size);
+  /*
+   * Store assignment rows often only set `available` (or historically wrote stock:0
+   * before product.stock was known). Pickup eligibility must follow storeIds —
+   * use global product stock unless a positive per-store stock is explicitly set.
+   */
+  if (row.stock == null || row.stock === "") {
+    return availableStock(product, color, size);
+  }
   const n = parseInt(row.stock, 10);
-  return isNaN(n) ? 0 : Math.max(0, n);
+  if (isNaN(n) || n <= 0) return availableStock(product, color, size);
+  return n;
 }
 
 function applyStoreStockDelta(product, storeId, qty, sign, color, size) {

@@ -128,6 +128,15 @@ async function main() {
   assert(inv.eligiblePickupStores(dbPick, [{ code: "P_A", name: "A", qty: 1 }, { code: "P_AB", name: "AB", qty: 1 }]).map((s) => s.id).join(",") === "store_a", "16 intersect");
   assert(inv.eligiblePickupStores(dbPick, [{ code: "P_AB", name: "AB", qty: 1 }]).length === 2, "17 remove one store not all");
   assert(inv.eligiblePickupStores(dbPick, [{ code: "P_LEG", name: "L", qty: 1 }]).length === 3, "13 legacy all");
+  /* Assignment-only storeStock with stock:0 must not hide eligible stores */
+  const assignedZero = {
+    code: "P_Z", name: "Z", stock: 8, active: true,
+    storeAvailabilityMode: "selected", storeIds: ["store_a"],
+    storeStock: { store_a: { available: true, stock: 0 }, store_b: { available: false, stock: 0 } },
+  };
+  dbPick.products.push(assignedZero);
+  assert(inv.storeAvailableStock(assignedZero, "store_a") === 8, "stock:0 assignment falls back to global");
+  assert(inv.eligiblePickupStores(dbPick, [{ code: "P_Z", name: "Z", qty: 1 }]).map((s) => s.id).join(",") === "store_a", "assigned store visible despite stock:0 row");
   ok("13-17 pickup eligibility (unit)");
 
   /* ===== UNIT: cancel parity ===== */

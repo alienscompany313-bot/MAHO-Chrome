@@ -2539,11 +2539,17 @@
           p.storeAvailabilityMode="selected";
           p.storeIds=ids.slice(); /* may be empty => no pickup stores */
         }
+        /* storeStock availability flags only — do NOT write stock:0 here (p.stock not set yet).
+           Pickup eligibility uses storeIds + global stock unless per-store stock is set later. */
         p.storeStock=p.storeStock||{};
         var allStores=(state.stores||[]).map(function(s){return String(s.id||"");}).filter(Boolean);
         allStores.forEach(function(id){
           var on = allMode || ids.indexOf(id)>=0;
-          p.storeStock[id]=Object.assign({}, (editIndex>=0 && state.products[editIndex] && state.products[editIndex].storeStock && state.products[editIndex].storeStock[id]) || {}, { available: !!on, stock: (p.storeStock[id]&&p.storeStock[id].stock!=null)?p.storeStock[id].stock:(Number(p.stock)||0) });
+          var prevRow=(editIndex>=0 && state.products[editIndex] && state.products[editIndex].storeStock && state.products[editIndex].storeStock[id]) || {};
+          var row=Object.assign({}, prevRow, { available: !!on });
+          /* Keep prior positive per-store stock if present; never invent stock:0 from empty p.stock */
+          if(!(row.stock!=null && Number(row.stock)>0)){ delete row.stock; }
+          p.storeStock[id]=row;
         });
       })();
       var sizes = hasSizes ? parseList($("#f_sizes").value) : [];
