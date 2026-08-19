@@ -4,10 +4,13 @@
  * Global product.stock / variantStock remain the source of truth for
  * total sellable units when storeStock is absent.
  *
- * product.storeStock = {
- *   [storeId]: { available: boolean, stock: number|null, variantStock?: object }
- * }
- * product.storeIds = string[]  // stores that carry the product (optional shorthand)
+ * product.storeAvailabilityMode = "all" | "selected"
+ * product.storeIds = string[]  // authoritative when mode === "selected"
+ * product.storeStock = { [storeId]: { available, stock, variantStock? } }
+ *
+ * Legacy (no storeAvailabilityMode / no storeIds field): treat as "all".
+ * Historical empty storeIds array (pre-mode): treat as "all".
+ * Explicit mode "selected" + empty storeIds: NO pickup stores.
  */
 const { haversineKm, parseCoord } = require("./geo");
 const {
@@ -21,14 +24,34 @@ function ensureStoreStock(product) {
     product.storeStock = {};
     changed = true;
   }
-  if (!Array.isArray(product.storeIds)) {
-    product.storeIds = Object.keys(product.storeStock).filter((id) => {
-      const row = product.storeStock[id];
-      return row && row.available !== false;
-    });
-    changed = true;
-  }
+  /* Do NOT invent storeIds from storeStock — that overloads empty/missing semantics. */
   return changed;
+}
+
+function resolveStoreAvailabilityMode(product) {
+  if (!product || typeof product !== "object") return "all";
+  if (product.storeAvailabilityMode === "all" || product.storeAvailabilityMode === "selected") {
+    return product.storeAvailabilityMode;
+  }
+  /* Legacy products: missing storeIds field => all active stores */
+  if (!Object.prototype.hasOwnProperty.call(product, "storeIds")) return "all";
+  if (!Array.isArray(product.storeIds)) return "all";
+  /* Historical admin save wrote [] to mean "all stores" */
+  if (product.storeIds.length === 0) return "all";
+  return "selected";
+}
+
+function normalizeStoreAssignment(product) {
+  if (!product || typeof product !== "object") return product;
+  ensureStoreStock(product);
+  const mode = resolveStoreAvailabilityMode(product);
+  product.storeAvailabilityMode = mode;
+  if (mode === "all") {
+    if (!Array.isArray(product.storeIds)) product.storeIds = [];
+  } else if (!Array.isArray(product.storeIds)) {
+    product.storeIds = [];
+  }
+  return product;
 }
 
 function storeRow(product, storeId) {
@@ -42,6 +65,7 @@ function storeRow(product, storeId) {
 }
 
 function setStoreAvailability(product, storeId, body) {
+  normalizeStoreAssignment(product);
   const row = storeRow(product, storeId);
   if (!row) return { ok: false, error: "missing_store" };
   if (body.available != null) row.available = !!body.available;
@@ -49,22 +73,27 @@ function setStoreAvailability(product, storeId, body) {
   if (body.variantStock && typeof body.variantStock === "object") {
     row.variantStock = Object.assign({}, row.variantStock || {}, body.variantStock);
   }
-  const ids = new Set(product.storeIds || []);
+  /* Switching a store on/off forces selected mode */
+  product.storeAvailabilityMode = "selected";
+  const ids = new Set((product.storeIds || []).map(String));
   if (row.available) ids.add(String(storeId));
   else ids.delete(String(storeId));
   product.storeIds = Array.from(ids);
-  return { ok: true, storeStock: row, storeIds: product.storeIds };
+  return { ok: true, storeStock: row, storeIds: product.storeIds, storeAvailabilityMode: product.storeAvailabilityMode };
 }
 
 function storeAvailableStock(product, storeId, color, size) {
   ensureStoreStock(product);
   const id = String(storeId || "");
-  /* No store scoping configured → fall back to global stock */
-  if (!id || !Object.keys(product.storeStock).length) {
+  const mode = resolveStoreAvailabilityMode(product);
+  if (!id) return 0;
+  if (mode === "all" && !Object.keys(product.storeStock).length) {
     return availableStock(product, color, size);
   }
+  if (!productCarriedAtStore(product, id)) return 0;
   const row = product.storeStock[id];
-  if (!row || row.available === false) return 0;
+  if (!row) return availableStock(product, color, size);
+  if (row.available === false) return 0;
   if (row.variantStock && typeof row.variantStock === "object") {
     const key = variantKey(color, size);
     if (Object.prototype.hasOwnProperty.call(row.variantStock, key)) {
@@ -98,23 +127,31 @@ function applyStoreStockDelta(product, storeId, qty, sign, color, size) {
     if (next < 0) return { ok: false, stock: cur };
     row.stock = next;
   }
-  /* Also mirror on global stock so public catalog stays consistent */
   return applyStockDelta(product, qty, sign, color, size);
 }
 
 function productCarriedAtStore(product, storeId) {
+  if (!product) return false;
   ensureStoreStock(product);
   const id = String(storeId || "");
-  if (!Object.keys(product.storeStock).length) return true; /* unset = all stores */
-  if (Array.isArray(product.storeIds) && product.storeIds.length) {
-    if (product.storeIds.indexOf(id) < 0) return false;
+  if (!id) return false;
+  const mode = resolveStoreAvailabilityMode(product);
+  if (mode === "all") {
+    const row = product.storeStock[id];
+    if (row && row.available === false) return false;
+    return true;
   }
+  /* selected mode — storeIds is authoritative */
+  const ids = Array.isArray(product.storeIds) ? product.storeIds.map(String) : [];
+  if (!ids.length) return false; /* explicit empty selection => no pickup stores */
+  if (ids.indexOf(id) < 0) return false;
   const row = product.storeStock[id];
-  return !!(row && row.available !== false);
+  if (row && row.available === false) return false;
+  return true;
 }
 
 /**
- * Stores that can fulfill ALL cart lines (qty) for pickup.
+ * Stores that can fulfill ALL cart lines (qty) for pickup — intersection.
  */
 function eligiblePickupStores(db, cartItems, customerLat, customerLng) {
   const stores = Array.isArray(db.stores) ? db.stores : [];
@@ -139,6 +176,7 @@ function eligiblePickupStores(db, cartItems, customerLat, customerLng) {
         shortages.push({ code: it.code, reason: "missing_product" });
         return;
       }
+      normalizeStoreAssignment(p);
       if (!productCarriedAtStore(p, storeId)) {
         ok = false;
         shortages.push({ code: p.code, reason: "not_at_store" });
@@ -188,7 +226,6 @@ function eligiblePickupStores(db, cartItems, customerLat, customerLng) {
 function resolvePickupStore(db, storeId) {
   const stores = Array.isArray(db.stores) ? db.stores : [];
   let store = stores.find((s, i) => String(s.id || ("store_" + i)) === String(storeId));
-  if (!store && stores.length) store = stores[0];
   if (!store) return null;
   const idx = stores.indexOf(store);
   const id = store.id || ("store_" + idx);
@@ -206,16 +243,18 @@ function resolvePickupStore(db, storeId) {
     mapsUrl: (lat != null && lng != null)
       ? ("https://www.google.com/maps?q=" + encodeURIComponent(lat + "," + lng))
       : (store.map || ""),
-    instructions: store.pickupInstructions || store.instructions || "",
   };
 }
 
 module.exports = {
   ensureStoreStock,
+  storeRow,
   setStoreAvailability,
   storeAvailableStock,
   applyStoreStockDelta,
   productCarriedAtStore,
   eligiblePickupStores,
   resolvePickupStore,
+  resolveStoreAvailabilityMode,
+  normalizeStoreAssignment,
 };

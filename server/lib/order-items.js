@@ -344,9 +344,12 @@ function requestItemReturn(order, lineId, body, meta) {
   if (!line) return { ok: false, error: "line_not_found", status: 404 };
   const elig = itemReturnEligible(order, line, meta.now);
   if (!elig.ok) return { ok: false, error: elig.error, status: 400 };
-  const method = String(body.method || "pickup_store");
+  const method = String((body && body.method) || "");
   if (method !== "pickup_store" && method !== "pickup_customer") {
-    return { ok: false, error: "invalid_return_method", status: 400 };
+    return { ok: false, error: "return_method_required", status: 400 };
+  }
+  if (!(body && (body.reasonId || body.reason))) {
+    return { ok: false, error: "return_reason_required", status: 400 };
   }
   const refundable = refundableForLine(order, line);
   line.returnRequest = {
@@ -354,12 +357,12 @@ function requestItemReturn(order, lineId, body, meta) {
     reason: String(body.reason || "").slice(0, 500),
     details: String(body.details || "").slice(0, 1000),
     reasonId: body.reasonId || null,
-    reasonTitleSnapshot: body.reasonTitleSnapshot || "",
+    reasonTitleSnapshot: body.reasonTitleSnapshot || String(body.reason || "").slice(0, 200),
     requestedAt: Date.now(),
     refundStatus: "not_ready",
     approvedRefundAmount: refundable,
     stockRestored: false,
-    returnPickupStatus: method === "pickup_customer" ? "not_assigned" : "n/a",
+    returnPickupStatus: method === "pickup_customer" ? "not_assigned" : "n_a",
   };
   setItemStatus(order, lineId, "return_requested", { by: meta.by || "customer", reason: body.reason });
   return { ok: true, line, order };

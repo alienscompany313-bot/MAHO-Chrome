@@ -157,7 +157,11 @@ function mountV2(app, ctx) {
     const win = customerMayRequestReturn(o);
     if (!win.ok) return res.status(400).json({ error: win.error || "return_not_allowed" });
     const b = req.body || {};
-    const method = b.method === "pickup_customer" ? "pickup_customer" : "pickup_store";
+    /* No silent default — customer must explicitly choose a return method. */
+    if (b.method !== "pickup_customer" && b.method !== "pickup_store") {
+      return res.status(400).json({ error: "return_method_required" });
+    }
+    const method = b.method;
     const reasonId = sanitizeText(b.reasonId, 40);
     let reason = sanitizeText(b.reason, 200);
     let reasonTitleSnapshot = reason;
@@ -171,6 +175,7 @@ function mountV2(app, ctx) {
       }
     }
     const details = sanitizeText(b.details, 1000);
+    if (!reason && !reasonId) return res.status(400).json({ error: "return_reason_required" });
     if (!reason) return res.status(400).json({ error: "reason_required" });
     let pickup = null;
     if (method === "pickup_customer") {

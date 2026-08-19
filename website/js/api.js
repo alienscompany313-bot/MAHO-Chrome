@@ -438,20 +438,40 @@
     if (STATUS_FA[c]) return lang === "en" ? c.replace(/_/g, " ") : STATUS_FA[c];
     return c;
   }
+  var CANONICAL_STATUS = {
+    new: 1, pending: 1, confirmed: 1, dispatched: 1, delivered: 1, cancelled: 1,
+    awaiting_payment: 1, return_requested: 1, return_approved: 1, return_rejected: 1,
+    return_completed: 1, receipt_submitted: 1, under_review: 1, payment_confirmed: 1,
+    payment_rejected: 1, partially_approved: 1, partially_rejected: 1, partially_shipped: 1,
+    partially_delivered: 1, partially_cancelled: 1, partially_returned: 1
+  };
   function statusCode(label) {
-    var s = String(label || "");
+    var s = String(label || "").trim();
+    if (!s) return "new";
+    /* Prefer canonical codes — never infer eligibility from translated UI labels. */
+    if (CANONICAL_STATUS[s]) return s === "pending" ? "new" : s;
     if (STATUS_FA[s]) return s;
-    if (s === "new" || s.indexOf("جدید") >= 0) return "new";
-    if (s.indexOf("ارسال") >= 0 || s === "dispatched") return "dispatched";
-    if (s.indexOf("تحویل") >= 0 || s === "delivered") return "delivered";
-    if (s.indexOf("تایید شده") >= 0 || s.indexOf("تأیید") >= 0 || s === "confirmed") return "confirmed";
-    if (s.indexOf("لغو") >= 0 || s === "cancelled") return "cancelled";
-    if (s.indexOf("انتظار پرداخت") >= 0 || s === "awaiting_payment") return "awaiting_payment";
-    if (s.indexOf("برگشت") >= 0 && (s.indexOf("تکمیل") >= 0 || s === "return_completed")) return "return_completed";
-    if (s.indexOf("برگشت") >= 0 && (s.indexOf("رد") >= 0 || s === "return_rejected")) return "return_rejected";
-    if (s.indexOf("برگشت") >= 0 && (s.indexOf("تأیید") >= 0 || s.indexOf("تایید") >= 0 || s === "return_approved")) return "return_approved";
-    if (s.indexOf("برگشت") >= 0 || s === "return_requested") return "return_requested";
-    if (s.indexOf("انتظار") >= 0 || s === "pending") return "new";
+    /* Exact English display forms */
+    var en = s.toLowerCase().replace(/\s+/g, "_");
+    if (CANONICAL_STATUS[en]) return en === "pending" ? "new" : en;
+    /* Legacy Persian label reverse-map (exact / careful). Avoid substring traps like «آماده ارسال» → dispatched. */
+    if (s === "آماده ارسال" || s === "در حال آماده‌سازی" || s === "آماده تحویل از فروشگاه") return "confirmed";
+    if (s === "بخشی لغو شد") return "partially_cancelled";
+    if (s === "بخشی برگشت داده شد") return "partially_returned";
+    if (s === "بخشی تأیید شد" || s === "بخشی تایید شد") return "partially_approved";
+    if (s === "بخشی رد شد") return "partially_rejected";
+    if (s === "بخشی ارسال شد") return "partially_shipped";
+    if (s === "بخشی تحویل داده شد") return "partially_delivered";
+    if (s === "در انتظار تأیید" || s === "در انتظار تایید" || s.indexOf("جدید") >= 0) return "new";
+    if (s === "تأیید شد" || s === "تایید شد" || s === "تایید شده") return "confirmed";
+    if (s === "ارسال شد") return "dispatched";
+    if (s === "تحویل داده شد" || s === "تحویل شد (فروشگاه)") return "delivered";
+    if (s === "لغو شد") return "cancelled";
+    if (s.indexOf("انتظار پرداخت") >= 0) return "awaiting_payment";
+    if (s.indexOf("برگشت") >= 0 && s.indexOf("تکمیل") >= 0) return "return_completed";
+    if (s.indexOf("برگشت") >= 0 && s.indexOf("رد") >= 0) return "return_rejected";
+    if (s.indexOf("برگشت") >= 0 && (s.indexOf("تأیید") >= 0 || s.indexOf("تایید") >= 0)) return "return_approved";
+    if (s.indexOf("برگشت") >= 0) return "return_requested";
     return s || "new";
   }
 

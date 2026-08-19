@@ -1176,15 +1176,26 @@ app.post("/api/orders", (req, res) => {
   let pickupStore = null;
   if (wantsPickup) {
     const storeId = (b.delivery && (b.delivery.storeId || b.pickupStoreId)) || b.pickupStoreId;
-    if (storeId) {
-      pickupStore = resolvePickupStore(db, storeId);
+    const eligible = eligiblePickupStores(db, items, customerLocation && customerLocation.lat, customerLocation && customerLocation.lng);
+    if (!storeId) {
+      return res.status(400).json({
+        error: "pickup_store_required",
+        message: "لطفاً فروشگاه تحویل حضوری را انتخاب کنید.",
+        eligibleStoreIds: eligible.map((s) => s.id),
+      });
     }
+    if (!eligible.some((s) => String(s.id) === String(storeId))) {
+      return res.status(400).json({
+        error: "invalid_pickup_store",
+        message: eligible.length
+          ? "فروشگاه انتخاب‌شده برای این سبد واجد شرایط نیست."
+          : "فروشگاه واجد شرایط برای تحویل حضوری یافت نشد.",
+        eligibleStoreIds: eligible.map((s) => s.id),
+      });
+    }
+    pickupStore = resolvePickupStore(db, storeId);
     if (!pickupStore) {
-      const eligible = eligiblePickupStores(db, items, customerLocation && customerLocation.lat, customerLocation && customerLocation.lng);
-      if (!eligible.length) {
-        return res.status(400).json({ error: "no_pickup_store", message: "فروشگاه واجد شرایط برای تحویل حضوری یافت نشد." });
-      }
-      pickupStore = resolvePickupStore(db, eligible[0].id) || eligible[0];
+      return res.status(400).json({ error: "invalid_pickup_store", message: "فروشگاه انتخاب‌شده معتبر نیست." });
     }
     if (b.delivery) b.delivery.storeId = pickupStore.id;
   }
