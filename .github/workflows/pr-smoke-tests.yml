@@ -63,3 +63,6 @@ jobs:
 
       - name: Smoke final additions
         run: node scripts/smoke-final-additions.js
+
+      - name: Smoke data retention
+        run: node scripts/smoke-retention.js

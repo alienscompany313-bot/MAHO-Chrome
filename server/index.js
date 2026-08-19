@@ -32,6 +32,7 @@ const { mountV3 } = require("./lib/api-v3");
 const { mountEngagement, maybeSendFeedbackRequest } = require("./lib/api-engagement");
 const { mountOpsSuite } = require("./lib/api-ops-suite");
 const { mountOrderOps } = require("./lib/api-order-ops");
+const { mountRetention } = require("./lib/api-retention");
 const { newLineId, normalizeOrderItems, mapOrderStatusToItem } = require("./lib/order-items");
 const { evaluateOrderValueDiscount } = require("./lib/order-discounts");
 const { resolvePickupStore, eligiblePickupStores } = require("./lib/store-inventory");
@@ -774,7 +775,10 @@ app.post("/api/admin/upload", requireAdminAnyPerm(["products", "settings"]), (re
 
 app.get("/api/admin/orders", requireAdminPerm("orders"), (req, res) => {
   res.setHeader("Cache-Control", "no-store");
-  res.json({ orders: db.orders });
+  const { filterOrdersForAdmin, getRetentionConfig } = require("./lib/retention");
+  const showArchived = String(req.query.archived || "") === "1" || String(req.query.showArchived || "") === "1";
+  const list = filterOrdersForAdmin(db.orders || [], getRetentionConfig(db), showArchived);
+  res.json({ orders: list, showArchived });
 });
 app.get("/api/admin/customers", requireAdminPerm("customers"), (req, res) =>
   res.json({ customers: db.users.map(publicUser) })
@@ -1285,7 +1289,12 @@ app.get("/api/orders", requireUser, (req, res) => {
     itemStatusTimestamp,
     publicItem,
   } = require("./lib/order-items");
-  const list = (db.orders || []).filter((o) => o && o.userId === req.user.id).map((o) => {
+  const { filterOrdersForCustomer, getRetentionConfig } = require("./lib/retention");
+  const mine = filterOrdersForCustomer(
+    (db.orders || []).filter((o) => o && o.userId === req.user.id),
+    getRetentionConfig(db)
+  );
+  const list = mine.map((o) => {
     normalizeOrderItems(o);
     const aggregateLabel = customerOrderAggregateLabel(o);
     const items = (o.items || []).map((it) => {
@@ -1301,6 +1310,7 @@ app.get("/api/orders", requireUser, (req, res) => {
       items,
       statusLabelFa: aggregateLabel,
       aggregateFlags: o.aggregateFlags || {},
+      archived: !!o.archived,
     });
   });
   res.json({ orders: list });
@@ -1400,6 +1410,11 @@ mountOrderOps(app, {
   saveDb, auth, requireAdmin, requireUser, publicUser,
   sessions, findProduct,
   get mail() { return mail; },
+});
+mountRetention(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm, staffHasPerm,
+  DATA_DIR,
 });
 
 /* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */

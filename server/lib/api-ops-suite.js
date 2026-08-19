@@ -477,13 +477,15 @@ function mountOpsSuite(app, ctx) {
     if (o.returnRequest.returnDriverId !== req.driverSession.driverId) {
       return res.status(403).json({ error: "not_your_job" });
     }
-    /* Idempotent: already collected — do not re-audit, re-notify, or re-touch inventory/refund */
-    const already =
+    /* Idempotent: fully collected — do not re-audit, re-notify, or re-touch inventory/refund */
+    const approvedQtyEarly = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0) || 1;
+    const collectedEarly = Number(o.returnRequest.collectedQty || 0) || 0;
+    const fullyCollected =
       o.returnRequest.pickupConfirmed === true ||
-      o.returnRequest.returnPickupStatus === "picked_up" ||
+      collectedEarly >= approvedQtyEarly ||
       o.returnRequest.returnPickupStatus === "returned_to_store" ||
       o.returnRequest.returnPickupStatus === "completed";
-    if (already) {
+    if (fullyCollected) {
       pushAudit(db(), {
         actor: req.driverSession.driverId,
         action: "return_pickup_duplicate_attempt",
@@ -492,6 +494,8 @@ function mountOpsSuite(app, ctx) {
         meta: {
           collectionId: o.returnRequest.collectionId || null,
           returnPickupStatus: o.returnRequest.returnPickupStatus,
+          collectedQty: collectedEarly,
+          approvedQty: approvedQtyEarly,
         },
       });
       saveDb();
@@ -502,20 +506,56 @@ function mountOpsSuite(app, ctx) {
         returnPickupStatus: o.returnRequest.returnPickupStatus,
         pickedUpAt: o.returnRequest.pickedUpAt || null,
         collectionId: o.returnRequest.collectionId || null,
+        collectedQty: collectedEarly,
+        approvedQty: approvedQtyEarly,
       });
     }
     const photos = o.returnRequest.pickupPhotos || [];
     if (o.returnRequest.photoRequired && !photos.length) {
       return res.status(400).json({ error: "photo_required" });
     }
-    const collectionId = "rpc_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-    const qty = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0) || 1;
+    const approvedQty = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0) || 1;
+    const alreadyQty = Number(o.returnRequest.collectedQty || 0) || 0;
+    if (alreadyQty >= approvedQty) {
+      pushAudit(db(), {
+        actor: req.driverSession.driverId,
+        action: "return_pickup_duplicate_attempt",
+        entityType: "order",
+        entityId: o.id,
+        meta: { reason: "qty_exhausted", collectedQty: alreadyQty, approvedQty },
+      });
+      saveDb();
+      return res.status(409).json({
+        ok: false,
+        error: "already_collected",
+        message: "این کالا قبلاً دریافت شده است.",
+        collectedQty: alreadyQty,
+        approvedQty,
+      });
+    }
+    let requestQty = Number((req.body || {}).qty);
+    if (!Number.isFinite(requestQty) || requestQty <= 0) requestQty = approvedQty - alreadyQty;
+    requestQty = Math.floor(requestQty);
+    const remaining = approvedQty - alreadyQty;
+    if (requestQty > remaining) {
+      return res.status(400).json({
+        error: "qty_exceeds_approved",
+        message: "مقدار درخواستی از مقدار تأییدشده برگشت بیشتر است.",
+        remaining,
+        approvedQty,
+        collectedQty: alreadyQty,
+      });
+    }
+    const collectionId = o.returnRequest.collectionId
+      || ("rpc_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8));
+    const newCollected = alreadyQty + requestQty;
     o.returnRequest.returnPickupStatus = "picked_up";
-    o.returnRequest.pickedUpAt = Date.now();
+    o.returnRequest.pickedUpAt = o.returnRequest.pickedUpAt || Date.now();
     o.returnRequest.pickedUpByDriverId = req.driverSession.driverId;
-    o.returnRequest.pickupConfirmed = true;
+    o.returnRequest.pickupConfirmed = newCollected >= approvedQty;
     o.returnRequest.collectionId = collectionId;
-    o.returnRequest.collectedQty = qty;
+    o.returnRequest.collectedQty = newCollected;
+    o.returnRequest.approvedReturnQty = approvedQty;
     /* Inventory must NOT restore here */
     saveDb();
     pushAudit(db(), {
@@ -523,9 +563,9 @@ function mountOpsSuite(app, ctx) {
       action: "return_pickup_confirmed",
       entityType: "order",
       entityId: o.id,
-      meta: { collectionId, qty },
+      meta: { collectionId, qty: requestQty, collectedQty: newCollected, approvedQty },
     });
-    if (mail() && o.customer && o.customer.email) {
+    if (mail() && o.customer && o.customer.email && newCollected >= approvedQty) {
       mail().orderStatus(o.customer.email, o, "کالای برگشتی دریافت شد", o.lang || "fa").catch(() => {});
     }
     res.json({
@@ -533,7 +573,10 @@ function mountOpsSuite(app, ctx) {
       returnPickupStatus: "picked_up",
       pickedUpAt: o.returnRequest.pickedUpAt,
       collectionId,
-      collectedQty: qty,
+      collectedQty: newCollected,
+      approvedQty,
+      remaining: Math.max(0, approvedQty - newCollected),
+      pickupConfirmed: !!o.returnRequest.pickupConfirmed,
     });
   });
 

@@ -409,23 +409,26 @@ function statusLabelItemFa(code) {
     rejected: "رد شد",
     cancelled: "لغو شد",
     preparing: "در حال آماده‌سازی",
-    ready_pickup: "آماده تحویل از فروشگاه",
+    ready_pickup: "آماده تحویل حضوری",
     ready_ship: "آماده ارسال",
-    handed_to_driver: "تحویل به درایور",
-    in_transit: "در مسیر",
+    handed_to_driver: "به راننده سپرده شد",
+    in_transit: "در مسیر ارسال",
     shipped: "ارسال شد",
     delivered: "تحویل داده شد",
-    return_requested: "درخواست برگشت ثبت شد",
+    pickup_delivered: "تحویل حضوری شد",
+    return_requested: "درخواست برگشت",
     return_approved: "برگشت تأیید شد",
+    return_driver_assigned: "راننده برای جمع‌آوری تعیین شد",
     return_awaiting_pickup: "در انتظار جمع‌آوری",
     return_driver_en_route: "درایور در مسیر جمع‌آوری",
-    return_collected: "جنس برگشتی جمع‌آوری شد",
-    return_to_store: "به فروشگاه برگشت",
+    return_collected: "کالای برگشتی جمع‌آوری شد",
+    return_to_store: "برگشت به فروشگاه رسید",
     return_reviewing: "در حال بررسی برگشتی",
     return_rejected: "برگشت رد شد",
     return_completed: "برگشت تکمیل شد",
     refund_pending: "بازپرداخت در انتظار",
     refund_completed: "بازپرداخت انجام شد",
+    order_placed: "سفارش ثبت شد",
   };
   return m[code] || code;
 }
@@ -442,24 +445,30 @@ function customerItemStatusLabel(order, item) {
     order.delivery.method === "pickup" || order.delivery.method === "store_pickup" || order.delivery.method === "store"
   );
 
-  if (rr && (st === "return_requested" || st === "return_approved" || st === "return_completed" || st.indexOf("return") === 0)) {
+  if (rr && (st === "return_requested" || st === "return_approved" || st === "return_completed" || String(st).indexOf("return") === 0)) {
     const rps = rr.returnPickupStatus || "";
     if (rr.refundStatus === "paid" || rr.cashRefundPaid) return statusLabelItemFa("refund_completed");
     if (st === "return_completed") return statusLabelItemFa("return_completed");
     if (rps === "returned_to_store") return statusLabelItemFa("return_to_store");
     if (rps === "picked_up" || rr.pickupConfirmed) return statusLabelItemFa("return_collected");
     if (rps === "on_the_way") return statusLabelItemFa("return_driver_en_route");
-    if (rps === "assigned" || rps === "not_assigned") return statusLabelItemFa("return_awaiting_pickup");
+    if (rps === "assigned" || rr.returnDriverId) return statusLabelItemFa("return_driver_assigned");
+    if (rps === "not_assigned") return statusLabelItemFa("return_awaiting_pickup");
     if (st === "return_approved") return statusLabelItemFa("return_approved");
     if (st === "return_requested") return statusLabelItemFa("return_requested");
-    if (rr.refundStatus === "approved" || rr.refundStatus === "pending") return statusLabelItemFa("refund_pending");
+    if (rr.refundStatus === "approved" || rr.refundStatus === "pending" || rr.refundStatus === "not_ready") {
+      return statusLabelItemFa("refund_pending");
+    }
   }
 
+  if (st === "pending") return statusLabelItemFa("pending");
   if (st === "approved" && isPickup) return statusLabelItemFa("preparing");
   if (st === "shipped" && isPickup) return statusLabelItemFa("ready_pickup");
+  if (st === "delivered" && isPickup) return statusLabelItemFa("pickup_delivered");
   if (st === "approved" && !isPickup) {
     if (order && order.driverStatus === "picked_up") return statusLabelItemFa("handed_to_driver");
     if (order && order.driverStatus === "in_transit") return statusLabelItemFa("in_transit");
+    if (order && order.driverId) return statusLabelItemFa("handed_to_driver");
     return statusLabelItemFa("ready_ship");
   }
   if (st === "shipped") {
@@ -530,7 +539,7 @@ function customerOrderAggregateLabel(order) {
     dispatched: "ارسال شد",
     delivered: "تحویل داده شد",
     cancelled: "لغو شد",
-    return_requested: "درخواست برگشت ثبت شد",
+    return_requested: "درخواست برگشت",
     return_approved: "برگشت تأیید شد",
     return_rejected: "برگشت رد شد",
     return_completed: "برگشت تکمیل شد",

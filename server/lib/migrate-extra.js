@@ -223,6 +223,11 @@ function extendMigrate(data) {
     }
   } catch (_) {}
 
+  try {
+    const { ensureRetention } = require("./retention");
+    if (ensureRetention(data)) changed = true;
+  } catch (_) {}
+
   return changed;
 }
 

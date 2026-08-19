@@ -277,6 +277,7 @@
           <div class="side-group-label">تنظیمات</div>
           <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si">Aa</span><span>متن‌های سایت</span></button>
           <button type="button" class="side-link" data-panel="settings" data-perm="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
+          <button type="button" class="side-link" data-panel="retention" data-perm="settings"><span class="si">🗄</span><span>مدیریت اطلاعات و پاک‌سازی</span></button>
           <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
         </div>
       </nav>
@@ -933,6 +934,40 @@
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnSettings">ذخیره تغییرات روی سرور</button></div>
     </div>
 
+    <!-- DATA RETENTION / CLEANUP -->
+    <div class="card admin-panel" data-panel="retention">
+      <div class="row-between">
+        <div>
+          <h2>مدیریت اطلاعات و پاک‌سازی</h2>
+          <div class="sub">نگهداری امن سوابق عملیاتی — پیش‌فرض: بدون حذف خودکار. آرشیف قبل از حذف دائمی. سوابق مالی فقط با مجوز صریح Owner حذف می‌شوند.</div>
+        </div>
+        <button type="button" class="btn btn-outline" id="retRefreshBtn">Refresh</button>
+      </div>
+      <div class="note" style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fbf8f1">
+        <b>هشدار ایمنی:</b> پاک‌سازی دائمی ممکن است غیرقابل‌بازیابی باشد مگر پشتیبان جداگانه داشته باشید.
+        محصولات، مشتریان، فروشگاه‌ها، کارمندان، رانندگان و تنظیمات سایت هرگز پاک نمی‌شوند.
+        حساب مشتری با پاک‌سازی سفارش قدیمی حذف نمی‌شود.
+      </div>
+      <div id="retCounts" class="note" style="margin-bottom:12px">—</div>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retAuto"> پاک‌سازی خودکار (آرشیف) — پیش‌فرض خاموش</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retArchiveFirst" checked> آرشیف قبل از حذف دائمی</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retShowArchivedAdmin"> نمایش آرشیف در لیست سفارش‌های ادمین</label>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="retShowArchivedCust"> نمایش سفارش‌های آرشیف‌شده برای مشتری</label>
+      <div class="field" style="max-width:220px;margin:8px 0"><label>اندازه دسته (batch)</label><input id="retBatch" type="number" min="1" max="200" value="50"></div>
+      <h3 style="margin:16px 0 8px;font-size:15px">دوره‌های نگهداری (روز)</h3>
+      <div id="retCatRows"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
+        <button type="button" class="btn btn-gold" id="retSaveCfg">ذخیره تنظیمات نگهداری</button>
+        <button type="button" class="btn btn-outline" id="retPreviewBtn">پیش‌نمایش پاک‌سازی</button>
+        <button type="button" class="btn btn-outline" id="retArchiveBtn">اجرای آرشیف واجد شرایط</button>
+        <button type="button" class="btn btn-danger" id="retDeleteBtn">حذف دائمی (Owner)</button>
+      </div>
+      <div id="retPreviewBox" class="note" style="white-space:pre-wrap;border:1px dashed var(--line);border-radius:10px;padding:10px;min-height:48px">پیش‌نمایش هنوز اجرا نشده است.</div>
+      <h3 style="margin:18px 0 8px;font-size:15px">تاریخچه پاک‌سازی</h3>
+      <div id="retHistory"></div>
+      <p class="note" style="margin-top:12px">Cron خارجی (اختیاری): <code>POST /api/cron/retention</code> با هدر <code>X-Retention-Cron: $RETENTION_CRON_SECRET</code>. فقط وقتی پاک‌سازی خودکار روشن باشد آرشیف می‌کند — هرگز حذف دائمی خودکار نیست.</p>
+    </div>
+
     <!-- PUBLISH / MAHO / BACKUP -->
     <div class="card admin-panel" data-panel="publish">
       <h2>انتشار، اتصال و پشتیبان</h2>
@@ -1170,7 +1205,7 @@
     var PANEL_PERM={
       products:"products", categories:"products", icons:"products", discounts:"products", ovdiscounts:"settings", showcase:"products",
       orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
-      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings",
+      poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings", retention:"settings",
       subscribers:"marketing", campaigns:"marketing", feedback:"marketing", giveaways:"marketing", returnreasons:"returns", driverperf:"drivers"
     };
     function hasUiPerm(p){
@@ -1269,6 +1304,7 @@
       if(id==="campaigns") { fillCmpProducts(); loadCampaigns(); }
       if(id==="feedback") loadFeedbackPanel();
       if(id==="giveaways") loadGiveaways();
+      if(id==="retention") loadRetention();
       if(id==="returnreasons") loadReturnReasons();
       if(id==="driverperf") loadDriverPerf();
     }
@@ -3737,6 +3773,116 @@
     document.querySelectorAll('#sideNav [data-panel="ovdiscounts"]').forEach(function(btn){
       btn.addEventListener("click", function(){ setTimeout(loadOvdRules, 50); });
     });
+
+    /* ---- Data Retention / Cleanup ---- */
+    var _retBusy=false;
+    var _retCats=[];
+    function loadRetention(){
+      engFetch("/api/admin/retention").then(function(x){
+        if(!x.ok){ if($("#retCounts")) $("#retCounts").textContent="دسترسی یا خطا: "+((x.data&&x.data.error)||x.status); return; }
+        var d=x.data||{};
+        var r=d.retention||{};
+        var c=d.counts||{};
+        if($("#retAuto")) $("#retAuto").checked=!!r.automaticCleanupEnabled;
+        if($("#retArchiveFirst")) $("#retArchiveFirst").checked=r.archiveBeforeDelete!==false;
+        if($("#retShowArchivedAdmin")) $("#retShowArchivedAdmin").checked=!!r.showArchivedInAdmin;
+        if($("#retShowArchivedCust")) $("#retShowArchivedCust").checked=!!r.showArchivedToCustomers;
+        if($("#retBatch")) $("#retBatch").value=r.batchSize||50;
+        if($("#retCounts")){
+          $("#retCounts").textContent=
+            "سفارش فعال: "+toFa(c.ordersActive||0)+" · آرشیف: "+toFa(c.ordersArchived||0)+
+            " · کمپین: "+toFa(c.campaignsActive||0)+"/"+toFa(c.campaignsArchived||0)+
+            " · کاربران: "+toFa(c.users||0)+" · محصولات: "+toFa(c.products||0)+
+            " · فروشگاه: "+toFa(c.stores||0)+" — "+(c.note||"");
+        }
+        _retCats=r.categories||[];
+        var box=$("#retCatRows");
+        if(box){
+          box.innerHTML=_retCats.map(function(cat){
+            return '<div class="grid2" style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px" data-ret-cat="'+esc(cat.id)+'">'+
+              '<div><b>'+esc(cat.titleFa)+'</b>'+(cat.financial?' <span class="tag">مالی</span>':'')+
+              '<div class="note">'+esc(cat.id)+'</div></div>'+
+              '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ret-en" '+(cat.enabled?"checked":"")+'> فعال</label>'+
+              '<div class="field"><label>روز نگهداری</label><input class="ret-days" type="number" min="1" max="3650" value="'+esc(cat.days)+'"></div>'+
+              '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="ret-perm" '+(cat.permanentDeleteAllowed?"checked":"")+'> اجازه حذف دائمی</label>'+
+              '</div>';
+          }).join("");
+        }
+      });
+      engFetch("/api/admin/retention/history?limit=30").then(function(x){
+        var box=$("#retHistory"); if(!box) return;
+        var list=(x.data&&x.data.history)||[];
+        box.innerHTML=list.map(function(h){
+          return '<div class="note" style="border-bottom:1px dashed var(--line);padding:6px 0">'+
+            new Date(h.at).toLocaleString("fa-AF")+' — <b>'+esc(h.action)+'</b> · '+esc(h.actor)+
+            ' · '+toFa(h.affected||0)+' رکورد · '+(h.success?"موفق":("خطا: "+esc(h.error||"")))+
+            '</div>';
+        }).join("")||'<p class="note">تاریخی ثبت نشده</p>';
+      });
+    }
+    function collectRetBody(){
+      var categories={};
+      document.querySelectorAll("[data-ret-cat]").forEach(function(row){
+        var id=row.getAttribute("data-ret-cat");
+        categories[id]={
+          enabled:!!(row.querySelector(".ret-en")&&row.querySelector(".ret-en").checked),
+          days:Number((row.querySelector(".ret-days")&&row.querySelector(".ret-days").value)||365),
+          permanentDeleteAllowed:!!(row.querySelector(".ret-perm")&&row.querySelector(".ret-perm").checked),
+          archiveBeforeDelete:!!($("#retArchiveFirst")&&$("#retArchiveFirst").checked)
+        };
+      });
+      return {
+        automaticCleanupEnabled:!!($("#retAuto")&&$("#retAuto").checked),
+        archiveBeforeDelete:!!($("#retArchiveFirst")&&$("#retArchiveFirst").checked),
+        showArchivedInAdmin:!!($("#retShowArchivedAdmin")&&$("#retShowArchivedAdmin").checked),
+        showArchivedToCustomers:!!($("#retShowArchivedCust")&&$("#retShowArchivedCust").checked),
+        batchSize:Number(($("#retBatch")&&$("#retBatch").value)||50),
+        categories:categories
+      };
+    }
+    if($("#retRefreshBtn")) $("#retRefreshBtn").onclick=loadRetention;
+    if($("#retSaveCfg")) $("#retSaveCfg").onclick=function(){
+      engFetch("/api/admin/retention",{method:"PUT",body:collectRetBody()}).then(function(x){
+        toast(x.ok?"تنظیمات نگهداری ذخیره شد":((x.data&&x.data.error)||"ناموفق"));
+        if(x.ok) loadRetention();
+      });
+    };
+    if($("#retPreviewBtn")) $("#retPreviewBtn").onclick=function(){
+      engFetch("/api/admin/retention/preview").then(function(x){
+        var box=$("#retPreviewBox"); if(!box) return;
+        if(!x.ok){ box.textContent=(x.data&&x.data.error)||"خطا"; return; }
+        var d=x.data||{};
+        var lines=["پیش‌نمایش پاک‌سازی — هیچ داده‌ای حذف نشد.","کل واجد شرایط: "+toFa(d.totalEligible||0),""];
+        Object.keys(d.categories||{}).forEach(function(id){
+          var c=d.categories[id];
+          lines.push(c.titleFa+": "+toFa(c.eligible||0)+(c.enabled?"":" (غیرفعال)"));
+        });
+        box.textContent=lines.join("\n");
+      });
+    };
+    if($("#retArchiveBtn")) $("#retArchiveBtn").onclick=function(){
+      if(_retBusy) return;
+      if(!confirm("آرشیف رکوردهای واجد شرایط اجرا شود؟ (حذف دائمی نیست)")) return;
+      _retBusy=true;
+      engFetch("/api/admin/retention/archive",{method:"POST",body:{}}).then(function(x){
+        _retBusy=false;
+        alert(x.ok?("آرشیف: "+((x.data&&x.data.affected)||0)+" رکورد"):((x.data&&(x.data.message||x.data.error))||"خطا"));
+        loadRetention();
+      }).catch(function(){ _retBusy=false; });
+    };
+    if($("#retDeleteBtn")) $("#retDeleteBtn").onclick=function(){
+      if(_retBusy) return;
+      if(!confirm("هشدار: حذف دائمی. فقط رکوردهای آرشیف‌شده/واجدشرایط دسته‌های مجاز. ادامه؟")) return;
+      var phrase=prompt('برای تأیید، عبارت DELETE یا «حذف» را تایپ کنید:');
+      if(phrase!=="DELETE" && phrase!=="حذف"){ alert("لغو شد"); return; }
+      if(!confirm("تأیید نهایی حذف دائمی؟ این عمل ممکن است غیرقابل‌بازیابی باشد.")) return;
+      _retBusy=true;
+      engFetch("/api/admin/retention/delete",{method:"POST",body:{confirm:true,confirmPhrase:phrase}}).then(function(x){
+        _retBusy=false;
+        alert(x.ok?("حذف: "+((x.data&&x.data.affected)||0)):((x.data&&(x.data.message||x.data.error))||"خطا / بدون مجوز"));
+        loadRetention();
+      }).catch(function(){ _retBusy=false; });
+    };
   })();
   </script>
   <div class="print-sheet label-a4" id="printSheet" aria-hidden="true"></div>

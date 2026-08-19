@@ -17,6 +17,8 @@ const ALL_PERMS = [
   "marketing_send", "marketing_export", "marketing_giveaway",
   "marketing_giveaway_draw", "marketing_giveaway_notify", "marketing_giveaway_claim",
   "stores", "inventory", "discounts_rules", "staff_manage",
+  /* data retention */
+  "retention_view", "retention_edit", "retention_preview", "retention_archive", "retention_delete", "retention_history",
 ];
 
 const PERM_PARENT = {
@@ -41,6 +43,12 @@ const PERM_PARENT = {
   inventory: "products",
   discounts_rules: "settings",
   staff_manage: "staff",
+  retention_view: "settings",
+  retention_edit: "settings",
+  retention_preview: "settings",
+  retention_archive: "settings",
+  retention_history: "settings",
+  /* permanent delete has NO parent — Owner or explicit grant only */
 };
 
 const PERM_GROUPS = [
@@ -51,6 +59,7 @@ const PERM_GROUPS = [
   { id: "delivery", title: "رانندگان / Delivery", keys: ["drivers", "delivery"] },
   { id: "staff", title: "کارمندان", keys: ["staff", "staff_manage"] },
   { id: "stores", title: "فروشگاه‌ها / Inventory", keys: ["products", "inventory", "stores", "settings", "discounts_rules"] },
+  { id: "retention", title: "مدیریت اطلاعات و پاک‌سازی", keys: ["retention_view", "retention_edit", "retention_preview", "retention_archive", "retention_delete", "retention_history"] },
 ];
 
 function normalizePerms(list) {
