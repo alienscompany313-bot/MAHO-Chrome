@@ -72,3 +72,6 @@ jobs:
 
       - name: Verify account payment email
         run: node scripts/verify-account-payment-email.js
+
+      - name: Verify WhatsApp payment isolation
+        run: node scripts/verify-payment-whatsapp-isolation.js

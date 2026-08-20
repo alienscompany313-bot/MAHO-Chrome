@@ -1377,17 +1377,26 @@
     return customerNo;
   }
   function afterOrderPlaced(order, customer) {
-    if (payMethod === "hesab") {
+    /* WhatsApp deep-link ONLY for the explicit canonical "whatsapp" payment method.
+       Hesab (Account Pay), bank, card, and any other method stay inside MAHO —
+       no WhatsApp open, redirect, deep-link, or order message to WhatsApp. */
+    const method = String((order && order.payment) || payMethod || "").trim().toLowerCase();
+    if (method === "whatsapp") {
+      const wa = waNumber();
+      if (wa) {
+        window.open("https://wa.me/" + wa + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
+      }
+    } else if (method === "hesab") {
       const h = hesabInfo();
-      if (h.link) window.open(h.link, "_blank");
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
-    } else if (payMethod === "card") {
+      if (h.link) {
+        const href = (window.MAHOApi && MAHOApi.ensureHttps) ? MAHOApi.ensureHttps(h.link) : h.link;
+        window.open(href, "_blank");
+      }
+    } else if (method === "card") {
       const link = paymentLink();
       if (link) window.open(link, "_blank");
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
-    } else {
-      window.open("https://wa.me/" + waNumber() + "?text=" + encodeURIComponent(orderMessage(order)), "_blank");
     }
+    /* bank / other non-WhatsApp: no external WhatsApp — pending/unpaid status already on order */
     const emailed = !apiOnline && sendOrderEmail(order, customer.email, customer.name);
     CART = []; saveCart(); updateCartBadge(); renderCart();
     showToast(t("order.placed") + " · " + t("order.number") + " " + order.id + (emailed ? " · " + t("order.emailSent") : ""));
@@ -1446,10 +1455,16 @@
             return;
           }
         }
+        const allowedPay = { whatsapp: 1, hesab: 1, bank: 1, card: 1 };
+        const paymentMethod = allowedPay[payMethod] ? payMethod : null;
+        if (!paymentMethod) {
+          if ($("#coMsg")) $("#coMsg").textContent = LANG === "en" ? "This payment method is disabled. Please choose another." : "این روش پرداخت غیرفعال است. روش دیگری انتخاب کنید.";
+          return;
+        }
         const payload = {
           items: CART.map((it) => ({ name: it.name, name_en: it.name_en, code: it.code || "", qty: it.qty, size: it.size, color: it.color })),
           customer: customer,
-          payment: payMethod === "hesab" || payMethod === "card" || payMethod === "bank" ? payMethod : "whatsapp",
+          payment: paymentMethod,
           delivery: delivery,
           customerLocation: customerLocation || undefined,
           deliveryNote: customer.note || "",
