@@ -87,6 +87,13 @@ const { buildMailer } = require("../lib/email");
   });
   assert(withProfile === profileUrl, "profile beats coords");
 
+  const coordInMapField = resolveStoreMapsUrl({
+    lat: 34.5116, lng: 69.1205, map: coordUrl,
+  });
+  assert(isRawCoordMapsUrl(coordUrl), "prod-like coord map detected");
+  assert(/maps\?q=34\.5116/.test(coordInMapField), "coord stored in map falls through to lat/lng — not treated as profile");
+  assert(coordInMapField !== profileUrl, "does not invent profile");
+
   const fallback = resolveStoreMapsUrl({ lat: 34.5, lng: 69.1 });
   assert(/maps\?q=34\.5/.test(fallback), "lat/lng fallback when no profile");
 

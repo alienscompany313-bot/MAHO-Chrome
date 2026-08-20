@@ -51,25 +51,43 @@ function isRawCoordMapsUrl(u) {
 }
 
 /**
- * Prefer a real Google Maps business/place/profile/share URL over raw lat/lng pins.
- * Priority: googleMapsUrl → googleMapsPlaceUrl → map → mapUrl → non-coord mapsUrl → lat/lng.
+ * First saved Google Maps business/place/profile/share URL on the store.
+ * Never treats maps?q=lat,lng coordinate pins as a profile.
+ * Field order: googleMapsUrl → googleMapsPlaceUrl → map → mapUrl → non-coord mapsUrl.
  */
-function resolveStoreMapsUrl(store) {
+function pickStoreProfileMapsUrl(store) {
   const s = store || {};
   const profileKeys = ["googleMapsUrl", "googleMapsPlaceUrl", "map", "mapUrl"];
   for (let i = 0; i < profileKeys.length; i++) {
     const raw = String(s[profileKeys[i]] || "").trim();
-    if (/^https?:\/\//i.test(raw)) return ensureHttpsUrl(raw);
+    if (!/^https?:\/\//i.test(raw)) continue;
+    if (isRawCoordMapsUrl(raw)) continue;
+    return ensureHttpsUrl(raw);
   }
   const existing = String(s.mapsUrl || "").trim();
-  if (existing && !isRawCoordMapsUrl(existing)) return ensureHttpsUrl(existing);
+  if (existing && !isRawCoordMapsUrl(existing) && /^https?:\/\//i.test(existing)) {
+    return ensureHttpsUrl(existing);
+  }
+  return "";
+}
+
+/**
+ * Prefer a real Google Maps business/place/profile/share URL over raw lat/lng pins.
+ * Coordinate-only URLs stored in map/mapUrl/etc. are ignored (not profiles).
+ * Fallback: lat/lng pin when no profile URL exists.
+ */
+function resolveStoreMapsUrl(store) {
+  const s = store || {};
+  const profile = pickStoreProfileMapsUrl(s);
+  if (profile) return profile;
   const lat = parseCoord(s.lat);
   const lng = parseCoord(s.lng);
   if (lat != null && lng != null) return mapsLink(lat, lng);
+  const existing = String(s.mapsUrl || "").trim();
   return existing ? ensureHttpsUrl(existing) : "";
 }
 
 module.exports = {
   haversineKm, parseCoord, storeCoords, mapsLink, ensureHttpsUrl,
-  isRawCoordMapsUrl, resolveStoreMapsUrl,
+  isRawCoordMapsUrl, pickStoreProfileMapsUrl, resolveStoreMapsUrl,
 };

@@ -67,6 +67,9 @@ jobs:
       - name: Verify email discount + maps hotfix
         run: node scripts/verify-email-discount-maps-hotfix.js
 
+      - name: Verify maps profile persistence
+        run: node scripts/verify-maps-profile-persist.js
+
       - name: Verify store display email polish
         run: node scripts/verify-store-display-email-polish.js
 
