@@ -213,7 +213,7 @@ function waitHealth(port, tries) {
     assert(st1 && st1.map === PROFILE, "API reload keeps exact profile URL got=" + (st1 && st1.map));
     ok("save → reload: profile URL persists on store.map");
 
-    /* Maho store with coord pin in map must migrate to canonical profile */
+    /* Coord pin in map must NOT be auto-rewritten to a guessed goo.gl profile */
     const state = await req(PORT, "GET", "/api/admin/state", null, token);
     assert(state.status === 200, "admin state");
     const stores = (state.data.stores || []).slice();
@@ -236,15 +236,38 @@ function waitHealth(port, tries) {
       stores,
       config: state.data.config || {},
     }, token);
-    assert(put2.status === 200, "save maho with coord map");
+    assert(put2.status === 200, "save store with coord-in-map (simulating legacy data)");
     const cat2 = await req(PORT, "GET", "/api/catalog");
     const maho = (cat2.data.stores || []).find((s) => s.id === "store_maho");
     assert(maho, "maho store present");
-    assert(maho.map === MAHO_CANONICAL, "migrate upgrades coord map → MAHO profile got=" + maho.map);
-    ok("Maho migration: coord-in-map upgraded to canonical profile");
+    assert(maho.map === COORD, "coord-in-map NOT rewritten to guessed profile got=" + maho.map);
+    assert(maho.map !== MAHO_CANONICAL, "no automatic maps.app.goo.gl from coordinates");
+    const resolvedCoordStore = resolveStoreMapsUrl(maho);
+    assert(/maps\?q=34\.51162312730907/.test(resolvedCoordStore) || /34\.51162312730907/.test(resolvedCoordStore),
+      "coord-in-map uses lat/lng fallback, not a guessed profile");
+    assert(resolvedCoordStore.indexOf("maps.app.goo.gl") < 0, "fallback is not goo.gl");
+    ok("no automatic coord→profile migration; fallback is coordinates only");
 
-    /* Fixture store profile still exact after maho save */
-    const fix = (cat2.data.stores || []).find((s) => s.id === "store_fixture");
+    /* Admin paste of REAL profile URL overwrites coord pin and persists exactly */
+    const state2 = await req(PORT, "GET", "/api/admin/state", null, token);
+    const stores2 = (state2.data.stores || []).map((s) => {
+      if (s.id === "store_maho") return Object.assign({}, s, { map: PROFILE });
+      return s;
+    });
+    const put3 = await req(PORT, "PUT", "/api/admin/catalog", {
+      products: state2.data.products,
+      stores: stores2,
+      config: state2.data.config || {},
+    }, token);
+    assert(put3.status === 200, "admin saves real profile URL");
+    const cat3 = await req(PORT, "GET", "/api/catalog");
+    const mahoFixed = (cat3.data.stores || []).find((s) => s.id === "store_maho");
+    assert(mahoFixed && mahoFixed.map === PROFILE, "exact pasted profile persists got=" + (mahoFixed && mahoFixed.map));
+    assert(resolveStoreMapsUrl(mahoFixed) === PROFILE, "resolver uses exact saved profile");
+    ok("Admin paste real profile → exact URL persists and is used");
+
+    /* Fixture store profile still exact */
+    const fix = (cat3.data.stores || []).find((s) => s.id === "store_fixture");
     assert(fix && fix.map === PROFILE, "fixture profile unchanged");
 
     /* Place order with fixture store — pickupStore must carry profile */
@@ -303,12 +326,18 @@ function waitHealth(port, tries) {
     assert(href === PROFILE, "My Orders href exact profile got=" + href);
     ok("My Orders href === saved profile URL");
 
+    /* Admin order view uses same profile preference (static + resolver) */
+    const adminHtml = fs.readFileSync(path.join(ROOT, "website", "admin.html"), "utf8");
+    assert(/isCoordPin/.test(adminHtml) && /ps\.map/.test(adminHtml), "admin order maps skips coord pins");
+    ok("admin order Maps link uses profile when saved");
+
     console.log("\nALL MAPS PROFILE PERSISTENCE CHECKS PASSED");
     console.log("EVIDENCE profile_url=" + PROFILE);
     console.log("EVIDENCE store.map_after_reload=" + fix.map);
     console.log("EVIDENCE order.pickupStore.mapsUrl=" + order.pickupStore.mapsUrl);
     console.log("EVIDENCE my_orders_href=" + href);
-    console.log("EVIDENCE maho_migrated_map=" + maho.map);
+    console.log("EVIDENCE coord_in_map_unchanged=" + COORD);
+    console.log("EVIDENCE no_guessed_goo_gl_from_coords=YES");
   } finally {
     cleanup();
   }

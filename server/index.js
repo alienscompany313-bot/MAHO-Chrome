@@ -36,7 +36,7 @@ const { newLineId, normalizeOrderItems, mapOrderStatusToItem } = require("./lib/
 const { evaluateOrderValueDiscount } = require("./lib/order-discounts");
 const { resolvePickupStore, eligiblePickupStores } = require("./lib/store-inventory");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
-const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl, isRawCoordMapsUrl } = require("./lib/geo");
+const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
 const { ALL_PERMS, hasPerm: staffHasPerm, normalizePerms } = require("./lib/staff");
 const {
   checkStock, applyStockDelta, colorKey,
@@ -280,8 +280,8 @@ function migrateDb(data) {
       }
       if (isMahoStore(s)) {
         const mapStr = String(s.map || "");
-        /* Coord pins mistakenly saved in `map` are not profiles — upgrade to canonical MAHO place URL. */
-        if (!mapStr || LEGACY_MAHO_MAPS.indexOf(mapStr) !== -1 || isRawCoordMapsUrl(mapStr)) {
+        /* Empty / known-legacy share links only — never invent a profile from coordinates. */
+        if (!mapStr || LEGACY_MAHO_MAPS.indexOf(mapStr) !== -1) {
           s.map = MAHO_MAP_URL;
           changed = true;
         }
