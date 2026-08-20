@@ -280,6 +280,7 @@ function migrateDb(data) {
       }
       if (isMahoStore(s)) {
         const mapStr = String(s.map || "");
+        /* Empty / known-legacy share links only — never invent a profile from coordinates. */
         if (!mapStr || LEGACY_MAHO_MAPS.indexOf(mapStr) !== -1) {
           s.map = MAHO_MAP_URL;
           changed = true;

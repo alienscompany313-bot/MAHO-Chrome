@@ -1594,16 +1594,21 @@
       const m = o && o.delivery && o.delivery.method;
       return m === "pickup" || m === "store_pickup" || m === "store";
     }
-    /** Exact store saved on the order — never invent/default another store. */
+    /** Prefer saved Google Maps profile/place URL; never treat maps?q=lat,lng as a profile. */
     function resolveOrderStoreMapsUrl(s) {
       const store = s || {};
+      const isCoordPin = function (u) {
+        const x = String(u || "").trim();
+        if (!x) return false;
+        return /(?:google\.[^/\s]+\/maps|maps\.google\.[^/\s]+|maps\.app\.goo\.gl)[^<\s"']*\bq=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(x)
+          || /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?\s*$/i.test(x);
+      };
       const profile = [store.googleMapsUrl, store.googleMapsPlaceUrl, store.map, store.mapUrl]
         .map(function (x) { return String(x || "").trim(); })
-        .find(function (u) { return /^https?:\/\//i.test(u); });
+        .find(function (u) { return /^https?:\/\//i.test(u) && !isCoordPin(u); });
       if (profile) return profile;
       const existing = String(store.mapsUrl || "").trim();
-      const coordOnly = existing && /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(existing);
-      if (existing && !coordOnly) return existing;
+      if (existing && !isCoordPin(existing)) return existing;
       if (store.lat != null && store.lng != null) {
         return "https://www.google.com/maps?q=" + encodeURIComponent(String(store.lat) + "," + String(store.lng));
       }

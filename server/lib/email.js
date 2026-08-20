@@ -40,15 +40,19 @@ function resolveEmailStoreMapsUrl(store) {
     return resolveStoreMapsUrl(store) || "";
   } catch (_) {
     const s = store || {};
+    const isCoord = (u) => {
+      const x = String(u || "").trim();
+      return /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(x);
+    };
     const profile = [s.googleMapsUrl, s.googleMapsPlaceUrl, s.map, s.mapUrl]
       .map((x) => String(x || "").trim())
-      .find((u) => /^https?:\/\//i.test(u));
+      .find((u) => /^https?:\/\//i.test(u) && !isCoord(u));
     if (profile) return profile;
-    if (s.mapsUrl) return String(s.mapsUrl);
+    if (s.mapsUrl && !isCoord(s.mapsUrl)) return String(s.mapsUrl);
     if (s.lat != null && s.lng != null) {
       return "https://www.google.com/maps?q=" + encodeURIComponent(String(s.lat) + "," + String(s.lng));
     }
-    return "";
+    return s.mapsUrl ? String(s.mapsUrl) : "";
   }
 }
 
@@ -597,11 +601,17 @@ ${ctaBtn(url, opts.ctaText || "مشاهده محصول")}
     const isEn = lang === "en";
     const c = order.customer || {};
     const picked = (order && order.pickupStore) || store || {};
+    let profileMap = "";
+    try {
+      profileMap = require("./geo").pickStoreProfileMapsUrl(picked) || "";
+    } catch (_) {
+      profileMap = picked.map || picked.mapUrl || picked.googleMapsUrl || picked.googleMapsPlaceUrl || "";
+    }
     const s = Object.assign({}, picked, {
       address: picked.address || picked.area || "",
       hours: picked.hours || "",
       phone: picked.phone || getStorePhone() || "",
-      map: picked.map || picked.mapUrl || picked.googleMapsUrl || picked.googleMapsPlaceUrl || "",
+      map: profileMap,
       mapsUrl: resolveEmailStoreMapsUrl(picked),
       instructions: picked.instructions || "",
     });

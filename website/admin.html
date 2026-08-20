@@ -1876,10 +1876,17 @@
             var ps=o.pickupStore||{};
             if(ps.name||ps.address||ps.area||ps.id){
               var mapsUrl="";
-              var profile=[ps.googleMapsUrl,ps.googleMapsPlaceUrl,ps.map,ps.mapUrl].map(function(x){return String(x||"").trim();}).filter(function(u){return /^https?:\/\//i.test(u);})[0]||"";
+              var isCoordPin=function(u){
+                var x=String(u||"").trim();
+                if(!x) return false;
+                return /(?:google\.[^/\s]+\/maps|maps\.google\.[^/\s]+|maps\.app\.goo\.gl)[^<\s"']*\bq=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(x)
+                  || /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?\s*$/i.test(x);
+              };
+              var profile=[ps.googleMapsUrl,ps.googleMapsPlaceUrl,ps.map,ps.mapUrl].map(function(x){return String(x||"").trim();}).filter(function(u){return /^https?:\/\//i.test(u)&&!isCoordPin(u);})[0]||"";
               if(profile) mapsUrl=profile;
               else {
                 mapsUrl=ps.mapsUrl||"";
+                if(mapsUrl && isCoordPin(mapsUrl)) mapsUrl="";
                 if(!mapsUrl&&ps.lat!=null&&ps.lng!=null){
                   mapsUrl="https://www.google.com/maps?q="+encodeURIComponent(String(ps.lat)+","+String(ps.lng));
                 }
@@ -2674,12 +2681,32 @@
     function closeStore(){$("#storeOverlay").classList.remove("show")}
     function validLat(v){ var n=parseFloat(toEn(v)); return isFinite(n)&&n>=-90&&n<=90; }
     function validLng(v){ var n=parseFloat(toEn(v)); return isFinite(n)&&n>=-180&&n<=180; }
+    /** Bare maps?q=lat,lng pins are NOT business profiles. */
+    function isRawCoordMapsUrl(u){
+      var s=String(u||"").trim();
+      if(!s) return false;
+      return /(?:google\.[^/\s]+\/maps|maps\.google\.[^/\s]+|maps\.app\.goo\.gl)[^<\s"']*\bq=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?/i.test(s)
+        || /[?&]q=[-+]?\d+(\.\d+)?(%2C|,)[-+]?\d+(\.\d+)?\s*$/i.test(s);
+    }
+    function normalizeStoreProfileUrl(u){
+      var s=String(u||"").trim();
+      if(!s) return "";
+      if(/^https:\/\//i.test(s)) return s;
+      if(/^http:\/\//i.test(s)) return "https://"+s.slice(7);
+      if(/^\/\//.test(s)) return "https:"+s;
+      return "https://"+s.replace(/^\/+/, "");
+    }
     function updateStoreCoordNote(){
       var note=$("#st_coordNote"); if(!note)return;
       var lat=$("#st_lat").value.trim(), lng=$("#st_lng").value.trim();
       var map=($("#st_map").value||"").trim();
-      if(!lat&&!lng){ note.style.color=""; note.textContent="لینک نقشه فقط برای «مشاهده روی نقشه» است. برای دلیوری، Latitude و Longitude را جداگانه وارد کنید."; }
-      else if(validLat(lat)&&validLng(lng)){ note.style.color="#2e7d32"; note.textContent="✔ مختصات معتبر است — محاسبه‌ی فاصله از این اعداد انجام می‌شود."+(map?"":" (لینک نقشه هنوز خالی است)"); }
+      if(map && isRawCoordMapsUrl(map)){
+        note.style.color="#b26a00";
+        note.textContent="⚠ این لینک پروفایل نیست — فقط پین مختصات (maps?q=lat,lng) است. لینک place/پروفایل واقعی (مثلاً maps.app.goo.gl یا /maps/place/...) را وارد کنید.";
+        return;
+      }
+      if(!lat&&!lng){ note.style.color=""; note.textContent="لینک پروفایل فقط برای «مشاهده در Google Maps» است. برای دلیوری، Latitude و Longitude را جداگانه وارد کنید."; }
+      else if(validLat(lat)&&validLng(lng)){ note.style.color="#2e7d32"; note.textContent="✔ مختصات معتبر است — محاسبه‌ی فاصله از این اعداد انجام می‌شود."+(map?"":" (لینک پروفایل هنوز خالی است — در این حالت فقط مختصات نشان داده می‌شود)"); }
       else { note.style.color="#b26a00"; note.textContent="⚠ Latitude باید بین −۹۰ و ۹۰ و Longitude بین −۱۸۰ و ۱۸۰ باشد."; }
     }
     $("#st_map").addEventListener("input",updateStoreCoordNote);
@@ -2700,11 +2727,27 @@
       if(latRaw!==""||lngRaw!==""){
         if(!validLat(latRaw)||!validLng(lngRaw)){ $("#storeMsg").textContent="Latitude (−۹۰…۹۰) و Longitude (−۱۸۰…۱۸۰) را درست وارد کنید."; return; }
       }
-      var s={ name:name, name_en:$("#st_name_en").value.trim(),
+      var mapRaw=($("#st_map").value||"").trim();
+      if(mapRaw && isRawCoordMapsUrl(mapRaw)){
+        $("#storeMsg").textContent="لینک واردشده فقط مختصات است. لینک پروفایل/place فروشگاه را وارد کنید (مثلاً maps.app.goo.gl یا google.com/maps/place/...). مختصات را در Latitude/Longitude بگذارید.";
+        return;
+      }
+      if(mapRaw && !/^https?:\/\//i.test(mapRaw) && !/^\/\//.test(mapRaw)){
+        /* allow goo.gl without scheme after normalize */
+      }
+      var mapVal=mapRaw ? normalizeStoreProfileUrl(mapRaw) : "";
+      if(mapVal && !/^https?:\/\//i.test(mapVal)){
+        $("#storeMsg").textContent="لینک Google Maps باید با http(s) شروع شود.";
+        return;
+      }
+      var prev=storeEditIndex>=0 ? (state.stores[storeEditIndex]||{}) : {};
+      var s=Object.assign({}, prev, {
+        name:name, name_en:$("#st_name_en").value.trim(),
         area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
         hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
         phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
-        map:$("#st_map").value.trim() };
+        map:mapVal
+      });
       if(latRaw!==""&&lngRaw!==""){ s.lat=String(parseFloat(toEn(latRaw))); s.lng=String(parseFloat(toEn(lngRaw))); }
       if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
       renderStoreTable(); setDirty(true); closeStore();
