@@ -12863,10 +12863,15 @@ window.MAHOAlpha9={saveUserStable,recoverScroll,secureFace,syncOperationalProfil
 
 <script>
 (function(){
-  function closeSplash(){var s=document.getElementById('mahoSplash');if(!s)return;s.classList.add('hide');setTimeout(function(){s.remove()},500)}
-  function updateSplash(){var en=(localStorage.getItem('maho_language')||'fa')==='en';var t=document.getElementById('mahoSplashTitle'),p=document.getElementById('mahoSplashSub');if(t)t.textContent=en?'MAHO Store Management System':'سیستم مدیریت فروشگاه MAHO';if(p)p.textContent=en?'Beauty for You':'زیبایی برای تو';}
+  function updateSplash(){
+    var en=(localStorage.getItem('maho_language')||'fa')==='en';
+    var t=document.getElementById('mahoSplashTitle'),p=document.getElementById('mahoSplashSub'),h=document.getElementById('mahoSplashHint');
+    if(t)t.textContent=en?'MAHO Store Management System':'سیستم مدیریت فروشگاه MAHO';
+    if(p)p.textContent=en?'Beauty for You':'زیبایی برای تو';
+    if(h)h.textContent=en?'Click to open':'برای باز شدن کلیک کنید';
+  }
   updateSplash();
-  if(document.readyState==='complete')setTimeout(closeSplash,4000);else window.addEventListener('load',function(){setTimeout(closeSplash,4000)},{once:true});
+  /* Splash close is owned by click-to-open handler (window.closeMahoSplash). */
 })();
 </script>
 
