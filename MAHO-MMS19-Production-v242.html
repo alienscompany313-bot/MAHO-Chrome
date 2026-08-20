@@ -117,7 +117,7 @@ main,.page,.card,#productsPage,#productForm{touch-action:pan-y}
 #mahoSplash p{margin:0;color:#ddd;font-size:clamp(14px,3.6vw,18px)}
 #mahoSplash .splash-hint{margin-top:14px;color:#c9a454;font-size:clamp(13px,3.4vw,16px);font-weight:700;letter-spacing:.02em;animation:mahoSplashHintPulse 1.6s ease-in-out infinite}
 #mahoSplash .splash-progress{width:min(68vw,300px);height:6px;margin:22px auto 0;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-#mahoSplash .splash-progress-bar{display:block;width:0;height:100%;background:#c9a454;border-radius:inherit;animation:mahoSplashProgress 4s linear forwards}
+#mahoSplash .splash-progress-bar{display:block;width:0;height:100%;background:#c9a454;border-radius:inherit;animation:mahoSplashProgress 120s linear forwards}
 @keyframes mahoSplashProgress{from{width:0}to{width:100%}}
 @keyframes mahoSplashHintPulse{0%,100%{opacity:.55}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){#mahoSplash{transition:none}#mahoSplash .splash-hint{animation:none;opacity:.9}}
@@ -8730,7 +8730,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* MMS31 - print only for a handover completed in the current session */
 (function(){
   var started=Date.now();
-  var duration=4000;
+  var duration=120000; /* open mainly by click; long fallback */
   var closed=false;
   function closeMahoSplash(){
     if(closed) return;
@@ -8771,7 +8771,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   schedule();
   /* Emergency escape only if a browser suspends the normal timer. */
-  window.setTimeout(closeMahoSplash,7000);
+  window.setTimeout(closeMahoSplash,125000);
 })();
 </script>
 
