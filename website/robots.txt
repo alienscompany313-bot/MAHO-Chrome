@@ -11,5 +11,6 @@ Disallow: /delivery.html
 Disallow: /website/delivery.html
 Disallow: /api/
 Disallow: /uploads/proofs/
+Disallow: /verify/
 
 Sitemap: https://mahomarket.com/sitemap.xml

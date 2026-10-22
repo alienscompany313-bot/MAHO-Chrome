@@ -111,8 +111,10 @@ async function main() {
     assert(!(await req("GET", "/api/health")).data.email, "email disabled");
 
     const admin = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(admin.status === 200 && admin.data.token, "admin login");
-    const adminTok = admin.data.token;
+    assert(admin.status === 200 && admin.data && admin.data.need2fa && admin.data.devCode, "admin 2fa start");
+    const adminDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: admin.data.challengeId, code: admin.data.devCode } });
+    assert(adminDone.status === 200 && adminDone.data.token, "admin 2fa");
+    const adminTok = adminDone.data.token;
 
     await req("PUT", "/api/admin/catalog", {
       token: adminTok,
@@ -137,7 +139,7 @@ async function main() {
 
     const email = "ui.customer_" + Date.now() + "@example.com";
     const reg = await req("POST", "/api/auth/register", {
-      body: { name: "UI Customer", phone: "0700111222", email, password: "BuyerPass99", marketingConsent: true },
+      body: { acceptTerms: true, name: "UI Customer", phone: "0700111222", email, password: "BuyerPass99", marketingConsent: true },
     });
     assert(reg.status === 200 && reg.data && reg.data.devCode, "register " + JSON.stringify(reg.data).slice(0, 200));
     await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });

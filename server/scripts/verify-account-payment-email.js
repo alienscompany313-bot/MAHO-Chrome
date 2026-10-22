@@ -87,7 +87,7 @@ async function main() {
     const email = "acctfix_" + Date.now() + "@maho.test";
     const pass = "PreviewTest123!";
     const reg = await req("POST", "/api/auth/register", {
-      body: { name: "آیدا تست", phone: "0700111222", email, password: pass, address: "کابل" },
+      body: { acceptTerms: true, name: "آیدا تست", phone: "0700111222", email, password: pass, address: "کابل" },
     });
     assert(reg.status === 200 && reg.data.devCode, "register " + JSON.stringify(reg.data));
     const ver = await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });
@@ -147,7 +147,7 @@ async function main() {
     /* AuthZ: other user cannot read */
     const email2 = "acct2_" + Date.now() + "@maho.test";
     const reg2 = await req("POST", "/api/auth/register", {
-      body: { name: "B", phone: "0700333444", email: email2, password: pass, address: "هرات" },
+      body: { acceptTerms: true, name: "B", phone: "0700333444", email: email2, password: pass, address: "هرات" },
     });
     await req("POST", "/api/auth/verify", { body: { email: email2, code: reg2.data.devCode } });
     const login2 = await req("POST", "/api/auth/login", { body: { id: email2, password: pass } });

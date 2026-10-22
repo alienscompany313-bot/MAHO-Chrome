@@ -213,6 +213,12 @@
       <div id="gateStep2" hidden>
         <p class="note" style="color:#b9b3a6">در حال ورود به سرور…</p>
       </div>
+      <div id="gateStep4" hidden>
+        <p class="note" style="color:#b9b3a6">کد ۶ رقمی به ایمیل مدیر فرستاده شد. تا ۵ دقیقه معتبر است.</p>
+        <input id="gateCode" inputmode="numeric" autocomplete="one-time-code" placeholder="کد یا کد بازیابی" dir="ltr">
+        <button class="btn btn-gold" style="width:100%" id="gate2faBtn" type="button">تأیید کد</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" id="gate2faResend" type="button">ارسال دوباره</button>
+      </div>
       <p class="note" id="gateMsg" style="color:#ff9d9d;min-height:18px;margin:8px 0 0"></p>
     </div>
   </div>
@@ -223,6 +229,7 @@
       <div class="brand"><span class="logo" id="brandLogo">M</span><span>MAHO <small>پنل مدیریت</small></span></div>
     </div>
     <div class="tb-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="orderBell" hidden>سفارش جدید <span id="orderBellCount">0</span></button>
       <span class="dirty-badge" id="dirtyBadge">● تغییرات ذخیره‌نشده</span>
       <a class="btn btn-ghost btn-sm" href="index.html" target="_blank">مشاهده سایت ↗</a>
       <button class="btn btn-gold btn-sm" id="saveBtn">ذخیره تغییرات</button>
@@ -259,6 +266,11 @@
         <button type="button" class="side-link" data-panel="stores" data-perm="settings"><span class="si">⌂</span><span>فروشگاه‌ها</span></button>
         <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si">Aa</span><span>متن‌های سایت</span></button>
         <button type="button" class="side-link" data-panel="settings" data-perm="settings"><span class="si">⚙</span><span>تنظیمات</span></button>
+        <button type="button" class="side-link" data-panel="hours" data-perm="settings"><span class="si">◷</span><span>ساعت کاری</span></button>
+        <button type="button" class="side-link" data-panel="ads" data-perm="marketing"><span class="si">▤</span><span>تبلیغات</span></button>
+        <button type="button" class="side-link" data-panel="policies" data-perm="settings"><span class="si">§</span><span>قوانین و حریم</span></button>
+        <button type="button" class="side-link" data-panel="links" data-perm="settings"><span class="si">⧉</span><span>صفحه لینک‌ها</span></button>
+        <button type="button" class="side-link" data-panel="security" data-perm="settings"><span class="si">⚑</span><span>امنیت مدیر</span></button>
         <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
       </nav>
       <button type="button" class="btn btn-ghost btn-sm side-collapse" id="sidebarCollapse" aria-label="جمع‌کردن منو">« جمع‌کردن</button>
@@ -782,6 +794,12 @@
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnContent">ذخیره تغییرات</button></div>
     </div>
 
+    <div class="card admin-panel" data-panel="hours"><h2>ساعت کاری</h2><div id="hoursAdmin"></div></div>
+    <div class="card admin-panel" data-panel="ads"><h2>تبلیغات</h2><div id="adsAdmin"></div></div>
+    <div class="card admin-panel" data-panel="policies"><h2>قوانین و حریم خصوصی</h2><p class="sub">پیش‌نویس تا زمان انتشار در سایت دیده نمی‌شود.</p><div id="policiesAdmin"></div></div>
+    <div class="card admin-panel" data-panel="links"><h2>صفحه لینک‌ها</h2><div id="linksAdmin"></div></div>
+    <div class="card admin-panel" data-panel="security"><h2>امنیت مدیر</h2><div id="securityAdmin"></div></div>
+
     <!-- SETTINGS -->
     <div class="card admin-panel" data-panel="settings">
       <h2>تنظیمات سایت</h2>
@@ -1154,6 +1172,7 @@
     var PANEL_PERM={
       products:"products", categories:"products", icons:"products", discounts:"products", ovdiscounts:"settings", showcase:"products",
       orders:"orders", returns:"returns", customers:"customers", staff:"staff", drivers:"drivers",
+      hours:"settings", ads:"marketing", policies:"settings", links:"settings", security:"settings",
       poslink:"pos", reviews:"products", stores:"settings", texts:"settings", settings:"settings", publish:"settings",
       subscribers:"marketing", campaigns:"marketing", feedback:"marketing", giveaways:"marketing", returnreasons:"returns", driverperf:"drivers"
     };
@@ -1203,7 +1222,7 @@
         return adminMe;
       });
     }
-    function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); }
+    function gateShowStep(step){ if($("#gateStep1")) $("#gateStep1").hidden=(step!==1); if($("#gateStep2")) $("#gateStep2").hidden=(step!==2); if($("#gateStep3")) $("#gateStep3").hidden=(step!==3); if($("#gateStep4")) $("#gateStep4").hidden=(step!==4); }
     function showGate(msg){
       try{ sessionStorage.removeItem(SESS_KEY); sessionStorage.removeItem(SESS_AT); }catch(e){}
       if(window.MAHOApi) MAHOApi.logoutAdmin();
@@ -1565,6 +1584,13 @@
         if(id && MAHOApi.staffLogin) return MAHOApi.staffLogin({ id:id, password:p });
         return MAHOApi.adminLogin(p);
       }).then(function(me){
+        if (me && me.need2fa) {
+          window._adminChallenge = me.challengeId;
+          gateShowStep(4);
+          $("#gateMsg").style.color = "#b9b3a6";
+          $("#gateMsg").textContent = me.devCode ? ("حالت آزمایشی، کد: " + me.devCode) : "کد به ایمیل مدیر فرستاده شد.";
+          return;
+        }
         setLock({});
         $("#gatePass").value="";
         if($("#gateId")) $("#gateId").value="";
@@ -1592,6 +1618,26 @@
     };
     if($("#recBackBtn")) $("#recBackBtn").onclick=function(){ gateShowStep(1); $("#gateMsg").textContent=""; };
     if($("#gatePass")) $("#gatePass").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#gateBtn").click(); });
+    if($("#gate2faBtn")) $("#gate2faBtn").onclick=function(){
+      var code=($("#gateCode").value||"").trim();
+      var body={ challengeId: window._adminChallenge };
+      if(code.length>6) body.recoveryCode=code; else body.code=code;
+      MAHOApi.adminLogin2fa(body).then(function(me){
+        setLock({});
+        $("#gateCode").value="";
+        adminMe={ owner:!!me.owner, permissions:me.permissions||[], name:me.name||"Owner", staffId:me.staffId||null };
+        openApp();
+      }).catch(function(err){
+        $("#gateMsg").style.color="#ff9d9d";
+        $("#gateMsg").textContent=(err&&err.message)||"کد نادرست است";
+      });
+    };
+    if($("#gate2faResend")) $("#gate2faResend").onclick=function(){
+      MAHOApi.adminResend2fa(window._adminChallenge).then(function(me){
+        window._adminChallenge=me.challengeId||window._adminChallenge;
+        $("#gateMsg").textContent=me.devCode?("کد جدید: "+me.devCode):"کد دوباره فرستاده شد";
+      }).catch(function(err){ $("#gateMsg").textContent=(err&&err.message)||"ارسال نشد"; });
+    };
     updateGateLockUI();
     if(sessionValid()) openApp(); else showGate();
 
@@ -3944,5 +3990,6 @@
   })();
   </script>
   <div class="print-sheet label-a4" id="printSheet" aria-hidden="true"></div>
+  <script src="js/admin-upgrade.js"></script>
 </body>
 </html>

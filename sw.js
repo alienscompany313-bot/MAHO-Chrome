@@ -1,10 +1,10 @@
-const CACHE_NAME = 'maho-enterprise-v2';
+const CACHE_NAME = 'maho-enterprise-v3';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', event => {

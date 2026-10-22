@@ -317,7 +317,7 @@ function buildMailer(opts) {
     return brandWrap(Object.assign({ storePhone: getStorePhone(), lang: args.lang || "fa" }, args));
   }
 
-  function send(to, subject, html, text) {
+  function send(to, subject, html, text, extra) {
     return sendRaw({
       to,
       subject,
@@ -325,6 +325,7 @@ function buildMailer(opts) {
       text: text || html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       replyTo: replyTo || "support@mahomarket.com",
       from: `"${fromName || "MAHO Market"}" <${fromEmail || "info@mahomarket.com"}>`,
+      attachments: extra && extra.attachments,
     }).catch((err) => {
       /* never roll back order — log and rethrow for caller catch */
       console.error("[mail]", String((err && err.message) || err).slice(0, 200));
@@ -476,7 +477,7 @@ ${maps ? `<strong>نقشه:</strong> <a href="${escapeHtml(maps)}">${escapeHtml(
 <strong>مبلغ:</strong> ${moneyAf(order.total, "fa")}</p>
 ${orderItemsTable(Object.assign({}, order, { _siteUrl: siteUrl, _logoUrl: logoUrl }), "fa")}
 ${orderTotalsBlock(order, "fa")}
-${ctaBtn((siteUrl || "https://mahomarket.com") + "/admin.html", "بازکردن پنل مدیر")}`,
+${ctaBtn((siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/admin.html?order=" + encodeURIComponent(order.id || ""), "بازکردن سفارش در پنل")}`,
     });
     return send(to, "MAHO — سفارش جدید " + (order.id || ""), html);
   }
@@ -758,6 +759,73 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     return send(to, "MAHO Market — " + title, html, feedbackUrl);
   }
 
+  function orderSalesNotify(order, to) {
+    const dest = to || "sales@mahomarket.com";
+    const c = order.customer || {};
+    const d = order.delivery || {};
+    const when = new Date(order.date || Date.now()).toISOString();
+    const link = (siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/admin.html?order=" + encodeURIComponent(order.id || "");
+    const lines = (order.items || []).map((it) =>
+      "• " + (it.name || "") + (it.size ? " / " + it.size : "") + (it.color ? " / " + it.color : "") + " × " + (it.qty || 1)
+    ).join("<br>");
+    const html = wrap({
+      title: "سفارش جدید",
+      preheader: order.id || "",
+      siteUrl, logoUrl, lang: "fa",
+      bodyHtml: `<p>یک سفارش جدید با موفقیت ثبت شد.</p>
+<p><strong>نمبر سفارش:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
+<strong>زمان:</strong> <span dir="ltr">${escapeHtml(when)}</span><br>
+<strong>مشتری:</strong> ${escapeHtml(c.name || "")}<br>
+<strong>تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span><br>
+<strong>ایمیل:</strong> <span dir="ltr">${escapeHtml(c.email || "")}</span><br>
+<strong>دریافت:</strong> ${escapeHtml(d.method || "")}<br>
+<strong>آدرس:</strong> ${escapeHtml(c.address || "—")}<br>
+<strong>پرداخت:</strong> ${escapeHtml(payLabel(order.payment, "fa"))}<br>
+<strong>وضعیت پرداخت:</strong> ${escapeHtml(String(order.paymentStatus || "—"))}<br>
+<strong>مجموع:</strong> ${moneyAf(order.total, "fa")} (${escapeHtml(String(order.total || 0))} AFN)</p>
+<p>${lines}</p>
+${ctaBtn(link, "مشاهده سفارش در پنل")}`,
+    });
+    const text = [
+      "Order " + (order.id || ""),
+      when,
+      c.name || "",
+      c.phone || "",
+      c.email || "",
+      "Total " + (order.total || 0) + " AFN",
+      "Payment " + (order.payment || "") + " / " + (order.paymentStatus || ""),
+      link,
+    ].join("\n");
+    return send(dest, "MAHO Market — New order " + (order.id || ""), html, text);
+  }
+
+  function adminLoginCode(to, code) {
+    const html = wrap({
+      title: "کد ورود مدیر",
+      preheader: "MAHO admin",
+      siteUrl, logoUrl, lang: "fa",
+      bodyHtml: `<p>کد ورود به پنل مدیریت ماهو:</p>
+<p style="font-size:28px;font-weight:800;letter-spacing:4px" dir="ltr">${escapeHtml(code)}</p>
+<p>این کد تا ۵ دقیقه معتبر است و فقط یک بار استفاده می‌شود. اگر این درخواست از شما نیست، رمز مدیر را عوض کنید.</p>`,
+    });
+    return send(to, "MAHO Market — admin sign-in code", html, "Your admin sign-in code is " + code + ". It expires in 5 minutes.");
+  }
+
+  function customerCard(to, user, png) {
+    const html = wrap({
+      title: "کارت مشتری ماهو",
+      preheader: user.customerNo || "",
+      siteUrl, logoUrl, lang: "fa",
+      bodyHtml: `<p>سلام ${escapeHtml(user.name || "")}،</p>
+<p>کارت مشتری شما آماده است. شماره دائمی مشتری: <strong dir="ltr">${escapeHtml(user.customerNo || "")}</strong></p>
+<p>فایل کارت به این ایمیل پیوست شده است. برای دانلود دوباره، وارد حساب خود در فروشگاه شوید.</p>
+${ctaBtn((siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/#orders", "ورود به حساب")}`,
+    });
+    return send(to, "MAHO Market — customer card", html, "Your MAHO customer card is attached. Customer number: " + (user.customerNo || ""), {
+      attachments: [{ filename: "maho-customer-card.png", content: png, contentType: "image/png" }],
+    });
+  }
+
   return {
     send,
     verificationCode,
@@ -765,6 +833,9 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     passwordReset,
     orderConfirmation,
     orderAdminNotify,
+    orderSalesNotify,
+    adminLoginCode,
+    customerCard,
     orderStatus,
     hesabPayStatus,
     campaignEmail,

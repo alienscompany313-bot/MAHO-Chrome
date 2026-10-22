@@ -357,6 +357,15 @@
       return d;
     });
   }
+  function adminLogin2fa(body) {
+    return request("/api/admin/login/2fa", { method: "POST", body: body || {} }).then(function (d) {
+      if (d.token) setToken("admin", d.token);
+      return d;
+    });
+  }
+  function adminResend2fa(challengeId) {
+    return request("/api/admin/login/2fa/resend", { method: "POST", body: { challengeId: challengeId } });
+  }
   function adminState() {
     return request("/api/admin/state", { token: getToken("admin") });
   }
@@ -434,6 +443,8 @@
     });
   }
   function logoutAdmin() {
+    var t = getToken("admin");
+    if (t) request("/api/admin/logout", { method: "POST", token: t }).catch(function () {});
     setToken("admin", null);
   }
 
@@ -738,6 +749,8 @@
     adminApproveItems: adminApproveItems,
     adminRejectItems: adminRejectItems,
     adminLogin: adminLogin,
+    adminLogin2fa: adminLogin2fa,
+    adminResend2fa: adminResend2fa,
     adminState: adminState,
     adminSaveCatalog: adminSaveCatalog,
     adminOrders: adminOrders,

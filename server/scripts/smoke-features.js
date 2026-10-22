@@ -99,8 +99,10 @@ async function main() {
   try {
     /* seed one product via admin */
     const login = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(login.status === 200 && login.data.token, "admin login");
-    const adminTok = login.data.token;
+    assert(login.status === 200 && login.data && login.data.need2fa && login.data.devCode, "admin 2fa start");
+    const loginDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: login.data.challengeId, code: login.data.devCode } });
+    assert(loginDone.status === 200 && loginDone.data.token, "admin 2fa");
+    const adminTok = loginDone.data.token;
     const catalog = {
       products: [{ name: "شال تست", name_en: "Test Scarf", code: "T100", cat: "scarf", icon: "scarf", price: 500, stock: 2 }],
       stores: [{ name: "مرکز", address: "کابل", phone: "0700000000", mapsUrl: "https://maps.google.com/?q=Kabul", lat: 34.5, lng: 69.1 }],
@@ -124,7 +126,7 @@ async function main() {
     /* register / verify / login */
     const email = "buyer_" + Date.now() + "@example.com";
     const reg = await req("POST", "/api/auth/register", {
-      body: { name: "آیدا", phone: "0700111222", email, password: "BuyerPass99" },
+      body: { acceptTerms: true, name: "آیدا", phone: "0700111222", email, password: "BuyerPass99" },
     });
     assert(reg.status === 200 || reg.status === 201, "register status " + reg.status);
     assert(reg.data.devCode && /^\d{6}$/.test(reg.data.devCode), "dev code");

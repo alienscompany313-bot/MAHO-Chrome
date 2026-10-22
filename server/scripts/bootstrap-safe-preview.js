@@ -99,7 +99,7 @@ async function main() {
     userTok = loginTry.data.token;
   } else {
     const reg = await req("POST", "/api/auth/register", {
-      body: {
+      body: { acceptTerms: true,
         name: "مشتری پیش‌نمایش",
         phone: PHONE,
         email: EMAIL,
@@ -116,8 +116,10 @@ async function main() {
   }
 
   const admin = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASS } });
-  if (admin.status !== 200) throw new Error("admin login failed");
-  const adminTok = admin.data.token;
+  if (admin.status !== 200 || !admin.data || !admin.data.devCode) throw new Error("admin login failed " + JSON.stringify(admin.data));
+  const adminDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: admin.data.challengeId, code: admin.data.devCode } });
+  if (adminDone.status !== 200 || !adminDone.data.token) throw new Error("admin 2fa failed");
+  const adminTok = adminDone.data.token;
 
   const cust = {
     name: "مشتری پیش‌نمایش",

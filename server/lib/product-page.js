@@ -193,6 +193,9 @@ function renderProductHtml(model) {
     '  <meta name="twitter:title" content="' + e(model.title) + '">\n' +
     '  <meta name="twitter:description" content="' + e(model.metaDescription) + '">\n' +
     '  <meta name="twitter:image" content="' + e(model.image) + '">\n' +
+    '  <meta property="og:image:alt" content="' + e(model.name) + '">\n' +
+    '  <link rel="icon" href="/icon-192.png">\n' +
+    '  <link rel="apple-touch-icon" href="/apple-touch-icon.png">\n' +
     '  <script type="application/ld+json">' + escapeJsonForScript(jsonLd) + "</script>\n" +
     '  <link rel="stylesheet" href="/css/styles.css">\n' +
     "</head>\n" +
@@ -264,12 +267,15 @@ function listActiveProductSitemapUrls(products, siteUrl) {
 }
 
 /** Dynamic sitemap: homepage + active product SEO pages. No hashes / private paths. */
-function buildSitemapXml(products, siteUrl) {
+function buildSitemapXml(products, siteUrl, extraLocs) {
   const base = siteBase(siteUrl);
   const now = new Date().toISOString().slice(0, 10);
   const entries = [{ loc: base + "/", pri: "1.0", freq: "daily" }];
   listActiveProductSitemapUrls(products, siteUrl).forEach((loc) => {
     entries.push({ loc: loc, pri: "0.8", freq: "weekly" });
+  });
+  (Array.isArray(extraLocs) ? extraLocs : []).forEach((loc) => {
+    if (loc) entries.push({ loc: loc, pri: "0.4", freq: "monthly" });
   });
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +

@@ -74,8 +74,10 @@ async function main() {
     }
 
     const admin = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(admin.status === 200 && admin.data.owner === true, "owner login");
-    const adminTok = admin.data.token;
+    assert(admin.status === 200 && admin.data && admin.data.need2fa && admin.data.devCode, "admin 2fa start");
+    const adminDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: admin.data.challengeId, code: admin.data.devCode } });
+    assert(adminDone.status === 200 && adminDone.data.token, "admin 2fa");
+    const adminTok = adminDone.data.token;
     ok("owner full access login");
 
     const catalog = {
@@ -160,7 +162,8 @@ async function main() {
     const smLocs = [...sm.raw.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
     assert(smLocs[0] === "https://mahomarket.com/", "sitemap homepage first");
     assert(smLocs.includes("https://mahomarket.com/p/S1"), "sitemap includes active product");
-    assert(smLocs.length === 2, "sitemap home + products only");
+    assert(smLocs.includes("https://mahomarket.com/links"), "sitemap includes links page");
+    assert(smLocs.length === 3, "sitemap home + products + links");
     assert(smLocs.every((u) => !/#/.test(u)), "sitemap no hash fragments");
     assert(smLocs.every((u) => !/\/(admin|api|cart|checkout|pos|driver|delivery)/i.test(u)), "sitemap no private paths");
     const productPage = await req("GET", "/p/S1");
@@ -190,7 +193,7 @@ async function main() {
       token: adminTok, body: { name: "Drv", email: "d4@example.com", password: "DriverPass99" },
     });
     const email = "p4_" + Date.now() + "@example.com";
-    const reg = await req("POST", "/api/auth/register", { body: { name: "A", phone: "0700111222", email, password: "BuyerPass99", address: "کابل" } });
+    const reg = await req("POST", "/api/auth/register", { body: { acceptTerms: true, name: "A", phone: "0700111222", email, password: "BuyerPass99", address: "کابل" } });
     await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });
     const ulogin = await req("POST", "/api/auth/login", { body: { id: email, password: "BuyerPass99" } });
     const ord = await req("POST", "/api/orders", {

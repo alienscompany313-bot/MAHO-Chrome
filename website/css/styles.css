@@ -793,3 +793,29 @@ bdi.phone-ltr { unicode-bidi: isolate; }
 .order-line img{width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f3efe7}
 .order-line .ol-body{flex:1;min-width:0}
 .order-line .ol-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+
+/* Approved homepage cleanup and new storefront pieces */
+.hero .container{grid-template-columns:minmax(0,820px)}
+.announce-bar{background:#141414;color:#f6f1e6;text-align:center;padding:8px 16px;font-size:14px;font-weight:700}
+.announce-bar a{color:#c8a35f}
+.home-promo{padding:18px 0 0}
+.home-promo-frame{position:relative;border-radius:18px;overflow:hidden;background:#141414;color:#fff;min-height:180px}
+.home-promo-frame img{width:100%;max-height:420px;object-fit:cover;display:block}
+.home-promo-copy{position:absolute;inset:auto 16px 16px 16px;text-shadow:0 1px 8px #000}
+.promo-nav{position:absolute;top:12px;inset-inline-end:12px;display:flex;gap:6px}
+.listing-promo{grid-column:1/-1;border:1px solid #e6dcc6;border-radius:16px;overflow:hidden;background:#fffdf8}
+.listing-promo a{display:flex;gap:14px;align-items:center;padding:12px;text-decoration:none;color:inherit}
+.listing-promo img{width:140px;height:90px;object-fit:cover;border-radius:10px}
+.badge-open,.store-hours-btn{border:0;background:#e7f6ea;color:#1b6b32;font-weight:800;border-radius:999px;padding:4px 10px;cursor:pointer;font:inherit}
+.badge-open.is-closed{background:#fdecec;color:#9b1c1c}
+.store-hours-btn{background:transparent;color:inherit;border-radius:8px;padding:0;font-weight:600}
+.policy-scroll{max-height:50vh;overflow:auto;white-space:pre-wrap;line-height:1.8}
+.hours-modal{max-width:420px}
+.hours-modal li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #eee}
+.hours-modal li.today{font-weight:800}
+.customer-card-box img{width:100%;height:auto;border-radius:12px;border:1px solid #e6dcc6;background:#fff}
+.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.share-menu{position:fixed;z-index:80;background:#fff;border:1px solid #e6dcc6;border-radius:12px;padding:8px;display:flex;flex-direction:column;min-width:180px;box-shadow:0 12px 30px #0002}
+.share-menu button,.share-menu a{background:#fff;border:0;text-align:start;padding:8px 10px;font:inherit;cursor:pointer;border-radius:8px;color:inherit;text-decoration:none}
+.share-menu button:hover,.share-menu a:hover{background:#f6f1e6}
+@media(max-width:720px){.listing-promo a{flex-direction:column;align-items:stretch}.listing-promo img{width:100%;height:160px}}

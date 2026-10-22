@@ -42,6 +42,10 @@ const {
   checkStock, applyStockDelta, colorKey,
 } = require("./lib/variant-stock");
 const { mountProductPage, buildSitemapXml } = require("./lib/product-page");
+const upgrade = require("./lib/upgrade/mount");
+const admin2fa = require("./lib/upgrade/admin-2fa");
+const { acceptanceSnapshot } = require("./lib/upgrade/policies");
+const { ensureCard } = require("./lib/upgrade/customer-card");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -120,12 +124,13 @@ if (EMAIL_ENABLED) {
   });
 }
 
-function sendRawMail({ to, subject, html, text, from, replyTo }) {
+function sendRawMail({ to, subject, html, text, from, replyTo, attachments }) {
   if (!EMAIL_ENABLED || !mailTransport) return Promise.resolve(false);
   return mailTransport.sendMail({
     from: from || (`"${SMTP.fromName}" <${SMTP.fromEmail}>`),
     to, subject, html, text,
     replyTo: replyTo || SMTP.replyTo,
+    attachments: attachments,
   }).then(() => true).catch((e) => {
     console.error("mail error", (e && e.message) ? String(e.message).slice(0, 160) : "send_failed");
     return false;
@@ -306,6 +311,7 @@ function loadDb() {
     /* Only seed when there is no usable DB file yet */
     db = defaultDb();
     migrateDb(db);
+    upgrade.ensure(db);
     saveDb();
     return;
   }
@@ -316,12 +322,22 @@ function loadDb() {
   db.passwordResets = db.passwordResets || [];
   db.pendingSignups = db.pendingSignups || [];
   db.idempotencyKeys = db.idempotencyKeys || {};
-  if (migrateDb(db)) saveDb();
+  if (migrateDb(db) || upgrade.ensure(db)) saveDb();
   if (!existed) { /* unreachable after catch, kept for clarity */ }
 }
 function saveDb() {
   try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (_) {}
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  /* Write the full document aside, then replace db.json. A direct write truncates
+     the live file first, so a reader can see an empty or partial JSON document. */
+  const json = JSON.stringify(db, null, 2);
+  const tmp = DB_FILE + ".tmp";
+  fs.writeFileSync(tmp, json);
+  try {
+    fs.renameSync(tmp, DB_FILE);
+  } catch (_) {
+    fs.copyFileSync(tmp, DB_FILE);
+    try { fs.unlinkSync(tmp); } catch (__) {}
+  }
 }
 
 /* -------------------- helpers -------------------- */
@@ -338,6 +354,8 @@ function publicUser(u) {
     address: u.address, addr: u.addr || {}, customerNo: u.customerNo, payments: sanitizePaymentsForClient(u.payments || []),
     status: u.status || (u.verified ? "active" : "pending"), verified: !!u.verified,
     marketingConsent: u.marketingConsent === true,
+    card: u.card ? { status: u.card.status || "active", createdAt: u.card.createdAt || null } : null,
+    passkeys: Array.isArray(u.passkeys) ? u.passkeys.map((p) => ({ id: p.id, deviceName: p.deviceName || "Passkey", createdAt: p.createdAt || null })) : [],
     blocked: u.blocked === true,
     blockedAt: u.blockedAt || null,
     blockReason: u.blockReason || "",
@@ -617,7 +635,7 @@ app.get("/api/health", (req, res) => res.json({
 
 app.get("/api/catalog", (req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-  res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config) });
+  res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config), site: upgrade.publicSite(db) });
 });
 
 /* -------------------- SEO: robots + sitemap (public) -------------------- */
@@ -634,6 +652,7 @@ app.get("/robots.txt", (req, res) => {
     "Disallow: /delivery.html\n" +
     "Disallow: /api/\n" +
     "Disallow: /uploads/proofs/\n" +
+    "Disallow: /verify/\n" +
     "\nSitemap: " + PUBLIC_SITE + "/sitemap.xml\n"
   );
 });
@@ -641,7 +660,13 @@ app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml");
   res.setHeader("Cache-Control", "public, max-age=300");
   /* Homepage + active products from live db.products (no hard-coded SKUs). */
-  res.send(buildSitemapXml(db.products, PUBLIC_SITE));
+  const extraLocs = [PUBLIC_SITE + "/links"];
+  try {
+    const pol = require("./lib/upgrade/policies");
+    if (pol.published(db, "terms")) extraLocs.push(PUBLIC_SITE + "/terms");
+    if (pol.published(db, "privacy")) extraLocs.push(PUBLIC_SITE + "/privacy");
+  } catch (_) {}
+  res.send(buildSitemapXml(db.products, PUBLIC_SITE, extraLocs));
 });
 
 /* Prefer apex host when request Host is www. (proxy / direct). Safe no-op for localhost. */
@@ -663,13 +688,72 @@ app.use("/uploads", express.static(UPLOAD_DIR, {
 }));
 
 /* -------------------- admin -------------------- */
-app.post("/api/admin/login", (req, res) => {
-  if (String((req.body || {}).password || "") !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "wrong password" });
-  }
+function issueOwnerSession() {
   const t = token();
   sessions.set(t, { type: "admin", owner: true, role: "owner", name: "Owner", permissions: ALL_PERMS.slice() });
+  return t;
+}
+async function deliverAdminCode(email, code) {
+  if (mail && typeof mail.adminLoginCode === "function") return mail.adminLoginCode(email, code);
+  return false;
+}
+async function beginOwner2fa(req, res) {
+  const started = admin2fa.beginChallenge(db, { pepper: TOKEN_PEPPER, ip: clientIp(req) });
+  if (started.error) {
+    if (started.retryAfterMs) res.setHeader("Retry-After", String(Math.ceil(started.retryAfterMs / 1000)));
+    return res.status(started.status || 400).json({ error: started.error });
+  }
+  let sent = false;
+  try { sent = await deliverAdminCode(started.email, started.code); } catch (_) { sent = false; }
+  pushAudit(db, { actor: "owner", action: "admin_2fa_challenge", entityType: "admin", entityId: "owner", meta: { outcome: sent ? "ok" : "email_failed" } });
+  saveDb();
+  if (!sent && !ALLOW_DEV_CODES) return res.status(503).json({ error: "email_not_configured" });
+  const out = { need2fa: true, challengeId: started.challengeId };
+  if (ALLOW_DEV_CODES) out.devCode = started.code;
+  return res.json(out);
+}
+app.post("/api/admin/login", (req, res) => {
+  const hit = admin2fa.passwordAllowed(clientIp(req));
+  if (!hit.ok) {
+    res.setHeader("Retry-After", String(Math.ceil((hit.retryAfterMs || 60000) / 1000)));
+    return res.status(429).json({ error: "rate_limited" });
+  }
+  if (String((req.body || {}).password || "") !== ADMIN_PASSWORD) {
+    pushAudit(db, { actor: clientIp(req), action: "admin_login_failed", entityType: "admin", entityId: "owner", meta: { outcome: "failed" } });
+    saveDb();
+    return res.status(401).json({ error: "wrong password" });
+  }
+  beginOwner2fa(req, res);
+});
+app.post("/api/admin/login/2fa", (req, res) => {
+  const b = req.body || {};
+  const result = admin2fa.verifyCode(db, {
+    pepper: TOKEN_PEPPER,
+    ip: clientIp(req),
+    challengeId: b.challengeId,
+    code: b.code,
+    recoveryCode: b.recoveryCode,
+  });
+  if (!result.ok) {
+    pushAudit(db, { actor: clientIp(req), action: "admin_login_failed", entityType: "admin", entityId: "owner", meta: { outcome: "failed" } });
+    saveDb();
+    return res.status(result.status || 400).json({ error: result.error || "bad_code", attemptsLeft: result.attemptsLeft });
+  }
+  const t = issueOwnerSession();
+  pushAudit(db, { actor: "owner", action: "admin_login", entityType: "admin", entityId: "owner", meta: { outcome: "ok" } });
+  saveDb();
   res.json({ token: t, owner: true, permissions: ALL_PERMS.slice(), name: "Owner" });
+});
+app.post("/api/admin/login/2fa/resend", async (req, res) => {
+  const started = admin2fa.resend(db, { pepper: TOKEN_PEPPER, ip: clientIp(req), challengeId: (req.body || {}).challengeId });
+  if (started.error) return res.status(started.status || 400).json({ error: started.error });
+  let sent = false;
+  try { sent = await deliverAdminCode(started.email, started.code); } catch (_) { sent = false; }
+  saveDb();
+  if (!sent && !ALLOW_DEV_CODES) return res.status(503).json({ error: "email_not_configured" });
+  const out = { need2fa: true, challengeId: started.challengeId };
+  if (ALLOW_DEV_CODES) out.devCode = started.code;
+  res.json(out);
 });
 
 app.get("/api/admin/state", requireAdmin, (req, res) => {
@@ -719,6 +803,7 @@ app.get("/api/admin/state", requireAdmin, (req, res) => {
 
 app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
   const b = scrubImageFields(req.body || {});
+  const beforeProducts = db.products;
   if (Array.isArray(b.products)) db.products = b.products;
   if (Array.isArray(b.stores)) db.stores = clampStoreCoords(b.stores);
   if (b.config && typeof b.config === "object") {
@@ -773,6 +858,19 @@ app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (re
   }
   migrateDb(db);
   ensurePaymentMethods(db.config);
+  if (Array.isArray(b.products)) {
+    const actor = (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin";
+    upgrade.auditCatalog(db, beforeProducts, db.products, actor);
+  }
+  if (b.config) {
+    pushAudit(db, {
+      actor: (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin",
+      action: "store_settings_updated",
+      entityType: "config",
+      entityId: "catalog",
+      meta: { outcome: "ok" },
+    });
+  }
   saveDb();
   res.json({ ok: true, products: db.products.length });
 });
@@ -914,6 +1012,22 @@ app.post("/api/auth/register", (req, res) => {
   const email = String(b.email || "").trim().toLowerCase(), address = sanitizeText(b.address, 300);
   const password = String(b.password || "");
   const addr = b.addr && typeof b.addr === "object" ? b.addr : {};
+  if (b.acceptTerms !== true) return res.status(400).json({ error: "terms_required" });
+  const policySnap = acceptanceSnapshot(db);
+  if (policySnap.termsVersion != null && String(b.termsVersion) !== String(policySnap.termsVersion)) {
+    return res.status(400).json({
+      error: "terms_version_required",
+      termsVersion: policySnap.termsVersion,
+      privacyVersion: policySnap.privacyVersion,
+    });
+  }
+  if (policySnap.privacyVersion != null && String(b.privacyVersion) !== String(policySnap.privacyVersion)) {
+    return res.status(400).json({
+      error: "privacy_version_required",
+      termsVersion: policySnap.termsVersion,
+      privacyVersion: policySnap.privacyVersion,
+    });
+  }
   if (!name || !phone || !email || !password) return res.status(400).json({ error: "missing fields" });
   if (password.length < 8) return res.status(400).json({ error: "weak_password" });
   if (!emailOk(email)) return res.status(400).json({ error: "bad email" });
@@ -934,6 +1048,7 @@ app.post("/api/auth/register", (req, res) => {
     lastSent: Date.now(),
     ip,
     marketingConsent: b.marketingConsent === true,
+    policyAcceptance: policySnap,
   });
   /* also keep memory map for backward compat during roll-out — no plaintext password */
   pendingReg.set(email, { exp: Date.now() + 10 * 60 * 1000 });
@@ -972,11 +1087,16 @@ app.post("/api/auth/verify", (req, res) => {
     address: pending.address, addr: pending.addr || {}, pass: pending.passHash, verified: true,
     status: "active",
     marketingConsent: pending.marketingConsent === true,
+    policyAcceptance: pending.policyAcceptance || null,
     customerNo: nextCustomerNo(), payments: [], createdAt: Date.now(),
   };
+  ensureCard(user, TOKEN_PEPPER);
   db.users.push(user); saveDb();
   const t = token(); sessions.set(t, { type: "user", userId: user.id });
   if (mail) mail.welcome(user.email, { name: user.name, email: user.email }).catch(() => {});
+  upgrade.onUserVerified({
+    db, user, mail, TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com", saveDb,
+  }, user).catch(() => {});
   res.json({
     token: t, user: publicUser(user),
     welcomeUrl: "/welcome.html?name=" + encodeURIComponent(user.name || "") + "&email=" + encodeURIComponent(user.email || ""),
@@ -1329,6 +1449,9 @@ app.post("/api/orders", (req, res) => {
       try { saveDb(); } catch (_) {}
     });
   }
+  try {
+    upgrade.onOrderCreated({ db, saveDb, mail }, order);
+  } catch (_) {}
 
   res.json({ order: order, warning: deliveryWarning || undefined });
 });
@@ -1420,6 +1543,7 @@ mountV2(app, {
   get mail() { return mail; },
   sessions, findProduct, isAllowedImageUrl,
   ADMIN_PASSWORD,
+  beginOwner2fa,
 });
 mountV3(app, {
   get db() { return db; },
@@ -1455,6 +1579,21 @@ mountOrderOps(app, {
   saveDb, auth, requireAdmin, requireUser, publicUser,
   sessions, findProduct,
   get mail() { return mail; },
+});
+
+function issueUserToken(user) {
+  const t = token();
+  sessions.set(t, { type: "user", userId: user.id });
+  return t;
+}
+upgrade.mount(app, {
+  get db() { return db; },
+  saveDb, auth, requireAdmin, requireAdminPerm, requireAdminAnyPerm,
+  requireUser, publicUser, emailOk,
+  get mail() { return mail; },
+  sessions, TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
+  ALLOW_DEV_CODES, UPLOAD_DIR, DATA_DIR,
+  issueUserToken,
 });
 
 /* Product SEO pages — SSR from live db.products (code/SKU). No catalog hardcoding. */

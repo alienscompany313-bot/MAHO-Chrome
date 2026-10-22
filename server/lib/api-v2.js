@@ -304,6 +304,7 @@ function mountV2(app, ctx) {
     const login = String(b.id || b.email || "").trim();
     /* Prefer env owner password first */
     if (password && password === ctx.ADMIN_PASSWORD) {
+      if (typeof ctx.beginOwner2fa === "function") return ctx.beginOwner2fa(req, res);
       const t = crypto.randomBytes(24).toString("hex");
       sessions.set(t, { type: "admin", owner: true, role: "owner", name: "Owner", permissions: ALL_PERMS.slice() });
       return res.json({ token: t, owner: true, permissions: ALL_PERMS.slice(), name: "Owner" });

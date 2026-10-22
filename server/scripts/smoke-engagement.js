@@ -71,8 +71,10 @@ async function main() {
     }
 
     const login = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(login.status === 200 && login.data.token, "admin login");
-    const tok = login.data.token;
+    assert(login.status === 200 && login.data && login.data.need2fa && login.data.devCode, "admin 2fa start");
+    const loginDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: login.data.challengeId, code: login.data.devCode } });
+    assert(loginDone.status === 200 && loginDone.data.token, "admin 2fa");
+    const tok = loginDone.data.token;
 
     const s1 = await req("POST", "/api/newsletter/subscribe", { body: { email: "  News@Example.COM ", source: "website" } });
     assert(s1.status === 200 && s1.data.subscriber.email === "news@example.com", "subscribe normalize");
@@ -117,7 +119,7 @@ async function main() {
       },
     });
     const email = "buyer_eng_" + Date.now() + "@example.com";
-    const reg = await req("POST", "/api/auth/register", { body: { name: "A", phone: "0700111222", email, password: "BuyerPass99" } });
+    const reg = await req("POST", "/api/auth/register", { body: { acceptTerms: true, name: "A", phone: "0700111222", email, password: "BuyerPass99" } });
     await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });
     const ulogin = await req("POST", "/api/auth/login", { body: { id: email, password: "BuyerPass99" } });
     const ord = await req("POST", "/api/orders", {

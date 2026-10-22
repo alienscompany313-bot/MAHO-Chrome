@@ -72,8 +72,10 @@ async function main() {
     }
 
     const login = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(login.status === 200 && login.data.token, "admin login");
-    const tok = login.data.token;
+    assert(login.status === 200 && login.data && login.data.need2fa && login.data.devCode, "admin 2fa start");
+    const loginDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: login.data.challengeId, code: login.data.devCode } });
+    assert(loginDone.status === 200 && loginDone.data.token, "admin 2fa");
+    const tok = loginDone.data.token;
 
     await req("PUT", "/api/admin/catalog", {
       token: tok,
@@ -103,11 +105,11 @@ async function main() {
     const emailYes = "consent_yes_" + Date.now() + "@example.com";
     const emailNo = "consent_no_" + Date.now() + "@example.com";
     const regY = await req("POST", "/api/auth/register", {
-      body: { name: "Yes", phone: "0700111001", email: emailYes, password: "BuyerPass99", marketingConsent: true },
+      body: { acceptTerms: true, name: "Yes", phone: "0700111001", email: emailYes, password: "BuyerPass99", marketingConsent: true },
     });
     await req("POST", "/api/auth/verify", { body: { email: emailYes, code: regY.data.devCode } });
     const regN = await req("POST", "/api/auth/register", {
-      body: { name: "No", phone: "0700111002", email: emailNo, password: "BuyerPass99", marketingConsent: false },
+      body: { acceptTerms: true, name: "No", phone: "0700111002", email: emailNo, password: "BuyerPass99", marketingConsent: false },
     });
     await req("POST", "/api/auth/verify", { body: { email: emailNo, code: regN.data.devCode } });
 
@@ -247,7 +249,7 @@ async function main() {
     /* delivery order for return window expiry + pickup_customer */
     const email2 = "ret_" + Date.now() + "@example.com";
     const reg2 = await req("POST", "/api/auth/register", {
-      body: { name: "R", phone: "0700111003", email: email2, password: "BuyerPass99", marketingConsent: true },
+      body: { acceptTerms: true, name: "R", phone: "0700111003", email: email2, password: "BuyerPass99", marketingConsent: true },
     });
     await req("POST", "/api/auth/verify", { body: { email: email2, code: reg2.data.devCode } });
     const ul2 = await req("POST", "/api/auth/login", { body: { id: email2, password: "BuyerPass99" } });
@@ -289,7 +291,7 @@ async function main() {
     });
     const email3 = "win0_" + Date.now() + "@example.com";
     const reg3 = await req("POST", "/api/auth/register", {
-      body: { name: "W", phone: "0700111004", email: email3, password: "BuyerPass99" },
+      body: { acceptTerms: true, name: "W", phone: "0700111004", email: email3, password: "BuyerPass99" },
     });
     await req("POST", "/api/auth/verify", { body: { email: email3, code: reg3.data.devCode } });
     const ul3 = await req("POST", "/api/auth/login", { body: { id: email3, password: "BuyerPass99" } });
@@ -399,7 +401,7 @@ async function main() {
     /* whatsapp COD: cash refund requires pickup confirm first */
     const emailCash = "cash_" + Date.now() + "@example.com";
     const regC = await req("POST", "/api/auth/register", {
-      body: { name: "C", phone: "0700111005", email: emailCash, password: "BuyerPass99" },
+      body: { acceptTerms: true, name: "C", phone: "0700111005", email: emailCash, password: "BuyerPass99" },
     });
     await req("POST", "/api/auth/verify", { body: { email: emailCash, code: regC.data.devCode } });
     const ulC = await req("POST", "/api/auth/login", { body: { id: emailCash, password: "BuyerPass99" } });

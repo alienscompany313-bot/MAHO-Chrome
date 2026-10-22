@@ -55,7 +55,7 @@ function req(method, urlPath, { body, token } = {}) {
 
 async function register(email, phone) {
   const reg = await req("POST", "/api/auth/register", {
-    body: { name: "U", phone, email, password: "BuyerPass99", marketingConsent: true },
+    body: { acceptTerms: true, name: "U", phone, email, password: "BuyerPass99", marketingConsent: true },
   });
   assert(reg.status === 200 && reg.data.devCode, "register");
   await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });
@@ -113,8 +113,10 @@ async function main() {
     assert(ready, "boot\n" + boot.slice(-1500));
 
     const admin = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(admin.status === 200, "admin");
-    const atok = admin.data.token;
+    assert(admin.status === 200 && admin.data && admin.data.need2fa && admin.data.devCode, "admin 2fa start");
+    const adminDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: admin.data.challengeId, code: admin.data.devCode } });
+    assert(adminDone.status === 200 && adminDone.data.token, "admin 2fa");
+    const atok = adminDone.data.token;
 
     await req("PUT", "/api/admin/catalog", {
       token: atok,

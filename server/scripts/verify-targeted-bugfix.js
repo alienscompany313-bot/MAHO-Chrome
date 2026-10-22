@@ -89,7 +89,7 @@ function writeArt(name, html) {
 
 async function registerUser(email, phone) {
   const reg = await req("POST", "/api/auth/register", {
-    body: { name: "U", phone, email, password: "BuyerPass99", marketingConsent: true },
+    body: { acceptTerms: true, name: "U", phone, email, password: "BuyerPass99", marketingConsent: true },
   });
   assert(reg.status === 200 && reg.data.devCode, "register " + email);
   await req("POST", "/api/auth/verify", { body: { email, code: reg.data.devCode } });
@@ -178,8 +178,14 @@ async function main() {
   assert(oi.requestItemReturn(deliv, "li1", { method: "pickup_store" }, {}).error === "return_reason_required", "reason required");
   const sOk = oi.requestItemReturn(JSON.parse(JSON.stringify(deliv)), "li1", { method: "pickup_store", reasonId: "r1", reason: "سایز" }, {});
   assert(sOk.ok && sOk.line.returnRequest.method === "pickup_store", "store return");
-  const cOk = oi.requestItemReturn(JSON.parse(JSON.stringify(deliv)), "li1", { method: "pickup_customer", reasonId: "r1", reason: "سایز" }, {});
+  /* Address pickup cannot be created with no contact details. The order's saved address and phone are the fallback. */
+  const missingContact = oi.requestItemReturn(JSON.parse(JSON.stringify(deliv)), "li1", { method: "pickup_customer", reasonId: "r1", reason: "سایز" }, {});
+  assert(missingContact.ok === false && missingContact.error === "address_phone_required", "customer pickup needs address and phone");
+  const withCustomer = JSON.parse(JSON.stringify(deliv));
+  withCustomer.customer = { address: "کابل", phone: "0700111222" };
+  const cOk = oi.requestItemReturn(withCustomer, "li1", { method: "pickup_customer", reasonId: "r1", reason: "سایز" }, {});
   assert(cOk.ok && cOk.line.returnRequest.method === "pickup_customer", "customer pickup");
+  assert(cOk.line.returnRequest.pickup && cOk.line.returnRequest.pickup.address === "کابل" && cOk.line.returnRequest.pickup.phone === "0700111222", "pickup uses customer contact");
   ok("6-9 return method/reason (unit)");
 
   /* ===== HTTP ===== */
@@ -208,8 +214,10 @@ async function main() {
     assert(ready, "server boot\n" + boot.slice(-2000));
 
     const adminLogin = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASSWORD } });
-    assert(adminLogin.status === 200 && adminLogin.data.token, "admin login");
-    const atok = adminLogin.data.token;
+    assert(adminLogin.status === 200 && adminLogin.data && adminLogin.data.need2fa && adminLogin.data.devCode, "admin 2fa start");
+    const adminLoginDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: adminLogin.data.challengeId, code: adminLogin.data.devCode } });
+    assert(adminLoginDone.status === 200 && adminLoginDone.data.token, "admin 2fa");
+    const atok = adminLoginDone.data.token;
 
     const storeA = "store_a";
     const storeB = "store_b";

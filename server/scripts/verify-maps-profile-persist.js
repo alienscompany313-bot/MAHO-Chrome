@@ -178,8 +178,10 @@ function waitHealth(port, tries) {
   try {
     await waitHealth(PORT);
     const login = await req(PORT, "POST", "/api/admin/login", { password: ADMIN_PASSWORD });
-    assert(login.status === 200 && login.data && login.data.token, "admin login");
-    const token = login.data.token;
+    assert(login.status === 200 && login.data && login.data.devCode, "admin 2fa start");
+    const loginDone = await req(PORT, "POST", "/api/admin/login/2fa", { challengeId: login.data.challengeId, code: login.data.devCode });
+    assert(loginDone.status === 200 && loginDone.data.token, "admin 2fa");
+    const token = loginDone.data.token;
 
     const fixtureStore = {
       id: "store_fixture",
@@ -271,10 +273,20 @@ function waitHealth(port, tries) {
     assert(fix && fix.map === PROFILE, "fixture profile unchanged");
 
     /* Place order with fixture store — pickupStore must carry profile */
-    const reg = await req(PORT, "POST", "/api/auth/register", {
+    const termsPub = await req(PORT, "GET", "/api/policies/terms");
+    const privacyPub = await req(PORT, "GET", "/api/policies/privacy");
+    const regBody = {
       email: "maps-buyer@test.local", name: "Maps Buyer", phone: "0700111222",
       password: "BuyerPass123!", address: "Test address",
-    });
+      acceptTerms: true,
+    };
+    if (termsPub.status === 200 && termsPub.data && termsPub.data.policy && termsPub.data.policy.version) {
+      regBody.termsVersion = termsPub.data.policy.version;
+    }
+    if (privacyPub.status === 200 && privacyPub.data && privacyPub.data.policy && privacyPub.data.policy.version) {
+      regBody.privacyVersion = privacyPub.data.policy.version;
+    }
+    const reg = await req(PORT, "POST", "/api/auth/register", regBody);
     assert(reg.status === 200 && reg.data && reg.data.devCode, "register + devCode got=" + reg.raw.slice(0, 200));
     const ver = await req(PORT, "POST", "/api/auth/verify", {
       email: "maps-buyer@test.local", code: reg.data.devCode,

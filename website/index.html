@@ -78,8 +78,9 @@
   }
   </script>
 
-  <link rel="icon" href="../icon-192.png">
-  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,6 +91,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
+  <div id="announceBar" class="announce-bar" hidden></div>
 
   <!-- ============ SVG ICON SPRITE ============ -->
   <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -152,7 +154,6 @@
         <button class="cart-btn" id="accountBtn" type="button" aria-label="حساب کاربری"><svg class="ic"><use href="#i-user"/></svg></button>
         <button class="cart-btn" id="cartBtn" type="button" aria-label="سبد خرید"><svg class="ic"><use href="#i-bag"/></svg><span class="cart-count empty" id="cartCount">0</span></button>
         <button class="lang-btn" id="langToggle" type="button"><svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span></button>
-        <a class="btn btn-ghost" href="admin.html" data-i18n="header.portal">پنل مدیریت</a>
         <button class="nav-toggle" id="navToggle" aria-label="منو" aria-expanded="false" aria-controls="nav">
           <span></span>
         </button>
@@ -183,25 +184,10 @@
           </div>
         </div>
 
-        <div class="hero-visual">
-          <div class="hero-card c1 float">
-            <span class="tag" data-i18n="herocard.tag1">پرفروش</span>
-            <h4 data-i18n="herocard.t1">لباس مجلسی</h4>
-            <span data-i18n="herocard.s1">پیراهن و کالای شب</span>
-          </div>
-          <div class="hero-card c2 float d1">
-            <span class="tag" data-i18n="herocard.tag2">جدید</span>
-            <h4 data-i18n="herocard.t2">شال و روسری</h4>
-            <span data-i18n="herocard.s2">کالکشن فصل جدید</span>
-          </div>
-          <div class="hero-card c3 float d2">
-            <span class="tag" data-i18n="herocard.tag3">۲۵٪ تخفیف</span>
-            <h4 data-i18n="herocard.t3">کیف و کفش</h4>
-            <span data-i18n="herocard.s3">پیشنهاد هفته</span>
-          </div>
-        </div>
       </div>
     </section>
+
+    <section id="homePromo" class="home-promo" hidden aria-label="MAHO promotions"></section>
 
     <!-- ============ CATEGORIES ============ -->
     <section class="section" id="categories">
@@ -343,8 +329,9 @@
           <h4 data-i18n="footer.support">پشتیبانی</h4>
           <a href="#contact" data-i18n="footer.link.contact">تماس با ما</a>
           <a href="#about" data-i18n="footer.link.about">درباره‌ی MAHO</a>
-          <a href="#" data-i18n="footer.link.terms">قوانین و شرایط</a>
-          <a href="#" data-i18n="footer.link.track">پیگیری سفارش</a>
+          <a href="/terms" id="footerTerms" data-i18n="footer.link.terms">قوانین و شرایط</a>
+          <a href="/privacy" id="footerPrivacy">حریم خصوصی</a>
+          <a href="#orders" id="footerTrackLink" data-i18n="footer.link.track">پیگیری سفارش</a>
         </div>
         <div class="footer-col">
           <h4 data-i18n="footer.contact">تماس</h4>
@@ -381,6 +368,7 @@
             <button type="button" id="qvPlus" aria-label="بیشتر">+</button>
           </div>
           <button class="btn btn-lg" id="qvAdd" data-i18n="qv.add">افزودن به سبد</button>
+          <button type="button" class="btn btn-outline" id="qvShare">اشتراک</button>
         </div>
         <p class="qv-msg" id="qvMsg"></p>
       </div>
@@ -510,6 +498,7 @@
             <div class="field"><label data-i18n="acct.phone">نمبر تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password" autocomplete="current-password"></div>
             <button class="btn btn-lg" id="loginBtn" style="width:100%" data-i18n="acct.login">ورود</button>
+            <button type="button" class="btn btn-outline" id="passkeyLoginBtn" style="width:100%;margin-top:8px">ورود با Face ID / Passkey</button>
             <button type="button" class="link-back" id="forgotLink" style="margin-top:8px" data-i18n="acct.forgot">پسورد را فراموش کرده‌اید؟</button>
           </div>
           <div id="resetPane" hidden>
@@ -534,6 +523,10 @@
             <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password" autocomplete="new-password"></div>
             <label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:13px;line-height:1.5">
+              <input type="checkbox" id="su_terms" style="margin-top:4px">
+              <span id="suTermsText">من قوانین و شرایط استفاده و پالیسی حریم خصوصی فروشگاه ماهو را مطالعه کرده‌ام و با آن‌ها موافق هستم. <button type="button" class="link-back" id="openTerms" style="display:inline;padding:0">قوانین</button> · <button type="button" class="link-back" id="openPrivacy" style="display:inline;padding:0">حریم خصوصی</button></span>
+            </label>
+            <label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:13px;line-height:1.5">
               <input type="checkbox" id="su_marketing" style="margin-top:4px">
               <span>می‌خواهم پیشنهادها، تخفیف‌ها و محصولات جدید MAHO را از طریق ایمیل دریافت کنم.</span>
             </label>
@@ -554,6 +547,20 @@
           <p class="muted" id="acctId" style="text-align:center;margin:2px 0 0"></p>
 
           <button class="btn btn-lg" id="ordersBtn" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
+          <section id="customerCardBox" class="customer-card-box" hidden>
+            <h4 id="customerCardTitle">کارت مشتری</h4>
+            <img id="customerCardImg" alt="MAHO customer card" width="640" height="372">
+            <div class="card-actions">
+              <a class="btn btn-outline btn-sm" id="cardPng" href="#">PNG</a>
+              <a class="btn btn-outline btn-sm" id="cardPdf" href="#">PDF</a>
+              <button type="button" class="btn btn-outline btn-sm" id="cardEmailBtn">ایمیل کارت</button>
+            </div>
+            <p class="muted" id="cardStatusLine"></p>
+          </section>
+          <section id="passkeyBox">
+            <button type="button" class="btn btn-outline btn-sm" id="passkeyAddBtn">افزودن Face ID / Passkey</button>
+            <div id="passkeyList"></div>
+          </section>
 
           <details class="acct-acc" id="acctProfileAcc" open>
             <summary class="acct-acc-sum"><span data-i18n="acct.profile">مشخصات من</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
@@ -621,7 +628,31 @@
   <button class="to-top" id="toTop" aria-label="بازگشت به بالا"><svg class="ic"><use href="#i-up"/></svg></button>
   <div class="toast" id="toast"><span class="dot">●</span><span id="toastMsg"></span></div>
 
+  <div class="ov" id="policyOverlay">
+    <div class="qv-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle" style="max-width:640px">
+      <button class="modal-x" id="policyClose" type="button" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <h3 id="policyTitle">قوانین</h3>
+        <div id="policyBody" class="policy-scroll"></div>
+        <p id="policyPdf"></p>
+      </div>
+    </div>
+  </div>
+  <div class="ov" id="hoursOverlay">
+    <div class="qv-modal hours-modal" role="dialog" aria-modal="true" aria-labelledby="hoursTitle">
+      <button class="modal-x" id="hoursClose" type="button" aria-label="بستن">✕</button>
+      <div class="qv-body">
+        <h3 id="hoursTitle">ساعت کاری</h3>
+        <p id="hoursNow"></p>
+        <ul id="hoursWeek"></ul>
+        <p id="hoursClosure" hidden></p>
+      </div>
+    </div>
+  </div>
+  <div class="share-menu" id="shareMenu" hidden></div>
+
   <script src="js/api.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/upgrade.js"></script>
 </body>
 </html>

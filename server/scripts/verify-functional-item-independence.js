@@ -75,8 +75,10 @@ async function loginUser() {
 
 async function loginAdmin() {
   const r = await req("POST", "/api/admin/login", { body: { password: ADMIN_PASS } });
-  assert(r.status === 200 && r.data.token, "admin login failed");
-  return r.data.token;
+  assert(r.status === 200 && r.data && r.data.devCode, "admin 2fa start");
+  const rDone = await req("POST", "/api/admin/login/2fa", { body: { challengeId: r.data.challengeId, code: r.data.devCode } });
+  assert(rDone.status === 200 && rDone.data.token, "admin 2fa");
+  return rDone.data.token;
 }
 
 async function getOrder(userTok, orderId) {

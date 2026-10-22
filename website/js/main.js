@@ -590,12 +590,14 @@
             ${stockNote}
             <div class="product-foot">
               <span class="price">${money(effPrice(p))} ${old}</span>
+              <button class="icon-btn" type="button" data-share aria-label="${LANG === "en" ? "Share" : "اشتراک"}">${icon("share")}</button>
               <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
             </div>
           </div>
         </article>`;
     }).join("");
     applyFilter(activeFilter);
+    document.dispatchEvent(new CustomEvent("maho:rendered"));
   }
 
   /* -------------------- Render store -------------------- */
@@ -612,20 +614,15 @@
         <article class="store-card">
           <div class="store-top">
             <h3>${name}</h3>
-            <span class="badge-open">${t("store.open")}</span>
+            <button type="button" class="badge-open" data-store-status="${escapeAttr(s.id || "")}">${t("store.open")}</button>
           </div>
           <div class="store-row"><span class="ico">${icon("pin")}</span><span>${area}</span></div>
-          <div class="store-row"><span class="ico">${icon("clock")}</span><span>${hours}</span></div>
+          <div class="store-row"><span class="ico">${icon("clock")}</span><button type="button" class="store-hours-btn" data-store-hours="${escapeAttr(s.id || "")}">${hours}</button></div>
           <div class="store-row"><span class="ico">${icon("call")}</span><a class="contact-link phone-ltr" href="${telHref(phone)}" dir="ltr"><bdi class="phone-ltr" dir="ltr">${phone}</bdi></a></div>
           <a class="btn btn-outline" target="_blank" rel="noopener" href="${escapeAttr(storeMapUrl(s) || '#')}">${t("store.directions")}</a>
         </article>`;
     }).join("");
-    const footerMap = $("#footerMapLink");
-    if (footerMap) {
-      const url = storeMapUrl(STORES[0]);
-      if (url) { footerMap.href = url; footerMap.style.display = ""; }
-      else { footerMap.removeAttribute("href"); footerMap.style.display = "none"; }
-    }
+    document.dispatchEvent(new CustomEvent("maho:rendered"));
   }
 
   /* -------------------- Filtering -------------------- */
@@ -807,6 +804,10 @@
       if (!card) return;
       const p = PRODUCTS[parseInt(card.dataset.idx, 10)];
       if (!p) return;
+      if (e.target.closest("[data-share]")) {
+        if (window.mahoShareProduct) window.mahoShareProduct(p, e.target.closest("[data-share]"));
+        return;
+      }
       if (e.target.closest("[data-addcart]")) {
         if (productSizes(p).length || productColors(p).length) openQuickView(p);
         else addToCart(p, 1, "", "");
@@ -2236,6 +2237,8 @@
     } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
     $("#qvCat").textContent = catLabel(p.cat) || "";
     $("#qvName").textContent = nm;
+    const qvShare = $("#qvShare");
+    if (qvShare) { qvShare.dataset.code = productPublicCode(p); qvShare.dataset.name = nm; }
     const codeEl = $("#qvCode");
     const codeVal = (p.code || p.sku || p.barcode || "").trim();
     if (codeEl) {
@@ -2560,11 +2563,17 @@
     const address = composeAddress(addr);
     const pass = ($("#su_pass").value || "").trim();
     const marketingConsent = !!(document.getElementById("su_marketing") && document.getElementById("su_marketing").checked);
+    const acceptTerms = !!(document.getElementById("su_terms") && document.getElementById("su_terms").checked);
+    if (!acceptTerms) { acctMsg(LANG === "en" ? "Please accept the Terms and Privacy Policy." : "لطفاً قوانین و حریم خصوصی را بپذیرید."); return; }
     if (!name || !phone || !email || !pass) { acctMsg(t("acct.needAll")); return; }
     if (!emailOk(email)) { acctMsg(t("acct.badEmail")); return; }
     if (apiOnline && window.MAHOApi) {
       acctMsg(t("acct.sending"), true);
-      MAHOApi.register({ name: name, phone: phone, email: email, address: address, addr: addr, password: pass, marketingConsent: marketingConsent }).then((res) => {
+      const published = (window.MAHO_SITE && window.MAHO_SITE.policies) || {};
+      const regBody = { name: name, phone: phone, email: email, address: address, addr: addr, password: pass, marketingConsent: marketingConsent, acceptTerms: true };
+      if (published.termsVersion) regBody.termsVersion = published.termsVersion;
+      if (published.privacyVersion) regBody.privacyVersion = published.privacyVersion;
+      MAHOApi.register(regBody).then((res) => {
         pendingSignup = { name: name, phone: phone, email: email, addr: addr, address: address, pass: pass, marketingConsent: marketingConsent, viaApi: true, code: res.devCode || "" };
         showSignupStep("verify");
         if (res.devCode) acctMsg(t("acct.demoNote").replace("{code}", res.devCode), true);
@@ -2641,6 +2650,11 @@
         acctMsg(t("acct.hi") + "، " + (res.user && res.user.name), true);
         showToast(t("acct.hi") + "، " + (res.user && res.user.name));
         if ($("#coMsg") && /جلسه|session/i.test($("#coMsg").textContent || "")) $("#coMsg").textContent = "";
+        if (sessionStorage.getItem("maho_after_login") === "orders") {
+          sessionStorage.removeItem("maho_after_login");
+          closeAcct();
+          openOrders();
+        }
       }).catch(() => acctMsg(t("acct.bad")));
       return;
     }
@@ -3046,6 +3060,18 @@
     const phoneRaw = String(c.footerPhone || t("footer.phone") || "+93791505454").trim();
     setFooterPhone(phoneRaw);
     const emailRaw = c.footerEmail || t("footer.email") || "";
+    const site = window.MAHO_SITE || {};
+    const docTitle = LANG === "en" ? (site.documentTitle_en || site.documentTitle) : (site.documentTitle || site.documentTitle_en);
+    if (docTitle) document.title = docTitle;
+    const docDesc = LANG === "en" ? (site.metaDescription_en || site.metaDescription) : (site.metaDescription || site.metaDescription_en);
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && docDesc) metaDesc.setAttribute("content", docDesc);
+    const footerMap = $("#footerMapLink");
+    if (footerMap) {
+      const mapUrl = site.footerMapsUrl || "";
+      if (mapUrl) { footerMap.href = mapUrl; footerMap.hidden = false; footerMap.style.display = ""; }
+      else { footerMap.removeAttribute("href"); footerMap.hidden = true; }
+    }
     const emLink = $("#footerEmailLink") || document.querySelector('.site-footer [data-i18n="footer.email"]');
     if (emLink) {
       if (emailRaw) { emLink.textContent = emailRaw; emLink.href = "mailto:" + emailRaw; }
@@ -3388,6 +3414,7 @@
     updateYear();
     const label = $("#langLabel");
     if (label) label.textContent = t("lang.other");
+    document.dispatchEvent(new CustomEvent("maho:rendered"));
   }
   const langToggle = $("#langToggle");
   if (langToggle) langToggle.addEventListener("click", () => applyLang(LANG === "fa" ? "en" : "fa"));
@@ -3397,6 +3424,7 @@
 
   function refreshFromCatalog(d) {
     if (!d) return;
+    if (d.site) window.MAHO_SITE = d.site;
     applyData(d);
     renderFilters();
     renderShowcase();
