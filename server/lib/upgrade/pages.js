@@ -22,7 +22,7 @@ function shell(title, body, opts) {
     "</head>\n<body>\n<main class=\"page\">\n" + body + "\n</main>\n</body>\n</html>\n";
 }
 
-function linksPage(rows, qrDataUri) {
+function linksPage(rows, qrDataUri, meta) {
   const items = rows.map((row) => {
     const label = row.label || row.label_en || "MAHO";
     return "<a class=\"btn btn-outline\" style=\"display:block;margin:10px 0;text-align:center\" href=\"" + esc(row.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(label) + (row.label_en ? " · " + esc(row.label_en) : "") + "</a>";
@@ -30,9 +30,12 @@ function linksPage(rows, qrDataUri) {
   const qr = qrDataUri
     ? "<div style=\"text-align:center;margin-top:18px\"><img alt=\"QR code for MAHO links\" width=\"220\" height=\"220\" src=\"" + qrDataUri + "\"><p><a href=\"/links/qr.png\">PNG</a> · <a href=\"/links/qr.svg\">SVG</a></p></div>"
     : "";
-  return shell("لینک‌های ماهو | MAHO", 
+  const page = meta || {};
+  const subFa = page.subtitle || "لباس و لوازم بانوان";
+  const subEn = page.subtitle_en || "Women's clothing & accessories";
+  return shell("لینک‌های ماهو مارکیت | MAHO MARKET",
     "<div class=\"card\" style=\"text-align:center\"><img src=\"/assets/brand/maho-logo.jpg\" alt=\"MAHO\" width=\"180\" height=\"180\" style=\"width:180px;height:auto\">" +
-    "<h1>ماهو</h1><p>لباس و لوازم بانوان · Women's clothing &amp; accessories</p>" +
+    "<h1>ماهو مارکیت</h1><p dir=\"ltr\" style=\"letter-spacing:1px;font-weight:800\">MAHO MARKET</p><p>" + esc(subFa) + "</p><p dir=\"ltr\">" + esc(subEn) + "</p>" +
     items + qr + "<p><a href=\"/\">بازگشت به فروشگاه</a></p></div>",
     { description: "Official MAHO Market links" });
 }
@@ -59,13 +62,16 @@ function policyPage(kind, policy) {
     { description: (policy.body_en || policy.body || "MAHO policy").slice(0, 180) });
 }
 
-function verifyPage(status) {
+function verifyPage(info) {
+  const status = info && typeof info === "object" ? info.status : info;
   const label = status === "active" ? "فعال / Active" : (status === "inactive" ? "غیرفعال / Inactive" : (status === "revoked" ? "باطل شده / Revoked" : "نامعتبر / Not found"));
   const known = status === "active" || status === "inactive" || status === "revoked";
+  const name = info && info.name ? "<p><strong>" + esc(info.name) + "</strong></p>" : "";
+  const no = info && info.customerNo ? "<p dir=\"ltr\">" + esc(info.customerNo) + "</p>" : "";
   return shell("تأیید کارت مشتری | MAHO",
     "<div class=\"card\" style=\"text-align:center\"><img src=\"/assets/brand/maho-logo.jpg\" alt=\"MAHO\" width=\"120\" height=\"120\" style=\"width:120px;height:auto\">" +
-    "<h1>کارت مشتری ماهو</h1><p id=\"status\" style=\"font-size:22px;font-weight:800\">" + esc(label) + "</p>" +
-    "<p>این صفحه فقط وضعیت کارت را نشان می‌دهد.</p>" +
+    "<h1>کارت مشتری ماهو</h1>" + name + no + "<p id=\"status\" style=\"font-size:22px;font-weight:800\">" + esc(label) + "</p>" +
+    "<p>نام، شماره مشتری و اعتبار کارت. ایمیل و آدرس در این صفحه نیست.</p>" +
     "<div id=\"staff\" hidden style=\"text-align:right;margin-top:16px\"></div></div>" +
     "<script>(function(){var token=location.pathname.split('/').pop();var t=localStorage.getItem('maho_api_admin_token')||'';" +
     "if(!t||!" + (known ? "true" : "false") + ")return;fetch('/api/admin/cards/lookup?token='+encodeURIComponent(token),{headers:{Authorization:'Bearer '+t},cache:'no-store'}).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});}).then(function(x){if(!x.ok||!x.d||!x.d.name)return;var box=document.getElementById('staff');box.hidden=false;box.innerHTML='<h2>جزئیات برای کارمند</h2><p>'+String(x.d.name||'')+'</p><p dir=\\'ltr\\'>'+String(x.d.customerNo||'')+'</p><p dir=\\'ltr\\'>'+String(x.d.email||'')+'</p>';}).catch(function(){});})();</script>",

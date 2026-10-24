@@ -187,7 +187,12 @@
     });
   }
   function logoutUser() {
+    var token = getToken("user");
     setToken("user", null);
+    if (!token) return Promise.resolve({ ok: true });
+    return request("/api/auth/logout", { method: "POST", token: token }).catch(function () {
+      return { ok: false };
+    });
   }
   function me() {
     return request("/api/me", { token: getToken("user") });

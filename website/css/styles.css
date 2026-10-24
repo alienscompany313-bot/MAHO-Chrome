@@ -526,10 +526,11 @@ body.nav-open .nav-toggle span::after { transform: rotate(-45deg) translateY(-1p
   background: var(--gold); color: #1a1509;
 }
 .product-badge.new { background: #fff; color: var(--black); border: 1px solid var(--line); }
-.product-body { padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.product-body .cat { font-size: 12.5px; color: var(--gold-deep); font-weight: 700; }
-.product-body h3 { font-size: 17px; margin: 0; }
-.product-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 12px; }
+.product-body { padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 168px; }
+.product-body .cat { font-size: 12.5px; color: var(--gold-deep); font-weight: 700; min-height: 1.2em; }
+.product-body h3 { font-size: 17px; margin: 0; min-height: 2.6em; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-foot { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr) 42px 42px; align-items: center; gap: 8px; padding-top: 12px; }
+.product-foot .price { min-height: 2.4em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
 .price { font-weight: 800; font-size: 18px; }
 .price small { color: var(--muted); font-weight: 600; font-size: 12px; }
 .price del { color: var(--muted); font-weight: 600; font-size: 13px; margin-inline-start: 6px; }
@@ -799,8 +800,9 @@ bdi.phone-ltr { unicode-bidi: isolate; }
 .announce-bar{background:#141414;color:#f6f1e6;text-align:center;padding:8px 16px;font-size:14px;font-weight:700}
 .announce-bar a{color:#c8a35f}
 .home-promo{padding:18px 0 0}
-.home-promo-frame{position:relative;border-radius:18px;overflow:hidden;background:#141414;color:#fff;min-height:180px}
-.home-promo-frame img{width:100%;max-height:420px;object-fit:cover;display:block}
+.home-promo .container{width:min(94%, var(--container));margin-inline:auto}
+.home-promo-frame{position:relative;border-radius:22px;overflow:hidden;background:#141414;color:#fff;min-height:220px;border:1px solid #e6d3a4}
+.home-promo-frame img{width:100%;height:clamp(220px, 38vw, 420px);object-fit:cover;display:block}
 .home-promo-copy{position:absolute;inset:auto 16px 16px 16px;text-shadow:0 1px 8px #000}
 .promo-nav{position:absolute;top:12px;inset-inline-end:12px;display:flex;gap:6px}
 .listing-promo{grid-column:1/-1;border:1px solid #e6dcc6;border-radius:16px;overflow:hidden;background:#fffdf8}
@@ -816,6 +818,13 @@ bdi.phone-ltr { unicode-bidi: isolate; }
 .customer-card-box img{width:100%;height:auto;border-radius:12px;border:1px solid #e6dcc6;background:#fff}
 .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .share-menu{position:fixed;z-index:80;background:#fff;border:1px solid #e6dcc6;border-radius:12px;padding:8px;display:flex;flex-direction:column;min-width:180px;box-shadow:0 12px 30px #0002}
+.share-menu[hidden]{display:none !important}
 .share-menu button,.share-menu a{background:#fff;border:0;text-align:start;padding:8px 10px;font:inherit;cursor:pointer;border-radius:8px;color:inherit;text-decoration:none}
 .share-menu button:hover,.share-menu a:hover{background:#f6f1e6}
-@media(max-width:720px){.listing-promo a{flex-direction:column;align-items:stretch}.listing-promo img{width:100%;height:160px}}
+@media(max-width:720px){.listing-promo a{flex-direction:column;align-items:stretch}.listing-promo img{width:100%;height:160px}.home-promo-frame img{height:200px}}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:#121212;color:#f4efe6}
+html[data-theme="dark"]{--paper:#1b1b1b;--cream:#161616;--ink:#f4efe6;--muted:#c8bfb0;--line:#3a3428;--black:#0e0e0e}
+html[data-theme="dark"] .site-header,html[data-theme="dark"] header{background:#141414;color:#f4efe6;border-color:#3a3428}
+html[data-theme="dark"] .section,html[data-theme="dark"] .bg-paper,html[data-theme="dark"] .qv-modal,html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .product-card,html[data-theme="dark"] .feature,html[data-theme="dark"] .store-card,html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#1b1b1b;color:#f4efe6;border-color:#3a3428}
+html[data-theme="dark"] img,html[data-theme="dark"] .logo,html[data-theme="dark"] .product-media img,html[data-theme="dark"] #customerCardImg{filter:none}

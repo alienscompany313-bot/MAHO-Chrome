@@ -203,7 +203,7 @@
       "order.emailIntro": "سفارش شما در فروشگاه MAHO ثبت شد. جزئیات:",
       "acct.address": "آدرس", "pay.cvv": "کود امنیتی (CVV)", "pay.expiry": "تاریخ انقضا (MM/YY)", "pay.cardAddr": "آدرس کارت",
       "share.copied": "لینک سایت کپی شد ✓", "share.title": "معرفی سایت", "copied": "کپی شد ✓",
-      "addr.country": "کشور", "addr.province": "ولایت", "addr.district": "ولسوالی / ناحیه", "addr.area": "منطقه / ساحه", "addr.street": "کوچه / سرک", "addr.house": "نمبر خانه",
+      "addr.country": "کشور", "addr.province": "ولایت / ایالت", "addr.district": "ولسوالی / ناحیه", "addr.city": "شهر / منطقه", "addr.area": "منطقه / ساحه", "addr.street": "سرک / کوچه", "addr.house": "نمبر خانه", "addr.zip": "زیپ کود (اختیاری)",
       "acct.forgot": "پسورد را فراموش کرده‌اید؟", "acct.reset": "بازیابی پسورد",
       "acct.resetSent": "کود بازیابی به ایمیل شما فرستاده شد. کود و پسورد جدید را وارد کنید.",
       "acct.newPassPh": "پسورد جدید", "acct.resetDone": "پسورد شما تغییر کرد ✓", "acct.noEmail": "این ایمیل ثبت نشده است.",
@@ -385,7 +385,7 @@
       "order.emailIntro": "Your order at MAHO is confirmed. Details:",
       "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
       "share.copied": "Site link copied ✓", "share.title": "Check out this store", "copied": "Copied ✓",
-      "addr.country": "Country", "addr.province": "Province", "addr.district": "District", "addr.area": "Area / Zone", "addr.street": "Street", "addr.house": "House no.",
+      "addr.country": "Country", "addr.province": "Province / State", "addr.district": "District", "addr.city": "City / Area", "addr.area": "Area / Zone", "addr.street": "Street / Lane", "addr.house": "House number", "addr.zip": "ZIP / Postal code (optional)",
       "acct.forgot": "Forgot password?", "acct.reset": "Reset password",
       "acct.resetSent": "A reset code was sent to your email. Enter the code and a new password.",
       "acct.newPassPh": "New password", "acct.resetDone": "Your password was changed ✓", "acct.noEmail": "This email is not registered.",
@@ -848,12 +848,13 @@
   function composeAddress(a) {
     a = a || {}; const parts = [];
     const line1 = [a.house, a.street].filter(Boolean).join(" "); if (line1) parts.push(line1);
-    if (a.area) parts.push(a.area);
-    if (a.district) parts.push(a.district); if (a.province) parts.push(a.province); if (a.country) parts.push(a.country);
+    if (a.city) parts.push(a.city);
+    else if (a.area) parts.push(a.area);
+    if (a.district) parts.push(a.district); if (a.province) parts.push(a.province); if (a.zip) parts.push(a.zip); if (a.country) parts.push(a.country);
     return parts.join("، ");
   }
-  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), area: g("area"), street: g("street"), house: g("house") }; }
-  function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("area", a.area); s("street", a.street); s("house", a.house); }
+  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), city: g("city"), area: g("area") || g("city"), street: g("street"), house: g("house"), zip: g("zip") }; }
+  function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el && v != null) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("city", a.city || a.area); s("area", a.area); s("street", a.street); s("house", a.house); s("zip", a.zip); }
 
   /* -------------------- delivery -------------------- */
   let recvMethod = "pickup", deliverTime = "normal", distanceKm = null, deliverSlot = 0;
@@ -1470,6 +1471,7 @@
           customerLocation: customerLocation || undefined,
           deliveryNote: customer.note || "",
           lang: LANG === "en" ? "en" : "fa",
+          couponCode: window.MAHO_COUPON || "",
           idempotencyKey: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10),
         };
         return MAHOApi.placeOrder(payload).then((res) => {
@@ -2647,6 +2649,7 @@
       MAHOApi.login({ id: id, password: pass }).then((res) => {
         setSession(sessionFromApiUser(res.user, res.token));
         paintLoggedInAccount(res.user);
+        document.dispatchEvent(new CustomEvent("maho:rendered"));
         acctMsg(t("acct.hi") + "، " + (res.user && res.user.name), true);
         showToast(t("acct.hi") + "، " + (res.user && res.user.name));
         if ($("#coMsg") && /جلسه|session/i.test($("#coMsg").textContent || "")) $("#coMsg").textContent = "";
@@ -3584,6 +3587,17 @@
       if (!apiOnline) return loadPublishedCatalog();
       return MAHOApi.getCatalog().then((d) => {
         if (d && Array.isArray(d.products)) refreshFromCatalog(d);
+        if (window.MAHO_OPEN_PRODUCT) {
+          const needle = String(window.MAHO_OPEN_PRODUCT).toLowerCase();
+          const hit = PRODUCTS.find((p) => [p.code, p.sku, p.barcode].some((v) => String(v || "").trim().toLowerCase() === needle));
+          if (hit) openQuickView(hit);
+          else showToast(LANG === "en" ? "This product is no longer available." : "این محصول دیگر در دسترس نیست.");
+        }
+        if (MAHOApi.getToken("user") && !getSession()) {
+          MAHOApi.me().then((res) => {
+            if (res && res.user) setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
+          }).catch(() => {});
+        }
         applyDeliveryAvailability();
         startStockPolling();
         syncStockFromApi();

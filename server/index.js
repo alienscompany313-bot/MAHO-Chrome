@@ -46,6 +46,9 @@ const upgrade = require("./lib/upgrade/mount");
 const admin2fa = require("./lib/upgrade/admin-2fa");
 const { acceptanceSnapshot } = require("./lib/upgrade/policies");
 const { ensureCard } = require("./lib/upgrade/customer-card");
+const couponsLib = require("./lib/upgrade/coupons");
+const ledgerLib = require("./lib/upgrade/ledger");
+const { snapshotAddress } = require("./lib/upgrade/address");
 
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -145,7 +148,7 @@ function initMail(siteFallback) {
     fromEmail: SMTP.fromEmail,
     replyTo: SMTP.replyTo,
     siteUrl: SITE_URL || siteFallback || "https://mahomarket.com",
-    logoUrl: "",
+    logoUrl: (SITE_URL || siteFallback || "https://mahomarket.com").replace(/\/+$/, "") + "/assets/brand/maho-logo.jpg",
     ordersNotifyEmail: SMTP.ordersEmail,
     getStorePhone: () => {
       const s = (db.stores && db.stores[0]) || {};
@@ -356,6 +359,7 @@ function publicUser(u) {
     marketingConsent: u.marketingConsent === true,
     card: u.card ? { status: u.card.status || "active", createdAt: u.card.createdAt || null } : null,
     passkeys: Array.isArray(u.passkeys) ? u.passkeys.map((p) => ({ id: p.id, deviceName: p.deviceName || "Passkey", createdAt: p.createdAt || null })) : [],
+    accountStatus: u.accountStatus || (u.deletedAt ? "deleted" : (u.blocked ? "blocked" : (u.deactivatedAt ? "deactivated" : "active"))),
     blocked: u.blocked === true,
     blockedAt: u.blockedAt || null,
     blockReason: u.blockReason || "",
@@ -490,7 +494,7 @@ function clampStoreCoords(stores) {
   });
 }
 
-const sessions = new Map();
+const sessions = require("./lib/session-store").open(path.join(DATA_DIR, "sessions.json"), TOKEN_PEPPER);
 function auth(req) {
   const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
   return t ? sessions.get(t) : null;
@@ -542,10 +546,17 @@ function requireAdminAnyPerm(perms) {
   };
 }
 function requireUser(req, res, next) {
-  const s = auth(req);
+  const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+  const s = t ? sessions.get(t) : null;
   if (!s || s.type !== "user") return res.status(401).json({ error: "login required" });
   const u = db.users.find((x) => x.id === s.userId);
   if (!u) return res.status(401).json({ error: "user not found" });
+  const accountState = require("./lib/upgrade/account-life").stateOf(u);
+  if (accountState === "deleted" || accountState === "blocked" || accountState === "hold") {
+    sessions.delete(t);
+    const error = accountState === "deleted" ? "account_deleted" : (accountState === "blocked" ? "account_blocked" : "account_hold");
+    return res.status(403).json({ error: error });
+  }
   req.user = u;
   next();
 }
@@ -618,7 +629,9 @@ if (mail && db.config && db.config.logo && String(db.config.logo).startsWith("/u
     fromEmail: SMTP.fromEmail,
     replyTo: SMTP.replyTo,
     siteUrl: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com",
-    logoUrl: (SITE_URL || "") + db.config.logo,
+    logoUrl: (db.config && db.config.logo && String(db.config.logo).startsWith("/uploads/"))
+      ? (SITE_URL || "https://mahomarket.com").replace(/\/+$/, "") + db.config.logo
+      : (SITE_URL || "https://mahomarket.com").replace(/\/+$/, "") + "/assets/brand/maho-logo.jpg",
     ordersNotifyEmail: SMTP.ordersEmail,
   });
 }
@@ -1114,7 +1127,8 @@ app.post("/api/auth/login", (req, res) => {
     [x.email, x.phone, x.id].some((v) => v && String(v).toLowerCase() === id)
   );
   if (!u || !verifyPw(password, u.pass)) return res.status(401).json({ error: "bad credentials" });
-  if (u.deletedAt || u.status === "deleted") return res.status(403).json({ error: "account_deleted" });
+  if (u.deletedAt || u.status === "deleted" || u.accountStatus === "deleted") return res.status(403).json({ error: "account_deleted" });
+  if (u.blocked === true || u.accountStatus === "blocked") return res.status(403).json({ error: "account_blocked" });
   if (u.verified === false || u.status === "pending") {
     return res.status(403).json({ error: "unverified", message: "حساب هنوز تأیید نشده است." });
   }
@@ -1126,6 +1140,12 @@ app.post("/api/auth/login", (req, res) => {
   res.json({ token: t, user: publicUser(u) });
 });
 
+app.post("/api/auth/logout", (req, res) => {
+  const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+  if (t) sessions.delete(t);
+  res.json({ ok: true });
+});
+
 /* -------------------- profile -------------------- */
 app.get("/api/me", requireUser, (req, res) => res.json({ user: publicUser(req.user) }));
 app.put("/api/me", requireUser, (req, res) => {
@@ -1133,7 +1153,11 @@ app.put("/api/me", requireUser, (req, res) => {
   if (b.name != null) u.name = String(b.name).trim();
   if (b.phone != null) u.phone = String(b.phone).trim();
   if (b.address != null) u.address = String(b.address).trim();
-  if (b.addr && typeof b.addr === "object") u.addr = b.addr;
+  if (b.addr && typeof b.addr === "object") {
+    const snap = snapshotAddress({ address: b.address != null ? b.address : u.address, addr: b.addr });
+    u.addr = snap.addr;
+    if (!b.address) u.address = snap.address;
+  }
   if (b.password) u.pass = hashPw(String(b.password));
   if (Array.isArray(b.payments)) u.payments = sanitizePaymentsForClient(b.payments);
   if (b.email && String(b.email).trim().toLowerCase() !== (u.email || "").toLowerCase()) {
@@ -1208,11 +1232,18 @@ app.post("/api/orders", (req, res) => {
   if (userRow.verified === false || userRow.status === "pending") {
     return res.status(403).json({ error: "unverified" });
   }
-  if (userRow.blocked === true) {
+  if (userRow.blocked === true || userRow.accountStatus === "blocked") {
     return res.status(403).json({
       error: "account_blocked",
       message: "حساب شما مسدود است و امکان ثبت سفارش جدید ندارید.",
       blockReason: userRow.blockReason || "",
+    });
+  }
+  if (userRow.accountStatus === "hold" || userRow.onHold === true || userRow.accountStatus === "deactivated" || userRow.deactivatedAt) {
+    return res.status(403).json({
+      error: "account_restricted",
+      message: "حساب شما در این وضعیت نمی‌تواند سفارش ثبت کند.",
+      accountStatus: userRow.accountStatus || "restricted",
     });
   }
   if (!customer.name || !customer.phone || !customer.address) {
@@ -1366,7 +1397,14 @@ app.post("/api/orders", (req, res) => {
 
   const fulfillment = wantsDeliver ? "delivery" : "pickup";
   const discEval = evaluateOrderValueDiscount(db, itemsTotal, fulfillment);
-  const discountTotal = Math.max(0, Number(discEval.amount) || 0);
+  let couponEval = null;
+  if (b.couponCode) {
+    couponEval = couponsLib.evaluate(db, b.couponCode, userRow, items);
+    if (couponEval.error) return res.status(couponEval.status || 400).json(couponEval);
+  }
+  const discountTotal = couponEval
+    ? Math.max(0, Number(couponEval.amount) || 0)
+    : Math.max(0, Number(discEval.amount) || 0);
 
   const orderLang = String(b.lang || b.locale || "fa").toLowerCase().indexOf("en") === 0 ? "en" : "fa";
   const initialStatus = autoApprove && !needsPay ? "confirmed" : "new";
@@ -1383,16 +1421,16 @@ app.post("/api/orders", (req, res) => {
     pickupStore: pickupStore,
     customerLocation: customerLocation,
     customerNo: userRow.customerNo || "",
-    customer: {
+    customer: Object.assign({
       name: sanitizeText(customer.name || userRow.name, 80),
       phone: sanitizeText(customer.phone || userRow.phone, 40),
       email: sanitizeText(customer.email || userRow.email, 120),
-      address: sanitizeText(customer.address || userRow.address, 400),
       note: sanitizeText(customer.note, 500),
       customerNo: userRow.customerNo || "",
-      city: sanitizeText(customer.city || (customer.addr && customer.addr.city), 80),
+    }, snapshotAddress({
+      address: customer.address || userRow.address,
       addr: customer.addr && typeof customer.addr === "object" ? customer.addr : (userRow.addr || {}),
-    },
+    })),
     payment: payment,
     paymentStatus: needsPay ? "awaiting_payment" : null,
     status: initialStatus,
@@ -1404,16 +1442,28 @@ app.post("/api/orders", (req, res) => {
     shipments: [],
     deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
   };
+  ledgerLib.markTracked(order, {
+    channel: "website",
+    couponCode: couponEval ? couponEval.code : "",
+  });
+  if (couponEval) order.couponSnapshot = { code: couponEval.code, amount: couponEval.amount, at: Date.now() };
   if (order.status === "confirmed") applyApprovedCancelWindow(order);
   appendHistory(order, { status: order.status, paymentStatus: order.paymentStatus, by: "user", note: "ثبت سفارش" });
   normalizeOrderItems(order);
 
+  if (couponEval && !couponsLib.commitUse(db, couponEval.code, userRow, order.id, Math.round(couponEval.amount * 100))) {
+    return res.status(409).json({ error: "coupon_exhausted" });
+  }
   /* decrement stock after building order (product + color + size when variants exist) */
   for (const it of items) {
     const p = findProduct(it.name, it.code);
     if (!p) continue;
     const adj = applyStockDelta(p, it.qty, -1, it.color, it.size);
     if (!adj.ok) {
+      if (couponEval) {
+        const coupon = (db.coupons || []).find((c) => c && c.code === couponEval.code);
+        if (coupon && coupon.uses) coupon.uses = coupon.uses.filter((u) => u.orderId !== order.id);
+      }
       return res.status(409).json({
         error: "insufficient stock",
         item: it.name,
@@ -1609,12 +1659,18 @@ app.get("/icon-512.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-51
 app.get("/", (req, res) => res.sendFile(path.join(WEBSITE_DIR, "index.html")));
 
 app.listen(PORT, () => {
+  const instances = Number(process.env.WEB_CONCURRENCY || process.env.MAHO_INSTANCES || 1);
   console.log(
     "MAHO backend on :" + PORT +
     " env=" + NODE_ENV +
     " email=" + EMAIL_ENABLED +
     " devCodes=" + ALLOW_DEV_CODES +
     " uploads=" + UPLOAD_DIR +
+    " sessions=file:" + path.join(DATA_DIR, "sessions.json") +
+    " sessionScope=single-instance" +
     " cors=" + (ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.join(",") : (IS_PROD ? "RESTRICTED" : "dev-open"))
   );
+  if (instances > 1) {
+    console.warn("MAHO session file is not shared across instances. Keep this service at one instance, or logins will not match between them.");
+  }
 });

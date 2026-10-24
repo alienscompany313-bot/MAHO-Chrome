@@ -159,9 +159,10 @@ async function main() {
     const token = user.card.token;
     const pub = await req("GET", "/api/verify/" + token);
     assert(pub.status === 200 && pub.data.status === "active" && pub.data.brand === "MAHO", "verify active");
-    assert(!pub.raw.includes(email) && !pub.raw.includes("Sahar"), "verify has no customer details");
+    assert(pub.data.name === "Sahar Ahmadi" && pub.data.customerNo === user.customerNo, "verify shows name and number");
+    assert(!pub.raw.includes(email) && !pub.raw.includes("0700111222"), "verify hides email and phone");
     const page = await rawGet("/verify/" + token);
-    assert(page.status === 200 && !page.buf.toString("utf8").includes(email), "verify page has no email");
+    assert(page.status === 200 && page.buf.toString("utf8").includes("Sahar") && !page.buf.toString("utf8").includes(email), "verify page name only");
     const png = await rawGet("/api/me/card.png", userTok);
     assert(png.status === 200 && png.buf.slice(0, 4).toString("hex") === "89504e47", "png");
     const pdf = await rawGet("/api/me/card.pdf", userTok);

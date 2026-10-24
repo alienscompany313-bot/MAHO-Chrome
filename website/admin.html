@@ -154,7 +154,23 @@
     .side-group{margin:10px 0 6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
     .side-group:first-of-type{border-top:0;padding-top:0;margin-top:0}
     .side-group-label{font:800 11px/1.2 inherit;color:#a89b88;margin:0 10px 6px;letter-spacing:.02em}
-    .side-nav{display:flex;flex-direction:column;gap:3px}
+    .side-nav{display:flex;flex-direction:column;gap:3px;overflow:auto}
+    .fin-board{display:flex;flex-direction:column;gap:14px}
+    .fin-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    .fin-toolbar label{font-weight:800}
+    .fin-toolbar select{min-width:180px;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;background:#fff}
+    .fin-actions{display:flex;gap:8px;margin-inline-start:auto}
+    .fin-status{margin:0;font-weight:800;color:#1b6b32}
+    .fin-sub{margin:8px 0 0;font-size:18px}
+    .fin-table{width:100%;border-collapse:collapse;background:#fff}
+    .fin-table th,.fin-table td{padding:10px 12px;border-bottom:1px solid #e6dcc6;text-align:right;vertical-align:middle}
+    .fin-table thead th{background:#f6f1e6;font-size:14px}
+    .fin-table td.num{text-align:left;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap}
+    .admin-help{position:fixed;bottom:16px;inset-inline-start:16px;z-index:50;max-width:320px;background:#fffdf8;border:1px solid #e6d3a4;border-radius:14px;box-shadow:0 10px 28px #0002}
+    .admin-help summary{cursor:pointer;padding:10px 12px;font-weight:800}
+    .admin-help div{padding:0 12px 12px;font-size:13px;line-height:1.6}
+    html[data-theme="dark"] body,html[data-theme="dark"] .admin-main,html[data-theme="dark"] .card{background:#161616;color:#f4efe6}
+    html[data-theme="dark"] .admin-help{background:#1c1c1c;color:#f4efe6}
     .side-link{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:transparent;border:0;color:#efe8dc;font:700 15.5px/1.45 inherit;padding:12px 14px;border-radius:10px;cursor:pointer;min-height:46px;letter-spacing:0}
     .side-link:hover,.side-link:focus-visible{background:rgba(200,163,95,.18);outline:2px solid var(--gold);outline-offset:1px}
     .side-link.active{background:var(--gold);color:#1a1509;font-weight:800}
@@ -231,6 +247,7 @@
     <div class="tb-actions">
       <button type="button" class="btn btn-ghost btn-sm" id="orderBell" hidden>سفارش جدید <span id="orderBellCount">0</span></button>
       <span class="dirty-badge" id="dirtyBadge">● تغییرات ذخیره‌نشده</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="adminThemeToggle" aria-label="نمای تیره">☾</button>
       <a class="btn btn-ghost btn-sm" href="index.html" target="_blank">مشاهده سایت ↗</a>
       <button class="btn btn-gold btn-sm" id="saveBtn">ذخیره تغییرات</button>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج</button>
@@ -270,6 +287,8 @@
         <button type="button" class="side-link" data-panel="ads" data-perm="marketing"><span class="si">▤</span><span>تبلیغات</span></button>
         <button type="button" class="side-link" data-panel="policies" data-perm="settings"><span class="si">§</span><span>قوانین و حریم</span></button>
         <button type="button" class="side-link" data-panel="links" data-perm="settings"><span class="si">⧉</span><span>صفحه لینک‌ها</span></button>
+        <button type="button" class="side-link" data-panel="coupons" data-perm="settings"><span class="si">%</span><span>کدهای تخفیف</span></button>
+        <button type="button" class="side-link" data-panel="finance" data-perm="orders"><span class="si">﷼</span><span>حسابداری</span></button>
         <button type="button" class="side-link" data-panel="security" data-perm="settings"><span class="si">⚑</span><span>امنیت مدیر</span></button>
         <button type="button" class="side-link" data-panel="publish" data-perm="settings"><span class="si">⇪</span><span>انتشار و پشتیبان</span></button>
       </nav>
@@ -390,6 +409,7 @@
 
     <!-- CUSTOMERS -->
     <div class="card admin-panel" id="cardCustomers" data-panel="customers">
+      <div id="customerStatusBox" class="note" style="margin-bottom:12px"></div>
       <div class="row-between">
         <div><h2 id="custTitle">مشتریان</h2><div class="sub">جستجو، فیلتر، مرتب‌سازی و خروجی. رمز یا توکن امنیتی هرگز در جدول/خروجی نیست.</div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -798,6 +818,8 @@
     <div class="card admin-panel" data-panel="ads"><h2>تبلیغات</h2><div id="adsAdmin"></div></div>
     <div class="card admin-panel" data-panel="policies"><h2>قوانین و حریم خصوصی</h2><p class="sub">پیش‌نویس تا زمان انتشار در سایت دیده نمی‌شود.</p><div id="policiesAdmin"></div></div>
     <div class="card admin-panel" data-panel="links"><h2>صفحه لینک‌ها</h2><div id="linksAdmin"></div></div>
+    <div class="card admin-panel" data-panel="coupons"><h2>کدهای تخفیف</h2><div id="couponsAdmin"></div></div>
+    <div class="card admin-panel" data-panel="finance"><h2>Accounting / Financial Reports</h2><p class="sub">حسابداری و گزارش مالی. اعداد از دفتر تراکنش و سفارش‌های واقعی است.</p><div id="financeAdmin"></div></div>
     <div class="card admin-panel" data-panel="security"><h2>امنیت مدیر</h2><div id="securityAdmin"></div></div>
 
     <!-- SETTINGS -->
@@ -3990,6 +4012,19 @@
   })();
   </script>
   <div class="print-sheet label-a4" id="printSheet" aria-hidden="true"></div>
+  <details class="admin-help" id="adminHelp">
+    <summary>راهنمای مدیر / Admin help</summary>
+    <div>
+      <p>این راهنما فقط توضیح می‌دهد و هیچ تنظیم، پرداخت یا ایمیلی را عوض نمی‌کند.</p>
+      <p><button type="button" data-help="orders">سفارش‌ها</button> وضعیت سفارش جدا از وضعیت پرداخت است.</p>
+      <p><button type="button" data-help="finance">حسابداری</button> جمع دریافتی فقط از تراکنش‌های تسویه‌شده است.</p>
+      <p><button type="button" data-help="coupons">کد تخفیف</button> درصد یا مبلغ ثابت، با سقف استفاده.</p>
+      <p><button type="button" data-help="ads">تبلیغات</button> سه جای جدا: بنر، نوار، کارت بین محصولات.</p>
+      <p><button type="button" data-help="links">لینک‌ها</button> زیرعنوان دری و انگلیسی بالای فهرست است.</p>
+      <p><button type="button" data-help="texts">عنوان تب و نقشه</button> در محتوای تنظیمات سایت است، نه در نوار کناری.</p>
+      <p><button type="button" data-help="customers">مشتریان</button> نگه‌داشتن، مسدود کردن و بازگرداندن از همین بخش.</p>
+    </div>
+  </details>
   <script src="js/admin-upgrade.js"></script>
 </body>
 </html>

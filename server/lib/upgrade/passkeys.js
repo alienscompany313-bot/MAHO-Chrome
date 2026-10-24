@@ -61,6 +61,8 @@ function originsFor(req, siteUrl) {
     const proto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() || "http";
     list.push(proto + "://" + host);
   }
+  const origin = String((req.headers && req.headers.origin) || "").trim();
+  if (origin) list.push(origin.replace(/\/+$/, ""));
   list.push("http://localhost:4000");
   return Array.from(new Set(list));
 }
@@ -169,8 +171,20 @@ async function loginVerify(db, body, req, siteUrl) {
   const found = findCredential(db, credId);
   if (!found) return { error: "unknown_credential", status: 400 };
   const u = found.user;
-  if (u.deletedAt || u.status === "deleted") return { error: "account_deleted", status: 403 };
+  const life = require("./account-life");
+  const account = life.stateOf(u);
+  if (account === "deleted") return { error: "account_deleted", status: 403 };
+  if (account === "blocked" || account === "hold" || account === "deactivated") {
+    return { error: "account_" + account, status: 403 };
+  }
   if (u.verified === false || u.status === "pending") return { error: "unverified", status: 403 };
+  const handle = body && body.credential && body.credential.response && body.credential.response.userHandle;
+  if (handle) {
+    try {
+      const raw = isoBase64URL.toBuffer(handle).toString("utf8");
+      if (raw && raw !== String(u.id)) return { error: "user_mismatch", status: 400 };
+    } catch (_) {}
+  }
   let verification;
   try {
     verification = await verifyAuthenticationResponse({

@@ -14,9 +14,25 @@ function escapeHtml(s) {
 }
 
 function moneyAf(n, lang) {
-  const v = Number(n) || 0;
-  const num = v.toLocaleString("en-US");
+  const v = Number(n);
+  const amount = Number.isFinite(v) ? v : 0;
+  const num = amount.toLocaleString("en-US");
   return lang === "en" ? num + " AFN" : num + " افغانی";
+}
+
+function kabulStamp(ts) {
+  try {
+    return new Intl.DateTimeFormat("fa-AF", {
+      timeZone: "Asia/Kabul",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(ts || Date.now()));
+  } catch (_) {
+    return new Date(ts || Date.now()).toISOString();
+  }
 }
 
 /**
@@ -464,13 +480,13 @@ ${supportContactHtml(getStorePhone(), lang)}`,
       bodyHtml: `<p>یک سفارش جدید ثبت شد${order.lang === "en" ? " (از نسخه انگلیسی سایت)" : ""}.</p>
 <p><strong>نمبر:</strong> <span dir="ltr">${escapeHtml(order.id || "")}</span><br>
 <strong>زبان سایت:</strong> ${escapeHtml(order.lang === "en" ? "English" : "دری")}<br>
-<strong>تاریخ:</strong> ${escapeHtml(new Date(order.date || Date.now()).toLocaleString("fa-AF"))}<br>
+<strong>تاریخ (کابل):</strong> ${escapeHtml(kabulStamp(order.date || Date.now()))}<br>
 <strong>مشتری:</strong> ${escapeHtml(c.name || "")}<br>
 <strong>ایمیل:</strong> <span dir="ltr">${escapeHtml(c.email || "")}</span><br>
 <strong>تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span><br>
 <strong>پرداخت:</strong> ${escapeHtml(payLabel(order.payment, "fa"))} / ${escapeHtml(statusLabelFa(order.paymentStatus || "—"))}<br>
 <strong>دریافت:</strong> ${escapeHtml(d.method === "deliver" ? "دلیوری" : "حضوری")}${d.time ? " — " + escapeHtml(d.time) : ""}<br>
-<strong>آدرس:</strong> ${escapeHtml(c.address || "—")}<br>
+<strong>آدرس:</strong><br>${require("./upgrade/address").formatAddressLines(c, "fa").map((line) => escapeHtml(line)).join("<br>") || escapeHtml(c.address || "—")}<br>
 ${loc.lat != null ? `<strong>مختصات:</strong> <span dir="ltr">${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lng))}</span><br>` : ""}
 ${maps ? `<strong>نقشه:</strong> <a href="${escapeHtml(maps)}">${escapeHtml(maps)}</a><br>` : ""}
 <strong>یادداشت:</strong> ${escapeHtml(c.note || order.deliveryNote || "—")}<br>
@@ -763,7 +779,7 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     const dest = to || "sales@mahomarket.com";
     const c = order.customer || {};
     const d = order.delivery || {};
-    const when = new Date(order.date || Date.now()).toISOString();
+    const when = kabulStamp(order.date || Date.now());
     const link = (siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/admin.html?order=" + encodeURIComponent(order.id || "");
     const lines = (order.items || []).map((it) =>
       "• " + (it.name || "") + (it.size ? " / " + it.size : "") + (it.color ? " / " + it.color : "") + " × " + (it.qty || 1)
@@ -779,10 +795,10 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
 <strong>تماس:</strong> <span dir="ltr">${escapeHtml(c.phone || "")}</span><br>
 <strong>ایمیل:</strong> <span dir="ltr">${escapeHtml(c.email || "")}</span><br>
 <strong>دریافت:</strong> ${escapeHtml(d.method || "")}<br>
-<strong>آدرس:</strong> ${escapeHtml(c.address || "—")}<br>
+<strong>آدرس:</strong><br>${require("./upgrade/address").formatAddressLines(c, "fa").map((line) => escapeHtml(line)).join("<br>") || escapeHtml(c.address || "—")}<br>
 <strong>پرداخت:</strong> ${escapeHtml(payLabel(order.payment, "fa"))}<br>
 <strong>وضعیت پرداخت:</strong> ${escapeHtml(String(order.paymentStatus || "—"))}<br>
-<strong>مجموع:</strong> ${moneyAf(order.total, "fa")} (${escapeHtml(String(order.total || 0))} AFN)</p>
+<strong>مجموع:</strong> ${moneyAf(order.total, "fa")}</p>
 <p>${lines}</p>
 ${ctaBtn(link, "مشاهده سفارش در پنل")}`,
     });
@@ -826,9 +842,23 @@ ${ctaBtn((siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/#orders",
     });
   }
 
+  function deletionCode(to, code, name) {
+    const html = wrap({
+      title: "تأیید حذف دائمی حساب",
+      preheader: "کود حذف حساب MAHO",
+      siteUrl, logoUrl, lang: "fa",
+      bodyHtml: `<p>سلام${name ? " " + escapeHtml(name) : ""}،</p>
+<p>برای حذف دائمی حساب، این کود را وارد کنید. این کار برگشت‌پذیر نیست.</p>
+<p style="font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;direction:ltr;color:#141414">${escapeHtml(code)}</p>
+<p>اعتبار کود <strong>۱۰ دقیقه</strong> است. اگر شما این درخواست را نکرده‌اید، این پیام را نادیده بگیرید.</p>`,
+    });
+    return send(to, "MAHO Market — تأیید حذف حساب", html, "کود حذف حساب: " + code + "\nاعتبار: ۱۰ دقیقه");
+  }
+
   return {
     send,
     verificationCode,
+    deletionCode,
     welcome,
     passwordReset,
     orderConfirmation,

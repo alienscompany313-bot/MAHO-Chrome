@@ -3,7 +3,11 @@
  * SSR product SEO page for GET /p/:code
  * Reads live product rows from db.products — no hardcoded catalog data.
  */
+const fs = require("fs");
+const path = require("path");
 const { usesVariantStock, sumVariantStock } = require("./variant-stock");
+
+const STORE_INDEX = path.join(__dirname, "..", "..", "website", "index.html");
 
 function escapeHtml(s) {
   return String(s == null ? "" : s)
@@ -149,7 +153,12 @@ function buildProductPageModel(p, siteUrl) {
   };
 }
 
-function renderProductHtml(model) {
+function replaceTag(html, re, next) {
+  if (re.test(html)) return html.replace(re, next);
+  return html.replace("</head>", next + "\n</head>");
+}
+
+function productJsonLd(model) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -161,12 +170,38 @@ function renderProductHtml(model) {
     offers: {
       "@type": "Offer",
       url: model.url,
-      priceCurrency: model.currency,
-      price: model.price != null ? String(model.price) : undefined,
+      priceCurrency: model.currency || "AFN",
       availability: model.availability,
     },
   };
-  if (jsonLd.offers.price == null) delete jsonLd.offers.price;
+  if (model.price != null) jsonLd.offers.price = String(model.price);
+  return jsonLd;
+}
+
+function renderShopShell(model) {
+  let html = "";
+  try { html = fs.readFileSync(STORE_INDEX, "utf8"); } catch (_) { return renderProductHtml(model); }
+  const e = escapeHtml;
+  html = replaceTag(html, /<title>[^<]*<\/title>/, "<title>" + e(model.title) + "</title>");
+  html = replaceTag(html, /<meta name="description" content="[^"]*">/, '<meta name="description" content="' + e(model.metaDescription) + '">');
+  html = replaceTag(html, /<meta property="og:title" content="[^"]*">/, '<meta property="og:title" content="' + e(model.title) + '">');
+  html = replaceTag(html, /<meta property="og:description" content="[^"]*">/, '<meta property="og:description" content="' + e(model.metaDescription) + '">');
+  html = replaceTag(html, /<meta property="og:image" content="[^"]*">/, '<meta property="og:image" content="' + e(model.image) + '">');
+  html = replaceTag(html, /<meta property="og:url" content="[^"]*">/, '<meta property="og:url" content="' + e(model.url) + '">');
+  html = replaceTag(html, /<meta property="og:type" content="[^"]*">/, '<meta property="og:type" content="product">');
+  html = replaceTag(html, /<link rel="canonical" href="[^"]*">/, '<link rel="canonical" href="' + e(model.url) + '">');
+  html = replaceTag(html, /<meta name="twitter:title" content="[^"]*">/, '<meta name="twitter:title" content="' + e(model.title) + '">');
+  html = replaceTag(html, /<meta name="twitter:description" content="[^"]*">/, '<meta name="twitter:description" content="' + e(model.metaDescription) + '">');
+  html = replaceTag(html, /<meta name="twitter:image" content="[^"]*">/, '<meta name="twitter:image" content="' + e(model.image) + '">');
+  const boot = "<script>window.MAHO_OPEN_PRODUCT=" + JSON.stringify(model.code).replace(/</g, "\\u003c") + ";</script>";
+  const ld = '<script type="application/ld+json" id="ld-product">' + escapeJsonForScript(productJsonLd(model)) + "</script>";
+  if (html.indexOf("MAHO_OPEN_PRODUCT") < 0) html = html.replace("</head>", boot + "\n</head>");
+  if (html.indexOf('id="ld-product"') < 0) html = html.replace("</head>", ld + "\n</head>");
+  return html;
+}
+
+function renderProductHtml(model) {
+  const jsonLd = productJsonLd(model);
 
   const e = escapeHtml;
   const priceText = model.price != null
@@ -317,7 +352,7 @@ function mountProductPage(app, opts) {
     res.status(200);
     res.setHeader("Cache-Control", "public, max-age=60");
     res.type("html");
-    return res.send(renderProductHtml(model));
+    return res.send(renderShopShell(model));
   });
 }
 

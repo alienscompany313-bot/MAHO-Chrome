@@ -121,7 +121,8 @@
     return {
       id: ad.id, enabled: !!val("enabled"), title: val("title") || "", title_en: val("title_en") || "",
       description: val("description") || "", description_en: val("description_en") || "",
-      url: val("url") || "", imageUrl: val("imageUrl") || "",
+      url: val("url") || "", imageUrl: val("imageUrl") || "", imageUrlMobile: val("imageUrlMobile") || "",
+      cta: val("cta") || "", cta_en: val("cta_en") || "",
       startAt: start ? new Date(start).getTime() : null,
       endAt: end ? new Date(end).getTime() : null,
       order: i, impressions: ad.impressions, clicks: ad.clicks,
@@ -148,7 +149,10 @@
           '<input data-area="' + name + '" data-i="' + i + '" data-k="title_en" value="' + esc(ad.title_en || "") + '" placeholder="Title" dir="ltr">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="description" value="' + esc(ad.description || "") + '" placeholder="توضیح">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="url" value="' + esc(ad.url || "") + '" placeholder="https://" dir="ltr">' +
-          '<input data-area="' + name + '" data-i="' + i + '" data-k="imageUrl" value="' + esc(ad.imageUrl || "") + '" placeholder="تصویر /uploads/..." dir="ltr">' +
+          '<input data-area="' + name + '" data-i="' + i + '" data-k="imageUrl" value="' + esc(ad.imageUrl || "") + '" placeholder="تصویر دسکتاپ" dir="ltr">' +
+          '<input data-area="' + name + '" data-i="' + i + '" data-k="imageUrlMobile" value="' + esc(ad.imageUrlMobile || "") + '" placeholder="تصویر موبایل" dir="ltr">' +
+          '<input data-area="' + name + '" data-i="' + i + '" data-k="cta" value="' + esc(ad.cta || "") + '" placeholder="متن دکمه">' +
+          '<input data-area="' + name + '" data-i="' + i + '" data-k="cta_en" value="' + esc(ad.cta_en || "") + '" placeholder="Button" dir="ltr">' +
           '<div class="grid2"><div class="field"><label>شروع</label><input type="datetime-local" data-area="' + name + '" data-i="' + i + '" data-k="startAt" value="' + esc(dtLocal(ad.startAt)) + '" dir="ltr"></div>' +
           '<div class="field"><label>پایان</label><input type="datetime-local" data-area="' + name + '" data-i="' + i + '" data-k="endAt" value="' + esc(dtLocal(ad.endAt)) + '" dir="ltr"></div></div>' +
           '<div class="note">بازدید ' + (ad.impressions || 0) + " · کلیک " + (ad.clicks || 0) + "</div></div>";
@@ -247,7 +251,9 @@
     if (!box) return;
     call("/api/admin/links").then(function (data) {
       window._links = data.links || [];
-      box.innerHTML = window._links.map(function (row, i) {
+      box.innerHTML = '<div class="field"><label>زیرعنوان دری</label><input id="linkSubtitle" value="' + esc(data.subtitle || "") + '"></div>' +
+        '<div class="field"><label>English subtitle</label><input id="linkSubtitleEn" dir="ltr" value="' + esc(data.subtitle_en || "") + '"></div>' +
+        window._links.map(function (row, i) {
         return '<div class="field"><label><input type="checkbox" data-lnk="' + i + '" data-k="enabled"' + (row.enabled ? " checked" : "") + "> " + esc(row.kind || "") + "</label>" +
           '<input data-lnk="' + i + '" data-k="label" value="' + esc(row.label || "") + '">' +
           '<input data-lnk="' + i + '" data-k="label_en" value="' + esc(row.label_en || "") + '" dir="ltr">' +
@@ -263,7 +269,7 @@
           }
           return { id: row.id, kind: row.kind, label: val("label"), label_en: val("label_en"), url: val("url"), enabled: !!val("enabled"), order: i };
         });
-        call("/api/admin/links", { method: "PUT", body: { links: links } }).then(function () { alert("ذخیره شد"); linksForm(); });
+        call("/api/admin/links", { method: "PUT", body: { links: links, subtitle: document.getElementById("linkSubtitle").value, subtitle_en: document.getElementById("linkSubtitleEn").value } }).then(function () { alert("ذخیره شد"); linksForm(); });
       };
     }).catch(function (e) { box.textContent = e.message || "خطا"; });
   }
@@ -305,6 +311,9 @@
       if (id === "policies") policiesForm();
       if (id === "links") linksForm();
       if (id === "security") securityForm();
+      if (id === "coupons") couponsForm();
+      if (id === "finance") financeForm();
+      if (id === "customers") customerStatusForm();
     });
   });
 
@@ -339,4 +348,142 @@
       } }).then(function () { alert("ذخیره شد"); }).catch(function (e) { alert(e.message || "خطا"); });
     };
   }
+
+  function couponsForm() {
+    var box = document.getElementById("couponsAdmin");
+    if (!box) return;
+    call("/api/admin/coupons").then(function (data) {
+      var rows = data.coupons || [];
+      box.innerHTML = rows.map(function (c, i) {
+        return '<div class="field" style="border:1px solid #eee;padding:8px;border-radius:10px;margin-bottom:8px">' +
+          '<input data-c="' + i + '" data-k="code" value="' + esc(c.code || "") + '" dir="ltr" placeholder="MAHO20">' +
+          '<select data-c="' + i + '" data-k="type"><option value="percent"' + (c.type !== "fixed" ? " selected" : "") + '>درصد</option><option value="fixed"' + (c.type === "fixed" ? " selected" : "") + '>مبلغ افغانی</option></select>' +
+          '<input data-c="' + i + '" data-k="value" value="' + esc(c.value || 0) + '" dir="ltr" placeholder="20">' +
+          '<label><input type="checkbox" data-c="' + i + '" data-k="enabled"' + (c.enabled ? " checked" : "") + "> فعال</label>" +
+          '<input data-c="' + i + '" data-k="minOrder" value="' + esc(c.minOrder || 0) + '" dir="ltr" placeholder="حداقل سفارش">' +
+          '<input data-c="' + i + '" data-k="maxUses" value="' + esc(c.maxUses == null ? "" : c.maxUses) + '" dir="ltr" placeholder="سقف کل">' +
+          '<input data-c="' + i + '" data-k="perCustomer" value="' + esc(c.perCustomer || 1) + '" dir="ltr" placeholder="سقف هر مشتری">' +
+          '<div class="note">استفاده شده: ' + (c.used || 0) + "</div></div>";
+      }).join("") + '<button type="button" class="btn btn-outline" id="addCoupon">+ کد</button> <button type="button" class="btn btn-gold" id="saveCoupons">ذخیره</button>';
+      window._coupons = rows;
+      document.getElementById("addCoupon").onclick = function () { window._coupons.push({ code: "", type: "percent", value: 10, enabled: false, perCustomer: 1 }); couponsForm(); };
+      document.getElementById("saveCoupons").onclick = function () {
+        var coupons = window._coupons.map(function (c, i) {
+          function val(k) { var el = document.querySelector('[data-c="' + i + '"][data-k="' + k + '"]'); if (!el) return c[k]; return el.type === "checkbox" ? el.checked : el.value; }
+          return { id: c.id, code: val("code"), type: val("type"), value: Number(val("value")) || 0, enabled: !!val("enabled"), minOrder: Number(val("minOrder")) || 0, maxUses: val("maxUses") === "" ? null : Number(val("maxUses")), perCustomer: Number(val("perCustomer")) || 1, categories: c.categories || [], productCodes: c.productCodes || [] };
+        });
+        call("/api/admin/coupons", { method: "PUT", body: { coupons: coupons } }).then(function () { alert("ذخیره شد"); couponsForm(); }).catch(function (e) { alert(e.message); });
+      };
+    }).catch(function (e) { box.textContent = e.message || "خطا"; });
+  }
+
+  var FIN_LABELS = {
+    gross: "فروش ناخالص / Gross",
+    discounts: "تخفیف‌ها / Discounts",
+    net: "خالص قبل از برگشت / Net before returns",
+    adjustments: "اعتبار برگشت تأییدشده / Approved return credit",
+    netAfterReturns: "خالص پس از برگشت / Net after returns",
+    collected: "مجموع دریافتی / Collections",
+    online: "دریافت آنلاین / Online",
+    inPerson: "دریافت حضوری POS / In-person POS",
+    unclassified: "بدون کانال ثبت‌شده / Unclassified",
+    otherChannel: "سایر کانال‌ها / Other channels",
+    outstanding: "طلب از مشتری / Receivable",
+    refundDue: "تعهد بازپرداخت / Refund due",
+    returns: "ارزش کالای برگشتی / Returned goods",
+    refunds: "بازپرداخت انجام‌شده / Completed refunds",
+    pendingRefunds: "بازپرداخت در انتظار / Pending refunds",
+    netCash: "خالص پول دریافت‌شده / Net cash",
+    paidOrders: "سفارش‌های تسویه‌شده / Settled orders",
+    unpaidOrders: "سفارش‌های پرداخت‌نشده / Unpaid orders",
+    partialOrders: "سفارش‌های نیمه‌پرداخت / Partial orders",
+    canceledOrders: "سفارش‌های لغوشده / Canceled orders",
+    legacyUnverified: "سفارش‌های قدیمی تأییدنشده / Legacy unverified",
+    legacyValue: "مبلغ سفارش‌های قدیمی / Legacy value"
+  };
+  var FIN_MONEY = { gross: 1, discounts: 1, net: 1, adjustments: 1, netAfterReturns: 1, collected: 1, online: 1, inPerson: 1, unclassified: 1, otherChannel: 1, outstanding: 1, refundDue: 1, returns: 1, refunds: 1, pendingRefunds: 1, netCash: 1, legacyValue: 1 };
+  function finAmount(key, value) {
+    var n = Number(value);
+    if (!Number.isFinite(n)) n = 0;
+    if (!FIN_MONEY[key]) return String(n);
+    return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " AFN";
+  }
+  function financeForm() {
+    var box = document.getElementById("financeAdmin");
+    if (!box) return;
+    var range = (document.getElementById("finRange") && document.getElementById("finRange").value) || "month";
+    call("/api/admin/finance?range=" + encodeURIComponent(range)).then(function (data) {
+      var kpi = data.kpi || {};
+      var rows = Object.keys(FIN_LABELS).map(function (key) {
+        return "<tr><th scope=\"row\">" + FIN_LABELS[key] + "</th><td class=\"num\" dir=\"ltr\">" + esc(finAmount(key, kpi[key])) + "</td></tr>";
+      }).join("");
+      var orders = (data.orders || []).slice(0, 40).map(function (o) {
+        return "<tr><td dir=\"ltr\">" + esc(o.orderId) + "</td><td class=\"num\" dir=\"ltr\">" + esc(finAmount("collected", o.collected)) + "</td><td class=\"num\" dir=\"ltr\">" + esc(finAmount("outstanding", o.outstanding)) + "</td><td class=\"num\" dir=\"ltr\">" + esc(finAmount("refundDue", o.refundDue)) + "</td><td>" + (o.legacy ? "قدیمی / Legacy" : "ثبت‌شده / Posted") + "</td></tr>";
+      }).join("");
+      box.innerHTML = '<div class="fin-board" dir="rtl">' +
+        '<div class="fin-toolbar"><label for="finRange">بازه گزارش</label><select id="finRange">' +
+        '<option value="today">امروز</option><option value="week">این هفته</option><option value="month">این ماه</option><option value="year">امسال</option></select>' +
+        '<div class="fin-actions"><button type="button" class="btn btn-outline btn-sm" data-fin-export="csv">CSV</button>' +
+        '<button type="button" class="btn btn-outline btn-sm" data-fin-export="xls">Excel</button>' +
+        '<button type="button" class="btn btn-outline btn-sm" data-fin-export="pdf">PDF</button></div></div>' +
+        '<p class="fin-status">' + (data.reconciled ? "تطبیق دفتر و جمع داشبورد: بدون اختلاف" : "تطبیق: اختلاف وجود دارد و باید بررسی شود") + "</p>" +
+        '<table class="fin-table"><thead><tr><th>شرح</th><th>مقدار</th></tr></thead><tbody>' + rows + "</tbody></table>" +
+        '<h3 class="fin-sub">سفارش‌های این بازه</h3>' +
+        '<table class="fin-table"><thead><tr><th>شماره سفارش / Order</th><th>دریافتی / Collected</th><th>طلب / Receivable</th><th>تعهد بازپرداخت / Refund due</th><th>وضعیت دفتر / Ledger</th></tr></thead><tbody>' +
+        (orders || "<tr><td colspan=\"5\">سفارشی در این بازه نیست.</td></tr>") + "</tbody></table></div>";
+      document.getElementById("finRange").value = range;
+      document.getElementById("finRange").onchange = financeForm;
+      box.querySelectorAll("[data-fin-export]").forEach(function (btn) {
+        btn.onclick = function () {
+          var kind = btn.getAttribute("data-fin-export");
+          fetch(api.url("/api/admin/finance/export." + kind + "?range=" + encodeURIComponent(document.getElementById("finRange").value)), {
+            headers: { Authorization: "Bearer " + token() }
+          }).then(function (r) { if (!r.ok) throw new Error("export"); return r.blob(); }).then(function (blob) {
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "maho-finance." + kind;
+            a.click();
+          }).catch(function () { alert("خروجی ناموفق بود"); });
+        };
+      });
+    }).catch(function (e) { box.textContent = e.message || "خطا"; });
+  }
+
+  function customerStatusForm() {
+    var box = document.getElementById("customerStatusBox");
+    if (!box || box.dataset.ready) return;
+    box.dataset.ready = "1";
+    box.innerHTML = '<strong>وضعیت حساب مشتری</strong><div class="field"><label>شناسه مشتری</label><input id="custStatusId" dir="ltr" placeholder="user id"></div>' +
+      '<div class="field"><label>وضعیت</label><select id="custStatusVal"><option value="active">فعال</option><option value="hold">نگه‌داشتن</option><option value="blocked">مسدود</option><option value="deactivated">غیرفعال</option></select></div>' +
+      '<div class="field"><label>دلیل</label><input id="custStatusReason"></div><button type="button" class="btn btn-gold btn-sm" id="saveCustStatus">ثبت وضعیت</button><p id="custStatusMsg"></p>';
+    document.getElementById("saveCustStatus").onclick = function () {
+      call("/api/admin/customers/" + encodeURIComponent(document.getElementById("custStatusId").value.trim()) + "/account-status", {
+        method: "POST",
+        body: { status: document.getElementById("custStatusVal").value, reason: document.getElementById("custStatusReason").value }
+      }).then(function (res) { document.getElementById("custStatusMsg").textContent = res.accountStatus || "ok"; }).catch(function (e) { document.getElementById("custStatusMsg").textContent = e.message || "خطا"; });
+    };
+  }
+
+  document.addEventListener("click", function (e) {
+    var help = e.target.getAttribute && e.target.getAttribute("data-help");
+    if (!help) return;
+    var btn = document.querySelector('#sideNav [data-panel="' + help + '"]');
+    if (btn) btn.click();
+  });
+  var adminTheme = document.getElementById("adminThemeToggle");
+  function paintAdminTheme() {
+    var mode = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    if (adminTheme) adminTheme.textContent = mode === "dark" ? "☀" : "☾";
+  }
+  try {
+    var savedTheme = localStorage.getItem("maho_theme");
+    if (savedTheme === "dark" || savedTheme === "light") document.documentElement.setAttribute("data-theme", savedTheme);
+  } catch (_) {}
+  paintAdminTheme();
+  if (adminTheme) adminTheme.addEventListener("click", function () {
+    var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("maho_theme", next); } catch (_) {}
+    paintAdminTheme();
+  });
 })();

@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>
+    try {
+      var mahoTheme = localStorage.getItem("maho_theme");
+      if (mahoTheme === "dark" || mahoTheme === "light") document.documentElement.setAttribute("data-theme", mahoTheme);
+    } catch (e) {}
+  </script>
+  <script>
     /* Self-heal: remove any stale service worker/caches (from the older MAHO app)
        so this site always loads the latest version instead of a cached copy. */
     (function () {
@@ -153,6 +159,7 @@
         <button class="cart-btn" id="shareBtn" type="button" aria-label="اشتراک‌گذاری"><svg class="ic"><use href="#i-share"/></svg></button>
         <button class="cart-btn" id="accountBtn" type="button" aria-label="حساب کاربری"><svg class="ic"><use href="#i-user"/></svg></button>
         <button class="cart-btn" id="cartBtn" type="button" aria-label="سبد خرید"><svg class="ic"><use href="#i-bag"/></svg><span class="cart-count empty" id="cartCount">0</span></button>
+        <button class="lang-btn" id="themeToggle" type="button" aria-pressed="false" aria-label="نمای تیره">☾</button>
         <button class="lang-btn" id="langToggle" type="button"><svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span></button>
         <button class="nav-toggle" id="navToggle" aria-label="منو" aria-expanded="false" aria-controls="nav">
           <span></span>
@@ -405,8 +412,11 @@
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="co_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="co_district"></div>
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="co_street"></div>
+          <div class="field"><label data-i18n="addr.city">شهر / منطقه</label><input id="co_city"></div>
           <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="co_area"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="co_house" dir="ltr"></div>
+          <div class="field"><label data-i18n="addr.zip">زیپ کود (اختیاری)</label><input id="co_zip" dir="ltr"></div>
+          <div class="field" id="couponBox"><label>کود تخفیف</label><div style="display:flex;gap:8px"><input id="co_coupon" dir="ltr" autocomplete="off"><button type="button" class="btn btn-outline btn-sm" id="applyCoupon">اعمال</button><button type="button" class="btn btn-outline btn-sm" id="removeCoupon">حذف</button></div><p class="qv-msg" id="couponMsg"></p></div>
           <div class="field"><label data-i18n="co.note">توضیحات (اختیاری)</label><input id="co_note"></div>
 
           <div class="field" id="recvWrap">
@@ -519,8 +529,10 @@
             <div class="field"><label data-i18n="addr.province">ولایت</label><input id="su_province"></div>
             <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="su_district"></div>
             <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="su_street"></div>
+            <div class="field"><label data-i18n="addr.city">شهر / منطقه</label><input id="su_city"></div>
             <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="su_area"></div>
             <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="su_house" dir="ltr"></div>
+            <div class="field"><label data-i18n="addr.zip">زیپ کود (اختیاری)</label><input id="su_zip" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="su_pass" type="password" autocomplete="new-password"></div>
             <label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:13px;line-height:1.5">
               <input type="checkbox" id="su_terms" style="margin-top:4px">
@@ -547,22 +559,24 @@
           <p class="muted" id="acctId" style="text-align:center;margin:2px 0 0"></p>
 
           <button class="btn btn-lg" id="ordersBtn" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>
-          <section id="customerCardBox" class="customer-card-box" hidden>
-            <h4 id="customerCardTitle">کارت مشتری</h4>
-            <img id="customerCardImg" alt="MAHO customer card" width="640" height="372">
+          <details class="acct-acc" id="customerCardBox" hidden>
+            <summary class="acct-acc-sum"><span id="customerCardTitle">کارت مشتری من</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
+            <div class="acct-acc-body">
+            <img id="customerCardImg" alt="MAHO customer card" width="640" height="402">
             <div class="card-actions">
-              <a class="btn btn-outline btn-sm" id="cardPng" href="#">PNG</a>
-              <a class="btn btn-outline btn-sm" id="cardPdf" href="#">PDF</a>
-              <button type="button" class="btn btn-outline btn-sm" id="cardEmailBtn">ایمیل کارت</button>
+              <a class="btn btn-outline btn-sm" id="cardPng" href="#">دانلود PNG</a>
+              <a class="btn btn-outline btn-sm" id="cardPdf" href="#">دانلود PDF</a>
+              <button type="button" class="btn btn-outline btn-sm" id="cardEmailBtn">ایمیل کارت من</button>
             </div>
             <p class="muted" id="cardStatusLine"></p>
-          </section>
+            </div>
+          </details>
           <section id="passkeyBox">
             <button type="button" class="btn btn-outline btn-sm" id="passkeyAddBtn">افزودن Face ID / Passkey</button>
             <div id="passkeyList"></div>
           </section>
 
-          <details class="acct-acc" id="acctProfileAcc" open>
+          <details class="acct-acc" id="acctProfileAcc">
             <summary class="acct-acc-sum"><span data-i18n="acct.profile">مشخصات من</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
             <div class="acct-acc-body">
           <div class="field"><label data-i18n="acct.fullname">نام مکمل</label><input id="pf_name"></div>
@@ -572,8 +586,10 @@
           <div class="field"><label data-i18n="addr.province">ولایت</label><input id="pf_province"></div>
           <div class="field"><label data-i18n="addr.district">ولسوالی / ناحیه</label><input id="pf_district"></div>
           <div class="field"><label data-i18n="addr.street">کوچه / سرک</label><input id="pf_street"></div>
+          <div class="field"><label data-i18n="addr.city">شهر / منطقه</label><input id="pf_city"></div>
           <div class="field"><label data-i18n="addr.area">منطقه / ساحه</label><input id="pf_area"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="pf_house" dir="ltr"></div>
+          <div class="field"><label data-i18n="addr.zip">زیپ کود (اختیاری)</label><input id="pf_zip" dir="ltr"></div>
           <div class="field"><label data-i18n="acct.newPass">پسورد جدید</label><input id="pf_pass" type="password" autocomplete="new-password"></div>
           <button class="btn btn-gold" id="saveProfileBtn" style="width:100%" data-i18n="acct.saveProfile">ذخیره تغییرات</button>
           <div id="pfVerify" hidden style="margin-top:10px">
@@ -607,6 +623,21 @@
             </div>
           </details>
 
+          <details class="acct-acc" id="acctLifeAcc">
+            <summary class="acct-acc-sum"><span>وضعیت حساب</span><span class="acct-acc-arrow" aria-hidden="true">▾</span></summary>
+            <div class="acct-acc-body">
+              <p class="note" id="acctLifeNote">غیرفعال‌سازی برگشت‌پذیر است. حذف دائمی فقط با کود ایمیل انجام می‌شود.</p>
+              <button type="button" class="btn btn-outline" id="deactivateBtn" style="width:100%">غیرفعال کردن حساب</button>
+              <button type="button" class="btn btn-outline" id="reactivateBtn" style="width:100%;margin-top:8px" hidden>فعال‌سازی دوباره</button>
+              <button type="button" class="btn btn-outline" id="deleteStartBtn" style="width:100%;margin-top:8px">حذف دائمی حساب</button>
+              <div id="deleteConfirmBox" hidden style="margin-top:8px">
+                <p class="note">حذف دائمی برگشت‌پذیر نیست. کود ۶ رقمی به ایمیل تأییدشده فرستاده شد و ۱۰ دقیقه اعتبار دارد.</p>
+                <div class="field"><label>کود ایمیل</label><input id="deleteCode" dir="ltr" inputmode="numeric" autocomplete="one-time-code"></div>
+                <button type="button" class="btn btn-gold" id="deleteConfirmBtn" style="width:100%">تأیید حذف دائمی</button>
+              </div>
+              <p class="qv-msg" id="lifeMsg"></p>
+            </div>
+          </details>
           <button class="btn btn-outline" id="logoutBtn" style="width:100%;margin-top:14px" data-i18n="acct.logout">خروج از حساب</button>
         </div>
         <button class="btn btn-gold" id="ordersBtnAll" style="width:100%;margin-top:12px" data-i18n="orders.title">سفارشات من</button>

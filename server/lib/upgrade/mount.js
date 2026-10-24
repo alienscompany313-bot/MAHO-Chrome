@@ -15,6 +15,10 @@ const passkeys = require("./passkeys");
 const notes = require("./notifications");
 const links = require("./links");
 const backups = require("./backups");
+const life = require("./account-life");
+const coupons = require("./coupons");
+const ledger = require("./ledger");
+const { snapshotAddress } = require("./address");
 const pages = require("./pages");
 const { safeHttpUrl } = require("./safe-url");
 
@@ -28,6 +32,8 @@ function ensure(db) {
   if (ads.ensureAds(db)) changed = true;
   if (policies.ensurePolicies(db)) changed = true;
   if (links.ensureLinks(db)) changed = true;
+  if (coupons.ensureCoupons(db)) changed = true;
+  if (ledger.ensureLedger(db)) changed = true;
   if (notes.ensureNotes(db)) changed = true;
   passkeys.ensurePasskeys(db);
   if (!db.siteMeta || typeof db.siteMeta !== "object") {
@@ -314,13 +320,18 @@ function mount(app, ctx) {
 
   app.get("/api/admin/links", ctx.requireAdminAnyPerm(["settings", "marketing"]), (req, res) => {
     links.ensureLinks(db());
-    res.json({ links: db().linkPage.links });
+    res.json({
+      links: db().linkPage.links,
+      subtitle: db().linkPage.subtitle || "",
+      subtitle_en: db().linkPage.subtitle_en || "",
+    });
   });
   app.put("/api/admin/links", ctx.requireAdminAnyPerm(["settings", "marketing"]), (req, res) => {
-    const page = links.saveLinks(db(), (req.body && req.body.links) || []);
+    const body = req.body || {};
+    const page = links.saveLinks(db(), body.links || [], { subtitle: body.subtitle, subtitle_en: body.subtitle_en });
     audit(db(), req, "links_updated", "links", "page", { count: page.links.length });
     save();
-    res.json({ links: page.links });
+    res.json({ links: page.links, subtitle: page.subtitle || "", subtitle_en: page.subtitle_en || "" });
   });
   async function linksQr(type) {
     const url = siteUrl().replace(/\/+$/, "") + "/links";
@@ -331,7 +342,7 @@ function mount(app, ctx) {
     const rows = links.publicLinks(db());
     let qr = "";
     try { qr = await QRCode.toDataURL(siteUrl().replace(/\/+$/, "") + "/links", { margin: 1, width: 280 }); } catch (_) {}
-    res.type("html").send(pages.linksPage(rows, qr));
+    res.type("html").send(pages.linksPage(rows, qr, db().linkPage || {}));
   });
   app.get("/links/qr.png", async (req, res) => {
     const buf = await linksQr("png");
@@ -349,7 +360,7 @@ function mount(app, ctx) {
     const pub = cards.publicCardStatus(found);
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
-    res.type("html").send(pages.verifyPage(pub ? pub.status : "missing"));
+    res.type("html").send(pages.verifyPage(pub || { status: "missing" }));
   });
   app.get("/api/verify/:token", (req, res) => {
     const found = cards.findByToken(db(), req.params.token, pepper());
@@ -365,17 +376,6 @@ function mount(app, ctx) {
     res.setHeader("Cache-Control", "no-store");
     res.json(cards.staffCardView(found));
   });
-
-  async function sendCard(user) {
-    const png = await cards.renderCardPng(user, siteUrl());
-    const m = mail();
-    if (m && typeof m.customerCard === "function" && user.email) {
-      await m.customerCard(user.email, user, png);
-      user.card.emailedAt = Date.now();
-      save();
-    }
-    return png;
-  }
 
   app.get("/api/me/card", ctx.requireUser, (req, res) => {
     const card = cards.ensureCard(req.user, pepper());
@@ -408,14 +408,269 @@ function mount(app, ctx) {
   app.post("/api/me/card/email", ctx.requireUser, async (req, res) => {
     const card = cards.ensureCard(req.user, pepper());
     if (!card || card.status === "revoked") return res.status(403).json({ error: "card_unavailable" });
+    const user = req.user;
+    if (!user.email) return res.status(400).json({ error: "no_email" });
+    if (user.cardEmailNextAt && Date.now() < user.cardEmailNextAt) {
+      return res.status(429).json({ error: "resend_cooldown", retryAt: user.cardEmailNextAt });
+    }
+    const requestedTo = req.body && req.body.to;
+    if (requestedTo && String(requestedTo).toLowerCase() !== String(user.email).toLowerCase()) {
+      return res.status(400).json({ error: "recipient_locked" });
+    }
     try {
-      await sendCard(req.user);
-      res.json({ ok: true });
+      const m = mail();
+      if (!m || typeof m.customerCard !== "function") {
+        return res.status(503).json({ error: "email_unavailable" });
+      }
+      const png = await cards.renderCardPng(user, siteUrl());
+      const sent = await m.customerCard(user.email, user, png);
+      if (!sent) return res.status(503).json({ error: "email_unavailable" });
+      user.cardEmailNextAt = Date.now() + 60 * 1000;
+      if (user.card) user.card.emailedAt = Date.now();
+      save();
+      res.json({ ok: true, sentTo: user.email });
     } catch (err) {
-      pushAudit(db(), { actor: "system", action: "email_failed", entityType: "customer_card", entityId: req.user.id, meta: { outcome: "failed" } });
+      pushAudit(db(), { actor: "system", action: "email_failed", entityType: "customer_card", entityId: user.id, meta: { outcome: "failed" } });
       save();
       res.status(503).json({ error: "email_failed" });
     }
+  });
+
+  app.post("/api/me/deactivate", ctx.requireUser, (req, res) => {
+    const out = life.deactivate(req.user);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "account_deactivated", "user", req.user.id, {});
+    save();
+    res.json({ ok: true, accountStatus: life.stateOf(req.user) });
+  });
+  app.post("/api/me/reactivate", ctx.requireUser, (req, res) => {
+    const out = life.reactivate(req.user);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "account_reactivated", "user", req.user.id, {});
+    save();
+    res.json({ ok: true, accountStatus: life.stateOf(req.user) });
+  });
+  app.post("/api/me/delete/start", ctx.requireUser, async (req, res) => {
+    const out = life.beginDeletion(req.user, pepper(), !!ctx.ALLOW_DEV_CODES);
+    if (out.error) return res.status(out.status || 400).json(out);
+    save();
+    const m = mail();
+    if (m && typeof m.deletionCode === "function") {
+      try { await m.deletionCode(req.user.email, out.code, req.user.name); } catch (_) {}
+    }
+    const body = { ok: true, expiresInSec: out.expiresInSec };
+    if (out.devCode && ctx.ALLOW_DEV_CODES) body.devCode = out.devCode;
+    res.json(body);
+  });
+  app.post("/api/me/delete/confirm", ctx.requireUser, (req, res) => {
+    const body = req.body || {};
+    const out = life.confirmDeletion(req.user, body.code, body.confirm, pepper());
+    if (out.error) {
+      save();
+      return res.status(out.status || 400).json(out);
+    }
+    const id = req.user.id;
+    life.anonymize(req.user);
+    if (ctx.sessions) life.revokeSessions(ctx.sessions, id);
+    audit(db(), req, "account_deleted", "user", id, {});
+    save();
+    res.json({ ok: true, deleted: true });
+  });
+  app.post("/api/admin/customers/:id/account-status", ctx.requireAdminAnyPerm(["customers"]), (req, res) => {
+    const user = (db().users || []).find((u) => u && u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "not_found" });
+    const body = req.body || {};
+    const actor = (req.adminSession && (req.adminSession.email || req.adminSession.id)) || "admin";
+    const out = life.applyStatus(user, body.status, body.reason, actor);
+    if (out.error) return res.status(out.status || 400).json(out);
+    if (body.status === "blocked" || body.status === "hold") {
+      if (ctx.sessions) life.revokeSessions(ctx.sessions, user.id);
+    }
+    audit(db(), req, "customer_status", "user", user.id, { status: body.status });
+    save();
+    res.json({ ok: true, accountStatus: life.stateOf(user) });
+  });
+
+  app.get("/api/admin/coupons", ctx.requireAdminAnyPerm(["settings", "orders"]), (req, res) => {
+    res.json({ coupons: coupons.publicAdmin(db()) });
+  });
+  app.put("/api/admin/coupons", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const list = coupons.saveAll(db(), (req.body && req.body.coupons) || []);
+    audit(db(), req, "coupons_updated", "coupon", "list", { count: list.length });
+    save();
+    res.json({ coupons: coupons.publicAdmin(db()) });
+  });
+  app.post("/api/coupons/preview", ctx.requireUser, (req, res) => {
+    const body = req.body || {};
+    const raw = Array.isArray(body.items) ? body.items : [];
+    const items = raw.map((it) => {
+      const code = String((it && (it.code || it.sku)) || "").trim().toLowerCase();
+      const product = (db().products || []).find((p) => p && [p.code, p.sku].some((v) => String(v || "").trim().toLowerCase() === code));
+      const price = product ? Number(product.price) || 0 : 0;
+      return { code: product ? (product.code || code) : code, cat: product ? product.cat : "", qty: it.qty || 1, price: price };
+    }).filter((it) => it.price > 0);
+    const out = coupons.evaluate(db(), body.code, req.user, items);
+    if (out.error) return res.status(out.status || 400).json(out);
+    res.json(out);
+  });
+
+  function financeQuery(req) {
+    return {
+      range: req.query.range,
+      fromDay: req.query.from,
+      toDay: req.query.to,
+      method: req.query.method,
+      paymentStatus: req.query.paymentStatus,
+      orderStatus: req.query.orderStatus,
+      channel: req.query.channel,
+      q: req.query.q,
+    };
+  }
+  app.get("/api/admin/finance", ctx.requireAdminAnyPerm(["orders", "settings"]), (req, res) => {
+    const report = ledger.summarize(db(), financeQuery(req));
+    res.json({
+      range: report.range,
+      kpi: ledger.majorKpi(report),
+      reconciled: report.reconciled,
+      exceptions: report.exceptions,
+      orders: report.orders.map((a) => ({
+        orderId: a.orderId,
+        status: a.status,
+        payment: a.payment,
+        customer: a.customer,
+        gross: ledger.fromMinor(a.grossMinor),
+        net: ledger.fromMinor(a.totalMinor),
+        collected: ledger.fromMinor(a.collectedMinor),
+        netCollected: ledger.fromMinor(a.netCollectedMinor),
+        outstanding: ledger.fromMinor(a.outstandingMinor),
+        refundDue: ledger.fromMinor(a.refundDueMinor),
+        amountDue: ledger.fromMinor(a.amountDueMinor),
+        adjustments: ledger.fromMinor(a.creditMinor),
+        refunded: ledger.fromMinor(a.refundedMinor),
+        pendingRefund: ledger.fromMinor(a.pendingRefundMinor),
+        returned: ledger.fromMinor(a.returnedMinor),
+        legacy: a.legacy,
+      })),
+      methods: Object.keys(report.methods || {}).reduce((out, name) => {
+        out[name] = ledger.fromMinor(report.methods[name]);
+        return out;
+      }, {}),
+    });
+  });
+  app.get("/api/admin/finance/export.csv", ctx.requireAdminAnyPerm(["orders", "settings"]), (req, res) => {
+    const report = ledger.summarize(db(), financeQuery(req));
+    audit(db(), req, "finance_export", "finance", "csv", {});
+    save();
+    res.setHeader("Content-Disposition", "attachment; filename=\"maho-finance.csv\"");
+    res.type("text/csv").send(ledger.toCsv(report));
+  });
+  app.get("/api/admin/finance/export.xls", ctx.requireAdminAnyPerm(["orders", "settings"]), (req, res) => {
+    const report = ledger.summarize(db(), financeQuery(req));
+    audit(db(), req, "finance_export", "finance", "xls", {});
+    save();
+    res.setHeader("Content-Disposition", "attachment; filename=\"maho-finance.xls\"");
+    res.type("application/vnd.ms-excel").send(ledger.toExcelXml(report));
+  });
+  app.get("/api/admin/finance/export.pdf", ctx.requireAdminAnyPerm(["orders", "settings"]), async (req, res) => {
+    const report = ledger.summarize(db(), financeQuery(req));
+    const PDFDocument = require("pdfkit");
+    const { Resvg } = require("@resvg/resvg-js");
+    const kpi = ledger.majorKpi(report);
+    const keys = Object.keys(ledger.KPI_FA || {});
+    const height = 120 + keys.length * 32;
+    const lines = keys.map((key, i) => {
+      const label = ledger.KPI_FA[key] || key;
+      const y = 90 + i * 32;
+      return `<text x="860" y="${y}" text-anchor="end" font-family="Tahoma, sans-serif" font-size="16" fill="#1a1509">${label}</text>
+        <text x="40" y="${y}" font-family="Tahoma, sans-serif" font-size="16" fill="#1a1509">${kpi[key] == null ? "" : kpi[key]}</text>`;
+    }).join("");
+    const svg = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="980" height="${height}" viewBox="0 0 980 ${height}"><rect width="980" height="${height}" fill="#fffdf8"/><text x="940" y="48" text-anchor="end" font-family="Tahoma, sans-serif" font-size="26" font-weight="700" fill="#1a1509">گزارش مالی ماهو</text>${lines}</svg>`;
+    const png = new Resvg(svg, { fitTo: { mode: "width", value: 900 }, font: { defaultFontFamily: "Tahoma", sansSerifFamily: "Tahoma" } }).render().asPng();
+    const buf = await new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ size: "A4", margin: 24 });
+      const chunks = [];
+      doc.on("data", (c) => chunks.push(c));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
+      doc.image(png, 24, 24, { width: 547 });
+      doc.end();
+    });
+    audit(db(), req, "finance_export", "finance", "pdf", {});
+    save();
+    res.setHeader("Content-Disposition", "attachment; filename=\"maho-finance.pdf\"");
+    res.type("pdf").send(buf);
+  });
+  app.post("/api/admin/orders/:id/payments", ctx.requireAdminAnyPerm(["orders"]), (req, res) => {
+    const order = (db().orders || []).find((o) => o && o.id === req.params.id);
+    const body = req.body || {};
+    const out = ledger.recordPayment(db(), order, {
+      amount: body.amount,
+      method: body.method,
+      status: body.status || "settled",
+      channel: body.channel,
+      idempotencyKey: body.idempotencyKey,
+      externalRef: body.externalRef,
+      actor: { id: (req.adminSession && req.adminSession.id) || "admin" },
+      at: body.at,
+    });
+    if (out.error) return res.status(out.status || 400).json(out);
+    if (out.txn && out.txn.status === "settled" && order) order.paymentStatus = "payment_confirmed";
+    audit(db(), req, "payment_recorded", "order", req.params.id, { txn: out.txn && out.txn.id, duplicate: !!out.duplicate });
+    save();
+    res.json({ ok: true, duplicate: !!out.duplicate, transaction: out.txn, account: ledger.orderAccount(db(), order) });
+  });
+  app.post("/api/admin/orders/:id/refunds", ctx.requireAdminAnyPerm(["orders", "returns"]), (req, res) => {
+    const order = (db().orders || []).find((o) => o && o.id === req.params.id);
+    const body = req.body || {};
+    const out = ledger.recordRefund(db(), order, {
+      amount: body.amount,
+      method: body.method,
+      status: body.status || "pending",
+      channel: body.channel,
+      paymentId: body.paymentId,
+      idempotencyKey: body.idempotencyKey,
+      actor: { id: (req.adminSession && req.adminSession.id) || "admin" },
+      at: body.at,
+    });
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "refund_recorded", "order", req.params.id, { txn: out.txn && out.txn.id });
+    save();
+    res.json({ ok: true, duplicate: !!out.duplicate, transaction: out.txn, account: order ? ledger.orderAccount(db(), order) : null });
+  });
+  app.post("/api/admin/orders/:id/refunds/:txnId/settle", ctx.requireAdminAnyPerm(["orders", "returns"]), (req, res) => {
+    const order = (db().orders || []).find((o) => o && o.id === req.params.id);
+    const out = ledger.settleRefund(db(), order, req.params.txnId, {
+      actor: { id: (req.adminSession && req.adminSession.id) || "admin" },
+      at: Date.now(),
+    });
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "refund_settled", "order", req.params.id, { txn: req.params.txnId, duplicate: !!out.duplicate });
+    save();
+    res.json({ ok: true, duplicate: !!out.duplicate, transaction: out.txn, account: ledger.orderAccount(db(), order) });
+  });
+  app.post("/api/pos/customer-card", (req, res) => {
+    const s = ctx.auth(req);
+    if (!s || (s.type !== "pos" && s.type !== "admin")) return res.status(401).json({ error: "pos_auth_required" });
+    const body = req.body || {};
+    let user = null;
+    if (body.token) {
+      const found = cards.findByToken(db(), body.token, pepper());
+      if (found && found.current) user = found.user;
+    } else if (body.customerNo) {
+      const no = String(body.customerNo).trim();
+      user = (db().users || []).find((u) => u && u.customerNo === no) || null;
+    }
+    if (!user) return res.status(404).json({ error: "not_found" });
+    const account = life.stateOf(user);
+    const active = account === "active" && user.card && user.card.status === "active";
+    res.json({
+      ok: true,
+      active: active,
+      accountStatus: account,
+      name: user.name || "",
+      customerNo: user.customerNo || "",
+      userId: active ? user.id : "",
+    });
   });
   app.post("/api/admin/customers/:id/card", ctx.requireAdminAnyPerm(["customers"]), (req, res) => {
     const user = (db().users || []).find((u) => u && u.id === req.params.id);
@@ -556,8 +811,9 @@ function onOrderCreated(ctx, order) {
   notes.createForOrder(ctx.db, order);
   if (!order.notify) order.notify = {};
   if (order.notify.salesEmailAt) return;
-  const sales = String(process.env.SALES_NOTIFY_EMAIL || "sales@mahomarket.com").trim();
+  const sales = String(process.env.SALES_NOTIFY_EMAIL || "").trim();
   const ordersTo = String(process.env.ORDERS_NOTIFY_EMAIL || "orders@mahomarket.com").trim();
+  if (!sales) return;
   if (!ctx.mail || typeof ctx.mail.orderSalesNotify !== "function") return;
   if (sales.toLowerCase() === ordersTo.toLowerCase()) return;
   order.notify.salesEmailAt = Date.now();

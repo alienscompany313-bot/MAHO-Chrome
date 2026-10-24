@@ -95,16 +95,21 @@
       var row = rows[promoIndex % rows.length];
       var title = pick(row, "title", "title_en");
       var desc = pick(row, "description", "description_en");
-      var img = row.imageUrl ? '<img src="' + row.imageUrl.replace(/"/g, "") + '" alt="' + (title || "MAHO").replace(/"/g, "") + '">' : "";
+      var cta = pick(row, "cta", "cta_en");
+      var imgSrc = row.imageUrl || "";
+      if (window.matchMedia && window.matchMedia("(max-width: 720px)").matches && row.imageUrlMobile) imgSrc = row.imageUrlMobile;
+      var img = imgSrc ? '<img src="' + imgSrc.replace(/"/g, "") + '" alt="' + (title || "MAHO").replace(/"/g, "") + '">' : "";
       var href = row.url ? api.url("/api/ads/go/" + encodeURIComponent(row.id)) : "";
-      var inner = img + '<div class="home-promo-copy"><strong>' + (title || "") + "</strong><div>" + (desc || "") + "</div></div>";
-      if (rows.length > 1) inner += '<div class="promo-nav"><button type="button" data-promo="-1" aria-label="prev">‹</button><button type="button" data-promo="1" aria-label="next">›</button></div>';
-      box.innerHTML = '<div class="container"><div class="home-promo-frame">' + (href ? '<a href="' + href + '">' + inner + "</a>" : inner) + "</div></div>";
+      var inner = img + '<div class="home-promo-copy"><strong>' + (title || "") + "</strong><div>" + (desc || "") + "</div>" + (cta ? "<span>" + cta + "</span>" : "") + "</div>";
+      var controls = '<div class="promo-nav"><button type="button" data-promo-pause="1" aria-label="' + (lang() === "en" ? "Pause" : "توقف") + '">❚❚</button>';
+      if (rows.length > 1) controls += '<button type="button" data-promo="-1" aria-label="prev">‹</button><button type="button" data-promo="1" aria-label="next">›</button>';
+      controls += "</div>";
+      box.innerHTML = '<div class="container"><div class="home-promo-frame" role="region" aria-roledescription="carousel" aria-label="MAHO">' + (href ? '<a href="' + href + '">' + inner + "</a>" : inner) + controls + "</div></div>";
       track([row.id]);
     }
     draw();
     if (promoTimer) clearInterval(promoTimer);
-    if (rows.length > 1) promoTimer = setInterval(function () { promoIndex += 1; draw(); }, 5000);
+    if (rows.length > 1 && !box.dataset.paused) promoTimer = setInterval(function () { promoIndex += 1; draw(); }, 7000);
   }
 
   function paintListing() {
@@ -181,6 +186,9 @@
     var menu = document.getElementById("shareMenu");
     if (!menu) return;
     var url = productUrl(p);
+    var code = (p && (p.code || p.sku || p.barcode)) || url;
+    if (menu.dataset.code === String(code) && !menu.hidden) { menu.hidden = true; menu.dataset.code = ""; return; }
+    menu.dataset.code = String(code);
     var name = (p && (lang() === "en" ? (p.name_en || p.name) : p.name)) || "MAHO";
     var text = name + " — " + url;
     menu.innerHTML = "";
@@ -275,6 +283,14 @@
   });
 
   document.addEventListener("click", function (e) {
+    var pause = e.target.closest("[data-promo-pause]");
+    if (pause) {
+      e.preventDefault();
+      var home = document.getElementById("homePromo");
+      if (home) home.dataset.paused = home.dataset.paused ? "" : "1";
+      paintHomePromo();
+      return;
+    }
     var promo = e.target.closest("[data-promo]");
     if (promo) {
       e.preventDefault();
@@ -312,7 +328,12 @@
       downloadCard(e.target.id === "cardPdf" ? "pdf" : "png");
     }
     if (e.target.id === "cardEmailBtn") {
-      api.request("/api/me/card/email", { method: "POST", token: api.getToken("user") }).catch(function () {});
+      var line = document.getElementById("cardStatusLine");
+      api.request("/api/me/card/email", { method: "POST", token: api.getToken("user"), body: {} }).then(function () {
+        if (line) line.textContent = lang() === "en" ? "Card emailed to your verified address." : "کارت به ایمیل تأییدشده شما فرستاده شد.";
+      }).catch(function (err) {
+        if (line) line.textContent = (err && err.message) || (lang() === "en" ? "Email failed." : "ارسال ایمیل ناموفق بود.");
+      });
     }
     var del = e.target.closest("[data-del-passkey]");
     if (del) {
@@ -329,9 +350,26 @@
           return api.request("/api/auth/passkey/login", { method: "POST", body: { challengeId: res.challengeId, credential: credToJSON(cred) } });
         });
       }).then(function (res) {
-        if (res && res.token) api.setToken("user", res.token);
-        location.reload();
-      }).catch(function () {});
+        if (!res || !res.token || !res.user) {
+          var msg = document.getElementById("acctMsg");
+          if (msg) msg.textContent = lang() === "en" ? "Passkey sign-in did not create a session." : "ورود با Passkey نشست نساخت.";
+          return;
+        }
+        api.setToken("user", res.token);
+        try {
+          localStorage.setItem("maho_session", JSON.stringify({
+            name: res.user.name, id: res.user.id || res.user.email, email: res.user.email,
+            phone: res.user.phone || "", address: res.user.address || "", addr: res.user.addr || {},
+            customerNo: res.user.customerNo || "", apiToken: res.token
+          }));
+        } catch (_) {}
+        var next = "/";
+        try { if (sessionStorage.getItem("maho_after_login") === "orders") next = "/#orders"; } catch (_) {}
+        location.href = next;
+      }).catch(function (err) {
+        var msg = document.getElementById("acctMsg");
+        if (msg) msg.textContent = (err && (err.message || err.error)) || (lang() === "en" ? "Passkey sign-in failed." : "ورود با Passkey ناموفق بود.");
+      });
     });
   }
   var passkeyAdd = document.getElementById("passkeyAddBtn");
@@ -353,4 +391,81 @@
   if (location.hash === "#orders" && !api.getToken("user")) {
     try { sessionStorage.setItem("maho_after_login", "orders"); } catch (_) {}
   }
+
+  var themeBtn = document.getElementById("themeToggle");
+  function paintTheme() {
+    var mode = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    if (themeBtn) {
+      themeBtn.textContent = mode === "dark" ? "☀" : "☾";
+      themeBtn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+      themeBtn.setAttribute("aria-label", mode === "dark" ? (lang() === "en" ? "Light mode" : "نمای روشن") : (lang() === "en" ? "Dark mode" : "نمای تیره"));
+    }
+  }
+  paintTheme();
+  if (themeBtn) themeBtn.addEventListener("click", function () {
+    var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("maho_theme", next); } catch (_) {}
+    paintTheme();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var menu = document.getElementById("shareMenu");
+    if (menu) { menu.hidden = true; menu.dataset.code = ""; }
+  });
+
+  var applyCoupon = document.getElementById("applyCoupon");
+  var removeCoupon = document.getElementById("removeCoupon");
+  function couponNote(text) { var el = document.getElementById("couponMsg"); if (el) el.textContent = text || ""; }
+  if (applyCoupon) applyCoupon.addEventListener("click", function () {
+    var code = (document.getElementById("co_coupon").value || "").trim();
+    var cart = [];
+    try { cart = JSON.parse(localStorage.getItem("maho_cart") || "[]"); } catch (_) {}
+    api.request("/api/coupons/preview", { method: "POST", token: api.getToken("user"), body: { code: code, items: cart } }).then(function (res) {
+      window.MAHO_COUPON = res.code;
+      couponNote((lang() === "en" ? "Coupon applied: " : "کود اعمال شد: ") + res.code + " · " + res.amount);
+    }).catch(function (err) {
+      window.MAHO_COUPON = "";
+      couponNote((err && err.message) || (lang() === "en" ? "Coupon was not accepted." : "کود پذیرفته نشد."));
+    });
+  });
+  if (removeCoupon) removeCoupon.addEventListener("click", function () {
+    window.MAHO_COUPON = "";
+    var input = document.getElementById("co_coupon");
+    if (input) input.value = "";
+    couponNote(lang() === "en" ? "Coupon removed." : "کود حذف شد.");
+  });
+
+  function lifeMsg(text) { var el = document.getElementById("lifeMsg"); if (el) el.textContent = text || ""; }
+  var deactivateBtn = document.getElementById("deactivateBtn");
+  if (deactivateBtn) deactivateBtn.addEventListener("click", function () {
+    api.request("/api/me/deactivate", { method: "POST", token: api.getToken("user"), body: {} }).then(function () {
+      lifeMsg(lang() === "en" ? "Account deactivated. You can reactivate it here." : "حساب غیرفعال شد. از همین‌جا می‌توانید دوباره فعال کنید.");
+      var b = document.getElementById("reactivateBtn"); if (b) b.hidden = false;
+    }).catch(function (err) { lifeMsg(err.message || "error"); });
+  });
+  var reactivateBtn = document.getElementById("reactivateBtn");
+  if (reactivateBtn) reactivateBtn.addEventListener("click", function () {
+    api.request("/api/me/reactivate", { method: "POST", token: api.getToken("user"), body: {} }).then(function () {
+      lifeMsg(lang() === "en" ? "Account is active again." : "حساب دوباره فعال شد.");
+    }).catch(function (err) { lifeMsg(err.message || "error"); });
+  });
+  var deleteStart = document.getElementById("deleteStartBtn");
+  if (deleteStart) deleteStart.addEventListener("click", function () {
+    if (!confirm(lang() === "en" ? "Permanent deletion cannot be undone. Send a code to your email?" : "حذف دائمی برگشت‌پذیر نیست. کود به ایمیل شما فرستاده شود؟")) return;
+    api.request("/api/me/delete/start", { method: "POST", token: api.getToken("user"), body: {} }).then(function (res) {
+      document.getElementById("deleteConfirmBox").hidden = false;
+      lifeMsg(lang() === "en" ? "Enter the 6-digit code from your email. It expires in 10 minutes." : "کود ۶ رقمی ایمیل را وارد کنید. اعتبار آن ۱۰ دقیقه است.");
+      if (res && res.devCode) lifeMsg((lang() === "en" ? "Dev code: " : "کود آزمایشی: ") + res.devCode);
+    }).catch(function (err) { lifeMsg(err.message || "error"); });
+  });
+  var deleteConfirm = document.getElementById("deleteConfirmBtn");
+  if (deleteConfirm) deleteConfirm.addEventListener("click", function () {
+    api.request("/api/me/delete/confirm", { method: "POST", token: api.getToken("user"), body: { code: document.getElementById("deleteCode").value, confirm: "DELETE" } }).then(function () {
+      api.setToken("user", "");
+      try { localStorage.removeItem("maho_session"); } catch (_) {}
+      location.href = "/";
+    }).catch(function (err) { lifeMsg(err.message || (lang() === "en" ? "Deletion was not confirmed." : "حذف تأیید نشد.")); });
+  });
 })();
