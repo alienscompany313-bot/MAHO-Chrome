@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { sanitizeText } = require("../security");
 
-const KINDS = ["terms", "privacy"];
+const KINDS = ["terms", "privacy", "returns", "other"];
 
 function emptyKind() {
   return { versions: [] };
@@ -61,6 +61,53 @@ function acceptanceSnapshot(db) {
   };
 }
 
+function acceptanceCount(db, kind, id) {
+  return (db.users || []).filter((user) => {
+    const snap = user && user.policyAcceptance;
+    if (!snap) return false;
+    if (kind === "terms") return snap.termsId === id;
+    if (kind === "privacy") return snap.privacyId === id;
+    return false;
+  }).length;
+}
+
+function findVersion(db, kind, id) {
+  ensurePolicies(db);
+  if (KINDS.indexOf(kind) < 0) return null;
+  return (db.policies[kind].versions || []).find((row) => row && row.id === id) || null;
+}
+
+function canDelete(db, kind, row) {
+  if (!row || row.status !== "draft" || row.publishedAt) return false;
+  return acceptanceCount(db, kind, row.id) === 0;
+}
+
+function removeDraft(db, kind, id) {
+  const row = findVersion(db, kind, id);
+  if (!row) return { error: "not_found", status: 404 };
+  if (!canDelete(db, kind, row)) return { error: "retain_history", status: 409 };
+  db.policies[kind].versions = db.policies[kind].versions.filter((item) => item.id !== id);
+  return { ok: true, deleted: true };
+}
+
+function unpublish(db, kind, id) {
+  const row = findVersion(db, kind, id);
+  if (!row) return { error: "not_found", status: 404 };
+  if (row.status !== "published") return { error: "not_published", status: 400 };
+  row.status = "inactive";
+  row.unpublishedAt = Date.now();
+  return { version: row };
+}
+
+function archiveVersion(db, kind, id) {
+  const row = findVersion(db, kind, id);
+  if (!row) return { error: "not_found", status: 404 };
+  if (row.status === "archived") return { version: row };
+  row.status = "archived";
+  row.archivedAt = Date.now();
+  return { version: row };
+}
+
 function adminView(db) {
   ensurePolicies(db);
   const pack = (kind) => (db.policies[kind].versions || []).map((v) => ({
@@ -74,8 +121,12 @@ function adminView(db) {
     createdAt: v.createdAt || null,
     publishedAt: v.publishedAt || null,
     hasPdf: !!v.pdfFile,
+    acceptedCount: acceptanceCount(db, kind, v.id),
+    deletable: canDelete(db, kind, v),
   }));
-  return { terms: pack("terms"), privacy: pack("privacy") };
+  const out = {};
+  KINDS.forEach((kind) => { out[kind] = pack(kind); });
+  return out;
 }
 
 function cleanVersion(body, existing) {
@@ -129,6 +180,32 @@ function publish(db, kind, id) {
   return { version: row };
 }
 
+function queueNotice(db, kind, versionId) {
+  if (!Array.isArray(db.policyNotices)) db.policyNotices = [];
+  const key = String(kind) + ":" + String(versionId);
+  const existing = db.policyNotices.find((row) => row && row.key === key);
+  if (existing) return { duplicate: true, notice: existing };
+  const notice = {
+    key: key,
+    kind: kind,
+    versionId: versionId,
+    status: "queued",
+    delivery: "queued_not_sent",
+    support: "support@mahomarket.com",
+    recipientCount: (db.users || []).filter((user) => user && user.email && !user.deletedAt && user.accountStatus !== "deleted").length,
+    at: Date.now(),
+  };
+  db.policyNotices.push(notice);
+  return { duplicate: false, notice: notice };
+}
+
+function welcomeAttachments(db) {
+  return ["terms", "privacy"].map((kind) => {
+    const row = published(db, kind);
+    return row && row.pdfFile ? { kind: kind, version: row.version, file: row.pdfFile } : null;
+  }).filter(Boolean);
+}
+
 function attachPdf(db, kind, id, filename) {
   const versions = (db.policies[kind] && db.policies[kind].versions) || [];
   const row = versions.find((v) => v.id === id);
@@ -170,18 +247,31 @@ const STARTERS = {
 };
 
 function createStarter(db, kind) {
-  return upsertDraft(db, kind, STARTERS[kind]);
+  const starter = STARTERS[kind] || {
+    version: "draft-1",
+    title: kind === "returns" ? "سیاست برگشت" : "سند",
+    title_en: kind === "returns" ? "Returns policy" : "Document",
+    body: "این پیش‌نویس است و تا زمان انتشار در سایت دیده نمی‌شود.",
+    body_en: "This draft stays off the website until it is published.",
+  };
+  return upsertDraft(db, kind, starter);
 }
 
 module.exports = {
   KINDS,
   ensurePolicies,
   published,
+  findVersion,
   publicPolicy,
   acceptanceSnapshot,
   adminView,
   upsertDraft,
   publish,
+  unpublish,
+  archiveVersion,
+  removeDraft,
+  queueNotice,
+  welcomeAttachments,
   attachPdf,
   pdfPath,
   ensurePdfDir,

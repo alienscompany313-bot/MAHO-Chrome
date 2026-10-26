@@ -4,6 +4,27 @@ const crypto = require("crypto");
 const { sanitizeText } = require("../security");
 const { safeHttpUrl } = require("./safe-url");
 
+const KABUL_OFFSET_MS = (4 * 60 + 30) * 60 * 1000;
+
+function parseKabul(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const text = String(value).trim();
+  if (/^\d+$/.test(text)) return Number(text);
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!match) return null;
+  const utc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+  return utc - KABUL_OFFSET_MS;
+}
+
+function formatKabul(ms) {
+  if (!ms) return "";
+  const date = new Date(Number(ms) + KABUL_OFFSET_MS);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return date.getUTCFullYear() + "-" + pad(date.getUTCMonth() + 1) + "-" + pad(date.getUTCDate()) + "T" + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes());
+}
+
 function blankAd(partial) {
   const src = partial && typeof partial === "object" ? partial : {};
   return {
@@ -18,8 +39,8 @@ function blankAd(partial) {
     imageUrlMobile: typeof src.imageUrlMobile === "string" ? src.imageUrlMobile.slice(0, 500) : "",
     cta: sanitizeText(src.cta, 80),
     cta_en: sanitizeText(src.cta_en, 80),
-    startAt: src.startAt ? Number(src.startAt) || null : null,
-    endAt: src.endAt ? Number(src.endAt) || null : null,
+    startAt: parseKabul(src.startAt),
+    endAt: parseKabul(src.endAt),
     order: Number(src.order) || 0,
   };
 }
@@ -124,4 +145,6 @@ module.exports = {
   findAd,
   isLive,
   bump,
+  parseKabul,
+  formatKabul,
 };

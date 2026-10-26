@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Delivery Driver | MAHO</title>
+  <title data-i18n="drv.docTitle">Delivery Driver | MAHO</title>
   <meta name="robots" content="noindex, nofollow">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="js/api.js"></script>
+  <script src="js/page-lang.js"></script>
   <style>
     :root{--black:#141414;--gold:#c8a35f;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--panel:#fff;--soft:#f7f3eb}
     *{box-sizing:border-box} body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#f3efe7;color:var(--ink)}
@@ -45,31 +46,35 @@
   <div class="gate" id="gate">
     <div class="box">
       <div style="font-size:22px;font-weight:800;color:var(--gold)">MAHO Delivery</div>
-      <p class="muted" style="color:#b9b3a6">ورود راننده</p>
-      <input id="loginId" placeholder="ایمیل / نام کاربری" dir="ltr">
-      <input id="loginPass" type="password" placeholder="رمز" dir="ltr">
-      <button class="btn btn-gold" style="width:100%" id="loginBtn">ورود</button>
+      <p class="muted" style="color:#b9b3a6" data-i18n="drv.lead">ورود راننده</p>
+      <input id="loginId" data-i18n-ph="drv.idPh" placeholder="ایمیل / نام کاربری" dir="ltr">
+      <input id="loginPass" type="password" data-i18n-ph="drv.passPh" placeholder="رمز" dir="ltr">
+      <button class="btn btn-gold" style="width:100%" id="loginBtn" data-i18n="drv.enter">ورود</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-lang-toggle style="margin-top:8px">English</button>
       <p class="err" id="gateMsg"></p>
     </div>
   </div>
   <div class="top" id="top" hidden>
     <div><b>MAHO Driver</b><div class="muted" style="color:#ccc" id="who">—</div></div>
-    <button class="btn btn-ghost" id="logoutBtn">خروج</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn-ghost" data-lang-toggle>English</button>
+      <button class="btn btn-ghost" id="logoutBtn" data-i18n="drv.logout">خروج</button>
+    </div>
   </div>
   <div class="wrap" id="app" hidden>
     <div class="cols" id="driverCols">
       <section class="col col-delivery" id="deliveryCol" aria-labelledby="deliveryTitle">
         <div class="col-head">
-          <h2 id="deliveryTitle">تحویل سفارش‌ها</h2>
+          <h2 id="deliveryTitle" data-i18n="drv.deliveryTitle">تحویل سفارش‌ها</h2>
           <span class="col-count" id="deliveryCount">0</span>
         </div>
         <div id="activeList"></div>
-        <div class="sec-sub" id="doneTitle" hidden>تحویل‌شده / ناموفق</div>
+        <div class="sec-sub" id="doneTitle" data-i18n="drv.doneTitle" hidden>تحویل‌شده / ناموفق</div>
         <div id="doneList"></div>
       </section>
       <section class="col col-returns" id="returnsCol" aria-labelledby="returnsTitle">
         <div class="col-head">
-          <h2 id="returnsTitle">برگشتی‌ها / جمع‌آوری برگشت</h2>
+          <h2 id="returnsTitle" data-i18n="drv.returnsTitle">برگشتی‌ها / جمع‌آوری برگشت</h2>
           <span class="col-count" id="returnsCount">0</span>
         </div>
         <div id="returnList"></div>
@@ -80,14 +85,76 @@
   (function(){
     function $(s){return document.querySelector(s)}
     var busy=false;
+    var LANGPACK={
+      fa:{
+        "drv.docTitle":"راننده تحویل | MAHO",
+        "drv.lead":"ورود راننده","drv.idPh":"ایمیل / نام کاربری","drv.passPh":"رمز","drv.enter":"ورود","drv.logout":"خروج",
+        "drv.deliveryTitle":"تحویل سفارش‌ها","drv.doneTitle":"تحویل‌شده / ناموفق","drv.returnsTitle":"برگشتی‌ها / جمع‌آوری برگشت",
+        "drv.noDelivery":"سفارشی برای تحویل موجود نیست","drv.noReturns":"برگشتی برای جمع‌آوری موجود نیست",
+        "drv.assigned":"Assign‌شده","drv.picked":"دریافت‌شده","drv.transit":"در مسیر","drv.delivered":"تحویل‌شده","drv.failed":"تحویل ناموفق",
+        "drv.pickupCustomer":"جمع‌آوری از آدرس من","drv.pickupStore":"تحویل به فروشگاه",
+        "drv.err":"خطا","drv.loginFail":"ورود ناموفق","drv.cashDone":"بازپرداخت نقدی قبلاً ثبت شده است.",
+        "drv.cashDue":"مبلغ نقدی قابل پرداخت: ","drv.cashBtn":"پول نقد به مشتری پرداخت شد",
+        "drv.cashAfter":"پس از تأیید «جنس برگشتی را دریافت کردم» می‌توانید refund نقدی را ثبت کنید.",
+        "drv.cashNo":"Refund غیرنقدی — فقط جمع‌آوری کالا","drv.photoReq":"عکس الزامی","drv.photoOpt":"عکس اختیاری",
+        "drv.already":"این کالا قبلاً دریافت شده است.","drv.gotIt":"جنس برگشتی را دریافت کردم","drv.photoLabel":"عکس Pickup","drv.upload":"آپلود عکس",
+        "drv.maps":"نقشه / Google Maps","drv.note":"یادداشت: ","drv.pickupAddr":"آدرس جمع‌آوری: ","drv.method":"روش برگشت: ",
+        "drv.reason":"دلیل: ","drv.items":"اقلام: ","drv.pay":"روش پرداخت اصلی: ","drv.refundAmt":"مبلغ قابل برگشت: ",
+        "drv.collect":"مبلغ قابل دریافت: ","drv.notePh":"برای ناموفق اجباری","drv.proof":"عکس اثبات (اختیاری)","drv.fail":"ناموفق",
+        "drv.afn":"افغانی","drv.saving":"در حال ثبت…","drv.savingDelivery":"در حال ثبت تحویل…","drv.noPhoto":"عکس انتخاب نشده",
+        "drv.uploaded":"عکس آپلود شد","drv.confirmGet":"تأیید دریافت کالای برگشتی؟","drv.saved":"ثبت شد",
+        "drv.confirmCash":"پرداخت نقدی به مشتری تأیید شود؟ مبلغ تغییر نمی‌کند.","drv.cashSaved":"Refund نقدی ثبت شد",
+        "drv.needFail":"دلیل تحویل ناموفق لازم است","drv.sending":"در حال ارسال…","drv.alreadyStatus":"این وضعیت قبلاً ثبت شده است.",
+        "drv.savedOk":"ثبت شد ✓","drv.kept":"خطا — وضعیت قبلی حفظ شد","drv.loadReturns":"خطا در بارگذاری برگشتی‌ها"
+      },
+      en:{
+        "drv.docTitle":"Delivery Driver | MAHO",
+        "drv.lead":"Driver Sign-In","drv.idPh":"Email / username","drv.passPh":"Password","drv.enter":"Sign In","drv.logout":"Sign Out",
+        "drv.deliveryTitle":"Deliveries","drv.doneTitle":"Delivered / Failed","drv.returnsTitle":"Returns / Return Pickup",
+        "drv.noDelivery":"No deliveries assigned","drv.noReturns":"No returns to pick up",
+        "drv.assigned":"Assigned","drv.picked":"Picked Up","drv.transit":"On the Way","drv.delivered":"Delivered","drv.failed":"Delivery Failed",
+        "drv.pickupCustomer":"Pickup from My Address","drv.pickupStore":"Drop Off at the Store",
+        "drv.err":"Something went wrong","drv.loginFail":"Sign-in failed","drv.cashDone":"The cash refund was already recorded.",
+        "drv.cashDue":"Cash to hand to the customer: ","drv.cashBtn":"Cash was paid to the customer",
+        "drv.cashAfter":"After you confirm that you received the returned goods, you can record the cash refund.",
+        "drv.cashNo":"Non-cash refund — collect the goods only","drv.photoReq":"Photo Required","drv.photoOpt":"Photo Optional",
+        "drv.already":"These goods were already collected.","drv.gotIt":"I received the returned goods","drv.photoLabel":"Pickup Photo","drv.upload":"Upload Photo",
+        "drv.maps":"Map / Google Maps","drv.note":"Note: ","drv.pickupAddr":"Pickup address: ","drv.method":"Return method: ",
+        "drv.reason":"Reason: ","drv.items":"Items: ","drv.pay":"Original payment: ","drv.refundAmt":"Refund amount: ",
+        "drv.collect":"Amount to collect: ","drv.notePh":"Required when delivery fails","drv.proof":"Proof photo (optional)","drv.fail":"Failed",
+        "drv.afn":"AFN","drv.saving":"Saving…","drv.savingDelivery":"Saving delivery…","drv.noPhoto":"No photo selected",
+        "drv.uploaded":"Photo uploaded","drv.confirmGet":"Confirm that you received the returned goods?","drv.saved":"Saved",
+        "drv.confirmCash":"Confirm the cash payment to the customer? The amount does not change.","drv.cashSaved":"Cash refund recorded",
+        "drv.needFail":"A reason is required when delivery fails","drv.sending":"Sending…","drv.alreadyStatus":"This status was already saved.",
+        "drv.savedOk":"Saved ✓","drv.kept":"Something went wrong — the previous status was kept","drv.loadReturns":"Could not load returns"
+      }
+    };
+    function L(k){ return window.MAHOPageLang.t(LANGPACK, k); }
+    function explain(e){
+      var m=(e&&e.message)||"";
+      if(!m || /^[a-z0-9_]+$/i.test(m)) return L("drv.err");
+      return m;
+    }
+    function money(n){ return (Number(n)||0).toLocaleString("en-US")+" "+L("drv.afn"); }
+    function bindLang(){
+      MAHOPageLang.apply(LANGPACK);
+      document.querySelectorAll("[data-lang-toggle]").forEach(function(btn){
+        btn.onclick=function(){ MAHOPageLang.setLang(MAHOPageLang.current()==="en"?"fa":"en", LANGPACK); };
+      });
+    }
+    bindLang();
+    document.addEventListener("maho:lang", function(){ bindLang(); if(!$("#app").hidden) reloadOrders(); });
     var STATUS_FA={ assigned:"Assign‌شده", picked_up:"دریافت‌شده", in_transit:"در مسیر", delivered:"تحویل‌شده", failed:"تحویل ناموفق" };
+    var STATUS_EN={ assigned:"Assigned", picked_up:"Picked Up", in_transit:"On the Way", delivered:"Delivered", failed:"Delivery Failed" };
     var METHOD_FA={ pickup_customer:"جمع‌آوری از آدرس من", pickup_store:"تحویل به فروشگاه" };
-    function statusLabel(st){ return STATUS_FA[st]||st||"—"; }
+    var METHOD_EN={ pickup_customer:"Pickup from my address", pickup_store:"Drop off at the store" };
+    function statusLabel(st){ var map=MAHOPageLang.current()==="en"?STATUS_EN:STATUS_FA; return map[st]||st||"—"; }
     function methodLabel(m){
+      var map=MAHOPageLang.current()==="en"?METHOD_EN:METHOD_FA;
       var s=String(m||"").toLowerCase().trim();
-      if(METHOD_FA[s]) return METHOD_FA[s];
-      if(s==="customer_address_pickup"||s==="pickup_from_address"||s==="customer_pickup"||s==="address_pickup") return METHOD_FA.pickup_customer;
-      if(s==="store_dropoff"||s==="return_to_store"||s==="pickup_store") return METHOD_FA.pickup_store;
+      if(map[s]) return map[s];
+      if(s==="customer_address_pickup"||s==="pickup_from_address"||s==="customer_pickup"||s==="address_pickup") return map.pickup_customer;
+      if(s==="store_dropoff"||s==="return_to_store"||s==="pickup_store") return map.pickup_store;
       return m||"—";
     }
     function openApp(){
@@ -97,7 +164,7 @@
     function reloadOrders(){
       return Promise.all([
         MAHOApi.driverOrders().then(render).catch(function(e){
-          $("#activeList").innerHTML="<p class='err'>"+(e.message||"خطا")+"</p>";
+          $("#activeList").innerHTML="<p class='err'>"+explain(e)+"</p>";
           $("#deliveryCount").textContent="0";
         }),
         loadReturnPickups()
@@ -109,7 +176,7 @@
         var box=$("#returnList");
         $("#returnsCount").textContent=String(list.length);
         if(!list.length){
-          box.innerHTML="<p class='empty'>برگشتی برای جمع‌آوری موجود نیست</p>";
+          box.innerHTML="<p class='empty'>"+L("drv.noReturns")+"</p>";
           return;
         }
         box.innerHTML=list.map(function(p){
@@ -118,40 +185,40 @@
           if (p.cashEligible) {
             if (collected) {
               if (p.refundStatus === "paid" || p.cashRefundPaid) {
-                cash = '<div class="ok">بازپرداخت نقدی قبلاً ثبت شده است.</div>';
+                cash = '<div class="ok">'+L("drv.cashDone")+'</div>';
               } else {
-                cash = '<div class="ok">مبلغ نقدی قابل پرداخت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
-                  '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">پول نقد به مشتری پرداخت شد</button>';
+                cash = '<div class="ok">'+L("drv.cashDue")+money(p.approvedRefundAmount||0)+'</div>'+
+                  '<button class="btn btn-gold" data-cash-refund="'+p.orderId+'">'+L("drv.cashBtn")+'</button>';
               }
             } else {
-              cash = '<div class="muted">پس از تأیید «جنس برگشتی را دریافت کردم» می‌توانید refund نقدی را ثبت کنید.</div>';
+              cash = '<div class="muted">'+L("drv.cashAfter")+'</div>';
             }
           } else {
-            cash = '<div class="muted">Refund غیرنقدی — فقط جمع‌آوری کالا</div>';
+            cash = '<div class="muted">'+L("drv.cashNo")+'</div>';
           }
-          var photoNote=p.photoRequired?'<span class="badge fail">عکس الزامی</span>':'<span class="badge">عکس اختیاری</span>';
+          var photoNote=p.photoRequired?'<span class="badge fail">'+L("drv.photoReq")+'</span>':'<span class="badge">'+L("drv.photoOpt")+'</span>';
           var confirmBlock = collected
-            ? '<div class="ok" style="margin-top:8px">این کالا قبلاً دریافت شده است.'+(p.pickedUpAt?(' — '+new Date(p.pickedUpAt).toLocaleString("fa-AF")):"")+'</div>'
-            : '<div class="acts" style="margin-top:8px"><button class="btn btn-gold" data-ret-confirm="'+p.orderId+'">جنس برگشتی را دریافت کردم</button></div>';
+            ? '<div class="ok" style="margin-top:8px">'+L("drv.already")+(p.pickedUpAt?(' — '+new Date(p.pickedUpAt).toLocaleString(MAHOPageLang.current()==="en"?"en-US":"fa-AF")):"")+'</div>'
+            : '<div class="acts" style="margin-top:8px"><button class="btn btn-gold" data-ret-confirm="'+p.orderId+'">'+L("drv.gotIt")+'</button></div>';
           var photoBlock = collected ? "" :
-            '<div style="margin-top:8px"><label class="muted">عکس Pickup</label><input type="file" class="ret-photo" accept="image/*" capture="environment">'+
-            '<button class="btn btn-outline" data-ret-photo="'+p.orderId+'">آپلود عکس</button></div>';
+            '<div style="margin-top:8px"><label class="muted">'+L("drv.photoLabel")+'</label><input type="file" class="ret-photo" accept="image/*" capture="environment">'+
+            '<button class="btn btn-outline" data-ret-photo="'+p.orderId+'">'+L("drv.upload")+'</button></div>';
           var maps = p.mapsUrl
-            ? ('<div class="acts"><a class="btn btn-outline" target="_blank" rel="noopener" href="'+p.mapsUrl+'">نقشه / Google Maps</a></div>')
+            ? ('<div class="acts"><a class="btn btn-outline" target="_blank" rel="noopener" href="'+p.mapsUrl+'">'+L("drv.maps")+'</a></div>')
             : '';
-          var notes = p.notes ? ('<div class="muted">یادداشت: '+p.notes+'</div>') : '';
+          var notes = p.notes ? ('<div class="muted">'+L("drv.note")+p.notes+'</div>') : '';
           var ref = p.returnNumber || p.orderId;
           return '<div class="card" data-mission-type="return_pickup" data-ret="'+p.orderId+'">'+
             '<span class="mission-type">return_pickup</span>'+
             '<div><b dir="ltr">#'+ref+'</b> · <span class="badge">'+ (p.returnPickupStatus||"") +'</span> '+photoNote+'</div>'+
             '<div>'+ (p.customerName||"") +' · <span dir="ltr">'+ (p.phone||"") +'</span></div>'+
-            '<div class="muted">آدرس جمع‌آوری: '+ (p.pickupAddress||"—") +'</div>'+
-            '<div class="muted">روش برگشت: '+ methodLabel(p.method) +'</div>'+
-            '<div class="muted">دلیل: '+ (p.reason||"—") +'</div>'+
+            '<div class="muted">'+L("drv.pickupAddr")+ (p.pickupAddress||"—") +'</div>'+
+            '<div class="muted">'+L("drv.method")+ methodLabel(p.method) +'</div>'+
+            '<div class="muted">'+L("drv.reason")+ (p.reason||"—") +'</div>'+
             notes+
-            '<div class="muted">اقلام: '+ (p.items||[]).map(function(it){return (it.name||"")+" × "+(it.qty||1);}).join("، ") +'</div>'+
-            '<div>روش پرداخت اصلی: '+ (p.payment||"—") +'</div>'+
-            '<div>مبلغ قابل برگشت: '+(p.approvedRefundAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+            '<div class="muted">'+L("drv.items")+ (p.items||[]).map(function(it){return (it.name||"")+" × "+(it.qty||1);}).join(MAHOPageLang.current()==="en"?", ":"، ") +'</div>'+
+            '<div>'+L("drv.pay")+ (p.payment||"—") +'</div>'+
+            '<div>'+L("drv.refundAmt")+money(p.approvedRefundAmount||0)+'</div>'+
             maps+
             photoBlock+
             confirmBlock+
@@ -159,32 +226,32 @@
         }).join("");
       }).catch(function(e){
         $("#returnsCount").textContent="0";
-        $("#returnList").innerHTML="<p class='err'>"+((e&&e.message)||"خطا در بارگذاری برگشتی‌ها")+"</p>";
+        $("#returnList").innerHTML="<p class='err'>"+(e&&e.message&&!/^[a-z0-9_]+$/i.test(e.message)?e.message:L("drv.loadReturns"))+"</p>";
       });
     }
     function cardHtml(o, done){
       var loc=o.customerLocation||{};
-      var maps=loc.mapsUrl?('<a class="btn btn-outline" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">نقشه / Google Maps</a>'):"";
-      var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join("، ");
+      var maps=loc.mapsUrl?('<a class="btn btn-outline" target="_blank" rel="noopener" href="'+loc.mapsUrl+'">'+L("drv.maps")+'</a>'):"";
+      var items=(o.items||[]).map(function(it){return it.name+" × "+it.qty}).join(MAHOPageLang.current()==="en"?", ":"، ");
       var st=o.driverStatus||"assigned";
       var badgeCls=st==="delivered"?"done":(st==="failed"?"fail":"");
       var acts="";
       if(!done){
         acts='<div class="acts">'+maps+
-          '<button class="btn btn-outline" data-st="picked_up">دریافت‌شده</button>'+
-          '<button class="btn btn-outline" data-st="in_transit">در مسیر</button>'+
-          '<button class="btn btn-gold" data-st="delivered">تحویل‌شده</button>'+
-          '<button class="btn btn-danger" data-st="failed">ناموفق</button></div>'+
-          '<div style="margin-top:8px"><label class="muted">یادداشت / دلیل</label><input class="note" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line)" placeholder="برای ناموفق اجباری">'+
-          '<label class="muted">عکس اثبات (اختیاری)</label><input type="file" class="proof" accept="image/*" capture="environment"></div>';
+          '<button class="btn btn-outline" data-st="picked_up">'+L("drv.picked")+'</button>'+
+          '<button class="btn btn-outline" data-st="in_transit">'+L("drv.transit")+'</button>'+
+          '<button class="btn btn-gold" data-st="delivered">'+L("drv.delivered")+'</button>'+
+          '<button class="btn btn-danger" data-st="failed">'+L("drv.fail")+'</button></div>'+
+          '<div style="margin-top:8px"><label class="muted">'+L("drv.note").replace(/:\s*$/,"")+'</label><input class="note" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line)" placeholder="'+L("drv.notePh")+'">'+
+          '<label class="muted">'+L("drv.proof")+'</label><input type="file" class="proof" accept="image/*" capture="environment"></div>';
       } else {
         acts=maps?'<div class="acts">'+maps+'</div>':"";
       }
       return '<div class="card" data-mission-type="delivery" data-oid="'+o.id+'"><span class="mission-type">delivery</span><div><b dir="ltr">#'+o.id+'</b> · <span class="badge '+badgeCls+'" data-status-badge>'+statusLabel(st)+'</span></div>'+
         '<div>'+(o.customer&&o.customer.name||"")+' · <span dir="ltr">'+(o.customer&&o.customer.phone||"")+'</span></div>'+
         '<div class="muted">'+(o.customer&&o.customer.address||"")+'</div>'+
-        '<div class="muted">اقلام: '+items+'</div>'+
-        '<div>مبلغ قابل دریافت: '+(o.collectAmount||0).toLocaleString("en-US")+' افغانی</div>'+
+        '<div class="muted">'+L("drv.items")+items+'</div>'+
+        '<div>'+L("drv.collect")+money(o.collectAmount||0)+'</div>'+
         acts+'<p class="muted msg"></p></div>';
     }
     function render(res){
@@ -197,12 +264,12 @@
       $("#deliveryCount").textContent=String(active.length + done.length);
       $("#activeList").innerHTML=active.length
         ? active.map(function(o){return cardHtml(o,false);}).join("")
-        : "<p class='empty'>سفارشی برای تحویل موجود نیست</p>";
+        : "<p class='empty'>"+L("drv.noDelivery")+"</p>";
       $("#doneTitle").hidden=!done.length;
       $("#doneList").innerHTML=done.map(function(o){return cardHtml(o,true);}).join("");
     }
     function setCardBusy(card, on, label){
-      card.querySelectorAll("button[data-st]").forEach(function(b){ b.disabled=!!on; if(on&&b.getAttribute("data-st")==="delivered") b.textContent=label||"در حال ثبت…"; });
+      card.querySelectorAll("button[data-st]").forEach(function(b){ b.disabled=!!on; if(on&&b.getAttribute("data-st")==="delivered") b.textContent=label||L("drv.saving"); });
     }
     function applyLocalStatus(card, st){
       var badge=card.querySelector("[data-status-badge]");
@@ -214,7 +281,7 @@
     $("#loginBtn").onclick=function(){
       MAHOApi.driverLogin({ id: $("#loginId").value.trim(), password: $("#loginPass").value })
         .then(function(d){ $("#who").textContent=d.name||""; openApp(); })
-        .catch(function(e){ $("#gateMsg").textContent=e.message||"ورود ناموفق"; });
+        .catch(function(e){ $("#gateMsg").textContent=e.message||L("drv.loginFail"); });
     };
     $("#logoutBtn").onclick=function(){ MAHOApi.driverLogout().then(function(){ location.reload(); }); };
     $("#app").addEventListener("click",function(e){
@@ -226,26 +293,26 @@
         var msg=card&&card.querySelector(".msg");
         if(retPhoto){
           var file=card.querySelector(".ret-photo")&&card.querySelector(".ret-photo").files[0];
-          if(!file){ if(msg){ msg.className="err"; msg.textContent="عکس انتخاب نشده"; } return; }
+          if(!file){ if(msg){ msg.className="err"; msg.textContent=L("drv.noPhoto"); } return; }
           var fd=new FormData(); fd.append("file", file);
           var headers={ Accept:"application/json" };
           var t=MAHOApi.getToken("driver"); if(t) headers.Authorization="Bearer "+t;
           fetch("/api/driver/return-pickups/"+encodeURIComponent(retPhoto)+"/photo",{ method:"POST", headers:headers, body:fd })
             .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
-            .then(function(x){ if(msg){ msg.className=x.ok?"ok":"err"; msg.textContent=x.ok?"عکس آپلود شد":((x.d&&x.d.error)||"خطا"); } });
+            .then(function(x){ if(msg){ msg.className=x.ok?"ok":"err"; msg.textContent=x.ok?L("drv.uploaded"):((x.d&&x.d.error)||L("drv.err")); } });
           return;
         }
         if(retConfirm){
-          if(!confirm("تأیید دریافت کالای برگشتی؟")) return;
+          if(!confirm(L("drv.confirmGet"))) return;
           var btnC = e.target.closest("[data-ret-confirm]");
-          if(btnC){ btnC.disabled=true; btnC.textContent="در حال ثبت…"; }
+          if(btnC){ btnC.disabled=true; btnC.textContent=L("drv.saving"); }
           MAHOApi.request("/api/driver/return-pickups/"+encodeURIComponent(retConfirm)+"/confirm",{ method:"POST", body:{}, token:MAHOApi.getToken("driver") })
-            .then(function(){ if(msg){ msg.className="ok"; msg.textContent="ثبت شد"; } loadReturnPickups(); })
+            .then(function(){ if(msg){ msg.className="ok"; msg.textContent=L("drv.saved"); } loadReturnPickups(); })
             .catch(function(err){
-              var m=(err&&err.message)||"خطا";
+              var m=(err&&err.message)||L("drv.err");
               var data=err&&err.data;
               if((data&&data.error==="already_collected") || /already_collected|قبلاً دریافت/i.test(m)) {
-                m=(data&&data.message)||"این کالا قبلاً دریافت شده است.";
+                m=(data&&data.message)||L("drv.already");
               }
               if(msg){ msg.className="err"; msg.textContent=m; }
               loadReturnPickups();
@@ -253,10 +320,10 @@
           return;
         }
         if(cash){
-          if(!confirm("پرداخت نقدی به مشتری تأیید شود؟ مبلغ تغییر نمی‌کند.")) return;
+          if(!confirm(L("drv.confirmCash"))) return;
           MAHOApi.request("/api/driver/return-pickups/"+encodeURIComponent(cash)+"/cash-refund",{ method:"POST", body:{}, token:MAHOApi.getToken("driver") })
-            .then(function(){ if(msg){ msg.className="ok"; msg.textContent="Refund نقدی ثبت شد"; } loadReturnPickups(); })
-            .catch(function(err){ if(msg){ msg.className="err"; msg.textContent=(err&&err.message)||"خطا"; } });
+            .then(function(){ if(msg){ msg.className="ok"; msg.textContent=L("drv.cashSaved"); } loadReturnPickups(); })
+            .catch(function(err){ if(msg){ msg.className="err"; msg.textContent=(err&&err.message)||L("drv.err"); } });
           return;
         }
       }
@@ -266,19 +333,19 @@
       var st=btn.getAttribute("data-st");
       var note=(card.querySelector(".note")&&card.querySelector(".note").value||"").trim();
       var msg=card.querySelector(".msg");
-      if(st==="failed" && !note){ msg.className="err"; msg.textContent="دلیل تحویل ناموفق لازم است"; return; }
+      if(st==="failed" && !note){ msg.className="err"; msg.textContent=L("drv.needFail"); return; }
       var file=card.querySelector(".proof")&&card.querySelector(".proof").files[0];
       busy=true;
-      setCardBusy(card, true, st==="delivered"?"در حال ثبت تحویل…":"در حال ثبت…");
-      msg.className="muted"; msg.textContent="در حال ارسال…";
+      setCardBusy(card, true, st==="delivered"?L("drv.savingDelivery"):L("drv.saving"));
+      msg.className="muted"; msg.textContent=L("drv.sending");
       var go=function(){
         return MAHOApi.driverSetStatus(id,{ status:st, note:note, reason:note }).then(function(res){
           var ord=(res&&res.order)||{ driverStatus:st, id:id };
           applyLocalStatus(card, ord.driverStatus||st);
           if(res && res.noop){
-            msg.className="ok"; msg.textContent=res.message||"این وضعیت قبلاً ثبت شده است.";
+            msg.className="ok"; msg.textContent=res.message||L("drv.alreadyStatus");
           } else {
-            msg.className="ok"; msg.textContent="ثبت شد ✓";
+            msg.className="ok"; msg.textContent=L("drv.savedOk");
           }
           return reloadOrders();
         });
@@ -290,8 +357,8 @@
         busy=false;
         setCardBusy(card, false);
         var deliveredBtn=card.querySelector('[data-st="delivered"]');
-        if(deliveredBtn) deliveredBtn.textContent="تحویل‌شده";
-        msg.className="err"; msg.textContent=(err&&err.message)||"خطا — وضعیت قبلی حفظ شد";
+        if(deliveredBtn) deliveredBtn.textContent=L("drv.delivered");
+        msg.className="err"; msg.textContent=(err&&err.message)||L("drv.kept");
       });
     });
     if(MAHOApi.getToken("driver")) openApp();

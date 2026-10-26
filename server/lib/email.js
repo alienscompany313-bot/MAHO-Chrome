@@ -304,11 +304,11 @@ function statusLabelFa(s) {
 
 function statusLabelEn(s) {
   const m = {
-    new: "Awaiting confirmation", pending: "Awaiting confirmation", confirmed: "Confirmed",
+    new: "Awaiting Confirmation", pending: "Awaiting Confirmation", confirmed: "Confirmed",
     dispatched: "Dispatched", delivered: "Delivered", cancelled: "Cancelled",
-    awaiting_payment: "Awaiting payment", receipt_submitted: "Receipt submitted",
-    under_review: "Under review", payment_confirmed: "Payment confirmed",
-    payment_rejected: "Payment rejected", return_requested: "Return requested",
+    awaiting_payment: "Awaiting Payment", receipt_submitted: "Receipt Submitted",
+    under_review: "Under Review", payment_confirmed: "Payment Confirmed",
+    payment_rejected: "Payment Rejected", return_requested: "Return Requested",
   };
   return m[s] || String(s || "—").replace(/_/g, " ");
 }
@@ -364,7 +364,8 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
     return send(to, "MAHO Market — کود تأیید حساب", html, `کود تأیید: ${code}\nاعتبار: ۱۰ دقیقه\n${supportContactText(getStorePhone(), "fa")}`);
   }
 
-  function welcome(to, { name, email }) {
+  function welcome(to, { name, email, attachments } = {}) {
+    const files = Array.isArray(attachments) ? attachments : [];
     const html = wrap({
       title: "به MAHO خوش آمدید",
       preheader: "حساب شما تأیید شد",
@@ -373,11 +374,13 @@ ${supportContactHtml(getStorePhone(), "fa")}`,
 <p>حساب شما با موفقیت ساخته و تأیید شد.</p>
 <p>ایمیل ورود شما: <strong dir="ltr">${escapeHtml(email || to)}</strong></p>
 <p>رمز عبور شما با موفقیت تنظیم شد. برای امنیت، رمز را نزد خود نگه دارید — ما هرگز رمز را در ایمیل نمی‌فرستیم.</p>
+<p>قوانین پذیرفته‌شده: <a href="${escapeHtml((siteUrl || "https://mahomarket.com") + "/terms")}">قوانین</a> · <a href="${escapeHtml((siteUrl || "https://mahomarket.com") + "/privacy")}">حریم خصوصی</a></p>
+${files.length ? "<p>نسخهٔ PDF پذیرفته‌شده به همین ایمیل پیوست شده است.</p>" : ""}
 ${ctaBtn((siteUrl || "https://mahomarket.com") + "/#account", "ورود به حساب")}
 ${ctaBtn((siteUrl || "https://mahomarket.com") + "/#products", "ادامهٔ خرید")}
 ${supportContactHtml(getStorePhone(), "fa")}`,
     });
-    return send(to, "MAHO Market — خوش آمدید", html);
+    return send(to, "MAHO Market — خوش آمدید", html, null, { attachments: files });
   }
 
   function passwordReset(to, { resetUrl, name }) {
@@ -519,19 +522,19 @@ ${ctaBtn((siteUrl || "https://mahomarket.com").replace(/\/+$/, "") + "/admin.htm
       under_review: "پرداخت در حال بررسی",
     };
     const titlesEn = {
-      confirmed: "Order confirmed",
-      dispatched: "Order dispatched",
-      delivered: "Order delivered",
-      cancelled: "Order cancelled",
-      return_requested: "Return requested",
-      return_approved: "Return approved",
-      return_rejected: "Return rejected",
-      return_completed: "Return completed",
-      payment_confirmed: "Payment confirmed",
-      payment_rejected: "Payment rejected",
-      awaiting_payment: "Awaiting payment",
-      receipt_submitted: "Receipt received",
-      under_review: "Payment under review",
+      confirmed: "Order Confirmed",
+      dispatched: "Order Dispatched",
+      delivered: "Order Delivered",
+      cancelled: "Order Cancelled",
+      return_requested: "Return Requested",
+      return_approved: "Return Approved",
+      return_rejected: "Return Rejected",
+      return_completed: "Return Completed",
+      payment_confirmed: "Payment Confirmed",
+      payment_rejected: "Payment Rejected",
+      awaiting_payment: "Awaiting Payment",
+      receipt_submitted: "Receipt Received",
+      under_review: "Payment under Review",
     };
     const titles = isEn ? titlesEn : titlesFa;
     const title = titles[order.status] || titles[order.paymentStatus] || (isEn ? "Order update" : "به‌روزرسانی سفارش");

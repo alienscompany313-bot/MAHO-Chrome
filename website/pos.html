@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>POS | MAHO</title>
+  <title data-i18n="pos.docTitle">POS | MAHO</title>
   <meta name="robots" content="noindex">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/page-lang.js"></script>
   <style>
     :root{--black:#141414;--gold:#c8a35f;--cream:#fbf8f1;--line:#e6e0d4;--ink:#23201a;--muted:#7a7368;--red:#c62828;--green:#2e7d32;--radius:14px}
     *{box-sizing:border-box}
@@ -24,7 +25,7 @@
     .card h2{margin:0 0 10px;font-size:18px}
     .scan{display:flex;gap:8px;flex-wrap:wrap}
     .scan input,.field input,.field select{flex:1;min-width:160px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit}
-    table{width:100%;border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid var(--line);font-size:13px;text-align:right}
+    table{width:100%;border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid var(--line);font-size:13px;text-align:start}
     .muted{color:var(--muted);font-size:13px}.ok{color:var(--green);font-weight:700}.err{color:var(--red);font-weight:700}
     .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
     .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font:700 12px inherit;cursor:pointer;min-height:40px}
@@ -51,13 +52,14 @@
   <div class="gate" id="gate">
     <div class="box">
       <div style="font-size:24px;font-weight:800;color:var(--gold)">MAHO POS</div>
-      <p class="muted" style="color:#b9b3a6">ورود مستقیم کارمند فروش — بدون نیاز به پنل مدیریت</p>
-      <input id="posLoginId" placeholder="ایمیل / نام کاربری کارمند" dir="ltr">
-      <input id="posPass" type="password" placeholder="رمز عبور" dir="ltr">
-      <button class="btn btn-gold" style="width:100%" id="posLoginBtn">ورود به POS</button>
+      <p class="muted" style="color:#b9b3a6" data-i18n="pos.lead">ورود مستقیم کارمند فروش — بدون نیاز به پنل مدیریت</p>
+      <input id="posLoginId" data-i18n-ph="pos.idPh" placeholder="ایمیل / نام کاربری کارمند" dir="ltr">
+      <input id="posPass" type="password" data-i18n-ph="pos.passPh" placeholder="رمز عبور" dir="ltr">
+      <button class="btn btn-gold" style="width:100%" id="posLoginBtn" data-i18n="pos.enter">ورود به POS</button>
       <p class="err" id="gateMsg"></p>
-      <p class="muted" style="color:#b9b3a6;font-size:12px;margin-top:10px">مدیر اصلی: ایمیل را خالی بگذارید یا Owner بنویسید و رمز ADMIN را وارد کنید.</p>
-      <a class="btn btn-ghost btn-sm" href="index.html" style="display:inline-block;margin-top:8px">بازگشت به سایت</a>
+      <p class="muted" style="color:#b9b3a6;font-size:12px;margin-top:10px" data-i18n="pos.ownerHint">مدیر اصلی: ایمیل را خالی بگذارید یا Owner بنویسید و رمز ADMIN را وارد کنید.</p>
+      <button type="button" class="btn btn-ghost btn-sm" data-lang-toggle style="margin-top:8px">English</button>
+      <a class="btn btn-ghost btn-sm" href="index.html" style="display:inline-block;margin-top:8px" data-i18n="pos.back">بازگشت به سایت</a>
     </div>
   </div>
 
@@ -65,104 +67,105 @@
     <div class="brand">MAHO POS <small id="who">—</small></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <span class="muted" style="color:#ccc" id="shiftInfo">شیفت: —</span>
-      <button class="btn btn-ghost btn-sm" id="logoutBtn">خروج از POS</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-lang-toggle>English</button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" data-i18n="pos.logout">خروج از POS</button>
     </div>
   </div>
 
   <div class="wrap no-print" id="app" hidden>
     <div class="card">
       <div class="tabs" id="tabs">
-        <button type="button" class="tab active" data-tab="sale">فروش</button>
-        <button type="button" class="tab" data-tab="return">برگشت</button>
-        <button type="button" class="tab" data-tab="shift">صندوق</button>
-        <button type="button" class="tab" data-tab="labels">بارکد / لیبل</button>
-        <button type="button" class="tab" data-tab="reports">گزارش‌ها</button>
+        <button type="button" class="tab active" data-tab="sale" data-i18n="pos.tabSale">فروش</button>
+        <button type="button" class="tab" data-tab="return" data-i18n="pos.tabReturn">برگشت</button>
+        <button type="button" class="tab" data-tab="shift" data-i18n="pos.tabShift">صندوق</button>
+        <button type="button" class="tab" data-tab="labels" data-i18n="pos.tabLabels">بارکد / لیبل</button>
+        <button type="button" class="tab" data-tab="reports" data-i18n="pos.tabReports">گزارش‌ها</button>
       </div>
 
       <div class="panel active" id="panel-sale">
-        <h2>فروش حضوری</h2>
+        <h2 data-i18n="pos.saleTitle">فروش حضوری</h2>
         <div class="scan">
-          <input id="scanInput" dir="ltr" placeholder="اسکن بارکد یا جستجوی نام / SKU" autocomplete="off">
-          <button class="btn btn-outline" type="button" id="searchBtn">جستجو</button>
+          <input id="scanInput" dir="ltr" data-i18n-ph="pos.scanPh" placeholder="اسکن بارکد یا جستجوی نام / SKU" autocomplete="off">
+          <button class="btn btn-outline" type="button" id="searchBtn" data-i18n="pos.search">جستجو</button>
         </div>
         <div class="scan" style="margin-top:8px">
-          <select id="prodCat" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1.5px solid var(--line)"><option value="">همه دسته‌ها</option></select>
+          <select id="prodCat" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1.5px solid var(--line)"><option value="" data-i18n="pos.allCats">همه دسته‌ها</option></select>
           <select id="prodStock" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1.5px solid var(--line)">
-            <option value="">همه موجودی‌ها</option>
-            <option value="in">موجود</option>
-            <option value="low">کم‌موجودی</option>
-            <option value="out">ناموجود</option>
+            <option value="" data-i18n="pos.allStock">همه موجودی‌ها</option>
+            <option value="in" data-i18n="pos.in">موجود</option>
+            <option value="low" data-i18n="pos.low">کم‌موجودی</option>
+            <option value="out" data-i18n="pos.out">ناموجود</option>
           </select>
-          <button class="btn btn-outline" type="button" id="reloadCatalogBtn">بارگذاری محصولات</button>
+          <button class="btn btn-outline" type="button" id="reloadCatalogBtn" data-i18n="pos.reload">بارگذاری محصولات</button>
         </div>
         <div id="prodGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0;max-height:280px;overflow:auto"></div>
         <div id="hits" style="margin-top:8px"></div>
-        <table><thead><tr><th>کالا</th><th>تعداد</th><th>قیمت</th><th></th></tr></thead><tbody id="cartBody"></tbody></table>
-        <div class="field" style="margin-top:8px"><label class="muted">تخفیف مبلغی</label><input id="saleDisc" type="number" min="0" value="0" dir="ltr"></div>
-        <div class="field"><label class="muted">روش پرداخت</label>
-          <select id="salePay"><option value="cash">نقدی</option><option value="card">کارت</option><option value="hesab">حساب‌پی</option><option value="other">سایر</option></select>
+        <table><thead><tr><th data-i18n="pos.colItem">کالا</th><th data-i18n="pos.colQty">تعداد</th><th data-i18n="pos.colPrice">قیمت</th><th></th></tr></thead><tbody id="cartBody"></tbody></table>
+        <div class="field" style="margin-top:8px"><label class="muted" data-i18n="pos.disc">تخفیف مبلغی</label><input id="saleDisc" type="number" min="0" value="0" dir="ltr"></div>
+        <div class="field"><label class="muted" data-i18n="pos.pay">روش پرداخت</label>
+          <select id="salePay"><option value="cash" data-i18n="pos.cash">نقدی</option><option value="card" data-i18n="pos.card">کارت</option><option value="hesab" data-i18n="pos.hesab">حساب‌پی</option><option value="other" data-i18n="pos.other">سایر</option></select>
         </div>
-        <div class="field"><label class="muted">مشتری (اختیاری)</label><input id="saleCust" placeholder="نام / نمبر"></div>
+        <div class="field"><label class="muted" data-i18n="pos.cust">مشتری (اختیاری)</label><input id="saleCust" data-i18n-ph="pos.custPh" placeholder="نام / نمبر"></div>
         <div class="muted" id="cashierLine">فروشنده: —</div>
-        <div class="tot" id="saleTotal">۰ افغانی</div>
-        <button class="btn btn-gold" id="checkoutBtn" type="button">ثبت فروش</button>
+        <div class="tot" id="saleTotal">0</div>
+        <button class="btn btn-gold" id="checkoutBtn" type="button" data-i18n="pos.checkout">ثبت فروش</button>
         <p class="muted" id="saleMsg"></p>
       </div>
 
       <div class="panel" id="panel-return">
-        <h2>برگشت / تعویض حضوری</h2>
+        <h2 data-i18n="pos.returnTitle">برگشت / تعویض حضوری</h2>
         <div class="scan">
-          <input id="retSaleId" dir="ltr" placeholder="نمبر فاکتور POS-...">
-          <button class="btn btn-outline" type="button" id="loadSaleBtn">بارگذاری</button>
+          <input id="retSaleId" dir="ltr" data-i18n-ph="pos.receiptPh" placeholder="نمبر فاکتور POS-...">
+          <button class="btn btn-outline" type="button" id="loadSaleBtn" data-i18n="pos.load">بارگذاری</button>
         </div>
         <div id="retItems"></div>
-        <div class="field"><label class="muted">دلیل</label><input id="retReason"></div>
-        <div class="field"><label class="muted">حالت</label>
-          <select id="retMode"><option value="refund">Refund</option><option value="exchange">Exchange</option></select>
+        <div class="field"><label class="muted" data-i18n="pos.reason">دلیل</label><input id="retReason"></div>
+        <div class="field"><label class="muted" data-i18n="pos.mode">حالت</label>
+          <select id="retMode"><option value="refund" data-i18n="pos.refund">Refund</option><option value="exchange" data-i18n="pos.exchange">Exchange</option></select>
         </div>
-        <button class="btn btn-gold" id="retSubmit" type="button">ثبت برگشت</button>
+        <button class="btn btn-gold" id="retSubmit" type="button" data-i18n="pos.returnSubmit">ثبت برگشت</button>
         <p class="muted" id="retMsg"></p>
       </div>
 
       <div class="panel" id="panel-shift">
-        <h2>صندوق و Shift</h2>
-        <div class="field"><label class="muted">موجودی آغاز</label><input id="openCash" type="number" dir="ltr" value="0"></div>
-        <button class="btn btn-gold" id="openShiftBtn" type="button">بازکردن Shift</button>
+        <h2 data-i18n="pos.shiftTitle">صندوق و Shift</h2>
+        <div class="field"><label class="muted" data-i18n="pos.openCash">موجودی آغاز</label><input id="openCash" type="number" dir="ltr" value="0"></div>
+        <button class="btn btn-gold" id="openShiftBtn" type="button" data-i18n="pos.openShift">بازکردن Shift</button>
         <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
-        <div class="field"><label class="muted">Cash In / Out (+/-)</label><input id="cashAmt" type="number" dir="ltr"></div>
-        <div class="field"><label class="muted">یادداشت</label><input id="cashNote"></div>
-        <button class="btn btn-outline" id="cashMoveBtn" type="button">ثبت حرکت نقد</button>
+        <div class="field"><label class="muted" data-i18n="pos.cashIo">Cash In / Out (+/-)</label><input id="cashAmt" type="number" dir="ltr"></div>
+        <div class="field"><label class="muted" data-i18n="pos.note">یادداشت</label><input id="cashNote"></div>
+        <button class="btn btn-outline" id="cashMoveBtn" type="button" data-i18n="pos.cashMove">ثبت حرکت نقد</button>
         <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
-        <div class="field"><label class="muted">مبلغ واقعی بستن</label><input id="closeCash" type="number" dir="ltr"></div>
-        <button class="btn btn-danger" id="closeShiftBtn" type="button">بستن Shift</button>
+        <div class="field"><label class="muted" data-i18n="pos.closeCash">مبلغ واقعی بستن</label><input id="closeCash" type="number" dir="ltr"></div>
+        <button class="btn btn-danger" id="closeShiftBtn" type="button" data-i18n="pos.closeShift">بستن Shift</button>
         <p class="muted" id="shiftMsg"></p>
       </div>
 
       <div class="panel" id="panel-labels">
-        <h2>چاپ بارکد کالا</h2>
+        <h2 data-i18n="pos.labelTitle">چاپ بارکد کالا</h2>
         <div class="scan">
-          <input id="labelQ" placeholder="جستجوی کالا برای لیبل">
-          <button class="btn btn-outline" type="button" id="labelSearch">جستجو</button>
+          <input id="labelQ" data-i18n-ph="pos.labelPh" placeholder="جستجوی کالا برای لیبل">
+          <button class="btn btn-outline" type="button" id="labelSearch" data-i18n="pos.search">جستجو</button>
         </div>
         <div id="labelHits"></div>
-        <div class="field"><label class="muted">اندازه لیبل</label>
-          <select id="labelSize"><option value="58">۵۸mm</option><option value="80">۸۰mm</option><option value="a4">A4</option></select>
+        <div class="field"><label class="muted" data-i18n="pos.labelSize">اندازه لیبل</label>
+          <select id="labelSize"><option value="58">58mm</option><option value="80">80mm</option><option value="a4">A4</option></select>
         </div>
-        <button class="btn btn-gold" type="button" id="printLabelsBtn">چاپ لیبل‌های انتخاب‌شده</button>
+        <button class="btn btn-gold" type="button" id="printLabelsBtn" data-i18n="pos.print">چاپ لیبل‌های انتخاب‌شده</button>
       </div>
 
       <div class="panel" id="panel-reports">
-        <h2>گزارش‌ها</h2>
-        <button class="btn btn-outline" type="button" id="loadReportBtn">بارگذاری گزارش</button>
-        <button class="btn btn-outline" type="button" id="exportReportCsv">خروجی CSV</button>
+        <h2 data-i18n="pos.reportTitle">گزارش‌ها</h2>
+        <button class="btn btn-outline" type="button" id="loadReportBtn" data-i18n="pos.loadReport">بارگذاری گزارش</button>
+        <button class="btn btn-outline" type="button" id="exportReportCsv" data-i18n="pos.csv">خروجی CSV</button>
         <pre id="reportBox" style="white-space:pre-wrap;background:#fbf8f1;padding:12px;border-radius:12px;font-size:12px;overflow:auto;max-height:60vh"></pre>
       </div>
     </div>
 
     <div class="card">
-      <h2>سبد فعال</h2>
-      <p class="muted">اسکنر USB/Bluetooth مانند کیبورد: فوکوس روی فیلد اسکن، سپس بارکد + Enter.</p>
-      <div id="liveCart" class="muted">خالی</div>
+      <h2 data-i18n="pos.cartTitle">سبد فعال</h2>
+      <p class="muted" data-i18n="pos.scanHelp">اسکنر USB/Bluetooth مانند کیبورد: فوکوس روی فیلد اسکن، سپس بارکد + Enter.</p>
+      <div id="liveCart" class="muted" data-i18n="pos.empty">خالی</div>
       <div id="recentSales" style="margin-top:16px"></div>
     </div>
   </div>
@@ -171,9 +174,88 @@
 
   <script>
   (function(){
-    var cart=[], shiftId=null, selectedLabels=[], loadedSale=null;
+    var cart=[], shiftId=null, selectedLabels=[], loadedSale=null, cashierName="", gateKey="";
+    var LANGPACK={
+      fa:{
+        "pos.docTitle":"صندوق فروش | MAHO",
+        "pos.lead":"ورود مستقیم کارمند فروش — بدون نیاز به پنل مدیریت",
+        "pos.idPh":"ایمیل / نام کاربری کارمند",
+        "pos.passPh":"رمز عبور",
+        "pos.enter":"ورود به POS",
+        "pos.ownerHint":"مدیر اصلی: ایمیل را خالی بگذارید یا Owner بنویسید و رمز ADMIN را وارد کنید.",
+        "pos.back":"بازگشت به سایت",
+        "pos.logout":"خروج از POS",
+        "pos.tabSale":"فروش","pos.tabReturn":"برگشت","pos.tabShift":"صندوق","pos.tabLabels":"بارکد / لیبل","pos.tabReports":"گزارش‌ها",
+        "pos.saleTitle":"فروش حضوری","pos.scanPh":"اسکن بارکد یا جستجوی نام / SKU","pos.search":"جستجو",
+        "pos.allCats":"همه دسته‌ها","pos.allStock":"همه موجودی‌ها","pos.in":"موجود","pos.low":"کم‌موجودی","pos.out":"ناموجود","pos.reload":"بارگذاری محصولات",
+        "pos.colItem":"کالا","pos.colQty":"تعداد","pos.colPrice":"قیمت","pos.disc":"تخفیف مبلغی","pos.pay":"روش پرداخت",
+        "pos.cash":"نقدی","pos.card":"کارت","pos.hesab":"حساب‌پی","pos.other":"سایر",
+        "pos.cust":"مشتری (اختیاری)","pos.custPh":"نام / نمبر","pos.checkout":"ثبت فروش",
+        "pos.returnTitle":"برگشت / تعویض حضوری","pos.receiptPh":"نمبر فاکتور POS-...","pos.load":"بارگذاری","pos.reason":"دلیل","pos.mode":"حالت",
+        "pos.refund":"بازپرداخت","pos.exchange":"تعویض","pos.returnSubmit":"ثبت برگشت",
+        "pos.shiftTitle":"صندوق و Shift","pos.openCash":"موجودی آغاز","pos.openShift":"بازکردن Shift","pos.cashIo":"ورود / خروج نقد (+/-)","pos.note":"یادداشت","pos.cashMove":"ثبت حرکت نقد","pos.closeCash":"مبلغ واقعی بستن","pos.closeShift":"بستن Shift",
+        "pos.labelTitle":"چاپ بارکد کالا","pos.labelPh":"جستجوی کالا برای لیبل","pos.labelSize":"اندازه لیبل","pos.print":"چاپ لیبل‌های انتخاب‌شده",
+        "pos.reportTitle":"گزارش‌ها","pos.loadReport":"بارگذاری گزارش","pos.csv":"خروجی CSV",
+        "pos.cartTitle":"سبد فعال","pos.scanHelp":"اسکنر USB/Bluetooth مانند کیبورد: فوکوس روی فیلد اسکن، سپس بارکد + Enter.","pos.empty":"خالی",
+        "pos.needPass":"رمز لازم است","pos.noAccess":"دسترسی ندارید","pos.loginFail":"ورود ناموفق","pos.noPos":"دسترسی POS ندارید یا حساب غیرفعال است",
+        "pos.stockN":"موجود: ","pos.noProducts":"محصولی نیست","pos.remove":"حذف","pos.outToast":"ناموجود","pos.over":"بیش از موجودی","pos.added":"افزوده شد",
+        "pos.stockLabel":"موجودی: ","pos.notFound":"موردی یافت نشد","pos.noBarcode":"بارکد پیدا نشد","pos.emptyCart":"سبد خالی است",
+        "pos.offline":"اینترنت قطع است — فروش ثبت نشد","pos.sold":"فروش ثبت شد: ","pos.seller":"فروشنده: ","pos.recent":"آخرین فروش‌ها",
+        "pos.noReceipt":"فاکتور یافت نشد","pos.returnQty":"تعداد برگشت: ","pos.loaded":"فاکتور بارگذاری شد","pos.loadFirst":"فاکتور را بارگذاری کنید","pos.returned":"برگشت ثبت شد: ",
+        "pos.shiftIdle":"شیفت: —","pos.shiftOpen":"شیفت باز: ","pos.shiftOpened":"شیفت باز شد","pos.cashOk":"حرکت نقد ثبت شد","pos.closed":"بسته شد — اختلاف: ","pos.cashier":"فروشنده: ",
+        "pos.noneSelected":"کالایی انتخاب نشده","pos.loadReportFirst":"ابتدا گزارش را بارگذاری کنید","pos.err":"خطا","pos.afn":"افغانی"
+      },
+      en:{
+        "pos.docTitle":"POS | MAHO",
+        "pos.lead":"Staff sign-in for the shop floor. The admin panel is not required.",
+        "pos.idPh":"Staff email / username",
+        "pos.passPh":"Password",
+        "pos.enter":"Sign In to POS",
+        "pos.ownerHint":"Owner: leave the email empty, or type Owner, and enter the admin password.",
+        "pos.back":"Back to the Site",
+        "pos.logout":"Sign Out of POS",
+        "pos.tabSale":"Sale","pos.tabReturn":"Return","pos.tabShift":"Till","pos.tabLabels":"Barcode / Label","pos.tabReports":"Reports",
+        "pos.saleTitle":"In-Store Sale","pos.scanPh":"Scan a barcode or search name / SKU","pos.search":"Search",
+        "pos.allCats":"All Categories","pos.allStock":"All Stock","pos.in":"In Stock","pos.low":"Low Stock","pos.out":"Out of Stock","pos.reload":"Load Products",
+        "pos.colItem":"Item","pos.colQty":"Qty","pos.colPrice":"Price","pos.disc":"Amount Discount","pos.pay":"Payment Method",
+        "pos.cash":"Cash","pos.card":"Card","pos.hesab":"HesabPay","pos.other":"Other",
+        "pos.cust":"Customer (Optional)","pos.custPh":"Name / phone","pos.checkout":"Record Sale",
+        "pos.returnTitle":"In-Store Return / Exchange","pos.receiptPh":"Receipt number POS-...","pos.load":"Load","pos.reason":"Reason","pos.mode":"Mode",
+        "pos.refund":"Refund","pos.exchange":"Exchange","pos.returnSubmit":"Record Return",
+        "pos.shiftTitle":"Till and Shift","pos.openCash":"Opening Cash","pos.openShift":"Open Shift","pos.cashIo":"Cash In / Out (+/-)","pos.note":"Note","pos.cashMove":"Record Cash Movement","pos.closeCash":"Counted Closing Cash","pos.closeShift":"Close Shift",
+        "pos.labelTitle":"Print Product Barcodes","pos.labelPh":"Search a product for a label","pos.labelSize":"Label Size","pos.print":"Print Selected Labels",
+        "pos.reportTitle":"Reports","pos.loadReport":"Load Report","pos.csv":"Export CSV",
+        "pos.cartTitle":"Current Cart","pos.scanHelp":"A USB or Bluetooth scanner types like a keyboard. Focus the scan field, then scan and press Enter.","pos.empty":"Empty",
+        "pos.needPass":"Password is required","pos.noAccess":"You do not have access","pos.loginFail":"Sign-in failed","pos.noPos":"No POS access, or the account is inactive",
+        "pos.stockN":"In stock: ","pos.noProducts":"No products","pos.remove":"Remove","pos.outToast":"Out of stock","pos.over":"More than the stock on hand","pos.added":"Added",
+        "pos.stockLabel":"Stock: ","pos.notFound":"Nothing matched","pos.noBarcode":"Barcode was not found","pos.emptyCart":"The cart is empty",
+        "pos.offline":"You are offline — the sale was not recorded","pos.sold":"Sale recorded: ","pos.seller":"Cashier: ","pos.recent":"Recent sales",
+        "pos.noReceipt":"Receipt was not found","pos.returnQty":"Return qty: ","pos.loaded":"Receipt loaded","pos.loadFirst":"Load the receipt first","pos.returned":"Return recorded: ",
+        "pos.shiftIdle":"Shift: —","pos.shiftOpen":"Shift open: ","pos.shiftOpened":"Shift opened","pos.cashOk":"Cash movement recorded","pos.closed":"Closed — difference: ","pos.cashier":"Cashier: ",
+        "pos.noneSelected":"No product selected","pos.loadReportFirst":"Load the report first","pos.err":"Something went wrong","pos.afn":"AFN"
+      }
+    };
     function $(s){return document.querySelector(s)}
-    function money(n){return (Number(n)||0).toLocaleString("en-US")+" افغانی"}
+    function L(k){ return window.MAHOPageLang.t(LANGPACK, k); }
+    function productTitle(p){ return (MAHOPageLang.current()==="en" && p && p.name_en) ? p.name_en : ((p&&p.name)||""); }
+    function money(n){ return (Number(n)||0).toLocaleString("en-US")+" "+L("pos.afn"); }
+    function paintShift(){ $("#shiftInfo").textContent = shiftId ? (L("pos.shiftOpen")+shiftId) : L("pos.shiftIdle"); }
+    function paintCashier(){ if($("#cashierLine")) $("#cashierLine").textContent = L("pos.cashier")+(cashierName||"—"); }
+    function paintGate(){ if(gateKey && $("#gateMsg")) $("#gateMsg").textContent = L(gateKey); }
+    function bindLang(){
+      MAHOPageLang.apply(LANGPACK);
+      document.querySelectorAll("[data-lang-toggle]").forEach(function(btn){
+        btn.onclick=function(){ MAHOPageLang.setLang(MAHOPageLang.current()==="en"?"fa":"en", LANGPACK); };
+      });
+    }
+    bindLang();
+    paintShift();
+    paintCashier();
+    document.addEventListener("maho:lang", function(){
+      bindLang();
+      paintShift(); paintCashier(); paintGate();
+      if(!$("#app").hidden){ renderCart(); loadCatalog(); refreshSales(); if(loadedSale) paintReturnItems(); }
+    });
     function toast(el,msg,ok){ if(!el)return; el.className=ok?"ok":"err"; el.textContent=msg||""; }
 
     function requirePos(){
@@ -181,8 +263,9 @@
       if(!tok) return Promise.reject(new Error("login"));
       if(MAHOApi.posMe) {
         return MAHOApi.posMe().then(function(me){
-          $("#who").textContent=(me.name||"")+(me.owner?" · Owner":"");
-          if($("#cashierLine")) $("#cashierLine").textContent="فروشنده: "+(me.name||"—");
+          cashierName=me.name||"";
+          $("#who").textContent=cashierName+(me.owner?" · Owner":"");
+          paintCashier();
           return me;
         });
       }
@@ -199,24 +282,25 @@
       $("#appTop").hidden=false; $("#app").hidden=false;
       requirePos().then(function(){ refreshSales(); loadCatalog(); $("#scanInput").focus(); }).catch(function(e){
         $("#gate").style.display="flex"; $("#appTop").hidden=true; $("#app").hidden=true;
-        $("#gateMsg").textContent=e.message||"دسترسی ندارید";
+        gateKey=/no_pos|forbidden|403/i.test((e&&e.message)||"") ? "pos.noPos" : "pos.noAccess";
+        paintGate();
       });
     }
 
     $("#posLoginBtn").onclick=function(){
       var pass=$("#posPass").value, id=$("#posLoginId").value.trim();
-      if(!pass){ $("#gateMsg").textContent="رمز لازم است"; return; }
+      if(!pass){ gateKey="pos.needPass"; paintGate(); return; }
       var p = MAHOApi.posLogin
         ? MAHOApi.posLogin({ id: id || "owner", password: pass })
         : (id && MAHOApi.staffLogin ? MAHOApi.staffLogin({ id:id, password:pass }) : MAHOApi.adminLogin(pass));
       p.then(function(res){
+        cashierName=(res&&res.name)||"";
         if(res && res.name) $("#who").textContent=res.name+(res.staffId?" · "+res.staffId.slice(0,8):" · Owner");
-        if($("#cashierLine")) $("#cashierLine").textContent="فروشنده: "+((res&&res.name)||"—");
+        paintCashier();
         openApp();
       }).catch(function(err){
-        var msg=(err&&err.message)||"ورود ناموفق";
-        if(/no_pos|forbidden|403/i.test(msg)) msg="دسترسی POS ندارید یا حساب غیرفعال است";
-        $("#gateMsg").textContent=msg;
+        gateKey=/no_pos|forbidden|403/i.test((err&&err.message)||"") ? "pos.noPos" : "pos.loginFail";
+        paintGate();
       });
     };
     if(MAHOApi.getToken("pos")||MAHOApi.getToken("admin")) openApp();
@@ -231,18 +315,18 @@
         var list=res.products||[];
         var cats=res.categories||[];
         var sel=$("#prodCat"), cur=sel.value;
-        sel.innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>'}).join("");
+        sel.innerHTML='<option value="">'+L("pos.allCats")+'</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>'}).join("");
         sel.value=cur;
         $("#prodGrid").innerHTML=list.map(function(p,i){
           var st=p.stockStatus||"unknown";
-          var badge=st==="out"?"ناموجود":(st==="low"?"کم‌موجودی":(p.stock!=null?("موجود: "+p.stock):"—"));
+          var badge=st==="out"?L("pos.out"):(st==="low"?L("pos.low"):(p.stock!=null?(L("pos.stockN")+p.stock):"—"));
           var bg=st==="out"?"#fdecec":(st==="low"?"#fff4e0":"#fff");
           var img=p.image?('<img src="'+p.image+'" alt="" style="width:100%;height:90px;object-fit:cover;border-radius:8px">'):"";
-          return '<button type="button" class="hit" data-pi="'+i+'" style="display:block;text-align:right;background:'+bg+';width:100%;border:1px solid var(--line)">'+
-            img+'<b>'+p.name+'</b><div class="muted">'+(p.name_en||"")+'</div>'+
+          return '<button type="button" class="hit" data-pi="'+i+'" style="display:block;text-align:start;background:'+bg+';width:100%;border:1px solid var(--line)">'+
+            img+'<b>'+productTitle(p)+'</b><div class="muted">'+(MAHOPageLang.current()==="en"?(p.name||""):(p.name_en||""))+'</div>'+
             '<div class="muted" dir="ltr">'+(p.code||p.sku||"")+(p.barcode?" · "+p.barcode:"")+'</div>'+
             '<div>'+money(p.price)+' · <span class="'+(st==="out"?"err":(st==="low"?"err":"ok"))+'">'+badge+'</span></div></button>';
-        }).join("")||"<p class='muted'>محصولی نیست</p>";
+        }).join("")||"<p class='muted'>"+L("pos.noProducts")+"</p>";
         $("#prodGrid")._list=list;
       });
     }
@@ -266,39 +350,39 @@
 
     function renderCart(){
       var body=$("#cartBody"), live=$("#liveCart");
-      if(!cart.length){ body.innerHTML=""; live.textContent="خالی"; $("#saleTotal").textContent=money(0); return; }
+      if(!cart.length){ body.innerHTML=""; live.textContent=L("pos.empty"); $("#saleTotal").textContent=money(0); return; }
       body.innerHTML=cart.map(function(it,i){
-        return "<tr><td>"+it.name+"<div class='muted' dir='ltr'>"+(it.code||"")+"</div></td>"+
+        return "<tr><td>"+productTitle(it)+"<div class='muted' dir='ltr'>"+(it.code||"")+"</div></td>"+
           "<td><input data-i='"+i+"' class='qty' type='number' min='1' value='"+it.qty+"' style='width:64px' dir='ltr'></td>"+
           "<td>"+money(it.price*it.qty)+"</td>"+
-          "<td><button class='btn btn-danger btn-sm' data-rm='"+i+"'>حذف</button></td></tr>";
+          "<td><button class='btn btn-danger btn-sm' data-rm='"+i+"'>"+L("pos.remove")+"</button></td></tr>";
       }).join("");
-      live.innerHTML=cart.map(function(it){return it.name+" × "+it.qty}).join("<br>");
+      live.innerHTML=cart.map(function(it){return productTitle(it)+" × "+it.qty}).join("<br>");
       var disc=Number($("#saleDisc").value)||0;
       var tot=cart.reduce(function(s,it){return s+it.price*it.qty},0)-disc;
       $("#saleTotal").textContent=money(Math.max(0,tot));
     }
 
     function addProduct(p){
-      if(p.stock!=null && Number(p.stock)<=0){ toast($("#saleMsg"),"ناموجود",false); return; }
+      if(p.stock!=null && Number(p.stock)<=0){ toast($("#saleMsg"),L("pos.outToast"),false); return; }
       var ex=cart.find(function(x){return (x.code&&p.code&&x.code===p.code)||x.name===p.name});
       if(ex){
-        if(p.stock!=null && ex.qty+1>Number(p.stock)){ toast($("#saleMsg"),"بیش از موجودی",false); return; }
+        if(p.stock!=null && ex.qty+1>Number(p.stock)){ toast($("#saleMsg"),L("pos.over"),false); return; }
         ex.qty+=1;
       } else {
         var disc=Math.min(95,Number(p.discount)||0);
         var unit=disc>0?Math.round((p.price||0)*(1-disc/100)):(p.price||0);
         cart.push({name:p.name,name_en:p.name_en,code:p.code||"",qty:1,price:unit,discount:disc,stock:p.stock});
       }
-      renderCart(); toast($("#saleMsg"),"افزوده شد",true);
+      renderCart(); toast($("#saleMsg"),L("pos.added"),true);
     }
 
     function search(q){
       return MAHOApi.posSearch(q).then(function(res){
         var hits=res.products||[];
         $("#hits").innerHTML=hits.map(function(p,i){
-          return "<div class='hit' data-hi='"+i+"'><div><b>"+p.name+"</b><div class='muted' dir='ltr'>"+(p.code||"")+" · موجودی: "+(p.stock==null?"—":p.stock)+"</div></div><div>"+money(p.price)+"</div></div>";
-        }).join("")||"<p class='muted'>موردی یافت نشد</p>";
+          return "<div class='hit' data-hi='"+i+"'><div><b>"+productTitle(p)+"</b><div class='muted' dir='ltr'>"+(p.code||"")+" · "+L("pos.stockLabel")+(p.stock==null?"—":p.stock)+"</div></div><div>"+money(p.price)+"</div></div>";
+        }).join("")||"<p class='muted'>"+L("pos.notFound")+"</p>";
         $("#hits")._hits=hits;
       });
     }
@@ -313,7 +397,7 @@
           var exact=hits.find(function(p){return String(p.code||"").toLowerCase()===q.toLowerCase()});
           if(exact){ addProduct(exact); $("#scanInput").value=""; }
           else if(hits.length===1){ addProduct(hits[0]); $("#scanInput").value=""; }
-          else { $("#hits")._hits=hits; $("#hits").innerHTML=hits.map(function(p,i){return "<div class='hit' data-hi='"+i+"'><b>"+p.name+"</b></div>"}).join("")||"<p class='err'>بارکد پیدا نشد</p>"; }
+          else { $("#hits")._hits=hits; $("#hits").innerHTML=hits.map(function(p,i){return "<div class='hit' data-hi='"+i+"'><b>"+productTitle(p)+"</b></div>"}).join("")||"<p class='err'>"+L("pos.noBarcode")+"</p>"; }
         });
       }
     });
@@ -327,14 +411,14 @@
     $("#cartBody").addEventListener("change",function(e){
       if(!e.target.classList.contains("qty")) return;
       var i=parseInt(e.target.getAttribute("data-i"),10); var q=Math.max(1,parseInt(e.target.value,10)||1);
-      if(cart[i].stock!=null && q>Number(cart[i].stock)){ toast($("#saleMsg"),"بیش از موجودی",false); e.target.value=cart[i].qty; return; }
+      if(cart[i].stock!=null && q>Number(cart[i].stock)){ toast($("#saleMsg"),L("pos.over"),false); e.target.value=cart[i].qty; return; }
       cart[i].qty=q; renderCart();
     });
     $("#saleDisc").addEventListener("input",renderCart);
 
     $("#checkoutBtn").onclick=function(){
-      if(!cart.length){ toast($("#saleMsg"),"سبد خالی است",false); return; }
-      if(!navigator.onLine){ toast($("#saleMsg"),"اینترنت قطع است — فروش ثبت نشد",false); return; }
+      if(!cart.length){ toast($("#saleMsg"),L("pos.emptyCart"),false); return; }
+      if(!navigator.onLine){ toast($("#saleMsg"),L("pos.offline"),false); return; }
       var idem="pos_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
       MAHOApi.posSale({
         items: cart.map(function(it){return {name:it.name,code:it.code,qty:it.qty,discount:it.discount}}),
@@ -344,33 +428,41 @@
         shiftId: shiftId,
         idempotencyKey: idem
       }).then(function(res){
-        toast($("#saleMsg"),"فروش ثبت شد: "+(res.sale.receiptNo||res.sale.id)+" · فروشنده: "+(res.sale.staffName||""),true);
+        toast($("#saleMsg"),L("pos.sold")+(res.sale.receiptNo||res.sale.id)+" · "+L("pos.seller")+(res.sale.staffName||""),true);
         cart=[]; $("#saleDisc").value=0; renderCart(); refreshSales(); loadCatalog();
-      }).catch(function(err){ toast($("#saleMsg"),(err&&err.message)||"خطا",false); });
+      }).catch(function(err){ toast($("#saleMsg"),(err&&err.message)||L("pos.err"),false); });
     };
 
     function refreshSales(){
       MAHOApi.posSales().then(function(res){
         var list=(res.sales||[]).slice(0,8);
-        $("#recentSales").innerHTML="<h3>آخرین فروش‌ها</h3>"+list.map(function(s){
+        $("#recentSales").innerHTML="<h3>"+L("pos.recent")+"</h3>"+list.map(function(s){
           return "<div class='hit'><div><b dir='ltr'>"+(s.receiptNo||s.id)+"</b><div class='muted'>"+(s.type||"sale")+" · "+money(s.total)+" · "+(s.staffName||"")+"</div></div></div>";
         }).join("");
       }).catch(function(){});
     }
 
+    function paintReturnItems(){
+      if(!loadedSale) return;
+      $("#retItems").innerHTML=(loadedSale.items||[]).map(function(it,i){
+        var qtyEl=document.querySelector('.ret-qty[data-i="'+i+'"]');
+        var checked=document.querySelector('.ret-it[data-i="'+i+'"]');
+        var q=qtyEl?qtyEl.value:it.qty;
+        var on=!checked||checked.checked;
+        return "<label style='display:block;margin:6px 0'><input type='checkbox' class='ret-it' data-i='"+i+"'"+(on?" checked":"")+"> "+(it.name||"")+" × "+it.qty+" — "+L("pos.returnQty")+" <input class='ret-qty' data-i='"+i+"' type='number' min='1' max='"+it.qty+"' value='"+q+"' style='width:64px' dir='ltr'></label>";
+      }).join("");
+    }
     $("#loadSaleBtn").onclick=function(){
       var id=$("#retSaleId").value.trim();
       MAHOApi.posSales().then(function(res){
         loadedSale=(res.sales||[]).find(function(s){return s.id===id && s.type==="sale"});
-        if(!loadedSale){ toast($("#retMsg"),"فاکتور یافت نشد",false); return; }
-        $("#retItems").innerHTML=(loadedSale.items||[]).map(function(it,i){
-          return "<label style='display:block;margin:6px 0'><input type='checkbox' class='ret-it' data-i='"+i+"' checked> "+it.name+" × "+it.qty+" — تعداد برگشت: <input class='ret-qty' data-i='"+i+"' type='number' min='1' max='"+it.qty+"' value='"+it.qty+"' style='width:64px' dir='ltr'></label>";
-        }).join("");
-        toast($("#retMsg"),"فاکتور بارگذاری شد",true);
+        if(!loadedSale){ toast($("#retMsg"),L("pos.noReceipt"),false); return; }
+        paintReturnItems();
+        toast($("#retMsg"),L("pos.loaded"),true);
       });
     };
     $("#retSubmit").onclick=function(){
-      if(!loadedSale){ toast($("#retMsg"),"فاکتور را بارگذاری کنید",false); return; }
+      if(!loadedSale){ toast($("#retMsg"),L("pos.loadFirst"),false); return; }
       var items=[];
       document.querySelectorAll(".ret-it:checked").forEach(function(cb){
         var i=parseInt(cb.getAttribute("data-i"),10); var it=loadedSale.items[i];
@@ -378,34 +470,34 @@
         items.push({name:it.name,code:it.code,qty:q});
       });
       MAHOApi.posReturn({ saleId: loadedSale.id, items: items, reason: $("#retReason").value, mode: $("#retMode").value, shiftId: shiftId })
-        .then(function(res){ toast($("#retMsg"),"برگشت ثبت شد: "+res.return.id,true); refreshSales(); })
-        .catch(function(err){ toast($("#retMsg"),(err&&err.message)||"خطا",false); });
+        .then(function(res){ toast($("#retMsg"),L("pos.returned")+res.return.id,true); refreshSales(); })
+        .catch(function(err){ toast($("#retMsg"),(err&&err.message)||L("pos.err"),false); });
     };
 
     $("#openShiftBtn").onclick=function(){
       MAHOApi.posShiftOpen({ openingCash: Number($("#openCash").value)||0 }).then(function(res){
-        shiftId=res.shift.id; $("#shiftInfo").textContent="شیفت باز: "+shiftId;
-        toast($("#shiftMsg"),"شیفت باز شد",true);
-      }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+        shiftId=res.shift.id; paintShift();
+        toast($("#shiftMsg"),L("pos.shiftOpened"),true);
+      }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||L("pos.err"),false); });
     };
     $("#cashMoveBtn").onclick=function(){
       MAHOApi.posShiftCash({ shiftId: shiftId, amount: Number($("#cashAmt").value), note: $("#cashNote").value })
-        .then(function(){ toast($("#shiftMsg"),"حرکت نقد ثبت شد",true); })
-        .catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+        .then(function(){ toast($("#shiftMsg"),L("pos.cashOk"),true); })
+        .catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||L("pos.err"),false); });
     };
     $("#closeShiftBtn").onclick=function(){
       MAHOApi.posShiftClose({ shiftId: shiftId, closingCash: Number($("#closeCash").value) })
         .then(function(res){
-          toast($("#shiftMsg"),"بسته شد — اختلاف: "+(res.shift.difference),true);
-          shiftId=null; $("#shiftInfo").textContent="شیفت: —";
-        }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||"خطا",false); });
+          toast($("#shiftMsg"),L("pos.closed")+(res.shift.difference),true);
+          shiftId=null; paintShift();
+        }).catch(function(err){ toast($("#shiftMsg"),(err&&err.message)||L("pos.err"),false); });
     };
 
     $("#labelSearch").onclick=function(){
       MAHOApi.posSearch($("#labelQ").value.trim()).then(function(res){
         var hits=res.products||[];
         $("#labelHits").innerHTML=hits.map(function(p,i){
-          return "<label style='display:flex;gap:8px;align-items:center;margin:6px 0'><input type='checkbox' class='lab' data-i='"+i+"'> <span>"+p.name+" <span class='muted' dir='ltr'>"+(p.code||"")+"</span></span></label>";
+          return "<label style='display:flex;gap:8px;align-items:center;margin:6px 0'><input type='checkbox' class='lab' data-i='"+i+"'> <span>"+productTitle(p)+" <span class='muted' dir='ltr'>"+(p.code||"")+"</span></span></label>";
         }).join("");
         $("#labelHits")._hits=hits;
       });
@@ -414,13 +506,13 @@
       var hits=$("#labelHits")._hits||[];
       var selected=[];
       document.querySelectorAll(".lab:checked").forEach(function(cb){ selected.push(hits[parseInt(cb.getAttribute("data-i"),10)]); });
-      if(!selected.length){ alert("کالایی انتخاب نشده"); return; }
+      if(!selected.length){ alert(L("pos.noneSelected")); return; }
       var size=$("#labelSize").value;
       var cls=size==="a4"?"label-a4":("label-"+size);
       var html=selected.map(function(p,idx){
         var code=p.code||("SKU"+idx);
         return "<div class='"+cls+"' style='padding:6px;border:1px dashed #ccc;margin-bottom:8px;page-break-inside:avoid'>"+
-          "<div style='font-weight:800'>"+p.name+"</div>"+
+          "<div style='font-weight:800'>"+productTitle(p)+"</div>"+
           "<div>"+money(p.price)+"</div>"+
           "<div dir='ltr'>"+code+"</div>"+
           "<svg class='bc' data-code='"+code+"'></svg></div>";
@@ -436,10 +528,10 @@
       MAHOApi.posReports({}).then(function(res){
         lastReport=res.report;
         $("#reportBox").textContent=JSON.stringify(res.report,null,2);
-      }).catch(function(err){ $("#reportBox").textContent=(err&&err.message)||"خطا"; });
+      }).catch(function(err){ $("#reportBox").textContent=(err&&err.message)||L("pos.err"); });
     };
     $("#exportReportCsv").onclick=function(){
-      if(!lastReport){ alert("ابتدا گزارش را بارگذاری کنید"); return; }
+      if(!lastReport){ alert(L("pos.loadReportFirst")); return; }
       var r=lastReport;
       var lines=["metric,value","posSalesTotal,"+r.posSalesTotal,"posSalesCount,"+r.posSalesCount,"onlineSalesTotal,"+r.onlineSalesTotal,"posReturnsTotal,"+r.posReturnsTotal,"inventoryValue,"+r.inventoryValue];
       lines.push("","staff,sales,count");

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>به MAHO خوش آمدید | MAHO Market</title>
+  <title data-i18n="wel.docTitle">به MAHO خوش آمدید | MAHO Market</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -15,14 +15,14 @@
     .logo{width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:800 28px Georgia,serif;margin:0 auto 14px;background:var(--black)}
     h1{margin:0 0 8px;font-size:1.55rem}
     .lead{color:var(--muted);margin:0 0 18px;font-size:.98rem}
-    .box{background:var(--cream);border-radius:14px;padding:14px;margin:14px 0;text-align:right}
+    .box{background:var(--cream);border-radius:14px;padding:14px;margin:14px 0;text-align:start}
     .box b{display:block;font-size:.8rem;color:var(--muted);font-weight:700}
     .box span{font-weight:800}
     .ok{color:#2e7d32;font-weight:800;margin:10px 0}
     .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
     .btn{font-family:inherit;font-weight:800;border-radius:999px;border:1.5px solid transparent;padding:11px 18px;cursor:pointer;text-decoration:none;display:inline-block}
     .btn-gold{background:var(--gold);color:#1a1509}.btn-outline{background:#fff;border-color:var(--line);color:var(--ink)}
-    .field{margin:10px 0;text-align:right}
+    .field{margin:10px 0;text-align:start}
     .field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
     .field input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit}
     .pass-wrap{position:relative;display:block}
@@ -36,39 +36,72 @@
 <body>
   <div class="card" id="welcomeCard">
     <div class="logo">M</div>
-    <h1 id="title">به MAHO خوش آمدید</h1>
-    <p class="lead" id="lead">حساب شما با موفقیت ساخته و تأیید شد.</p>
+    <button type="button" class="btn btn-outline" data-lang-toggle style="margin-bottom:12px">English</button>
+    <h1 id="title" data-i18n="wel.title">به MAHO خوش آمدید</h1>
+    <p class="lead" id="lead" data-i18n="wel.lead">حساب شما با موفقیت ساخته و تأیید شد.</p>
     <div class="box">
-      <b>نام</b><span id="wName">—</span>
+      <b data-i18n="wel.name">نام</b><span id="wName">—</span>
     </div>
     <div class="box">
-      <b>ایمیل / نام کاربری</b><span id="wEmail" dir="ltr">—</span>
+      <b data-i18n="wel.email">ایمیل / نام کاربری</b><span id="wEmail" dir="ltr">—</span>
     </div>
-    <p class="ok">رمز عبور شما با موفقیت تنظیم شد.</p>
-    <p class="lead" style="font-size:.85rem">رمز عبور هرگز در این صفحه یا ایمیل نمایش داده نمی‌شود. برای ورود از رمز خود استفاده کنید.</p>
+    <p class="ok" data-i18n="wel.passOk">رمز عبور شما با موفقیت تنظیم شد.</p>
+    <p class="lead" style="font-size:.85rem" data-i18n="wel.passNote">رمز عبور هرگز در این صفحه یا ایمیل نمایش داده نمی‌شود. برای ورود از رمز خود استفاده کنید.</p>
     <div class="btns">
-      <a class="btn btn-gold" href="/#account" id="loginBtn">ورود به حساب</a>
-      <a class="btn btn-outline" href="/#products">ادامهٔ خرید</a>
+      <a class="btn btn-gold" href="/#account" id="loginBtn" data-i18n="wel.login">ورود به حساب</a>
+      <a class="btn btn-outline" href="/#products" data-i18n="wel.shop">ادامهٔ خرید</a>
     </div>
   </div>
 
   <div class="card" id="resetCard" hidden>
     <div class="logo">M</div>
-    <h1>تنظیم رمز جدید</h1>
-    <p class="lead">رمز قبلی یا جدید در ایمیل فرستاده نمی‌شود.</p>
-    <div class="field"><label>ایمیل</label><input id="rsEmail" dir="ltr"></div>
-    <div class="field"><label>رمز جدید (حداقل ۸ حرف)</label><input id="rsPass" type="password" autocomplete="new-password"></div>
-    <div class="field"><label>تکرار رمز</label><input id="rsPass2" type="password" autocomplete="new-password"></div>
+    <button type="button" class="btn btn-outline" data-lang-toggle style="margin-bottom:12px">English</button>
+    <h1 data-i18n="wel.resetTitle">تنظیم رمز جدید</h1>
+    <p class="lead" data-i18n="wel.resetLead">رمز قبلی یا جدید در ایمیل فرستاده نمی‌شود.</p>
+    <div class="field"><label data-i18n="wel.emailShort">ایمیل</label><input id="rsEmail" dir="ltr"></div>
+    <div class="field"><label data-i18n="wel.newPass">رمز جدید (حداقل ۸ حرف)</label><input id="rsPass" type="password" autocomplete="new-password"></div>
+    <div class="field"><label data-i18n="wel.repeat">تکرار رمز</label><input id="rsPass2" type="password" autocomplete="new-password"></div>
     <p class="err" id="rsErr"></p>
     <div class="btns">
-      <button class="btn btn-gold" type="button" id="rsSubmit">ذخیره رمز</button>
-      <a class="btn btn-outline" href="/">بازگشت</a>
+      <button class="btn btn-gold" type="button" id="rsSubmit" data-i18n="wel.save">ذخیره رمز</button>
+      <a class="btn btn-outline" href="/" data-i18n="wel.back">بازگشت</a>
     </div>
   </div>
 
+  <script src="js/page-lang.js"></script>
   <script src="js/api.js"></script>
   <script>
   (function(){
+    var LANGPACK={
+      fa:{
+        "wel.docTitle":"به MAHO خوش آمدید | MAHO Market","wel.title":"به MAHO خوش آمدید","wel.lead":"حساب شما با موفقیت ساخته و تأیید شد.",
+        "wel.name":"نام","wel.email":"ایمیل / نام کاربری","wel.passOk":"رمز عبور شما با موفقیت تنظیم شد.",
+        "wel.passNote":"رمز عبور هرگز در این صفحه یا ایمیل نمایش داده نمی‌شود. برای ورود از رمز خود استفاده کنید.",
+        "wel.login":"ورود به حساب","wel.shop":"ادامهٔ خرید","wel.resetTitle":"تنظیم رمز جدید",
+        "wel.resetLead":"رمز قبلی یا جدید در ایمیل فرستاده نمی‌شود.","wel.emailShort":"ایمیل",
+        "wel.newPass":"رمز جدید (حداقل ۸ حرف)","wel.repeat":"تکرار رمز","wel.save":"ذخیره رمز","wel.back":"بازگشت",
+        "wel.show":"نمایش رمز عبور","wel.hide":"پنهان کردن رمز عبور","wel.short":"رمز باید حداقل ۸ حرف باشد.","wel.mismatch":"تکرار رمز یکسان نیست.",
+        "wel.updated":"رمز به‌روزرسانی شد","wel.canLogin":"اکنون می‌توانید وارد حساب شوید.","wel.fail":"ناموفق","wel.guest":"مشتری گرامی"
+      },
+      en:{
+        "wel.docTitle":"Welcome to MAHO | MAHO Market","wel.title":"Welcome to MAHO","wel.lead":"Your account was created and confirmed.",
+        "wel.name":"Name","wel.email":"Email / username","wel.passOk":"Your password was saved.",
+        "wel.passNote":"Your password is never shown on this page or in email. Use it when you sign in.",
+        "wel.login":"Sign In","wel.shop":"Continue Shopping","wel.resetTitle":"Set a New Password",
+        "wel.resetLead":"The old or new password is never sent by email.","wel.emailShort":"Email",
+        "wel.newPass":"New password (at least 8 characters)","wel.repeat":"Repeat password","wel.save":"Save Password","wel.back":"Back",
+        "wel.show":"Show Password","wel.hide":"Hide Password","wel.short":"The password must be at least 8 characters.","wel.mismatch":"The passwords do not match.",
+        "wel.updated":"Password updated","wel.canLogin":"You can sign in now.","wel.fail":"Could not save","wel.guest":"Valued customer"
+      }
+    };
+    function L(k){ return window.MAHOPageLang.t(LANGPACK, k); }
+    function bindLang(){
+      window.MAHOPageLang.apply(LANGPACK);
+      document.querySelectorAll("[data-lang-toggle]").forEach(function(btn){
+        btn.onclick=function(){ window.MAHOPageLang.setLang(window.MAHOPageLang.current()==="en"?"fa":"en", LANGPACK); };
+      });
+    }
+    bindLang();
     var q = new URLSearchParams(location.search);
     var name = q.get("name") || "";
     var email = q.get("email") || "";
@@ -89,14 +122,14 @@
         var btn = document.createElement("button");
         btn.type = "button";
         btn.className = "pass-toggle";
-        btn.setAttribute("aria-label", "نمایش رمز عبور");
-        btn.title = "نمایش رمز عبور";
+        btn.setAttribute("aria-label", L("wel.show"));
+        btn.title = L("wel.show");
         btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 5c-5 0-9.3 3.1-11 7 1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5z"/></svg>';
         wrap.appendChild(btn);
         btn.addEventListener("click", function () {
           var show = input.type === "password";
           input.type = show ? "text" : "password";
-          var label = show ? "پنهان کردن رمز عبور" : "نمایش رمز عبور";
+          var label = show ? L("wel.hide") : L("wel.show");
           btn.setAttribute("aria-label", label);
           btn.title = label;
         });
@@ -108,16 +141,16 @@
         var p1 = document.getElementById("rsPass").value;
         var p2 = document.getElementById("rsPass2").value;
         var err = document.getElementById("rsErr");
-        if (p1.length < 8) { err.textContent = "رمز باید حداقل ۸ حرف باشد."; return; }
-        if (p1 !== p2) { err.textContent = "تکرار رمز یکسان نیست."; return; }
+        if (p1.length < 8) { err.textContent = L("wel.short"); return; }
+        if (p1 !== p2) { err.textContent = L("wel.mismatch"); return; }
         err.textContent = "";
         MAHOApi.resetPassword({ email: em, token: token, password: p1 }).then(function(){
-          document.getElementById("resetCard").innerHTML = '<div class="logo">M</div><h1>رمز به‌روزرسانی شد</h1><p class="ok">اکنون می‌توانید وارد حساب شوید.</p><div class="btns"><a class="btn btn-gold" href="/#account">ورود به حساب</a></div>';
-        }).catch(function(e){ err.textContent = (e && e.message) || "ناموفق"; });
+          document.getElementById("resetCard").innerHTML = '<div class="logo">M</div><h1>'+L("wel.updated")+'</h1><p class="ok">'+L("wel.canLogin")+'</p><div class="btns"><a class="btn btn-gold" href="/#account">'+L("wel.login")+'</a></div>';
+        }).catch(function(e){ err.textContent = (e && e.message) || L("wel.fail"); });
       };
       return;
     }
-    document.getElementById("wName").textContent = name || "مشتری گرامی";
+    document.getElementById("wName").textContent = name || L("wel.guest");
     document.getElementById("wEmail").textContent = email || "—";
   })();
   </script>

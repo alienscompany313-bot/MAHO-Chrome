@@ -124,6 +124,122 @@ function anonymize(user) {
   recordEvent(user, "deleted", "verified_email_code", "customer");
 }
 
+function queueStatusMail(user, kind, reason) {
+  user.mailQueue = Array.isArray(user.mailQueue) ? user.mailQueue : [];
+  const row = {
+    id: "mq_" + Date.now().toString(36) + "_" + user.mailQueue.length,
+    kind: kind,
+    status: "queued",
+    to: user.email || "",
+    appeal: "support@mahomarket.com",
+    reason: String(reason || user.blockReason || "").slice(0, 240),
+    at: Date.now(),
+  };
+  user.mailQueue.push(row);
+  if (user.mailQueue.length > 20) user.mailQueue = user.mailQueue.slice(-20);
+  return row;
+}
+
+function rememberReason(user, publicReason, internalNote) {
+  user.blockReason = String(publicReason || "").trim().slice(0, 240);
+  user.blockNote = String(internalNote || "").trim().slice(0, 240);
+  return { reason: user.blockReason, note: user.blockNote };
+}
+
+function publicSchedule(user) {
+  const sch = user && user.blockSchedule;
+  if (!sch) return null;
+  return {
+    startAt: sch.startAt || null,
+    endAt: sch.endAt || null,
+    publicReason: sch.publicReason || "",
+    timezone: "Asia/Kabul",
+    cancelled: !!sch.cancelled,
+    completed: !!sch.completed,
+  };
+}
+
+function applySchedule(user, now) {
+  if (!user) return { state: "missing", changed: false };
+  const sch = user.blockSchedule;
+  if (!sch || sch.cancelled || sch.completed) return { state: stateOf(user), changed: false };
+  const t = typeof now === "number" ? now : Date.now();
+  if (sch.endAt && t >= Number(sch.endAt)) {
+    let changed = false;
+    if (user.blockedBySchedule && stateOf(user) === "blocked") {
+      applyStatus(user, "active", "schedule_ended", "system");
+      user.blockedBySchedule = false;
+      user.blockReason = "";
+      if (!sch.reinstatedMailed) {
+        queueStatusMail(user, "reinstated", sch.publicReason);
+        sch.reinstatedMailed = true;
+      }
+      changed = true;
+    }
+    sch.completed = true;
+    return { state: stateOf(user), changed: true };
+  }
+  if (t >= Number(sch.startAt || 0) && stateOf(user) !== "deleted" && stateOf(user) !== "blocked") {
+    applyStatus(user, "blocked", sch.publicReason || "blocked", sch.actor || "schedule");
+    user.blockedBySchedule = true;
+    user.blockReason = String(sch.publicReason || "").slice(0, 240);
+    user.blockNote = String(sch.internalNote || "").slice(0, 240);
+    if (!sch.blockMailed) {
+      queueStatusMail(user, "blocked", sch.publicReason);
+      sch.blockMailed = true;
+    }
+    return { state: "blocked", changed: true };
+  }
+  return { state: stateOf(user), changed: false };
+}
+
+function scheduleBlock(user, input, actor) {
+  if (stateOf(user) === "deleted") return { error: "account_deleted", status: 409 };
+  const startAt = Number(input && input.startAt);
+  const endAt = input && input.endAt ? Number(input.endAt) : null;
+  if (!Number.isFinite(startAt) || startAt <= 0) return { error: "bad_start", status: 400 };
+  if (endAt && (!Number.isFinite(endAt) || endAt <= startAt)) return { error: "bad_end", status: 400 };
+  const publicReason = String((input && input.publicReason) || "").trim().slice(0, 240);
+  if (!publicReason) return { error: "reason_required", status: 400 };
+  user.blockSchedule = {
+    startAt: startAt,
+    endAt: endAt,
+    publicReason: publicReason,
+    internalNote: String((input && input.internalNote) || "").slice(0, 240),
+    actor: String(actor || "admin").slice(0, 80),
+    at: Date.now(),
+    cancelled: false,
+    completed: false,
+    blockMailed: false,
+    reinstatedMailed: false,
+  };
+  rememberReason(user, publicReason, user.blockSchedule.internalNote);
+  const applied = applySchedule(user, Date.now());
+  return {
+    ok: true,
+    accountStatus: applied.state,
+    schedule: publicSchedule(user),
+    mail: (user.mailQueue || []).slice(-1)[0] || null,
+  };
+}
+
+function cancelSchedule(user, actor) {
+  const sch = user && user.blockSchedule;
+  if (!sch || sch.completed) return { error: "no_schedule", status: 404 };
+  sch.cancelled = true;
+  let mail = null;
+  if (user.blockedBySchedule && stateOf(user) === "blocked") {
+    applyStatus(user, "active", "schedule_cancelled", actor || "admin");
+    user.blockedBySchedule = false;
+    user.blockReason = "";
+    if (!sch.reinstatedMailed) {
+      mail = queueStatusMail(user, "reinstated", sch.publicReason);
+      sch.reinstatedMailed = true;
+    }
+  }
+  return { ok: true, accountStatus: stateOf(user), schedule: publicSchedule(user), mail: mail };
+}
+
 function revokeSessions(sessions, userId) {
   if (!sessions || typeof sessions.forEach !== "function") return 0;
   const drop = [];
@@ -144,4 +260,10 @@ module.exports = {
   confirmDeletion,
   anonymize,
   revokeSessions,
+  queueStatusMail,
+  rememberReason,
+  publicSchedule,
+  applySchedule,
+  scheduleBlock,
+  cancelSchedule,
 };

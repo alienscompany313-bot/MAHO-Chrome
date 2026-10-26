@@ -476,10 +476,38 @@
     partially_cancelled: "بخشی لغو شد",
     partially_returned: "بخشی برگشت داده شد",
   };
+  var STATUS_EN = {
+    new: "Awaiting Confirmation",
+    pending: "Awaiting Confirmation",
+    confirmed: "Approved",
+    dispatched: "Shipped",
+    delivered: "Delivered",
+    awaiting_payment: "Awaiting Payment",
+    cancelled: "Cancelled",
+    return_requested: "Return Requested",
+    return_approved: "Return Approved",
+    return_rejected: "Return Rejected",
+    return_completed: "Return Completed",
+    receipt_submitted: "Receipt Sent",
+    under_review: "Under Review",
+    payment_confirmed: "Payment Confirmed",
+    payment_rejected: "Payment Rejected",
+    partially_approved: "Partly Approved",
+    partially_rejected: "Partly Rejected",
+    partially_shipped: "Partly Shipped",
+    partially_delivered: "Partly Delivered",
+    partially_cancelled: "Partly Cancelled",
+    partially_returned: "Partly Returned",
+  };
   var STATUS_FA_PICKUP = {
     confirmed: "در حال آماده‌سازی",
     dispatched: "آماده تحویل از فروشگاه",
     delivered: "تحویل شد (فروشگاه)",
+  };
+  var STATUS_EN_PICKUP = {
+    confirmed: "Being Prepared",
+    dispatched: "Ready for Store Pickup",
+    delivered: "Handed Over at the Store",
   };
   function isPickupOrder(order) {
     var m = order && order.delivery && order.delivery.method;
@@ -487,8 +515,10 @@
   }
   function statusLabel(code, lang, order) {
     var c = String(code || "");
+    if (lang === "en" && order && isPickupOrder(order) && STATUS_EN_PICKUP[c]) return STATUS_EN_PICKUP[c];
     if (lang !== "en" && order && isPickupOrder(order) && STATUS_FA_PICKUP[c]) return STATUS_FA_PICKUP[c];
-    if (STATUS_FA[c]) return lang === "en" ? c.replace(/_/g, " ") : STATUS_FA[c];
+    if (lang === "en" && STATUS_EN[c]) return STATUS_EN[c];
+    if (STATUS_FA[c]) return STATUS_FA[c];
     return c;
   }
   var CANONICAL_STATUS = {

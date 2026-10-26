@@ -98,7 +98,7 @@
       var cta = pick(row, "cta", "cta_en");
       var imgSrc = row.imageUrl || "";
       if (window.matchMedia && window.matchMedia("(max-width: 720px)").matches && row.imageUrlMobile) imgSrc = row.imageUrlMobile;
-      var img = imgSrc ? '<img src="' + imgSrc.replace(/"/g, "") + '" alt="' + (title || "MAHO").replace(/"/g, "") + '">' : "";
+      var img = imgSrc ? '<img src="' + imgSrc.replace(/"/g, "") + '" alt="' + (title || "MAHO").replace(/"/g, "") + '" onerror="this.style.display=\'none\'">' : "";
       var href = row.url ? api.url("/api/ads/go/" + encodeURIComponent(row.id)) : "";
       var inner = img + '<div class="home-promo-copy"><strong>' + (title || "") + "</strong><div>" + (desc || "") + "</div>" + (cta ? "<span>" + cta + "</span>" : "") + "</div>";
       var controls = '<div class="promo-nav"><button type="button" data-promo-pause="1" aria-label="' + (lang() === "en" ? "Pause" : "توقف") + '">❚❚</button>';
@@ -109,7 +109,8 @@
     }
     draw();
     if (promoTimer) clearInterval(promoTimer);
-    if (rows.length > 1 && !box.dataset.paused) promoTimer = setInterval(function () { promoIndex += 1; draw(); }, 7000);
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (rows.length > 1 && !box.dataset.paused && !reduce) promoTimer = setInterval(function () { promoIndex += 1; draw(); }, 7000);
   }
 
   function paintListing() {
@@ -177,18 +178,76 @@
     ov.classList.add("show");
   }
 
+  function publicBase() {
+    var configured = window.MAHO_SITE && MAHO_SITE.publicUrl ? String(MAHO_SITE.publicUrl).replace(/\/+$/, "") : "";
+    if (configured && !/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(configured)) return configured;
+    return location.origin;
+  }
   function productUrl(p) {
     var code = (p && (p.code || p.sku || p.barcode)) || "";
-    if (!code) return location.origin + "/";
-    return location.origin + "/p/" + encodeURIComponent(code);
+    var base = publicBase();
+    if (!code) return base + "/";
+    return base + "/p/" + encodeURIComponent(code);
+  }
+  function copyText(value) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(value).catch(function () { copyTextFallback(value); });
+    }
+    copyTextFallback(value);
+    return Promise.resolve();
+  }
+  function copyTextFallback(value) {
+    var area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "0";
+    area.style.left = "-9999px";
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand("copy"); } catch (_) {}
+    area.remove();
+  }
+  function shareIsOpen(menu) {
+    return !!(menu && (!menu.hidden || (menu.matches && menu.matches(":popover-open"))));
+  }
+  function closeShareMenu() {
+    var menu = document.getElementById("shareMenu");
+    if (!menu) return;
+    if (typeof menu.hidePopover === "function") {
+      try { if (menu.matches(":popover-open")) menu.hidePopover(); } catch (_) {}
+    }
+    menu.hidden = true;
+    menu.dataset.code = "";
+  }
+  window.mahoCloseShare = closeShareMenu;
+  function openShareMenu(menu) {
+    if (menu.parentElement !== document.body) document.body.appendChild(menu);
+    menu.setAttribute("popover", "manual");
+    menu.hidden = false;
+    if (typeof menu.showPopover === "function") {
+      try { if (!menu.matches(":popover-open")) menu.showPopover(); } catch (_) {}
+    }
+  }
+  function placeShareMenu(menu, anchor) {
+    var rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 16, right: 16, top: 16, bottom: 16 };
+    var width = menu.offsetWidth || 180;
+    var height = menu.offsetHeight || 180;
+    var left = document.documentElement.dir === "rtl" ? rect.right - width : rect.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    var top = rect.bottom + 8;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 8);
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
   }
   function shareMenu(p, anchor) {
     var menu = document.getElementById("shareMenu");
     if (!menu) return;
     var url = productUrl(p);
     var code = (p && (p.code || p.sku || p.barcode)) || url;
-    if (menu.dataset.code === String(code) && !menu.hidden) { menu.hidden = true; menu.dataset.code = ""; return; }
+    if (menu.dataset.code === String(code) && shareIsOpen(menu)) { closeShareMenu(); return; }
     menu.dataset.code = String(code);
+    menu.dataset.url = url;
     var name = (p && (lang() === "en" ? (p.name_en || p.name) : p.name)) || "MAHO";
     var text = name + " — " + url;
     menu.innerHTML = "";
@@ -196,20 +255,21 @@
       var b = document.createElement("button");
       b.type = "button";
       b.textContent = label;
-      b.addEventListener("click", function () { fn(); menu.hidden = true; });
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        fn();
+        closeShareMenu();
+      });
       menu.appendChild(b);
     }
     if (navigator.share) add(lang() === "en" ? "Share…" : "اشتراک", function () { navigator.share({ title: name, text: name, url: url }).catch(function () {}); });
     add("WhatsApp", function () { window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener"); });
     add("Facebook", function () { window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank", "noopener"); });
     add("Telegram", function () { window.open("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(name), "_blank", "noopener"); });
-    add(lang() === "en" ? "Copy link" : "کپی لینک", function () {
-      if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
-    });
-    var rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 20, bottom: 20 };
-    menu.style.top = (rect.bottom + 8) + "px";
-    menu.style.left = Math.max(8, rect.left) + "px";
-    menu.hidden = false;
+    add(lang() === "en" ? "Copy link" : "کپی لینک", function () { copyText(url); });
+    openShareMenu(menu);
+    placeShareMenu(menu, anchor);
   }
   window.mahoShareProduct = shareMenu;
 
@@ -269,10 +329,11 @@
   }
 
   document.addEventListener("maho:rendered", function () {
-    paintAnnounce();
-    paintHomePromo();
-    paintListing();
-    paintHours();
+    try { paintTheme(); } catch (err) {}
+    try { paintAnnounce(); } catch (err) {}
+    try { paintHomePromo(); } catch (err) {}
+    try { paintListing(); } catch (err) {}
+    try { paintHours(); } catch (err) {}
     var terms = document.getElementById("suTermsText");
     if (terms) {
       terms.innerHTML = lang() === "en"
@@ -309,8 +370,7 @@
       shareMenu({ code: code, name: e.target.dataset.name || "MAHO" }, e.target);
     }
     if (!e.target.closest("#shareMenu") && e.target.id !== "qvShare" && !e.target.closest("[data-share]")) {
-      var menu = document.getElementById("shareMenu");
-      if (menu) menu.hidden = true;
+      closeShareMenu();
     }
     if (e.target.id === "footerTrackLink") {
       e.preventDefault();
@@ -398,7 +458,7 @@
     if (themeBtn) {
       themeBtn.textContent = mode === "dark" ? "☀" : "☾";
       themeBtn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
-      themeBtn.setAttribute("aria-label", mode === "dark" ? (lang() === "en" ? "Light mode" : "نمای روشن") : (lang() === "en" ? "Dark mode" : "نمای تیره"));
+      themeBtn.setAttribute("aria-label", mode === "dark" ? (lang() === "en" ? "Light Mode" : "نمای روشن") : (lang() === "en" ? "Dark Mode" : "نمای تیره"));
     }
   }
   paintTheme();
@@ -412,8 +472,11 @@
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
     var menu = document.getElementById("shareMenu");
-    if (menu) { menu.hidden = true; menu.dataset.code = ""; }
-  });
+    if (!shareIsOpen(menu)) return;
+    closeShareMenu();
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
 
   var applyCoupon = document.getElementById("applyCoupon");
   var removeCoupon = document.getElementById("removeCoupon");

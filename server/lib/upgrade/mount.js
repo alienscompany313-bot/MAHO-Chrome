@@ -18,6 +18,9 @@ const backups = require("./backups");
 const life = require("./account-life");
 const coupons = require("./coupons");
 const ledger = require("./ledger");
+const content = require("./content");
+const contacts = require("./contact-methods");
+const favorites = require("./favorites");
 const { snapshotAddress } = require("./address");
 const pages = require("./pages");
 const { safeHttpUrl } = require("./safe-url");
@@ -35,6 +38,8 @@ function ensure(db) {
   if (coupons.ensureCoupons(db)) changed = true;
   if (ledger.ensureLedger(db)) changed = true;
   if (notes.ensureNotes(db)) changed = true;
+  if (content.ensureContent(db)) changed = true;
+  if (contacts.ensureContactMethods(db)) changed = true;
   passkeys.ensurePasskeys(db);
   if (!db.siteMeta || typeof db.siteMeta !== "object") {
     db.siteMeta = {
@@ -65,9 +70,14 @@ function publicSite(db) {
     footerMapsUrl: meta.footerMapsUrl || "",
     storeHours: db.storeHours,
     ads: ads.publicAds(db),
+    whyMaho: content.publicWhy(db),
+    socials: content.publicSocials(db),
+    contactMethods: contacts.publicContactMethods(db),
+    publicUrl: String(process.env.SITE_URL || process.env.PUBLIC_URL || "").replace(/\/+$/, ""),
     policies: {
       terms: !!terms,
       privacy: !!privacy,
+      returns: !!policies.published(db, "returns"),
       termsVersion: terms ? terms.version : null,
       privacyVersion: privacy ? privacy.version : null,
     },
@@ -284,8 +294,32 @@ function mount(app, ctx) {
   });
   app.post("/api/admin/policies/:kind/:id/publish", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
     const out = policies.publish(db(), req.params.kind, req.params.id);
+    if (!out.error && req.body && req.body.notify === true && out.version) {
+      policies.queueNotice(db(), req.params.kind, out.version.id);
+    }
     if (out.error) return res.status(out.status || 400).json({ error: out.error });
-    audit(db(), req, "policy_published", "policy", req.params.kind, { version: out.version.version });
+    audit(db(), req, "policy_published", "policy", req.params.kind, { version: out.version.version, notify: !!(req.body && req.body.notify === true) });
+    save();
+    res.json(out);
+  });
+  app.post("/api/admin/policies/:kind/:id/unpublish", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const out = policies.unpublish(db(), req.params.kind, req.params.id);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "policy_unpublished", "policy", req.params.id, {});
+    save();
+    res.json(out);
+  });
+  app.post("/api/admin/policies/:kind/:id/archive", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const out = policies.archiveVersion(db(), req.params.kind, req.params.id);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "policy_archived", "policy", req.params.id, {});
+    save();
+    res.json(out);
+  });
+  app.delete("/api/admin/policies/:kind/:id", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const out = policies.removeDraft(db(), req.params.kind, req.params.id);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "policy_draft_deleted", "policy", req.params.id, {});
     save();
     res.json(out);
   });
@@ -486,9 +520,83 @@ function mount(app, ctx) {
     if (body.status === "blocked" || body.status === "hold") {
       if (ctx.sessions) life.revokeSessions(ctx.sessions, user.id);
     }
+    if (body.status === "blocked") {
+      life.rememberReason(user, body.publicReason || body.reason, body.internalNote);
+      life.queueStatusMail(user, "blocked", user.blockReason);
+    }
+    if (body.status === "active") {
+      user.blockedBySchedule = false;
+      if (user.blockSchedule && !user.blockSchedule.completed) user.blockSchedule.cancelled = true;
+      life.queueStatusMail(user, "reinstated", body.reason || "");
+    }
     audit(db(), req, "customer_status", "user", user.id, { status: body.status });
     save();
-    res.json({ ok: true, accountStatus: life.stateOf(user) });
+    res.json({ ok: true, accountStatus: life.stateOf(user), reason: user.blockReason || "", schedule: life.publicSchedule(user) });
+  });
+  app.post("/api/admin/customers/:id/block-schedule", ctx.requireAdminAnyPerm(["customers"]), (req, res) => {
+    const user = (db().users || []).find((u) => u && u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "not_found" });
+    const actor = (req.adminSession && (req.adminSession.email || req.adminSession.id)) || "admin";
+    const out = life.scheduleBlock(user, req.body || {}, actor);
+    if (out.error) return res.status(out.status || 400).json(out);
+    if (life.stateOf(user) === "blocked" && ctx.sessions) life.revokeSessions(ctx.sessions, user.id);
+    audit(db(), req, "customer_block_scheduled", "user", user.id, { startAt: user.blockSchedule && user.blockSchedule.startAt });
+    save();
+    res.json(out);
+  });
+  app.post("/api/admin/customers/:id/block-schedule/cancel", ctx.requireAdminAnyPerm(["customers"]), (req, res) => {
+    const user = (db().users || []).find((u) => u && u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "not_found" });
+    const actor = (req.adminSession && (req.adminSession.email || req.adminSession.id)) || "admin";
+    const out = life.cancelSchedule(user, actor);
+    if (out.error) return res.status(out.status || 400).json(out);
+    audit(db(), req, "customer_block_schedule_cancelled", "user", user.id, {});
+    save();
+    res.json(out);
+  });
+  app.get("/api/admin/why-maho", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    content.ensureContent(db());
+    res.json({ whyMaho: db().whyMaho });
+  });
+  app.put("/api/admin/why-maho", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const saved = content.saveWhy(db(), req.body || {});
+    audit(db(), req, "why_maho_updated", "content", "why", { enabled: saved.enabled });
+    save();
+    res.json({ whyMaho: saved });
+  });
+  app.get("/api/admin/footer-socials", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    content.ensureContent(db());
+    res.json({ socials: db().footerSocials });
+  });
+  app.get("/api/admin/contact-methods", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    contacts.ensureContactMethods(db());
+    res.json({ methods: db().contactMethods, publicMethods: contacts.publicContactMethods(db()) });
+  });
+  app.put("/api/admin/contact-methods", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const saved = contacts.saveContactMethods(db(), (req.body && req.body.methods) || []);
+    audit(db(), req, "contact_methods_updated", "content", "contacts", { count: saved.length });
+    save();
+    res.json({ methods: saved, publicMethods: contacts.publicContactMethods(db()) });
+  });
+  app.get("/api/me/favorites", ctx.requireUser, (req, res) => {
+    res.json(favorites.list(db(), req.user));
+  });
+  app.post("/api/me/favorites", ctx.requireUser, (req, res) => {
+    const out = favorites.toggle(db(), req.user, (req.body || {}).code);
+    if (out.error) return res.status(out.status || 400).json(out);
+    save();
+    res.json(out);
+  });
+  app.delete("/api/me/favorites/:code", ctx.requireUser, (req, res) => {
+    const out = favorites.remove(db(), req.user, req.params.code);
+    save();
+    res.json(out);
+  });
+  app.put("/api/admin/footer-socials", ctx.requireAdminAnyPerm(["settings"]), (req, res) => {
+    const saved = content.saveSocials(db(), (req.body && req.body.socials) || []);
+    audit(db(), req, "footer_socials_updated", "content", "socials", { count: saved.length });
+    save();
+    res.json({ socials: saved, publicSocials: content.publicSocials(db()) });
   });
 
   app.get("/api/admin/coupons", ctx.requireAdminAnyPerm(["settings", "orders"]), (req, res) => {
@@ -555,6 +663,25 @@ function mount(app, ctx) {
         out[name] = ledger.fromMinor(report.methods[name]);
         return out;
       }, {}),
+    });
+  });
+  app.get("/api/admin/finance/detail", ctx.requireAdminAnyPerm(["orders", "settings"]), (req, res) => {
+    const report = ledger.summarize(db(), financeQuery(req));
+    const key = String(req.query.key || "collected");
+    const detail = ledger.detailFor(report, key);
+    const counts = { paidOrders: 1, unpaidOrders: 1, partialOrders: 1, canceledOrders: 1, legacyUnverified: 1 };
+    const present = (amount) => counts[key] ? amount : ledger.fromMinor(amount);
+    res.json({
+      key: key,
+      matches: detail.matches,
+      sum: present(detail.sumMinor),
+      kpi: present(detail.kpiMinor),
+      lines: detail.lines.map((row) => ({
+        orderId: row.orderId || "",
+        txnId: row.txnId || "",
+        source: row.source || "",
+        amount: present(row.amountMinor),
+      })),
     });
   });
   app.get("/api/admin/finance/export.csv", ctx.requireAdminAnyPerm(["orders", "settings"]), (req, res) => {
@@ -728,7 +855,10 @@ function mount(app, ctx) {
   app.post("/api/auth/passkey/login", async (req, res) => {
     if (!rlPasskey(clientIp(req) + ":pkl").ok) return res.status(429).json({ error: "rate_limited" });
     const out = await passkeys.loginVerify(db(), req.body || {}, req, siteUrl());
-    if (out.error) return res.status(out.status || 400).json({ error: out.error });
+    if (out.error) {
+      if (out.changed) save();
+      return res.status(out.status || 400).json({ error: out.error, reason: out.reason || "" });
+    }
     const t = ctx.issueUserToken(out.user);
     save();
     res.json({ token: t, user: ctx.publicUser(out.user) });

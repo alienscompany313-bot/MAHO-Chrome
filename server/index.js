@@ -44,7 +44,8 @@ const {
 const { mountProductPage, buildSitemapXml } = require("./lib/product-page");
 const upgrade = require("./lib/upgrade/mount");
 const admin2fa = require("./lib/upgrade/admin-2fa");
-const { acceptanceSnapshot } = require("./lib/upgrade/policies");
+const { acceptanceSnapshot, welcomeAttachments, pdfPath: policyPdfPath } = require("./lib/upgrade/policies");
+const accountLife = require("./lib/upgrade/account-life");
 const { ensureCard } = require("./lib/upgrade/customer-card");
 const couponsLib = require("./lib/upgrade/coupons");
 const ledgerLib = require("./lib/upgrade/ledger");
@@ -102,6 +103,8 @@ const SMTP = {
 const SITE_URL = String(process.env.SITE_URL || process.env.PUBLIC_URL || "").replace(/\/+$/, "") || "";
 const TOKEN_PEPPER = process.env.TOKEN_PEPPER || ADMIN_PASSWORD;
 const EMAIL_ENABLED = !!(nodemailer && SMTP.host && SMTP.user && SMTP.pass);
+/* Local acceptance only. Never talks to SMTP and is refused in production. */
+const MOCK_MAIL = !IS_PROD && process.env.MAHO_MOCK_MAIL === "1";
 
 /* Dev codes only when explicitly enabled AND not production. Never in production. */
 const ALLOW_DEV_CODES = !IS_PROD && process.env.ALLOW_DEV_CODES === "true";
@@ -109,6 +112,10 @@ const ALLOW_DEV_CODES = !IS_PROD && process.env.ALLOW_DEV_CODES === "true";
 if (IS_PROD) {
   if (process.env.ALLOW_DEV_CODES === "true") {
     console.error("FATAL: ALLOW_DEV_CODES must be false (or unset) in production.");
+    process.exit(1);
+  }
+  if (process.env.MAHO_MOCK_MAIL === "1") {
+    console.error("FATAL: MAHO_MOCK_MAIL cannot be used in production.");
     process.exit(1);
   }
   if (!EMAIL_ENABLED) {
@@ -127,7 +134,38 @@ if (EMAIL_ENABLED) {
   });
 }
 
+function attachmentFact(file) {
+  const name = file && (file.filename || file.path) ? path.basename(String(file.filename || file.path)) : "";
+  let buf = null;
+  if (file && file.path && fs.existsSync(file.path)) buf = fs.readFileSync(file.path);
+  else if (file && file.content) buf = Buffer.isBuffer(file.content) ? file.content : Buffer.from(file.content);
+  return {
+    filename: name,
+    contentType: (file && file.contentType) || "",
+    bytes: buf ? buf.length : 0,
+    pdf: !!(buf && buf.slice(0, 4).toString() === "%PDF"),
+  };
+}
+
 function sendRawMail({ to, subject, html, text, from, replyTo, attachments }) {
+  if (MOCK_MAIL) {
+    const dir = path.join(DATA_DIR, "mock-mail");
+    fs.mkdirSync(dir, { recursive: true });
+    const files = (Array.isArray(attachments) ? attachments : []).map(attachmentFact);
+    const row = {
+      at: new Date().toISOString(),
+      transport: "mock",
+      to: String(to || ""),
+      subject: String(subject || ""),
+      from: from || (`"${SMTP.fromName}" <${SMTP.fromEmail}>`),
+      replyTo: replyTo || SMTP.replyTo,
+      attachments: files,
+      policyLinks: /\/terms/.test(String(html || "")) && /\/privacy/.test(String(html || "")),
+    };
+    const safeTo = String(to || "mail").replace(/[^a-z0-9@._-]+/gi, "_").slice(0, 80);
+    fs.writeFileSync(path.join(dir, Date.now() + "-" + safeTo + ".json"), JSON.stringify(row, null, 2));
+    return Promise.resolve(true);
+  }
   if (!EMAIL_ENABLED || !mailTransport) return Promise.resolve(false);
   return mailTransport.sendMail({
     from: from || (`"${SMTP.fromName}" <${SMTP.fromEmail}>`),
@@ -545,17 +583,22 @@ function requireAdminAnyPerm(perms) {
     });
   };
 }
+function effectiveAccount(user) {
+  const applied = accountLife.applySchedule(user, Date.now());
+  if (applied.changed) saveDb();
+  return applied.state;
+}
 function requireUser(req, res, next) {
   const t = (req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
   const s = t ? sessions.get(t) : null;
   if (!s || s.type !== "user") return res.status(401).json({ error: "login required" });
   const u = db.users.find((x) => x.id === s.userId);
   if (!u) return res.status(401).json({ error: "user not found" });
-  const accountState = require("./lib/upgrade/account-life").stateOf(u);
+  const accountState = effectiveAccount(u);
   if (accountState === "deleted" || accountState === "blocked" || accountState === "hold") {
     sessions.delete(t);
     const error = accountState === "deleted" ? "account_deleted" : (accountState === "blocked" ? "account_blocked" : "account_hold");
-    return res.status(403).json({ error: error });
+    return res.status(403).json({ error: error, reason: u.blockReason || "", support: "support@mahomarket.com" });
   }
   req.user = u;
   next();
@@ -1106,7 +1149,28 @@ app.post("/api/auth/verify", (req, res) => {
   ensureCard(user, TOKEN_PEPPER);
   db.users.push(user); saveDb();
   const t = token(); sessions.set(t, { type: "user", userId: user.id });
-  if (mail) mail.welcome(user.email, { name: user.name, email: user.email }).catch(() => {});
+  const welcomeFiles = welcomeAttachments(db).map((row) => {
+    const abs = policyPdfPath(DATA_DIR, row.file);
+    if (!abs || !fs.existsSync(abs)) return null;
+    return { filename: row.kind + "-" + row.version + ".pdf", path: abs, contentType: "application/pdf" };
+  }).filter(Boolean);
+  user.welcomeMail = {
+    status: mail ? "pending" : "unavailable",
+    attachments: welcomeFiles.map((file) => file.filename),
+    links: ["/terms", "/privacy"],
+    at: Date.now(),
+  };
+  saveDb();
+  if (mail) {
+    mail.welcome(user.email, { name: user.name, email: user.email, attachments: welcomeFiles }).then((sent) => {
+      user.welcomeMail.status = sent === false ? "unavailable" : (MOCK_MAIL ? "mocked" : "sent");
+      user.welcomeMail.transport = MOCK_MAIL ? "mock" : "smtp";
+      saveDb();
+    }).catch(() => {
+      user.welcomeMail.status = "failed";
+      saveDb();
+    });
+  }
   upgrade.onUserVerified({
     db, user, mail, TOKEN_PEPPER, SITE_URL: SITE_URL || ALLOWED_ORIGINS[0] || "https://mahomarket.com", saveDb,
   }, user).catch(() => {});
@@ -1127,8 +1191,15 @@ app.post("/api/auth/login", (req, res) => {
     [x.email, x.phone, x.id].some((v) => v && String(v).toLowerCase() === id)
   );
   if (!u || !verifyPw(password, u.pass)) return res.status(401).json({ error: "bad credentials" });
-  if (u.deletedAt || u.status === "deleted" || u.accountStatus === "deleted") return res.status(403).json({ error: "account_deleted" });
-  if (u.blocked === true || u.accountStatus === "blocked") return res.status(403).json({ error: "account_blocked" });
+  const loginState = effectiveAccount(u);
+  if (u.deletedAt || u.status === "deleted" || loginState === "deleted") return res.status(403).json({ error: "account_deleted" });
+  if (loginState === "blocked" || u.blocked === true) {
+    return res.status(403).json({
+      error: "account_blocked",
+      reason: u.blockReason || "",
+      support: "support@mahomarket.com",
+    });
+  }
   if (u.verified === false || u.status === "pending") {
     return res.status(403).json({ error: "unverified", message: "حساب هنوز تأیید نشده است." });
   }
@@ -1232,7 +1303,7 @@ app.post("/api/orders", (req, res) => {
   if (userRow.verified === false || userRow.status === "pending") {
     return res.status(403).json({ error: "unverified" });
   }
-  if (userRow.blocked === true || userRow.accountStatus === "blocked") {
+  if (effectiveAccount(userRow) === "blocked" || userRow.blocked === true) {
     return res.status(403).json({
       error: "account_blocked",
       message: "حساب شما مسدود است و امکان ثبت سفارش جدید ندارید.",
@@ -1286,7 +1357,7 @@ app.post("/api/orders", (req, res) => {
     });
   }
 
-  const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  let itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const s = sAuth;
   const payment = sanitizeText(b.payment || "whatsapp", 40) || "whatsapp";
   const payCheck = assertPaymentAllowed(db.config, payment);
@@ -1396,12 +1467,18 @@ app.post("/api/orders", (req, res) => {
   }
 
   const fulfillment = wantsDeliver ? "delivery" : "pickup";
-  const discEval = evaluateOrderValueDiscount(db, itemsTotal, fulfillment);
   let couponEval = null;
   if (b.couponCode) {
-    couponEval = couponsLib.evaluate(db, b.couponCode, userRow, items);
+    const listItems = items.map((it) => Object.assign({}, it, { price: it.listPrice || it.price }));
+    couponEval = couponsLib.evaluate(db, b.couponCode, userRow, listItems);
     if (couponEval.error) return res.status(couponEval.status || 400).json(couponEval);
+    items.forEach((it) => {
+      it.price = it.listPrice || it.price;
+      it.discount = 0;
+    });
+    itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   }
+  const discEval = evaluateOrderValueDiscount(db, itemsTotal, fulfillment);
   const discountTotal = couponEval
     ? Math.max(0, Number(couponEval.amount) || 0)
     : Math.max(0, Number(discEval.amount) || 0);
@@ -1415,8 +1492,9 @@ app.post("/api/orders", (req, res) => {
     items: items,
     itemsTotal: itemsTotal, deliveryFee: deliveryFee, discountTotal: discountTotal,
     total: Math.max(0, itemsTotal - discountTotal + deliveryFee),
-    discountSnapshot: discEval.snapshot || null,
-    discountMessage: discEval.messageFa || "",
+    discountSnapshot: couponEval ? { replacedByCoupon: couponEval.code, orderValueAmount: discEval.amount || 0 } : (discEval.snapshot || null),
+    discountMessage: couponEval ? "" : (discEval.messageFa || ""),
+    discountPolicy: couponEval ? "coupon_replaces_product_and_order_discounts" : "product_plus_order_value",
     delivery: b.delivery || null,
     pickupStore: pickupStore,
     customerLocation: customerLocation,
@@ -1441,6 +1519,15 @@ app.post("/api/orders", (req, res) => {
     hesabReceipts: [],
     shipments: [],
     deliveryNote: sanitizeText(b.deliveryNote || customer.note, 500),
+    orderNote: sanitizeText(b.orderNote || customer.note, 500),
+    gift: (b.gift && b.gift.enabled) ? {
+      enabled: true,
+      recipientName: sanitizeText(b.gift.recipientName, 80),
+      recipientPhone: sanitizeText(b.gift.recipientPhone, 40),
+      message: sanitizeText(b.gift.message, 400),
+      addressMode: b.gift.addressMode === "different" ? "different" : "mine",
+      addr: b.gift.addressMode === "different" && b.gift.addr ? snapshotAddress({ addr: b.gift.addr }).addr : null,
+    } : { enabled: false },
   };
   ledgerLib.markTracked(order, {
     channel: "website",
@@ -1652,6 +1739,7 @@ mountProductPage(app, {
   siteUrl: PUBLIC_SITE,
 });
 
+app.get("/catalog", (req, res) => res.sendFile(path.join(WEBSITE_DIR, "index.html")));
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
 app.use("/downloads", express.static(path.join(ROOT_DIR, "downloads")));
 app.get("/icon-192.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-192.png")));
@@ -1664,6 +1752,7 @@ app.listen(PORT, () => {
     "MAHO backend on :" + PORT +
     " env=" + NODE_ENV +
     " email=" + EMAIL_ENABLED +
+    " mockMail=" + MOCK_MAIL +
     " devCodes=" + ALLOW_DEV_CODES +
     " uploads=" + UPLOAD_DIR +
     " sessions=file:" + path.join(DATA_DIR, "sessions.json") +

@@ -172,10 +172,11 @@ async function loginVerify(db, body, req, siteUrl) {
   if (!found) return { error: "unknown_credential", status: 400 };
   const u = found.user;
   const life = require("./account-life");
-  const account = life.stateOf(u);
-  if (account === "deleted") return { error: "account_deleted", status: 403 };
+  const applied = life.applySchedule(u, Date.now());
+  const account = applied.state;
+  if (account === "deleted") return { error: "account_deleted", status: 403, changed: applied.changed };
   if (account === "blocked" || account === "hold" || account === "deactivated") {
-    return { error: "account_" + account, status: 403 };
+    return { error: "account_" + account, status: 403, reason: u.blockReason || "", changed: applied.changed };
   }
   if (u.verified === false || u.status === "pending") return { error: "unverified", status: 403 };
   const handle = body && body.credential && body.credential.response && body.credential.response.userHandle;

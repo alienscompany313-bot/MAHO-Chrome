@@ -50,7 +50,7 @@ function normalize(list) {
     kind: sanitizeText(row.kind, 40) || "link",
     enabled: row.enabled !== false && !!safeHttpUrl(row.url),
     order: Number.isFinite(Number(row.order)) ? Number(row.order) : i,
-  })).filter((row) => row.label || row.label_en);
+  })).filter((row) => row.url);
 }
 
 function saveLinks(db, list, meta) {

@@ -341,39 +341,56 @@ function mountOrderOps(app, ctx) {
 
   /* ---------- Block / unblock customer ---------- */
   app.post("/api/admin/customers/:id/block", guard("customers"), (req, res) => {
+    const life = require("./upgrade/account-life");
     const u = (ctx.db.users || []).find((x) => x && x.id === req.params.id);
     if (!u) return res.status(404).json({ error: "not_found" });
-    if (u.status === "deleted") return res.status(400).json({ error: "account_deleted" });
-    u.blocked = true;
+    if (u.status === "deleted" || u.accountStatus === "deleted") return res.status(400).json({ error: "account_deleted" });
+    const actor = (req.adminSession && (req.adminSession.name || req.adminSession.staffId || req.adminSession.email)) || "admin";
+    const reason = sanitizeText((req.body && (req.body.publicReason || req.body.reason)) || "", 240);
+    const out = life.applyStatus(u, "blocked", reason || "blocked", actor);
+    if (out.error) return res.status(out.status || 400).json(out);
+    life.rememberReason(u, reason || "مسدود توسط مدیریت", (req.body && req.body.internalNote) || "");
     u.blockedAt = Date.now();
-    u.blockedBy = (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin";
-    u.blockReason = sanitizeText((req.body && req.body.reason) || "", 400);
+    u.blockedBy = actor;
+    u.blockedBySchedule = false;
+    life.queueStatusMail(u, "blocked", u.blockReason);
     pushAudit(ctx.db, {
-      actor: u.blockedBy,
+      actor: actor,
       action: "customer_block",
       entityType: "user",
       entityId: u.id,
       meta: { reason: u.blockReason },
     });
     saveDb();
-    res.json({ ok: true, user: ctx.publicUser(u) });
+    res.json({ ok: true, accountStatus: life.stateOf(u), user: ctx.publicUser(u) });
   });
 
   app.post("/api/admin/customers/:id/unblock", guard("customers"), (req, res) => {
+    const life = require("./upgrade/account-life");
     const u = (ctx.db.users || []).find((x) => x && x.id === req.params.id);
     if (!u) return res.status(404).json({ error: "not_found" });
+    if (u.status === "deleted" || u.deletedAt || u.accountStatus === "deleted") {
+      return res.status(409).json({ error: "account_deleted" });
+    }
+    const actor = (req.adminSession && (req.adminSession.name || req.adminSession.staffId || req.adminSession.email)) || "admin";
+    const out = life.applyStatus(u, "active", "admin_unblock", actor);
+    if (out.error) return res.status(out.status || 400).json(out);
     u.blocked = false;
+    u.blockedBySchedule = false;
+    u.blockReason = "";
+    if (u.blockSchedule && !u.blockSchedule.completed) u.blockSchedule.cancelled = true;
     u.unblockedAt = Date.now();
-    u.unblockedBy = (req.adminSession && (req.adminSession.name || req.adminSession.staffId)) || "admin";
+    u.unblockedBy = actor;
+    life.queueStatusMail(u, "reinstated", "");
     pushAudit(ctx.db, {
-      actor: u.unblockedBy,
+      actor: actor,
       action: "customer_unblock",
       entityType: "user",
       entityId: u.id,
       meta: {},
     });
     saveDb();
-    res.json({ ok: true, user: ctx.publicUser(u) });
+    res.json({ ok: true, accountStatus: life.stateOf(u), user: ctx.publicUser(u) });
   });
 
   /* ---------- Staff deactivate ---------- */

@@ -64,6 +64,7 @@
       "nav.home": "خانه", "nav.categories": "دسته‌بندی‌ها", "nav.products": "محصولات",
       "nav.stores": "فروشگاه", "nav.about": "درباره ما", "nav.contact": "تماس",
       "header.portal": "پنل مدیریت",
+      "brand.name": "ماهو مارکیت",
       "brand.sub": "لباس و لوازم بانوان",
       "hero.eyebrow": "✦ لباس و لوازم بانوان MAHO",
       "hero.title": 'زیبایی و اصالت<br>در <span class="grad">پوشاک زنانه</span>',
@@ -84,6 +85,34 @@
       "cat6.t": "کفش زنانه", "cat6.d": "پاشنه‌بلند و تخت",
       "cat7.t": "اکسسوری و بدلیجات", "cat7.d": "گردنبند، دستبند و ساعت",
       "cat8.t": "آرایشی و بهداشتی", "cat8.d": "لوازم آرایش و عطر",
+      "search.label": "جستجو", "search.ph": "جستجوی محصولات ماهو...", "search.empty": "کالایی با این نام پیدا نشد.", "search.all": "مشاهده تمام محصولات",
+      "fav.add": "افزودن به علاقه‌مندی‌ها", "fav.remove": "حذف از علاقه‌مندی‌ها", "fav.login": "برای ذخیره علاقه‌مندی، لطفاً وارد حساب شوید.",
+      "fav.title": "علاقه‌مندی‌های من", "fav.empty": "هنوز کالایی ذخیره نکرده‌اید.", "fav.gone": "این کالا دیگر در فروشگاه نیست.",
+      "fav.details": "جزئیات کالا", "fav.cart": "افزودن به سبد", "fav.inStock": "موجود",
+      "card.title": "کارت مشتری من", "card.png": "دانلود PNG", "card.pdf": "دانلود PDF", "card.email": "ایمیل کارت من",
+      "acct.passkeyLogin": "ورود با Face ID / Passkey", "acct.passkeyAdd": "افزودن Face ID / Passkey",
+      "acct.status": "وضعیت حساب",
+      "acct.lifeNote": "غیرفعال‌سازی برگشت‌پذیر است. حذف دائمی فقط با کود ایمیل انجام می‌شود.",
+      "acct.deactivate": "غیرفعال کردن حساب", "acct.reactivate": "فعال‌سازی دوباره",
+      "acct.delete": "حذف دائمی حساب",
+      "acct.deleteNote": "حذف دائمی برگشت‌پذیر نیست. کود ۶ رقمی به ایمیل تأییدشده فرستاده شد و ۱۰ دقیقه اعتبار دارد.",
+      "acct.deleteCode": "کود ایمیل", "acct.deleteConfirm": "تأیید حذف دائمی",
+      "acct.marketing": "می‌خواهم پیشنهادها، تخفیف‌ها و محصولات جدید MAHO را از طریق ایمیل دریافت کنم.",
+      "acct.dialog": "حساب کاربری", "orders.dialog": "سفارشات من", "qv.dialog": "جزئیات محصول",
+      "co.orderDiscount": "تخفیف مبلغ سفارش",
+      "share.action": "اشتراک",
+      "ui.close": "بستن", "ui.top": "بازگشت به بالا", "ui.less": "کمتر", "ui.more": "بیشتر", "ui.qty": "تعداد",
+      "ui.theme": "نمای تیره", "hours.title": "ساعت کاری",
+      "contact.title": "تماس با ماهو مارکیت", "contact.lead": "لطفاً روش دلخواه خود را برای تماس با ما انتخاب کنید.",
+      "policy.terms": "قوانین",
+      "ui.share": "اشتراک‌گذاری", "ui.account": "حساب کاربری", "ui.cart": "سبد خرید", "ui.menu": "منو", "nav.aria": "ناوبری اصلی",
+      "coupon.label": "کود تخفیف", "coupon.apply": "اعمال", "coupon.remove": "حذف",
+      "pickup.store": "فروشگاه تحویل حضوری", "pickup.note": "موقعیت اختیاری است؛ بدون آن هم می‌توانید فروشگاه را دستی انتخاب کنید.", "pickup.near": "مرتب‌سازی بر اساس نزدیک‌ترین (اختیاری)",
+      "loc.use": "استفاده از موقعیت فعلی من برای دلیوری", "loc.preview": "پیش‌نمایش موقعیت روی نقشه", "loc.clear": "حذف موقعیت / ورود دستی آدرس",
+      "hesab.open": "بازکردن لینک پرداخت",
+      "social.ig": "اینستاگرام", "social.tg": "تلگرام", "social.wa": "واتساپ", "social.fb": "فیسبوک", "social.tt": "تیک‌تاک",
+      "catalog.kicker": "کاتالوگ", "catalog.h2": "تمام محصولات",
+      "gift.toggle": "ارسال به شکل تحفه", "gift.name": "نام گیرنده", "gift.phone": "نمبر گیرنده", "gift.message": "پیام تحفه (اختیاری)", "gift.mine": "آدرس خودم", "gift.other": "آدرس متفاوت",
       "prod.kicker": "جدیدترین‌ها", "prod.h2": "پرفروش‌ترین‌ها",
       "prod.p": "گلچینی از شیک‌ترین کالاهای MAHO با قیمت ویژه.",
       "filter.all": "همه", "filter.clothing": "پوشاک", "filter.scarf": "شال و روسری",
@@ -118,7 +147,7 @@
       "footer.shop": "فروشگاه", "footer.link.categories": "دسته‌بندی‌ها",
       "footer.link.products": "محصولات", "footer.link.stores": "فروشگاه", "footer.link.reviews": "نظر مشتریان",
       "footer.support": "پشتیبانی", "footer.link.contact": "تماس با ما", "footer.link.about": "درباره‌ی MAHO",
-      "footer.link.terms": "قوانین و شرایط", "footer.link.track": "پیگیری سفارش",
+      "footer.link.terms": "قوانین و شرایط", "footer.link.privacy": "حریم خصوصی", "footer.link.track": "پیگیری سفارش",
       "footer.contact": "تماس",
       "footer.addr": "کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵",
       "footer.phone": "+93791505454", "footer.email": "info@mahomarket.com",
@@ -245,139 +274,168 @@
     en: {
       "nav.home": "Home", "nav.categories": "Categories", "nav.products": "Products",
       "nav.stores": "Store", "nav.about": "About", "nav.contact": "Contact",
-      "header.portal": "Admin panel",
+      "header.portal": "Admin Panel",
+      "brand.name": "Maho Market",
       "brand.sub": "WOMEN'S CLOTHING & ESSENTIALS",
       "hero.eyebrow": "✦ MAHO Women's Clothing & Essentials",
-      "hero.title": 'Elegance & quality<br>in <span class="grad">women\'s fashion</span>',
+      "hero.title": 'Elegance & Quality<br>in <span class="grad">Women\'s Fashion</span>',
       "hero.lead": "From evening dresses and manteaus to scarves, bags, shoes and cosmetics — everything a stylish woman needs, with premium quality and fair prices at MAHO.",
-      "hero.cta1": "Shop products →", "hero.cta2": "Our location",
-      "stat.products": "Products & styles", "stat.customers": "Happy customers",
-      "stat.years": "Years of experience", "stat.brands": "Trusted brands",
-      "herocard.tag1": "Bestseller", "herocard.t1": "Evening wear", "herocard.s1": "Dresses & eveningwear",
-      "herocard.tag2": "New", "herocard.t2": "Scarves", "herocard.s2": "New season",
-      "herocard.tag3": "25% off", "herocard.t3": "Bags & shoes", "herocard.s3": "Weekly deal",
-      "cats.kicker": "Categories", "cats.h2": "Everything she needs",
+      "hero.cta1": "Shop Products →", "hero.cta2": "Our Location",
+      "stat.products": "Products & Styles", "stat.customers": "Happy Customers",
+      "stat.years": "Years of Experience", "stat.brands": "Trusted Brands",
+      "herocard.tag1": "Bestseller", "herocard.t1": "Evening Wear", "herocard.s1": "Dresses & Eveningwear",
+      "herocard.tag2": "New", "herocard.t2": "Scarves", "herocard.s2": "New Season",
+      "herocard.tag3": "25% off", "herocard.t3": "Bags & Shoes", "herocard.s3": "Weekly Deal",
+      "cats.kicker": "Categories", "cats.h2": "Everything She Needs",
       "cats.p": "From clothing and scarves to bags, shoes, accessories and cosmetics — all in one place, neatly organized.",
-      "cat1.t": "Evening dresses", "cat1.d": "Dresses & eveningwear",
-      "cat2.t": "Manteaus & coats", "cat2.d": "Casual & formal",
-      "cat3.t": "Blouses & tops", "cat3.d": "Many styles",
-      "cat4.t": "Scarves & shawls", "cat4.d": "Cotton & silk",
+      "cat1.t": "Evening Dresses", "cat1.d": "Dresses & eveningwear",
+      "cat2.t": "Manteaus & Coats", "cat2.d": "Casual & formal",
+      "cat3.t": "Blouses & Tops", "cat3.d": "Many styles",
+      "cat4.t": "Scarves & Shawls", "cat4.d": "Cotton & silk",
       "cat5.t": "Handbags", "cat5.d": "Everyday & evening",
-      "cat6.t": "Women's shoes", "cat6.d": "Heels & flats",
-      "cat7.t": "Accessories & jewelry", "cat7.d": "Necklaces, bracelets & watches",
-      "cat8.t": "Beauty & care", "cat8.d": "Makeup & perfume",
-      "prod.kicker": "New arrivals", "prod.h2": "Bestsellers",
+      "cat6.t": "Women's Shoes", "cat6.d": "Heels & flats",
+      "cat7.t": "Accessories & Jewelry", "cat7.d": "Necklaces, bracelets & watches",
+      "cat8.t": "Beauty & Care", "cat8.d": "Makeup & perfume",
+      "search.label": "Search", "search.ph": "Search MAHO products...", "search.empty": "No product matches that search.", "search.all": "View All Products",
+      "fav.add": "Add to Favorites", "fav.remove": "Remove from Favorites", "fav.login": "Sign in to save favorites.",
+      "fav.title": "My Favorites", "fav.empty": "You have not saved any products yet.", "fav.gone": "This product is no longer available.",
+      "fav.details": "Product Details", "fav.cart": "Add to Cart", "fav.inStock": "In Stock",
+      "card.title": "My Customer Card", "card.png": "Download PNG", "card.pdf": "Download PDF", "card.email": "Email My Card",
+      "acct.passkeyLogin": "Sign in with Face ID / Passkey", "acct.passkeyAdd": "Add Face ID / Passkey",
+      "acct.status": "Account Status",
+      "acct.lifeNote": "Deactivation can be reversed. Permanent deletion requires an email code.",
+      "acct.deactivate": "Deactivate Account", "acct.reactivate": "Reactivate Account",
+      "acct.delete": "Delete Account Permanently",
+      "acct.deleteNote": "Permanent deletion cannot be undone. A 6-digit code was sent to your verified email and is valid for 10 minutes.",
+      "acct.deleteCode": "Email Code", "acct.deleteConfirm": "Confirm Permanent Deletion",
+      "acct.marketing": "I want to receive MAHO offers, discounts, and new products by email.",
+      "acct.dialog": "Account", "orders.dialog": "My Orders", "qv.dialog": "Product Details",
+      "co.orderDiscount": "Order Discount",
+      "share.action": "Share",
+      "ui.close": "Close", "ui.top": "Back to Top", "ui.less": "Less", "ui.more": "More", "ui.qty": "Quantity",
+      "ui.theme": "Dark Mode", "hours.title": "Business Hours",
+      "contact.title": "Contact MAHO MARKET", "contact.lead": "Choose how you would like to contact us.",
+      "policy.terms": "Terms",
+      "ui.share": "Share", "ui.account": "Account", "ui.cart": "Cart", "ui.menu": "Menu", "nav.aria": "Main",
+      "coupon.label": "Discount Code", "coupon.apply": "Apply", "coupon.remove": "Remove",
+      "pickup.store": "Pickup Store", "pickup.note": "Location is optional. You can still choose a store yourself.", "pickup.near": "Sort by Nearest (Optional)",
+      "loc.use": "Use My Current Location for Delivery", "loc.preview": "Preview Location on the Map", "loc.clear": "Clear Location / Enter the Address",
+      "hesab.open": "Open Payment Link",
+      "social.ig": "Instagram", "social.tg": "Telegram", "social.wa": "WhatsApp", "social.fb": "Facebook", "social.tt": "TikTok",
+      "catalog.kicker": "Catalog", "catalog.h2": "All Products",
+      "gift.toggle": "Send as a Gift", "gift.name": "Recipient name", "gift.phone": "Recipient phone", "gift.message": "Gift message (optional)", "gift.mine": "My Address", "gift.other": "Different Address",
+      "prod.kicker": "New Arrivals", "prod.h2": "Bestsellers",
       "prod.p": "A selection of MAHO's most stylish items at special prices.",
       "filter.all": "All", "filter.clothing": "Clothing", "filter.scarf": "Scarves",
-      "filter.bagshoes": "Bags & shoes", "filter.beauty": "Beauty", "filter.accessory": "Accessories",
-      "feat.kicker": "Why MAHO", "feat.h2": "A shopping experience you can trust",
+      "filter.bagshoes": "Bags & Shoes", "filter.beauty": "Beauty", "filter.accessory": "Accessories",
+      "feat.kicker": "Why MAHO", "feat.h2": "A Shopping Experience You Can Trust",
       "feat.p": "Our commitment isn't just selling — it's building a lasting relationship based on trust and quality.",
-      "feat1.t": "Genuine quality", "feat1.d": "Every item is genuine and carefully selected.",
-      "feat2.t": "Fast delivery", "feat2.d": "Home delivery across the city in no time.",
-      "feat3.t": "Easy exchange", "feat3.d": "Hassle-free exchange or return window.",
-      "feat4.t": "Friendly support", "feat4.d": "With you before and after your purchase.",
-      "stores.kicker": "Our store", "stores.h2": "Visit the MAHO store in person",
+      "feat1.t": "Genuine Quality", "feat1.d": "Every item is genuine and carefully selected.",
+      "feat2.t": "Fast Delivery", "feat2.d": "Home delivery across the city in no time.",
+      "feat3.t": "Easy Exchange", "feat3.d": "Hassle-free exchange or return window.",
+      "feat4.t": "Friendly Support", "feat4.d": "With you before and after your purchase.",
+      "stores.kicker": "Our Store", "stores.h2": "Visit the MAHO Store in Person",
       "stores.p": "Our team is ready to help you choose the best.",
-      "store.open": "Open now", "store.directions": "Get directions →",
-      "testi.kicker": "Testimonials", "testi.h2": "What MAHO customers say",
+      "store.open": "Open Now", "store.directions": "Get Directions →",
+      "testi.kicker": "Testimonials", "testi.h2": "What MAHO Customers Say",
       "testi1.q": "“The clothing quality and stitching were excellent. The manteau I bought looked exactly like the photo, and the staff were very kind.”",
       "testi1.name": "Narges Ahmadi", "testi1.role": "Loyal customer",
       "testi2.q": "“The variety of scarves is amazing and prices are fair. The exchange guarantee let me shop with peace of mind.”",
       "testi2.name": "Maryam Hosseini", "testi2.role": "Shopper",
       "testi3.q": "“I bought an elegant dress and a matching bag for a party; everyone complimented me. I'll definitely shop at MAHO again.”",
       "testi3.name": "Samira Nouri", "testi3.role": "New customer",
-      "review.write": "Write a review", "review.submit": "Submit review", "review.rate": "Your rating",
+      "review.write": "Write a Review", "review.submit": "Submit Review", "review.rate": "Your Rating",
       "review.ph": "Share your experience with your purchase or our service...",
       "review.loginFirst": "Please sign in to your account to write a review.",
       "review.thanks": "Thank you for your review ✓",
       "review.needText": "Please provide a rating and review text.",
       "review.empty": "No reviews yet. Be the first to share your experience!",
       "review.customer": "MAHO customer",
-      "cta.h2": "Get offers & new arrivals",
+      "cta.h2": "Get Offers & New Arrivals",
       "cta.p": "Enter your email to receive MAHO's special offers.",
       "cta.ph": "Your email (example@mail.com)", "cta.btn": "Subscribe",
       "footer.desc": "MAHO Women's Clothing & Essentials — premium women's apparel and supplies with genuine quality and reliable after-sales service.",
       "footer.shop": "Shop", "footer.link.categories": "Categories",
       "footer.link.products": "Products", "footer.link.stores": "Store", "footer.link.reviews": "Testimonials",
-      "footer.support": "Support", "footer.link.contact": "Contact us", "footer.link.about": "About MAHO",
-      "footer.link.terms": "Terms & conditions", "footer.link.track": "Track order",
+      "footer.support": "Support",       "footer.link.contact": "Contact Us", "footer.link.about": "About MAHO",
+      "footer.link.terms": "Terms & Conditions", "footer.link.privacy": "Privacy Policy", "footer.link.track": "Track Order",
       "footer.contact": "Contact",
       "footer.addr": "Kote Sangi, Kabul — Mubarak Center, 4th floor, shop 74 & 75",
       "footer.phone": "+93791505454", "footer.email": "info@mahomarket.com",
-      "footer.map": "View on map →",
+      "footer.map": "View on Map →",
       "footer.copyPre": "©", "footer.copy": "MAHO — All rights reserved.",
       "footer.made": "Made with ❤ for MAHO customers",
       "toast.cart": "“{name}” added to your cart ({n})",
       "toast.news": "You're subscribed to the newsletter ✓",
       "form.err": "Please enter a valid email address.",
       "form.ok": "You're subscribed! You'll soon receive MAHO's special offers.",
-      "lang.other": "فارسی",
-      "cart.title": "Your cart", "cart.empty": "Your cart is empty.",
+      "lang.other": "Persian",
+      "cart.title": "Your Cart", "cart.empty": "Your cart is empty.",
       "cart.total": "Total", "cart.checkout": "Order via WhatsApp",
-      "cart.clear": "Clear cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",
-      "stock.out": "Out of stock", "stock.left": "{n} left in stock", "stock.max": "You can't order more than the available stock.",
-      "qv.add": "Add to cart",
+      "cart.clear": "Clear Cart", "cart.remove": "Remove", "cart.emptyToast": "Your cart is empty.",
+      "stock.out": "Out of Stock", "stock.left": "{n} left in stock", "stock.max": "You can't order more than the available stock.",
+      "qv.add": "Add to Cart",
       "qv.code": "SKU: {code}",
       "qv.size": "Size", "qv.color": "Color", "qv.pick": "Please select size and color.",
       "cart.continue": "Checkout →",
-      "co.back": "← Back to cart", "co.title": "Order details",
+      "co.back": "← Back to Cart", "co.title": "Order Details",
       "co.name": "Full name *", "co.phone": "Phone *", "co.address": "Delivery address *", "co.note": "Notes (optional)",
       "co.err": "Please enter your name, phone and address.",
-      "acct.login": "Log in", "acct.signup": "Sign up", "acct.create": "Create account", "acct.logout": "Log out",
+      "acct.login": "Log In", "acct.signup": "Sign Up", "acct.create": "Create Account", "acct.logout": "Log Out",
       "acct.sessionExpired": "Your session has ended. Please sign in again.",
       "acct.validating": "Checking sign-in…",
-      "pass.show": "Show password", "pass.hide": "Hide password",
+      "pass.show": "Show Password", "pass.hide": "Hide Password",
       "acct.name": "Full name", "acct.phone": "Phone or email", "acct.pass": "Password",
       "acct.exists": "This account already exists.", "acct.bad": "Incorrect login details.",
       "acct.created": "Your account was created & verified ✓", "acct.hi": "Welcome",
       "acct.need": "Please fill in all fields to continue.",
       "acct.fullname": "Full name", "acct.phoneNum": "Phone number", "acct.email": "Email",
-      "acct.sendCode": "Send verification code", "acct.codeSent": "A verification code was sent to your email. Enter it below.",
-      "acct.code": "Verification code", "acct.verify": "Verify & create account", "acct.resend": "Resend code",
+      "acct.sendCode": "Send Verification Code", "acct.codeSent": "A verification code was sent to your email. Enter it below.",
+      "acct.code": "Verification Code", "acct.verify": "Verify & Create Account", "acct.resend": "Resend Code",
       "acct.badCode": "The code is incorrect.", "acct.needAll": "Enter your name, phone, email and password.",
       "acct.badEmail": "Enter a valid email address.", "acct.emailExists": "This email is already registered.",
       "acct.sending": "Sending code...", "acct.sendFail": "Sending the email failed. Please try again.",
       "acct.demoNote": "Demo mode: your verification code is {code}. To send real emails, configure EmailJS in the admin panel.",
       "order.customer": "Customer", "order.addr": "Address", "order.note": "Notes",
       "order.header": "Hello, I'd like to order these items:",
-      "co.payment": "Payment method",
-      "pay.whatsapp": "Order via WhatsApp (pay on delivery)",
-      "pay.bank": "Bank transfer / payment", "pay.card": "Pay online by card",
+      "co.payment": "Payment Method",
+      "pay.whatsapp": "Order via WhatsApp (Pay on Delivery)",
+      "pay.bank": "Bank Transfer / Payment", "pay.card": "Pay Online by Card",
       "pay.bankInfo": "Please transfer the amount to the account below and send the receipt on WhatsApp:",
-      "pay.holder": "Account holder", "pay.bankName": "Bank", "pay.accountNo": "Account / card number",
+      "pay.holder": "Account Holder", "pay.bankName": "Bank", "pay.accountNo": "Account / Card Number",
       "pay.noBank": "Bank account details are not set yet. Please use WhatsApp.",
       "pay.noCard": "Online payment is not set up yet. Please use WhatsApp or bank transfer.",
-      "pay.placeWhatsapp": "Place order (WhatsApp)", "pay.payCard": "Pay by card →", "pay.placeBank": "Place order & show account",
+      "pay.placeWhatsapp": "Place Order (WhatsApp)", "pay.payCard": "Pay by Card →", "pay.placeBank": "Place Order & Show Account",
       "pay.hesab": "Pay with HesabPay",
       "pay.hesabInfo": "Pay via HesabPay, then submit your receipt from My Orders:",
-      "pay.hesabNumber": "HesabPay number/ID", "pay.hesabOpen": "Pay with HesabPay →",
-      "pay.txnId": "Transaction ID", "pay.paidAmount": "Amount paid",
+      "pay.hesabNumber": "HesabPay Number/ID", "pay.hesabOpen": "Pay with HesabPay →",
+      "pay.txnId": "Transaction ID", "pay.paidAmount": "Amount Paid",
       "pay.receiptShot": "Screenshot / receipt", "pay.noteOpt": "Note (optional)",
-      "pay.submitReceipt": "Submit payment receipt", "pay.receiptOk": "Receipt received and under review",
+      "pay.submitReceipt": "Submit Payment Receipt", "pay.receiptOk": "Receipt received and under review",
       "pay.receiptNeed": "Transaction ID or receipt file is required",
       "pay.noHesab": "HesabPay is not set up yet. Please use WhatsApp or bank transfer.",
       "order.placed": "Your order has been placed ✓",
-      "orders.title": "My orders", "orders.empty": "You have no orders yet.",
+      "orders.title": "My Orders", "orders.empty": "You have no orders yet.",
       "orders.date": "Date", "orders.pay": "Payment", "orders.items": "Items",
-      "status.pending": "Pending", "status.awaitPay": "Awaiting payment",
+      "status.pending": "Pending", "status.awaitPay": "Awaiting Payment",
       "status.confirmed": "Confirmed",
-      "status.cancelled": "Cancelled", "status.returnReq": "Return requested",
-      "orders.cancel": "Cancel order", "orders.return": "Request return", "orders.code": "Item code",
+      "status.cancelled": "Cancelled", "status.returnReq": "Return Requested",
+      "orders.cancel": "Cancel Order", "orders.return": "Request Return", "orders.code": "Item Code",
       "orders.confirmCancel": "Cancel this order?", "orders.confirmReturn": "Request a return for this order?",
       "orders.cancelMsg": "Order cancelled", "orders.returnMsg": "Return request",
       "orders.cancelCountdown": "Cancel window remaining:", "orders.cancelWindowDone": "Cancel window has ended",
-      "acct.custNo": "Customer no.", "acct.profile": "My profile", "acct.savedInfo": "Payment info",
-      "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save changes",
+      "acct.custNo": "Customer No.", "acct.profile": "My Profile", "acct.savedInfo": "Payment Info",
+      "acct.newPass": "New password (fill to change)", "acct.saveProfile": "Save Changes",
       "acct.saved": "Changes saved ✓",
       "acct.emailChangeCode": "To change your email, enter the code sent to the new address.",
-      "acct.verifyNewEmail": "Verify new email", "acct.emailUpdated": "Your email was updated ✓",
-      "pay.type": "Type", "pay.tCard": "Bank card", "pay.tBank": "Bank account",
-      "pay.add": "Save payment info", "pay.none": "No saved payment info yet.",
+      "acct.verifyNewEmail": "Verify New Email", "acct.emailUpdated": "Your email was updated ✓",
+      "pay.type": "Type", "pay.tCard": "Bank Card", "pay.tBank": "Bank Account",
+      "pay.add": "Save Payment Info", "pay.none": "No saved payment info yet.",
       "pay.localNote": "Bank details are saved to your account. Card CVV is never stored.",
       "pay.bankAccNo": "Account Number",
       "pay.bankRouting": "Routing Number",
       "pay.bankHolder": "Account Holder Name",
-      "pay.cardNo": "Card number",
+      "pay.cardNo": "Card Number",
       "pay.cardSafeNote": "Only the last 4 digits are shown after save. CVV is never stored.",
       "pay.savedOk": "Payment info saved ✓",
       "co.email": "Email (for order confirmation)",
@@ -386,21 +444,21 @@
       "acct.address": "Address", "pay.cvv": "Security code (CVV)", "pay.expiry": "Expiry (MM/YY)", "pay.cardAddr": "Card address",
       "share.copied": "Site link copied ✓", "share.title": "Check out this store", "copied": "Copied ✓",
       "addr.country": "Country", "addr.province": "Province / State", "addr.district": "District", "addr.city": "City / Area", "addr.area": "Area / Zone", "addr.street": "Street / Lane", "addr.house": "House number", "addr.zip": "ZIP / Postal code (optional)",
-      "acct.forgot": "Forgot password?", "acct.reset": "Reset password",
+      "acct.forgot": "Forgot Password?", "acct.reset": "Reset Password",
       "acct.resetSent": "A reset code was sent to your email. Enter the code and a new password.",
       "acct.newPassPh": "New password", "acct.resetDone": "Your password was changed ✓", "acct.noEmail": "This email is not registered.",
-      "acct.backLogin": "← Back to login",
-      "co.delivery": "Receiving method", "co.pickup": "Pick up at the store", "co.deliver": "Deliver to my address",
-      "co.deliverTime": "Delivery time", "co.normal": "Normal", "co.urgent": "Same-day (urgent)",
-      "co.calcDist": "Calculate distance (my location)", "co.distKm": "Distance to nearest store", "co.km": "km",
-      "co.manualKm": "Or enter distance (km) manually", "co.deliveryFee": "Delivery fee", "co.grand": "Amount payable",
+      "acct.backLogin": "← Back to Login",
+      "co.delivery": "Receiving Method", "co.pickup": "Pick Up at the Store", "co.deliver": "Deliver to My Address",
+      "co.deliverTime": "Delivery Time", "co.normal": "Normal", "co.urgent": "Same-Day (Urgent)",
+      "co.calcDist": "Calculate Distance (My Location)", "co.distKm": "Distance to Nearest Store", "co.km": "km",
+      "co.manualKm": "Or enter distance (km) manually", "co.deliveryFee": "Delivery Fee", "co.grand": "Amount Payable",
       "co.belowMin": "For delivery, the minimum order is {n}. Please add more items or choose in-store pickup.",
       "co.beyondMax": "Delivery is only available within {n} km of the store; your address is farther.",
-      "co.timeslot": "Pickup / delivery time",
+      "co.timeslot": "Pickup / Delivery Time",
       "co.ts0": "As soon as possible", "co.ts1": "Today morning (9–12)", "co.ts2": "Today afternoon (12–4)", "co.ts3": "Today evening (4–8)", "co.ts4": "Tomorrow",
-      "co.makeAccount": "Sign in required to checkout", "co.passPh": "Password for your new account",
+      "co.makeAccount": "Sign In Required to Checkout", "co.passPh": "Password for your new account",
       "co.makeAccountHint": "You must sign in to complete checkout. Create an account from the Account menu if you don’t have one. Passwords are never emailed.",
-      "co.enterCode": "Verification code (sent to your email)", "co.verifyPlace": "Verify code & place order",
+      "co.enterCode": "Verification code (sent to your email)", "co.verifyPlace": "Verify Code & Place Order",
       "co.acctNeedEmail": "Enter a valid email to create an account.", "co.acctExists": "This email already has an account; please sign in.",
       "co.codeSentEmail": "A verification code was sent to your email. Enter it below.", "co.acctCreated": "Your account was created ✓ Customer no: {no}",
       "acct.welcomeMsg": "Your MAHO account has been created. Your customer number: {no}. You can sign in with this email and password.",
@@ -412,17 +470,17 @@
       "co.deliveryOk": "About {km} km away — delivery is available.",
       "co.deliveryDisabled": "Delivery is currently disabled; please choose store pickup.",
       "pay.hesabThanks": "Thank you for submitting your HesabPay receipt. Please wait for confirmation and check your email.",
-      "pay.hesabResubmit": "Submit receipt again",
-      "pay.hesabHistory": "Receipt history",
-      "orders.returnReason": "Return reason", "orders.returnDetails": "Details", "orders.returnMethod": "Return method",
-      "orders.returnPickupStore": "Drop off at store", "orders.returnPickupCustomer": "Pickup from my address",
-      "orders.returnSubmit": "Submit return request", "orders.returnNeedReason": "A return reason is required.",
+      "pay.hesabResubmit": "Submit Receipt Again",
+      "pay.hesabHistory": "Receipt History",
+      "orders.returnReason": "Return Reason", "orders.returnDetails": "Details", "orders.returnMethod": "Return Method",
+      "orders.returnPickupStore": "Drop Off at Store", "orders.returnPickupCustomer": "Pickup from My Address",
+      "orders.returnSubmit": "Submit Return Request", "orders.returnNeedReason": "A return reason is required.",
       "order.deliveryTo": "Deliver to address", "order.pickupAt": "Pickup",
       "orders.fulfill": "Fulfillment",
-      "orders.pickupStore": "Pickup store",
+      "orders.pickupStore": "Pickup Store",
       "orders.storeAddress": "Address",
       "orders.storePhone": "Phone",
-      "orders.viewMaps": "View store on Google Maps",
+      "orders.viewMaps": "View Store on Google Maps",
     },
   };
   const t = (key) => (I18N[LANG] && I18N[LANG][key]) || I18N.fa[key] || key;
@@ -553,10 +611,25 @@
 
   /* -------------------- Render products -------------------- */
   let activeFilter = "all";
+  let catalogPage = 1;
+  let favoriteCodes = new Set();
   const productGrid = $("#productGrid");
+  function catalogMode() {
+    return location.pathname === "/catalog" ? "catalog" : "home";
+  }
+  try {
+    if (catalogMode() === "catalog") {
+      document.body.classList.add("catalog-view");
+      catalogPage = Math.max(1, parseInt(new URLSearchParams(location.search).get("page") || "1", 10) || 1);
+    }
+  } catch (_) {}
   function renderProducts() {
     if (!productGrid) return;
-    productGrid.innerHTML = PRODUCTS.map((p, i) => {
+    const q = foldSearch($("#productSearch") && $("#productSearch").value);
+    const pack = (window.MAHOCatalog && MAHOCatalog.pageProducts)
+      ? MAHOCatalog.pageProducts(PRODUCTS, { q: q, cat: activeFilter, mode: catalogMode(), page: catalogPage, pageSize: 24, homeCount: 12 })
+      : { items: PRODUCTS.map((product, index) => ({ product: product, index: index })), total: PRODUCTS.length, page: 1, pages: 1, mode: "catalog" };
+    const cards = pack.items.map(({ product: p, index: i }) => {
       const badgeText = LANG === "en" ? (p.badgeText_en || p.badgeText) : p.badgeText;
       const disc = prodDiscount(p);
       const badge = disc
@@ -566,9 +639,10 @@
       const old = orig ? `<del>${money(orig)}</del>` : "";
       const name = LANG === "en" ? (p.name_en || p.name) : p.name;
       const imgs = productImages(p);
-      const media = imgs.length
+        const media = imgs.length
         ? `<img src="${imgs[0]}" alt="${name}" loading="lazy">`
         : icon(p.icon || catIcon(p.cat));
+      const loved = favoriteCodes.has(String(p.code || ""));
       const stock = productStock(p);
       const out = stock <= 0;
       const low = stock > 0 && stock <= LOW_STOCK;
@@ -581,9 +655,9 @@
         ? `<a class="product-seo-link" href="${escapeAttr(seoHref)}">${escHtml(name)}</a>`
         : "";
       return `
-        <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-idx="${i}" role="button" tabindex="0">
+        <article class="product-card${out ? " out" : ""}" data-cat="${p.cat}" data-code="${escHtml(p.code || "")}" data-idx="${i}" role="button" tabindex="0">
           ${seoLink}
-          <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}</div>
+          <div class="product-media m-${p.cat}">${badge}${outOverlay}${media}<button type="button" class="fav-btn${loved ? " is-on" : ""}" data-fav aria-pressed="${loved ? "true" : "false"}" aria-label="${loved ? t("fav.remove") : t("fav.add")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/></svg></button></div>
           <div class="product-body">
             <span class="cat">${catLabel(p.cat)}</span>
             <h3>${name}</h3>
@@ -591,13 +665,48 @@
             <div class="product-foot">
               <span class="price">${money(effPrice(p))} ${old}</span>
               <button class="icon-btn" type="button" data-share aria-label="${LANG === "en" ? "Share" : "اشتراک"}">${icon("share")}</button>
-              <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
+              <button class="icon-btn" type="button" data-addcart ${out ? "disabled" : ""} aria-label="${LANG === "en" ? "Add to Cart" : "افزودن به سبد خرید"}">${icon("bag")}</button>
             </div>
           </div>
         </article>`;
-    }).join("");
-    applyFilter(activeFilter);
+    });
+    productGrid.innerHTML = cards.join("");
+    const more = $("#catalogMore");
+    const viewAll = $("#viewAllProducts");
+    const pager = $("#catalogPager");
+    const empty = $("#searchEmpty");
+    if (empty) empty.hidden = !q || pack.total > 0;
+    if (more && viewAll) {
+      viewAll.hidden = catalogMode() !== "home";
+      more.hidden = viewAll.hidden && !(pack.mode === "catalog" && pack.pages > 1);
+      viewAll.textContent = t("search.all");
+      viewAll.href = "/catalog";
+    }
+    const prodH2 = document.querySelector("#products h2");
+    const prodKicker = document.querySelector("#products .kicker");
+    if (prodH2) prodH2.textContent = catalogMode() === "catalog" ? t("catalog.h2") : t("prod.h2");
+    if (prodKicker) prodKicker.textContent = catalogMode() === "catalog" ? t("catalog.kicker") : t("prod.kicker");
+    if (pager) {
+      pager.hidden = pack.mode !== "catalog" || pack.pages < 2;
+      pager.innerHTML = pack.mode === "catalog" && pack.pages > 1
+        ? '<button type="button" data-page="' + (pack.page - 1) + '"' + (pack.page <= 1 ? " disabled" : "") + ">‹</button> <span>" + toDigits(pack.page) + " / " + toDigits(pack.pages) + '</span> <button type="button" data-page="' + (pack.page + 1) + '"' + (pack.page >= pack.pages ? " disabled" : "") + ">›</button>"
+        : "";
+    }
+    paintSearchSuggest(q);
     document.dispatchEvent(new CustomEvent("maho:rendered"));
+  }
+  function paintSearchSuggest(q) {
+    const box = $("#searchSuggest");
+    if (!box) return;
+    if (!q || !window.MAHOCatalog) { box.hidden = true; box.innerHTML = ""; return; }
+    const pack = MAHOCatalog.pageProducts(PRODUCTS, { q: q, mode: "catalog", pageSize: 6, page: 1 });
+    if (!pack.items.length) { box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    box.innerHTML = pack.items.map(({ product: p, index: i }) => {
+      const name = LANG === "en" ? (p.name_en || p.name) : p.name;
+      const img = (productImages(p)[0] || "");
+      return '<button type="button" role="option" data-suggest="' + i + '">' + (img ? '<img alt="" src="' + escapeAttr(img) + '">' : "") + "<span><b>" + escHtml(name) + "</b><br><span>" + money(effPrice(p)) + "</span></span></button>";
+    }).join("");
   }
 
   /* -------------------- Render store -------------------- */
@@ -626,12 +735,212 @@
   }
 
   /* -------------------- Filtering -------------------- */
-  function applyFilter(filter) {
-    activeFilter = filter;
-    $$(".product-card", productGrid).forEach((card) => {
-      const show = filter === "all" || card.dataset.cat === filter;
-      card.classList.toggle("is-hidden", !show);
+  function paintQuickFavorite(p) {
+    const name = $("#qvName");
+    if (!name || !p) return;
+    let btn = $("#qvFav");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "qvFav";
+      btn.type = "button";
+      btn.className = "fav-btn qv-fav";
+      name.insertAdjacentElement("afterend", btn);
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (qvProduct) toggleFavorite(qvProduct);
+      });
+    }
+    const loved = favoriteCodes.has(String(p.code || ""));
+    btn.classList.toggle("is-on", loved);
+    btn.setAttribute("aria-pressed", loved ? "true" : "false");
+    btn.setAttribute("aria-label", loved ? t("fav.remove") : t("fav.add"));
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/></svg>';
+  }
+  function applyFavoriteSet(codes) {
+    favoriteCodes = new Set((codes || []).map((code) => String(code)));
+    document.querySelectorAll("[data-fav]").forEach((btn) => {
+      const card = btn.closest(".product-card");
+      const code = card ? card.getAttribute("data-code") : "";
+      const loved = favoriteCodes.has(code);
+      btn.classList.toggle("is-on", loved);
+      btn.setAttribute("aria-pressed", loved ? "true" : "false");
+      btn.setAttribute("aria-label", loved ? t("fav.remove") : t("fav.add"));
     });
+    if (qvProduct) paintQuickFavorite(qvProduct);
+    paintFavoritesList();
+  }
+  function loadFavorites() {
+    if (!(window.MAHOApi && MAHOApi.getToken("user"))) { applyFavoriteSet([]); return Promise.resolve(); }
+    return MAHOApi.request("/api/me/favorites", { token: MAHOApi.getToken("user") }).then((res) => {
+      window._favoriteItems = (res && res.items) || [];
+      applyFavoriteSet((res && res.favorites) || []);
+    }).catch(() => {});
+  }
+  function toggleFavorite(p) {
+    const code = p && (p.code || "");
+    if (!code) return;
+    if (!(window.MAHOApi && MAHOApi.getToken("user"))) {
+      showToast(t("fav.login"));
+      if (typeof openAcct === "function") openAcct();
+      return;
+    }
+    const had = favoriteCodes.has(String(code));
+    const previousCodes = Array.from(favoriteCodes);
+    const previousItems = (window._favoriteItems || []).slice();
+    const nextCodes = had ? previousCodes.filter((item) => item !== String(code)) : previousCodes.concat([String(code)]);
+    if (had) window._favoriteItems = previousItems.filter((item) => String(item.code) !== String(code));
+    applyFavoriteSet(nextCodes);
+    MAHOApi.request("/api/me/favorites", { method: "POST", body: { code: code }, token: MAHOApi.getToken("user") }).then((res) => {
+      window._favoriteItems = (res && res.items) || [];
+      applyFavoriteSet((res && res.favorites) || []);
+      showToast(had ? t("fav.remove") : t("fav.add"));
+    }).catch((err) => {
+      window._favoriteItems = previousItems;
+      applyFavoriteSet(previousCodes);
+      showToast((err && err.message) || t("fav.login"));
+    });
+  }
+  function mediaSrc(src) {
+    const raw = String(src || "").trim();
+    if (!raw || /^javascript:/i.test(raw)) return "";
+    if (/^(https?:|data:|\/)/i.test(raw)) return raw;
+    return "/" + raw.replace(/^\.?\//, "");
+  }
+  function favoriteSource(item) {
+    const live = PRODUCTS.find((product) => String(product.code || "") === String(item && item.code || ""));
+    return live || item || {};
+  }
+  function paintFavoritesList() {
+    const box = $("#favoritesList");
+    const title = $("#favoritesTitle");
+    if (title) title.textContent = t("fav.title");
+    if (!box) return;
+    const items = window._favoriteItems || [];
+    if (!items.length) { box.innerHTML = '<p class="muted">' + escHtml(t("fav.empty")) + "</p>"; return; }
+    box.innerHTML = '<div class="fav-list">' + items.map((item) => {
+      const source = favoriteSource(item);
+      const name = LANG === "en" ? (source.name_en || source.name || item.code) : (source.name || source.name_en || item.code);
+      const cat = String(source.cat || item.cat || "").replace(/[^a-z0-9_-]/gi, "");
+      if (!item.available && !source.name && !source.name_en) {
+        return '<article class="fav-card is-gone"><div class="fav-media' + (cat ? " m-" + cat : "") + '"></div><div class="fav-main"><h4>' + escHtml(name) + '</h4><p class="fav-note">' + escHtml(t("fav.gone")) + '</p><div class="fav-actions"><button type="button" class="btn btn-outline btn-sm" data-unfav="' + escHtml(item.code) + '">' + escHtml(t("fav.remove")) + "</button></div></div></article>";
+      }
+      const image = mediaSrc((productImages(source)[0]) || source.image || item.image || "");
+      const media = image
+        ? '<img src="' + escapeAttr(image) + '" alt="' + escapeAttr(name) + '" data-fav-photo="1">'
+        : icon(source.icon || catIcon(source.cat || item.cat));
+      const stock = productStock(source);
+      const note = stock <= 0 ? t("stock.out") : (isFinite(stock) && stock <= LOW_STOCK ? t("stock.left").replace("{n}", toDigits(stock)) : t("fav.inStock"));
+      const old = origPrice(source);
+      const price = '<span class="fav-price">' + money(effPrice(source)) + (old ? " <del>" + money(old) + "</del>" : "") + "</span>";
+      return '<article class="fav-card"><div class="fav-media' + (cat ? " m-" + cat : "") + '">' + media + '</div><div class="fav-main"><h4>' + escHtml(name) + "</h4>" + price + '<p class="fav-note">' + escHtml(note) + '</p><div class="fav-actions"><button type="button" class="btn btn-outline btn-sm" data-open-fav="' + escHtml(item.code) + '">' + escHtml(t("fav.details")) + '</button><button type="button" class="btn btn-gold btn-sm" data-cart-fav="' + escHtml(item.code) + '"' + (stock <= 0 ? " disabled" : "") + ">" + escHtml(t("fav.cart")) + '</button><button type="button" class="btn btn-outline btn-sm" data-unfav="' + escHtml(item.code) + '">' + escHtml(t("fav.remove")) + "</button></div></div></article>";
+    }).join("") + "</div>";
+  }
+  function foldSearch(value) {
+    return String(value || "").toLowerCase().replace(/[يى]/g, "ی").replace(/ك/g, "ک").replace(/\s+/g, " ").trim();
+  }
+  function contactHref(kind, value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (kind === "tel") {
+      const digits = raw.replace(/[^\d+]/g, "");
+      return digits ? "tel:" + digits : "";
+    }
+    if (kind === "mail") return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) ? "mailto:" + raw : "";
+    if (kind === "wa") {
+      if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//i.test(raw)) return raw;
+      const digits = raw.replace(/\D/g, "");
+      return digits.length >= 8 ? "https://wa.me/" + digits : "";
+    }
+    if (/^https:\/\//i.test(raw)) return raw;
+    return "";
+  }
+  function contactMark(type) {
+    const paths = {
+      whatsapp: "M5 6h14v9H8l-3 3z",
+      tel: "M7 3h3l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v3c0 1-1 2-2 2A16 16 0 0 1 5 5c0-1 1-2 2-2z",
+      email: "M4 6h16v12H4zM4 7l8 6 8-6",
+      telegram: "M4 12 20 5l-4 14-4-5-3 3z",
+      instagram: "M8 4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+      facebook: "M14 9h3V6h-3c-2 0-3 1-3 3v2H9v3h2v7h3v-7h3l1-3h-4V9z",
+      url: "M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1",
+    };
+    return '<svg class="contact-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (paths[type] || paths.url) + '"/></svg>';
+  }
+  function paintContactPopover() {
+    const box = $("#contactPopoverOptions");
+    if (!box) return;
+    const managed = window.MAHO_SITE && Array.isArray(MAHO_SITE.contactMethods) ? MAHO_SITE.contactMethods : null;
+    if (managed && managed.length) {
+      box.innerHTML = managed.map((item) => '<a href="' + escapeAttr(item.href) + '" target="_blank" rel="noopener">' + contactMark(item.type) + "<span>" + escHtml(LANG === "en" ? (item.label_en || item.label) : (item.label || item.label_en)) + "</span></a>").join("");
+      const title = $("#contactPopoverTitle");
+      const lead = $("#contactPopoverLead");
+      if (title) title.textContent = LANG === "en" ? "Contact MAHO MARKET" : "تماس با ماهو مارکیت";
+      if (lead) lead.textContent = LANG === "en" ? "Choose how you would like to contact us." : "لطفاً روش دلخواه خود را برای تماس با ما انتخاب کنید.";
+      return;
+    }
+    const c = CONFIG.content || {};
+    const phone = c.footerPhone || (($("#footerPhoneText") && $("#footerPhoneText").textContent) || "");
+    const email = c.footerEmail || (($("#footerEmailLink") && $("#footerEmailLink").textContent) || "");
+    const wa = c.whatsappLink || c.officialWhatsAppNumber || "";
+    const items = [
+      { href: contactHref("wa", wa), label: LANG === "en" ? "WhatsApp" : "واتساپ", type: "whatsapp" },
+      { href: contactHref("tel", phone), label: LANG === "en" ? "Call" : "تماس تلفنی", type: "tel" },
+      { href: contactHref("mail", email), label: LANG === "en" ? "Email" : "ارسال ایمیل", type: "email" },
+    ].filter((item) => item.href);
+    box.innerHTML = items.map((item) => '<a href="' + escapeAttr(item.href) + '" target="_blank" rel="noopener">' + contactMark(item.type) + "<span>" + escHtml(item.label) + "</span></a>").join("");
+    const title = $("#contactPopoverTitle");
+    const lead = $("#contactPopoverLead");
+    if (title) title.textContent = LANG === "en" ? "Contact MAHO MARKET" : "تماس با ماهو مارکیت";
+    if (lead) lead.textContent = LANG === "en" ? "Choose how you would like to contact us." : "لطفاً روش دلخواه خود را برای تماس با ما انتخاب کنید.";
+  }
+  function placeContactPopover() {
+    const pop = $("#contactPopover");
+    const btn = $("#footerContact");
+    if (!pop || !btn) return;
+    const rect = btn.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 24);
+    pop.style.width = width + "px";
+    let left = rect.right - width;
+    left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+    pop.hidden = false;
+    const top = Math.max(12, rect.top - pop.offsetHeight - 10);
+    pop.style.left = left + "px";
+    pop.style.top = top + "px";
+  }
+  function closeContactPopover() {
+    const pop = $("#contactPopover");
+    const btn = $("#footerContact");
+    if (pop) pop.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+  function wireContactPopover() {
+    const btn = $("#footerContact");
+    const pop = $("#contactPopover");
+    if (!btn || !pop || btn.dataset.wired === "1") return;
+    btn.dataset.wired = "1";
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!pop.hidden) { closeContactPopover(); return; }
+      paintContactPopover();
+      pop.hidden = false;
+      btn.setAttribute("aria-expanded", "true");
+      placeContactPopover();
+    });
+    const closer = $("#contactPopoverClose");
+    if (closer) closer.addEventListener("click", (e) => { e.stopPropagation(); closeContactPopover(); btn.focus(); });
+    document.addEventListener("click", (e) => {
+      if (pop.hidden) return;
+      if (e.target === btn || pop.contains(e.target)) return;
+      closeContactPopover();
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden) { closeContactPopover(); btn.focus(); } });
+  }
+  function applyFilter(filter) {
+    activeFilter = filter || "all";
+    catalogPage = 1;
+    renderProducts();
   }
   function renderShowcase() {
     const grid = document.querySelector(".cat-grid");
@@ -657,7 +966,59 @@
     const chip = (f, label) => `<button class="chip${activeFilter === f ? " active" : ""}" data-filter="${f}">${label}</button>`;
     filterBar.innerHTML = chip("all", t("filter.all")) + cats.map((c) => chip(c.key, LANG === "en" ? (c.name_en || c.name) : c.name)).join("");
   }
-  if (filterBar) {
+    const productSearch = $("#productSearch");
+    const heroSearchForm = $("#heroSearchForm");
+    if (heroSearchForm) heroSearchForm.addEventListener("submit", (e) => { e.preventDefault(); const sec = $("#products"); if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" }); });
+    if (productSearch) {
+      productSearch.addEventListener("input", () => applyFilter(activeFilter));
+      productSearch.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); const sec = $("#products"); if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" }); }
+        if (e.key === "Escape") { productSearch.value = ""; applyFilter(activeFilter); const box = $("#searchSuggest"); if (box) box.hidden = true; }
+      });
+    }
+    document.addEventListener("click", (e) => {
+      const pageBtn = e.target.closest && e.target.closest("[data-page]");
+      if (pageBtn && !pageBtn.disabled) {
+        catalogPage = Math.max(1, parseInt(pageBtn.getAttribute("data-page"), 10) || 1);
+        if (catalogMode() === "catalog") history.pushState({}, "", "/catalog?page=" + catalogPage);
+        renderProducts();
+        const sec = $("#products");
+        if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      const suggest = e.target.closest && e.target.closest("[data-suggest]");
+      if (suggest) {
+        const p = PRODUCTS[parseInt(suggest.getAttribute("data-suggest"), 10)];
+        const box = $("#searchSuggest");
+        if (box) box.hidden = true;
+        if (p) openQuickView(p);
+      }
+    });
+    wireContactPopover();
+    window.addEventListener("popstate", () => {
+      try { catalogPage = location.pathname === "/catalog" ? Math.max(1, parseInt(new URLSearchParams(location.search).get("page") || "1", 10) || 1) : 1; } catch (_) { catalogPage = 1; }
+      document.body.classList.toggle("catalog-view", location.pathname === "/catalog");
+      renderProducts();
+    });
+    document.addEventListener("click", (e) => {
+      const unfav = e.target.closest && e.target.closest("[data-unfav]");
+      if (unfav) { toggleFavorite({ code: unfav.getAttribute("data-unfav") }); return; }
+      const openFav = e.target.closest && e.target.closest("[data-open-fav]");
+      if (openFav) {
+        const product = PRODUCTS.find((item) => item.code === openFav.getAttribute("data-open-fav"));
+        if (product) openQuickView(product);
+        return;
+      }
+      const cartFav = e.target.closest && e.target.closest("[data-cart-fav]");
+      if (cartFav) {
+        const product = PRODUCTS.find((item) => item.code === cartFav.getAttribute("data-cart-fav"));
+        if (product) {
+          if (productSizes(product).length || productColors(product).length) openQuickView(product);
+          else addToCart(product, 1, "", "");
+        }
+      }
+    });
+    if (filterBar) {
     filterBar.addEventListener("click", (e) => {
       const chip = e.target.closest(".chip");
       if (!chip) return;
@@ -785,7 +1146,7 @@
           </div>
           <div class="qty sm">
             <button type="button" data-dec="${it.key}" aria-label="-">−</button>
-            <input value="${toDigits(it.qty)}" readonly aria-label="تعداد">
+            <input value="${toDigits(it.qty)}" readonly aria-label="${t("ui.qty")}">
             <button type="button" data-inc="${it.key}" aria-label="+">+</button>
           </div>
         </div>`;
@@ -804,6 +1165,12 @@
       if (!card) return;
       const p = PRODUCTS[parseInt(card.dataset.idx, 10)];
       if (!p) return;
+      if (e.target.closest("[data-fav]")) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(p);
+        return;
+      }
       if (e.target.closest("[data-share]")) {
         if (window.mahoShareProduct) window.mahoShareProduct(p, e.target.closest("[data-share]"));
         return;
@@ -817,6 +1184,7 @@
     });
     productGrid.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
+      if (e.target.closest("[data-fav],[data-addcart],[data-share],button,a")) return;
       const card = e.target.closest(".product-card"); if (!card) return;
       e.preventDefault();
       const p = PRODUCTS[parseInt(card.dataset.idx, 10)]; if (p) openQuickView(p);
@@ -853,7 +1221,7 @@
     if (a.district) parts.push(a.district); if (a.province) parts.push(a.province); if (a.zip) parts.push(a.zip); if (a.country) parts.push(a.country);
     return parts.join("، ");
   }
-  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; return { country: g("country"), province: g("province"), district: g("district"), city: g("city"), area: g("area") || g("city"), street: g("street"), house: g("house"), zip: g("zip") }; }
+  function readAddr(prefix) { const g = (id) => { const el = $("#" + prefix + "_" + id); return el ? el.value.trim() : ""; }; const city = g("city"); const legacyArea = g("area"); return { country: g("country"), province: g("province"), district: g("district"), city: city, area: legacyArea && legacyArea !== city ? legacyArea : "", street: g("street"), house: g("house"), zip: g("zip") }; }
   function fillAddr(prefix, a) { a = a || {}; const s = (id, v) => { const el = $("#" + prefix + "_" + id); if (el && v != null) el.value = v || ""; }; s("country", a.country || "افغانستان"); s("province", a.province); s("district", a.district); s("city", a.city || a.area); s("area", a.area); s("street", a.street); s("house", a.house); s("zip", a.zip); }
 
   /* -------------------- delivery -------------------- */
@@ -999,7 +1367,7 @@
             '<div class="meta">'+escapeAttr(s.address||s.area||"")+(s.phone?(" · "+escapeAttr(s.phone)):"")+dist+
             (s.hours?("<br>"+escapeAttr(s.hours)):"")+"</div></button>";
         }).join("");
-      }).catch(() => { list.innerHTML = '<p class="note">خطا در بارگذاری فروشگاه‌ها</p>'; });
+      }).catch(() => { list.innerHTML = '<p class="note">' + (LANG === "en" ? "Could not load stores." : "خطا در بارگذاری فروشگاه‌ها") + "</p>"; });
     };
     if (useLoc && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -1116,7 +1484,7 @@
         const desc = LANG === "en" ? (h.description_en || h.description) : (h.description || h.description_en);
         const guide = LANG === "en" ? (h.guide_en || h.guide) : (h.guide || h.guide_en);
         const btn = LANG === "en" ? (h.buttonText_en || h.buttonText) : (h.buttonText || h.buttonText_en);
-        if (hesabText) hesabText.innerHTML = [title, desc, guide, h.holder ? ("صاحب حساب: " + h.holder) : "", h.number ? ("نمبر: <span dir=\"ltr\">" + h.number + "</span>") : ""].filter(Boolean).join("<br>");
+        if (hesabText) hesabText.innerHTML = [title, desc, guide, h.holder ? ((LANG === "en" ? "Account Holder: " : "صاحب حساب: ") + h.holder) : "", h.number ? ((LANG === "en" ? "Number: " : "نمبر: ") + "<span dir=\"ltr\">" + h.number + "</span>") : ""].filter(Boolean).join("<br>");
         if (hesabImg) {
           if (h.qrUrl) { hesabImg.src = h.qrUrl; hesabImg.style.display = "inline-block"; }
           else { hesabImg.removeAttribute("src"); hesabImg.style.display = "none"; }
@@ -1229,9 +1597,10 @@
     } catch (_) { return ""; }
   }
   function itemStatusLabelLocal(order, it) {
-    if (it && it.statusLabelFa) return it.statusLabelFa;
+    if (LANG !== "en" && it && it.statusLabelFa) return it.statusLabelFa;
+    if (LANG === "en" && it && it.statusLabelEn) return it.statusLabelEn;
     const st = (it && it.itemStatus) || "";
-    const map = {
+    const fa = {
       pending: "در انتظار تأیید",
       approved: "تأیید شد",
       rejected: "رد شد",
@@ -1249,7 +1618,25 @@
       return_collected: "جنس برگشتی جمع‌آوری شد",
       return_completed: "برگشت تکمیل شد",
     };
-    return map[st] || st || "";
+    const en = {
+      pending: "Awaiting Confirmation",
+      approved: "Approved",
+      rejected: "Rejected",
+      cancel_requested: "Cancellation Requested",
+      cancelled: "Cancelled",
+      preparing: "Being Prepared",
+      shipped: "Shipped",
+      delivered: "Delivered",
+      return_requested: "Return Requested",
+      return_approved: "Return Approved",
+      return_rejected: "Return Rejected",
+      return_in_progress: "Return in Progress",
+      return_awaiting_pickup: "Awaiting Pickup",
+      return_driver_en_route: "Driver on the Way",
+      return_collected: "Return Collected",
+      return_completed: "Return Completed",
+    };
+    return (LANG === "en" ? en[st] : fa[st]) || st || "";
   }
   let openOrderIds = new Set();
   function cancelUnavailableReason(cancelUi, code) {
@@ -1472,6 +1859,15 @@
           deliveryNote: customer.note || "",
           lang: LANG === "en" ? "en" : "fa",
           couponCode: window.MAHO_COUPON || "",
+          orderNote: customer.note || "",
+          gift: ($("#co_gift") && $("#co_gift").checked) ? {
+            enabled: true,
+            recipientName: ($("#gift_name") && $("#gift_name").value.trim()) || "",
+            recipientPhone: ($("#gift_phone") && $("#gift_phone").value.trim()) || "",
+            message: ($("#gift_message") && $("#gift_message").value.trim()) || "",
+            addressMode: ($("#giftOther") && $("#giftOther").classList.contains("active")) ? "different" : "mine",
+            addr: ($("#giftOther") && $("#giftOther").classList.contains("active")) ? readAddr("gift") : null,
+          } : { enabled: false },
           idempotencyKey: "web_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10),
         };
         return MAHOApi.placeOrder(payload).then((res) => {
@@ -1515,6 +1911,22 @@
     const addrParts = readAddr("co");
     const ad = composeAddress(addrParts);
     const note = ($("#co_note") && $("#co_note").value.trim()) || "";
+    const giftBox = $("#giftBox");
+    const giftToggle = $("#co_gift");
+    if (giftToggle && giftBox && !giftToggle.dataset.bound) {
+      giftToggle.dataset.bound = "1";
+      giftToggle.addEventListener("change", () => { giftBox.hidden = !giftToggle.checked; });
+      const mine = $("#giftMine");
+      const other = $("#giftOther");
+      const addr = $("#giftAddr");
+      function pickGift(different) {
+        if (mine) mine.classList.toggle("active", !different);
+        if (other) other.classList.toggle("active", different);
+        if (addr) addr.hidden = !different;
+      }
+      if (mine) mine.addEventListener("click", () => pickGift(false));
+      if (other) other.addEventListener("click", () => pickGift(true));
+    }
     const email = ($("#co_email") && $("#co_email").value.trim()) || "";
     const ts = selectedTimeslot();
     return { nm, ph, addrParts, ad, note, email, ts };
@@ -1678,9 +2090,9 @@
             ? `<label class="oi-check"><input type="checkbox" data-line-pick="${lid}" data-oid="${oid}" ${cancelableItem ? 'data-can-cancel="1"' : ""} ${returnableItem ? 'data-can-return="1"' : ""}><span>${LANG === "en" ? "Select" : "انتخاب"}</span></label>`
             : "";
           let itemActs = `<div class="oi-actions">`;
-          if (cancelableItem) itemActs += `<button type="button" class="btn btn-danger-sm oi-btn" data-cancel-line="${oid}" data-line="${lid}">${LANG === "en" ? "Cancel item" : "لغو این کالا"}</button>`;
-          if (returnableItem) itemActs += `<button type="button" class="btn btn-outline btn-sm oi-btn" data-return-line="${oid}" data-line="${lid}">${LANG === "en" ? "Return item" : "برگشت این کالا"}</button>`;
-          if (reorderable) itemActs += `<button type="button" class="btn btn-gold btn-sm oi-btn" data-reorder-line="${oid}" data-line="${lid}">${LANG === "en" ? "Reorder item" : "سفارش مجدد این کالا"}</button>`;
+          if (cancelableItem) itemActs += `<button type="button" class="btn btn-danger-sm oi-btn" data-cancel-line="${oid}" data-line="${lid}">${LANG === "en" ? "Cancel Item" : "لغو این کالا"}</button>`;
+          if (returnableItem) itemActs += `<button type="button" class="btn btn-outline btn-sm oi-btn" data-return-line="${oid}" data-line="${lid}">${LANG === "en" ? "Return Item" : "برگشت این کالا"}</button>`;
+          if (reorderable) itemActs += `<button type="button" class="btn btn-gold btn-sm oi-btn" data-reorder-line="${oid}" data-line="${lid}">${LANG === "en" ? "Reorder Item" : "سفارش مجدد این کالا"}</button>`;
           itemActs += `</div>`;
           let why = "";
           if (!cancelableItem && !canCancel && (st === "pending" || st === "approved" || !st) && cancelBlockedMsg) {
@@ -1721,12 +2133,12 @@
         });
         const hasReturnable = (o.items || []).some((it) => it && it.itemStatus === "delivered" && canReturnOrder);
         const bulk = `<div class="oi-bulk">
-            ${(hasCancelable || hasReturnable) ? `<label class="oi-check oi-check-all"><input type="checkbox" data-select-all-lines="${escHtml(o.id)}"><span>${LANG === "en" ? "Select all eligible" : "انتخاب همه واجد شرایط"}</span></label>` : ""}
+            ${(hasCancelable || hasReturnable) ? `<label class="oi-check oi-check-all"><input type="checkbox" data-select-all-lines="${escHtml(o.id)}"><span>${LANG === "en" ? "Select All Eligible" : "انتخاب همه واجد شرایط"}</span></label>` : ""}
             <div class="order-actions"${canCancel && cancelUi.deadline ? ` data-cancel-deadline="${cancelUi.deadline}"` : ""}>
               ${cancelMeta}
-              ${hasCancelable ? `<button type="button" class="btn btn-danger-sm" data-cancel-lines="${escHtml(o.id)}">${LANG === "en" ? "Cancel selected" : "لغو موارد انتخاب‌شده"}</button>` : ""}
-              ${hasReturnable ? `<button type="button" class="btn btn-outline btn-sm" data-return-lines="${escHtml(o.id)}">${LANG === "en" ? "Return selected" : "برگشت انتخاب‌شده‌ها"}</button>` : ""}
-              <button type="button" class="btn btn-gold btn-sm" data-reorder="${escHtml(o.id)}">${LANG === "en" ? "Reorder all available" : "سفارش مجدد همه موجود"}</button>
+              ${hasCancelable ? `<button type="button" class="btn btn-danger-sm" data-cancel-lines="${escHtml(o.id)}">${LANG === "en" ? "Cancel Selected" : "لغو موارد انتخاب‌شده"}</button>` : ""}
+              ${hasReturnable ? `<button type="button" class="btn btn-outline btn-sm" data-return-lines="${escHtml(o.id)}">${LANG === "en" ? "Return Selected" : "برگشت انتخاب‌شده‌ها"}</button>` : ""}
+              <button type="button" class="btn btn-gold btn-sm" data-reorder="${escHtml(o.id)}">${LANG === "en" ? "Reorder All Available" : "سفارش مجدد همه موجود"}</button>
             </div>
           </div>`;
         let hesabForm = "";
@@ -1813,16 +2225,16 @@
   const ordersClose = $("#ordersClose"); if (ordersClose) ordersClose.addEventListener("click", closeOrders);
   if (ordersOverlay) ordersOverlay.addEventListener("click", (e) => { if (e.target === ordersOverlay) closeOrders(); });
   function buildReturnFormHtml(addr, phone) {
-    const reasonLabel = t("orders.returnReason") || (LANG === "en" ? "Return reason" : "دلیل برگشت");
+    const reasonLabel = t("orders.returnReason") || (LANG === "en" ? "Return Reason" : "دلیل برگشت");
     const detailsLabel = t("orders.returnDetails") || (LANG === "en" ? "Details" : "توضیحات");
-    const methodLabel = t("orders.returnMethod") || (LANG === "en" ? "Return method" : "روش برگشت");
-    const storeLabel = t("orders.returnPickupStore") || (LANG === "en" ? "Return to store" : "تحویل به فروشگاه");
-    const custLabel = t("orders.returnPickupCustomer") || (LANG === "en" ? "Pickup from my address" : "جمع‌آوری از آدرس من");
-    const submitLabel = t("orders.returnSubmit") || (LANG === "en" ? "Submit return" : "ثبت درخواست برگشت");
+    const methodLabel = t("orders.returnMethod") || (LANG === "en" ? "Return Method" : "روش برگشت");
+    const storeLabel = t("orders.returnPickupStore") || (LANG === "en" ? "Return to Store" : "تحویل به فروشگاه");
+    const custLabel = t("orders.returnPickupCustomer") || (LANG === "en" ? "Pickup from My Address" : "جمع‌آوری از آدرس من");
+    const submitLabel = t("orders.returnSubmit") || (LANG === "en" ? "Submit Return" : "ثبت درخواست برگشت");
     const radioName = "rf-method-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
     return `
         <label class="note">${reasonLabel}</label>
-        <select class="ctrl rf-reason-id" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"><option value="">${LANG === "en" ? "Select reason" : "انتخاب دلیل"}</option></select>
+        <select class="ctrl rf-reason-id" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"><option value="">${LANG === "en" ? "Select Reason" : "انتخاب دلیل"}</option></select>
         <label class="note rf-details-label">${detailsLabel}</label>
         <textarea class="ctrl rf-details" rows="2" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)"></textarea>
         <label class="note">${methodLabel}</label>
@@ -1833,7 +2245,7 @@
         <p class="note rf-method-hint" style="font-size:12px">${LANG === "en" ? "Please choose a return method." : "لطفاً یکی از روش‌های برگشت را انتخاب کنید."}</p>
         <div class="rf-store-info note" hidden style="margin:6px 0;padding:8px;border:1px dashed var(--line);border-radius:10px"></div>
         <div class="rf-cust" hidden>
-          <label class="note">${LANG === "en" ? "Pickup address" : "آدرس برداشت"}</label>
+          <label class="note">${LANG === "en" ? "Pickup Address" : "آدرس برداشت"}</label>
           <input class="ctrl rf-address" value="${(addr || "").replace(/"/g, "&quot;")}" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
           <label class="note">${LANG === "en" ? "Phone" : "شماره تماس"}</label>
           <input class="ctrl rf-phone" dir="ltr" value="${(phone || "").replace(/"/g, "&quot;")}" style="width:100%;margin:4px 0 8px;padding:8px;border-radius:8px;border:1px solid var(--line)">
@@ -1853,7 +2265,7 @@
     fetch("/api/return-reasons").then(function(r){ return r.json(); }).then(function(d){
       var sel = form.querySelector(".rf-reason-id");
       var reasons = ((d && d.reasons) || []).filter(function(r){ return r && r.active !== false; });
-      sel.innerHTML = '<option value="">' + (LANG === "en" ? "Select reason" : "انتخاب دلیل") + "</option>" +
+      sel.innerHTML = '<option value="">' + (LANG === "en" ? "Select Reason" : "انتخاب دلیل") + "</option>" +
         reasons.map(function(r){
           return '<option value="' + r.id + '" data-note="' + (r.requireNote ? "1" : "0") + '">' +
             (LANG === "en" && r.titleEn ? r.titleEn : r.title) + "</option>";
@@ -1871,7 +2283,7 @@
           const stores = (typeof CONFIG !== "undefined" && CONFIG.stores) || [];
           const s = stores[0] || null;
           if (s) {
-            storeInfo.innerHTML = "<b>" + (LANG === "en" ? "Return to store" : "تحویل به فروشگاه") + "</b><br>" +
+            storeInfo.innerHTML = "<b>" + (LANG === "en" ? "Return to Store" : "تحویل به فروشگاه") + "</b><br>" +
               (s.name || "") + (s.address || s.area ? (" — " + (s.address || s.area)) : "") +
               (s.phone ? ("<br>" + s.phone) : "") +
               (s.hours ? ("<br>" + s.hours) : "");
@@ -1932,7 +2344,7 @@
       };
       run().catch((err) => {
         msg.className = "qv-msg";
-        msg.textContent = (err && err.message) || (err && err.error) || "خطا";
+        msg.textContent = (err && err.message) || (err && err.error) || (LANG === "en" ? "Something went wrong." : "خطا");
       });
     });
   }
@@ -2040,7 +2452,7 @@
       if (!window.MAHOApi || !MAHOApi.cancelOrderItem) { showToast("API unavailable"); return; }
       MAHOApi.cancelOrderItem(id, lid, { reason: LANG === "en" ? "Customer cancel item" : "لغو توسط مشتری" })
         .then(() => { showToast(LANG === "en" ? "Item cancelled" : "کالا لغو شد"); renderOrders(); })
-        .catch((err) => alert((err && err.message) || (err && err.error) || "خطا"));
+        .catch((err) => alert((err && err.message) || (err && err.error) || (LANG === "en" ? "Something went wrong." : "خطا")));
       return;
     }
     const returnLineBtn = e.target.closest("[data-return-line]");
@@ -2083,14 +2495,16 @@
           }
         });
         saveCart(); updateCartBadge(); renderCart();
-        let msg = added.length ? ("افزوده شد به سبد: " + added.length) : "هیچ کالای موجودی اضافه نشد";
+        let msg = added.length
+          ? (LANG === "en" ? "Added to cart: " : "افزوده شد به سبد: ") + added.length
+          : (LANG === "en" ? "No available item was added." : "هیچ کالای موجودی اضافه نشد");
         if (skipped.length) {
-          msg += "\nغيرقابل سفارش: " + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join("، ");
+          msg += (LANG === "en" ? "\nUnavailable: " : "\nغيرقابل سفارش: ") + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join(LANG === "en" ? ", " : "، ");
         }
         alert(msg);
         if (added.length) openCart();
       };
-      MAHOApi.reorder(id, { lineIds: [lid] }).then(applyReorder).catch((err) => alert((err && err.message) || "خطا"));
+      MAHOApi.reorder(id, { lineIds: [lid] }).then(applyReorder).catch((err) => alert((err && err.message) || (LANG === "en" ? "Something went wrong." : "خطا")));
       return;
     }
     const reorderBtn = e.target.closest("[data-reorder]");
@@ -2125,13 +2539,15 @@
           }
         });
         saveCart(); updateCartBadge(); renderCart();
-        let msg = added.length ? ("افزوده شد به سبد: " + added.length) : "هیچ کالای موجودی اضافه نشد";
+        let msg = added.length
+          ? (LANG === "en" ? "Added to cart: " : "افزوده شد به سبد: ") + added.length
+          : (LANG === "en" ? "No available item was added." : "هیچ کالای موجودی اضافه نشد");
         if (skipped.length) {
-          msg += "\nغيرقابل سفارش: " + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join("، ");
+          msg += (LANG === "en" ? "\nUnavailable: " : "\nغيرقابل سفارش: ") + skipped.map((s) => (s.code || s.name || "") + " (" + (s.reason || "") + ")").join(LANG === "en" ? ", " : "، ");
         }
         alert(msg);
         openCart();
-      }).catch((err) => alert((err && err.message) || "خطا"));
+      }).catch((err) => alert((err && err.message) || (LANG === "en" ? "Something went wrong." : "خطا")));
       return;
     }
     const cancelLinesBtn = e.target.closest("[data-cancel-lines]");
@@ -2140,16 +2556,16 @@
       const card = cancelLinesBtn.closest(".order-card");
       const picks = card ? Array.from(card.querySelectorAll('input[data-line-pick][data-can-cancel="1"]:checked')) : [];
       const lineIds = picks.map((el) => el.getAttribute("data-line-pick")).filter(Boolean);
-      if (!lineIds.length) { alert("حداقل یک آیتم را انتخاب کنید"); return; }
-      if (!confirm("آیتم‌های انتخاب‌شده لغو شوند؟")) return;
+      if (!lineIds.length) { alert(LANG === "en" ? "Select at least one item." : "حداقل یک آیتم را انتخاب کنید"); return; }
+      if (!confirm(LANG === "en" ? "Cancel the selected items?" : "آیتم‌های انتخاب‌شده لغو شوند؟")) return;
       const run = async () => {
         for (const lid of lineIds) {
-          await MAHOApi.cancelOrderItem(id, lid, { reason: "لغو انتخاب‌شده توسط مشتری" });
+          await MAHOApi.cancelOrderItem(id, lid, { reason: LANG === "en" ? "Customer cancelled the selected items" : "لغو انتخاب‌شده توسط مشتری" });
         }
         showToast(LANG === "en" ? "Selected items cancelled" : "اقلام انتخاب‌شده لغو شدند");
         renderOrders();
       };
-      run().catch((err) => alert((err && err.message) || "خطا"));
+      run().catch((err) => alert((err && err.message) || (LANG === "en" ? "Something went wrong." : "خطا")));
       return;
     }
     const returnLinesBtn = e.target.closest("[data-return-lines]");
@@ -2239,6 +2655,7 @@
     } else { thumbs.hidden = true; thumbs.innerHTML = ""; }
     $("#qvCat").textContent = catLabel(p.cat) || "";
     $("#qvName").textContent = nm;
+    paintQuickFavorite(p);
     const qvShare = $("#qvShare");
     if (qvShare) { qvShare.dataset.code = productPublicCode(p); qvShare.dataset.name = nm; }
     const codeEl = $("#qvCode");
@@ -2267,9 +2684,31 @@
       }).join("");
     } else { colorsWrap.hidden = true; $("#qvColors").innerHTML = ""; }
     refreshQvStockMsg();
-    if (qvOverlay) qvOverlay.classList.add("show");
+    if (qvOverlay) {
+      qvOverlay.classList.add("show");
+      /* Account, cart and orders share .ov at 150. Product details must sit above them. */
+      qvOverlay.style.zIndex = "180";
+    }
+    const opener = document.activeElement;
+    if (opener && opener.closest && opener.closest("#acctOverlay")) qvReturnFocus = opener;
+    const closer = $("#qvClose");
+    if (closer) closer.focus();
   }
-  function closeQuickView() { if (qvOverlay) qvOverlay.classList.remove("show"); }
+  let qvReturnFocus = null;
+  function closeQuickView() {
+    if (qvOverlay) {
+      qvOverlay.classList.remove("show");
+      qvOverlay.style.zIndex = "";
+    }
+    if (window.mahoCloseShare) window.mahoCloseShare();
+    else {
+      const menu = document.getElementById("shareMenu");
+      if (menu) { menu.hidden = true; menu.dataset.code = ""; }
+    }
+    const back = qvReturnFocus;
+    qvReturnFocus = null;
+    if (back && document.body.contains(back) && acctOverlay && acctOverlay.classList.contains("show")) back.focus();
+  }
   const qvThumbsEl = $("#qvThumbs");
   if (qvThumbsEl) qvThumbsEl.addEventListener("click", (e) => {
     const img = e.target.closest("img[data-i]"); if (!img || !qvProduct) return;
@@ -2295,7 +2734,16 @@
     refreshQvStockMsg();
   });
   const qvClose = $("#qvClose"); if (qvClose) qvClose.addEventListener("click", closeQuickView);
-  if (qvOverlay) qvOverlay.addEventListener("click", (e) => { if (e.target === qvOverlay) closeQuickView(); });
+  if (qvOverlay) qvOverlay.addEventListener("click", (e) => {
+    if (e.target !== qvOverlay) return;
+    const menu = document.getElementById("shareMenu");
+    if (menu && (!menu.hidden || (menu.matches && menu.matches(":popover-open")))) {
+      if (window.mahoCloseShare) window.mahoCloseShare();
+      else { menu.hidden = true; menu.dataset.code = ""; }
+      return;
+    }
+    closeQuickView();
+  });
   const qvPlus = $("#qvPlus"); if (qvPlus) qvPlus.addEventListener("click", () => setQvQty(qvQty + 1));
   const qvMinus = $("#qvMinus"); if (qvMinus) qvMinus.addEventListener("click", () => setQvQty(qvQty - 1));
   if (qvQtyEl) qvQtyEl.addEventListener("input", () => { const n = parseInt(toEnDigits(qvQtyEl.value).replace(/[^0-9]/g, ""), 10); qvQty = isNaN(n) ? 1 : Math.max(1, n); });
@@ -2313,14 +2761,32 @@
     closeQuickView();
   });
 
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeQuickView(); closeCart(); closeAcct(); closeOrders(); } });
+  function overlayIsOpen(id) {
+    const el = document.getElementById(id);
+    return !!(el && el.classList.contains("show"));
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const share = document.getElementById("shareMenu");
+    if (share && (!share.hidden || (share.matches && share.matches(":popover-open")))) return;
+    if (overlayIsOpen("hoursOverlay")) { document.getElementById("hoursOverlay").classList.remove("show"); return; }
+    if (overlayIsOpen("policyOverlay")) { document.getElementById("policyOverlay").classList.remove("show"); return; }
+    if (overlayIsOpen("qvOverlay")) { closeQuickView(); return; }
+    if (overlayIsOpen("ordersOverlay")) { closeOrders(); return; }
+    if (overlayIsOpen("cartOverlay")) { closeCart(); return; }
+    if (overlayIsOpen("acctOverlay")) { closeAcct(); return; }
+  });
 
   /* -------------------- Accounts (client-side) -------------------- */
   const USERS_KEY = "maho_users", SESS_KEY = "maho_session";
   const getUsers = () => { try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch (_) { return []; } };
   const saveUsers = (u) => { try { localStorage.setItem(USERS_KEY, JSON.stringify(u)); } catch (_) {} };
   const getSession = () => { try { return JSON.parse(localStorage.getItem(SESS_KEY)); } catch (_) { return null; } };
-  const setSession = (s) => { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {} };
+  const setSession = (s) => {
+    try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (_) {}
+    if (s) loadFavorites();
+    else applyFavoriteSet([]);
+  };
   const CUST_SEQ_KEY = "maho_cust_seq";
   let sessionExpiryToastAt = 0;
   function clearPrivateOrdersCache() {
@@ -2609,7 +3075,7 @@
         if ($("#vf_code")) $("#vf_code").value = "";
         const url = (res.welcomeUrl) || ("/welcome.html?name=" + encodeURIComponent(nm || "") + "&email=" + encodeURIComponent(em || ""));
         location.href = url;
-      }).catch((err) => acctMsg((err && err.message === "too_many_attempts") ? "تلاش بیش از حد — بعداً دوباره امتحان کنید." : t("acct.badCode")));
+      }).catch((err) => acctMsg((err && err.message === "too_many_attempts") ? (LANG === "en" ? "Too many attempts. Try again later." : "تلاش بیش از حد — بعداً دوباره امتحان کنید.") : t("acct.badCode")));
       return;
     }
     if (entered !== pendingSignup.code) { acctMsg(t("acct.badCode")); return; }
@@ -2686,13 +3152,13 @@
     if (apiOnline && window.MAHOApi && MAHOApi.forgotPassword) {
       acctMsg(t("acct.sending"), true);
       MAHOApi.forgotPassword({ email: email }).then(() => {
-        acctMsg("اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true);
+        acctMsg(LANG === "en" ? "If an account exists for this email, a recovery message will be sent." : "اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true);
       }).catch(() => acctMsg(t("acct.sendFail")));
       return;
     }
     const u = getUsers().find((x) => (x.email || "").toLowerCase() === email.toLowerCase());
     /* same message whether or not user exists */
-    if (!u) { acctMsg("اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true); return; }
+    if (!u) { acctMsg(LANG === "en" ? "If an account exists for this email, a recovery message will be sent." : "اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی فرستاده می‌شود.", true); return; }
     const code = genCode(); pendingReset = { email: email, code: code };
     acctMsg(t("acct.sending"), true);
     sendCode(email, u.name, code).then((res) => {
@@ -3081,21 +3547,62 @@
     }
     /* editable category section texts */
     const sc = CONFIG.sectionCats || {};
-    const scPick = (k) => (LANG === "en" ? (sc[k + "_en"] || sc[k] || "") : (sc[k] || sc[k + "_en"] || ""));
+    const legacyEnTitle = {
+      "Everything a lady needs": "Everything a Lady Needs",
+      "A shopping experience you can trust": "A Shopping Experience You Can Trust",
+      "Authentic goods": "Authentic Goods",
+      "Fast delivery": "Fast Delivery",
+      "Easy exchange": "Easy Exchange",
+      "Real support": "Real Support",
+    };
+    const showEn = (value) => (LANG === "en" && legacyEnTitle[value]) || value;
+    const scPick = (k) => showEn(LANG === "en" ? (sc[k + "_en"] || sc[k] || "") : (sc[k] || sc[k + "_en"] || ""));
     const catSec = $("#categories");
     if (catSec) {
       const kicker = scPick("kicker"); if (kicker) setSel('#categories .kicker', kicker);
       const title = scPick("title"); if (title) setSel('#categories h2', title);
       const lead = scPick("lead"); if (lead) setSel('#categories .section-head p', lead);
     }
-    // Social links (instagram, telegram, whatsapp, facebook, tiktok) — show only those that have a URL
-    const socialUrls = [c.instagram, c.telegram, c.whatsappLink, c.facebook, c.tiktok];
-    const socials = $$(".socials a");
-    socials.forEach((a, i) => {
-      const url = socialUrls[i] || "";
-      if (url) { a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.display = ""; }
-      else { a.removeAttribute("href"); a.style.display = "none"; }
-    });
+    const why = site.whyMaho;
+    const about = $("#about");
+    if (about && why) {
+      about.hidden = why.enabled === false;
+      const pickWhy = (fa, en) => showEn(LANG === "en" ? (en || fa || "") : (fa || en || ""));
+      const kicker = about.querySelector(".kicker");
+      const heading = about.querySelector("h2");
+      const lead = about.querySelector(".section-head p");
+      if (kicker) kicker.textContent = pickWhy(why.kicker, why.kicker_en);
+      if (heading) heading.textContent = pickWhy(why.heading, why.heading_en);
+      if (lead) lead.textContent = pickWhy(why.description, why.description_en);
+      const grid = about.querySelector(".feature-grid");
+      if (grid && Array.isArray(why.cards)) {
+        const icons = { shield: "i-shield", truck: "i-truck", refresh: "i-refresh", headphones: "i-headphones" };
+        grid.innerHTML = why.cards.map((card) => {
+          const icon = icons[card.icon] || "i-shield";
+          const title = pickWhy(card.title, card.title_en);
+          const desc = pickWhy(card.description, card.description_en);
+          return '<div class="feature"><div class="ico"><svg class="ic"><use href="#' + icon + '"/></svg></div><h3>' + title.replace(/</g, "") + "</h3><p>" + desc.replace(/</g, "") + "</p></div>";
+        }).join("");
+      }
+    }
+    const socialBox = $("#footerSocials");
+    const managed = Array.isArray(site.socials) ? site.socials : null;
+    if (socialBox && managed) {
+      const icons = { instagram: "i-instagram", telegram: "i-send", whatsapp: "i-chat", facebook: "i-facebook", tiktok: "i-tiktok" };
+      socialBox.innerHTML = managed.filter((row) => row && row.url).map((row) => {
+        const label = LANG === "en" ? (row.label_en || row.label || row.platform) : (row.label || row.label_en || row.platform);
+        const icon = icons[row.platform];
+        const glyph = icon ? '<svg class="ic"><use href="#' + icon + '"/></svg>' : "<span>" + String(label).replace(/</g, "") + "</span>";
+        return '<a href="' + String(row.url).replace(/"/g, "") + '" target="_blank" rel="noopener" aria-label="' + String(label).replace(/"/g, "") + '">' + glyph + "</a>";
+      }).join("");
+    } else {
+      const socialUrls = [c.instagram, c.telegram, c.whatsappLink, c.facebook, c.tiktok];
+      $$(".socials a").forEach((a, i) => {
+        const url = socialUrls[i] || "";
+        if (url) { a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.display = ""; }
+        else { a.removeAttribute("href"); a.style.display = "none"; }
+      });
+    }
     const statsArr = c.stats || [];
     const statEls = $$(".hero-stats .stat");
     let applied = 0;
@@ -3103,8 +3610,9 @@
       if (!st || !statEls[i]) return;
       const b = statEls[i].querySelector("b"), span = statEls[i].querySelector("span");
       if (b && st.value != null && st.value !== "") {
-        b.setAttribute("data-count", String(st.value));
-        b.textContent = toDigits(parseInt(st.value, 10) || 0);
+        const raw = String(st.value).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+        b.setAttribute("data-count", raw);
+        b.textContent = toDigits(parseInt(raw, 10) || 0);
         applied++;
       }
       const lab = LANG === "en" ? (st.label_en || st.label) : st.label;
@@ -3392,6 +3900,7 @@
     });
     $$("[data-i18n-html]").forEach((el) => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
     $$("[data-i18n-ph]").forEach((el) => { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
+    $$("[data-i18n-aria]").forEach((el) => { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
   }
   function applyLang(lang) {
     LANG = lang === "en" ? "en" : "fa";
@@ -3408,6 +3917,10 @@
     renderCart();
     updateCartBadge();
     renderAccount();
+    paintFavoritesList();
+    paintContactPopover();
+    if (typeof qvProduct !== "undefined" && qvProduct) openQuickView(qvProduct);
+    if (window.mahoCloseShare) window.mahoCloseShare();
     updatePayInfo();
     applyLogo();
     applyHero();
@@ -3597,6 +4110,8 @@
           MAHOApi.me().then((res) => {
             if (res && res.user) setSession(sessionFromApiUser(res.user, MAHOApi.getToken("user")));
           }).catch(() => {});
+        } else if (MAHOApi.getToken("user")) {
+          loadFavorites();
         }
         applyDeliveryAvailability();
         startStockPolling();

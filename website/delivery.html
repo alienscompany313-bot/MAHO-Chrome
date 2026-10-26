@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>دلیوری سفارش | MAHO Market</title>
+  <title data-i18n="del.docTitle">دلیوری سفارش | MAHO Market</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="../icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -17,6 +17,7 @@
     h1{margin:0;font-size:1.15rem}
     .muted{color:var(--muted);font-size:.9rem}
     .row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.95rem}
+    .lang{margin:0 0 10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:700 12px inherit;cursor:pointer}
     .badge{display:inline-block;background:#fff3d9;color:#8a6a2a;font-weight:800;padding:4px 10px;border-radius:999px;font-size:12px}
     .badge.warn{background:#fdecec;color:#c62828}
     ul{padding-inline-start:18px;margin:8px 0}
@@ -26,39 +27,70 @@
 </head>
 <body>
   <div class="wrap" id="app">
-    <div class="brand"><div class="logo">M</div><div><h1>برگهٔ دلیوری MAHO</h1><div class="muted">فقط اطلاعات لازم برای تحویل</div></div></div>
-    <div id="body" class="muted">در حال بارگذاری…</div>
+    <button type="button" class="lang" data-lang-toggle>English</button>
+    <div class="brand"><div class="logo">M</div><div><h1 data-i18n="del.title">برگهٔ دلیوری MAHO</h1><div class="muted" data-i18n="del.lead">فقط اطلاعات لازم برای تحویل</div></div></div>
+    <div id="body" class="muted" data-i18n="del.loading">در حال بارگذاری…</div>
   </div>
+  <script src="js/page-lang.js"></script>
   <script src="js/api.js"></script>
   <script>
   (function(){
+    var LANGPACK={
+      fa:{
+        "del.docTitle":"دلیوری سفارش | MAHO Market","del.title":"برگهٔ دلیوری MAHO","del.lead":"فقط اطلاعات لازم برای تحویل","del.loading":"در حال بارگذاری…",
+        "del.bad":"لینک نامعتبر است.","del.order":"نمبر سفارش","del.status":"وضعیت","del.customer":"مشتری","del.phone":"نمبر تماس","del.address":"آدرس",
+        "del.pay":"پرداخت","del.collect":"مبلغ قابل دریافت","del.items":"محصولات","del.size":"سایز","del.note":"یادداشت: ","del.maps":"بازکردن موقعیت در Google Maps",
+        "del.inactive":"این QR دیگر برای تحویل فعال نیست.","del.denied":"دسترسی مجاز نیست یا لینک منقضی شده است.","del.afn":"افغانی"
+      },
+      en:{
+        "del.docTitle":"Order Delivery | MAHO Market","del.title":"MAHO Delivery Sheet","del.lead":"Only the details needed for delivery","del.loading":"Loading…",
+        "del.bad":"This link is not valid.","del.order":"Order Number","del.status":"Status","del.customer":"Customer","del.phone":"Phone","del.address":"Address",
+        "del.pay":"Payment","del.collect":"Amount to Collect","del.items":"Products","del.size":"Size","del.note":"Note: ","del.maps":"Open the Location in Google Maps",
+        "del.inactive":"This QR is no longer active for delivery.","del.denied":"Access is not allowed, or the link has expired.","del.afn":"AFN"
+      }
+    };
+    function L(k){ return window.MAHOPageLang.t(LANGPACK, k); }
+    var mode = "loading";
+    var last = null;
+    function bindLang(){
+      window.MAHOPageLang.apply(LANGPACK);
+      document.querySelectorAll("[data-lang-toggle]").forEach(function(btn){
+        btn.onclick=function(){ window.MAHOPageLang.setLang(window.MAHOPageLang.current()==="en"?"fa":"en", LANGPACK); };
+      });
+    }
+    function paint(){
+      if (mode === "bad") { body.innerHTML = '<p class="err">'+L("del.bad")+'</p>'; return; }
+      if (mode === "denied") { body.innerHTML = '<p class="err">'+L("del.denied")+'</p>'; return; }
+      if (mode !== "sheet" || !last) return;
+      var d = last, c = d.customer || {};
+      var items = (d.items || []).map(function(it){
+        return "<li>" + (it.name||"") + " × " + (it.qty||1) + (it.size?" — "+L("del.size")+" "+it.size:"") + "</li>";
+      }).join("");
+      var maps = d.mapsUrl ? '<a class="btn" target="_blank" rel="noopener" href="'+d.mapsUrl+'">'+L("del.maps")+'</a>' : "";
+      body.innerHTML =
+        '<div class="row"><span>'+L("del.order")+'</span><b dir="ltr">'+d.id+'</b></div>'+
+        '<div class="row"><span>'+L("del.status")+'</span><span class="badge'+(d.inactive?' warn':'')+'">'+(d.status||"")+'</span></div>'+
+        '<div class="row"><span>'+L("del.customer")+'</span><b>'+(c.name||"")+'</b></div>'+
+        '<div class="row"><span>'+L("del.phone")+'</span><b dir="ltr">'+(c.phone||"")+'</b></div>'+
+        '<div class="row"><span>'+L("del.address")+'</span><span>'+(c.address||"—")+'</span></div>'+
+        '<div class="row"><span>'+L("del.pay")+'</span><span>'+(d.payment||"")+' / '+(d.paymentStatus||"—")+'</span></div>'+
+        '<div class="row"><span>'+L("del.collect")+'</span><b>'+(Number(d.collectAmount||0).toLocaleString("en-US"))+' '+L("del.afn")+'</b></div>'+
+        '<div><b>'+L("del.items")+'</b><ul>'+items+'</ul></div>'+
+        (d.deliveryNote ? '<p class="muted">'+L("del.note")+d.deliveryNote+'</p>' : '')+
+        maps+
+        (d.inactive ? '<p class="err">'+L("del.inactive")+'</p>' : '');
+    }
+    bindLang();
+    document.addEventListener("maho:lang", function(){ bindLang(); paint(); });
     var q = new URLSearchParams(location.search);
     var id = q.get("o") || "";
     var t = q.get("t") || "";
     var body = document.getElementById("body");
-    if (!id || !t) { body.innerHTML = '<p class="err">لینک نامعتبر است.</p>'; return; }
+    if (!id || !t) { mode = "bad"; paint(); return; }
     fetch((window.MAHOApi ? "" : "") + "/api/delivery/" + encodeURIComponent(id) + "?t=" + encodeURIComponent(t), { cache: "no-store" })
       .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw d; return d; }); })
-      .then(function(d){
-        var c = d.customer || {};
-        var items = (d.items || []).map(function(it){
-          return "<li>" + (it.name||"") + " × " + (it.qty||1) + (it.size?" — سایز "+it.size:"") + "</li>";
-        }).join("");
-        var maps = d.mapsUrl ? '<a class="btn" target="_blank" rel="noopener" href="'+d.mapsUrl+'">بازکردن موقعیت در Google Maps</a>' : "";
-        body.innerHTML =
-          '<div class="row"><span>نمبر سفارش</span><b dir="ltr">'+d.id+'</b></div>'+
-          '<div class="row"><span>وضعیت</span><span class="badge'+(d.inactive?' warn':'')+'">'+(d.status||"")+'</span></div>'+
-          '<div class="row"><span>مشتری</span><b>'+(c.name||"")+'</b></div>'+
-          '<div class="row"><span>نمبر تماس</span><b dir="ltr">'+(c.phone||"")+'</b></div>'+
-          '<div class="row"><span>آدرس</span><span>'+(c.address||"—")+'</span></div>'+
-          '<div class="row"><span>پرداخت</span><span>'+(d.payment||"")+' / '+(d.paymentStatus||"—")+'</span></div>'+
-          '<div class="row"><span>مبلغ قابل دریافت</span><b>'+(Number(d.collectAmount||0).toLocaleString("en-US"))+' افغانی</b></div>'+
-          '<div><b>محصولات</b><ul>'+items+'</ul></div>'+
-          (d.deliveryNote ? '<p class="muted">یادداشت: '+d.deliveryNote+'</p>' : '')+
-          maps+
-          (d.inactive ? '<p class="err">این QR دیگر برای تحویل فعال نیست.</p>' : '');
-      })
-      .catch(function(){ body.innerHTML = '<p class="err">دسترسی مجاز نیست یا لینک منقضی شده است.</p>'; });
+      .then(function(d){ last = d; mode = "sheet"; paint(); })
+      .catch(function(){ mode = "denied"; paint(); });
   })();
   </script>
 </body>

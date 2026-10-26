@@ -30,7 +30,7 @@ function extendMigrate(data) {
       kicker: "دسته‌بندی‌ها",
       kicker_en: "Categories",
       title: "هر آنچه یک خانم لازم دارد",
-      title_en: "Everything a lady needs",
+      title_en: "Everything a Lady Needs",
       lead: "از پوشاک و شال تا کیف، کفش، اکسسوری و لوازم آرایشی — همه در یک‌جا و دسته‌بندی‌شده.",
       lead_en: "From clothing and scarves to bags, shoes, accessories and beauty — all in one place.",
     };

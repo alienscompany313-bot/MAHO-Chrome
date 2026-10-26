@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>نظر و امتیاز سفارش | MAHO Market</title>
+  <title data-i18n="fb.docTitle">نظر و امتیاز سفارش | MAHO Market</title>
+  <script src="js/page-lang.js"></script>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .stars button{font-size:22px;background:none;border:0;cursor:pointer;color:#ccc}
@@ -17,29 +18,30 @@
 </head>
 <body>
   <main style="max-width:560px;margin:40px auto;padding:0 16px;font-family:Tahoma,Arial,sans-serif;line-height:1.8">
-    <h1>نظر و امتیاز سفارش</h1>
-    <p class="guide">۱=بسیار ناراضی · ۲=ناراضی · ۳=متوسط · ۴=راضی · ۵=بسیار راضی</p>
-    <p id="status">در حال بارگذاری…</p>
+    <button type="button" data-lang-toggle class="btn btn-outline" style="margin-bottom:12px">English</button>
+    <h1 data-i18n="fb.title">نظر و امتیاز سفارش</h1>
+    <p class="guide" data-i18n="fb.guide">۱=بسیار ناراضی · ۲=ناراضی · ۳=متوسط · ۴=راضی · ۵=بسیار راضی</p>
+    <p id="status" data-i18n="fb.loading">در حال بارگذاری…</p>
     <form id="fbForm" hidden>
       <div class="field" id="driverField">
-        <label>امتیاز راننده</label>
+        <label data-i18n="fb.driver">امتیاز راننده</label>
         <div class="stars" id="driverStars" data-val=""></div>
       </div>
       <div class="field">
-        <label>رضایت کلی</label>
+        <label data-i18n="fb.overall">رضایت کلی</label>
         <div class="stars" id="overallStars" data-val=""></div>
       </div>
       <div id="productRatings"></div>
       <div class="field">
-        <label>نظر شما (اختیاری)</label>
+        <label data-i18n="fb.comment">نظر شما (اختیاری)</label>
         <textarea id="comment" rows="4" maxlength="2000"></textarea>
       </div>
-      <button type="submit" class="btn btn-gold" id="submitBtn">ارسال نظر</button>
+      <button type="submit" class="btn btn-gold" id="submitBtn" data-i18n="fb.submit">ارسال نظر</button>
     </form>
     <div id="thanks" hidden>
-      <p>از بازخورد شما سپاسگزاریم.</p>
-      <p id="googleWrap" hidden><a id="googleLink" class="btn btn-gold" target="_blank" rel="noopener">ثبت نظر در Google</a></p>
-      <p><a href="/">بازگشت به فروشگاه</a></p>
+      <p data-i18n="fb.thanks">از بازخورد شما سپاسگزاریم.</p>
+      <p id="googleWrap" hidden><a id="googleLink" class="btn btn-gold" target="_blank" rel="noopener" data-i18n="fb.google">ثبت نظر در Google</a></p>
+      <p><a href="/" data-i18n="fb.back">بازگشت به فروشگاه</a></p>
     </div>
   </main>
   <script>
@@ -47,11 +49,74 @@
       var params = new URLSearchParams(location.search);
       var orderId = params.get("o") || "";
       var token = params.get("t") || "";
+      var LANGPACK = {
+        fa: {
+          "fb.docTitle": "نظر و امتیاز سفارش | MAHO Market",
+          "fb.title": "نظر و امتیاز سفارش",
+          "fb.guide": "۱=بسیار ناراضی · ۲=ناراضی · ۳=متوسط · ۴=راضی · ۵=بسیار راضی",
+          "fb.loading": "در حال بارگذاری…",
+          "fb.driver": "امتیاز راننده",
+          "fb.overall": "رضایت کلی",
+          "fb.comment": "نظر شما (اختیاری)",
+          "fb.submit": "ارسال نظر",
+          "fb.thanks": "از بازخورد شما سپاسگزاریم.",
+          "fb.google": "ثبت نظر در Google",
+          "fb.back": "بازگشت به فروشگاه",
+          "fb.badLink": "لینک نامعتبر است.",
+          "fb.expired": "لینک نامعتبر یا منقضی است.",
+          "fb.network": "خطا در ارتباط با سرور.",
+          "fb.needOverall": "لطفاً رضایت کلی را انتخاب کنید.",
+          "fb.needDriver": "لطفاً امتیاز راننده را انتخاب کنید.",
+          "fb.product": "امتیاز محصول",
+          "fb.needProducts": "لطفاً برای همه محصولات امتیاز بدهید.",
+          "fb.sendFail": "ارسال ناموفق",
+          "fb.err": "خطا"
+        },
+        en: {
+          "fb.docTitle": "Order Rating | MAHO Market",
+          "fb.title": "Order Rating",
+          "fb.guide": "1 = very unhappy · 2 = unhappy · 3 = okay · 4 = happy · 5 = very happy",
+          "fb.loading": "Loading…",
+          "fb.driver": "Driver Rating",
+          "fb.overall": "Overall Satisfaction",
+          "fb.comment": "Your comment (optional)",
+          "fb.submit": "Send Feedback",
+          "fb.thanks": "Thank you for your feedback.",
+          "fb.google": "Leave a Google Review",
+          "fb.back": "Back to the Store",
+          "fb.badLink": "This link is not valid.",
+          "fb.expired": "This link is not valid or has expired.",
+          "fb.network": "Could not reach the server.",
+          "fb.needOverall": "Please choose an overall rating.",
+          "fb.needDriver": "Please rate the driver.",
+          "fb.product": "Product Rating",
+          "fb.needProducts": "Please rate every product.",
+          "fb.sendFail": "Could not send the feedback",
+          "fb.err": "Something went wrong"
+        }
+      };
+      function L(k) { return window.MAHOPageLang.t(LANGPACK, k); }
+      function bindLang() {
+        window.MAHOPageLang.apply(LANGPACK);
+        document.querySelectorAll("[data-lang-toggle]").forEach(function (btn) {
+          btn.onclick = function () {
+            window.MAHOPageLang.setLang(window.MAHOPageLang.current() === "en" ? "fa" : "en", LANGPACK);
+          };
+        });
+      }
+      bindLang();
       var status = document.getElementById("status");
       var form = document.getElementById("fbForm");
       var items = [];
       var googleUrl = "";
       var storePickup = false;
+      var statusKey = "fb.loading";
+      function setStatus(key) {
+        statusKey = key;
+        status.hidden = false;
+        status.textContent = L(key);
+      }
+      document.addEventListener("maho:lang", function () { bindLang(); if (!status.hidden && statusKey) status.textContent = L(statusKey); });
 
       function makeStars(el) {
         el.innerHTML = "";
@@ -73,14 +138,14 @@
       }
 
       if (!orderId || !token) {
-        status.textContent = "لینک نامعتبر است.";
+        setStatus("fb.badLink");
         return;
       }
 
       fetch("/api/feedback/" + encodeURIComponent(orderId) + "?token=" + encodeURIComponent(token))
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (x) {
-          if (!x.ok) { status.textContent = "لینک نامعتبر یا منقضی است."; return; }
+          if (!x.ok) { setStatus("fb.expired"); return; }
           if (x.d.feedback && x.d.feedback.status === "submitted") {
             status.hidden = true;
             document.getElementById("thanks").hidden = false;
@@ -101,20 +166,21 @@
           makeStars(document.getElementById("overallStars"));
           var box = document.getElementById("productRatings");
           box.innerHTML = items.map(function (it, idx) {
-            return '<div class="field"><label>امتیاز محصول: ' + (it.name || it.code || "") +
+            return '<div class="field"><label><span data-i18n="fb.product">' + L("fb.product") + '</span>: ' + (it.name || it.code || "") +
               '</label><div class="stars" id="pr' + idx + '" data-val="" data-code="' + (it.code || "") +
               '" data-name="' + (it.name || "") + '"></div></div>';
           }).join("");
           items.forEach(function (_it, idx) { makeStars(document.getElementById("pr" + idx)); });
+          bindLang();
         })
-        .catch(function () { status.textContent = "خطا در ارتباط با سرور."; });
+        .catch(function () { setStatus("fb.network"); });
 
       form.onsubmit = function (e) {
         e.preventDefault();
         var overall = parseInt(document.getElementById("overallStars").getAttribute("data-val"), 10) || 0;
-        if (!overall) { alert("لطفاً رضایت کلی را انتخاب کنید."); return; }
+        if (!overall) { alert(L("fb.needOverall")); return; }
         var driverRating = storePickup ? null : (parseInt(document.getElementById("driverStars").getAttribute("data-val"), 10) || 0);
-        if (!storePickup && !driverRating) { alert("لطفاً امتیاز راننده را انتخاب کنید."); return; }
+        if (!storePickup && !driverRating) { alert(L("fb.needDriver")); return; }
         var productRatings = items.map(function (it, idx) {
           var el = document.getElementById("pr" + idx);
           return {
@@ -124,7 +190,7 @@
           };
         }).filter(function (r) { return r.rating > 0; });
         if (items.length && productRatings.length < items.length) {
-          alert("لطفاً برای همه محصولات امتیاز بدهید.");
+          alert(L("fb.needProducts"));
           return;
         }
         document.getElementById("submitBtn").disabled = true;
@@ -140,7 +206,7 @@
           })
         }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
           .then(function (x) {
-            if (!x.ok) { alert((x.d && x.d.error) || "ارسال ناموفق"); document.getElementById("submitBtn").disabled = false; return; }
+            if (!x.ok) { alert((x.d && x.d.error) || L("fb.sendFail")); document.getElementById("submitBtn").disabled = false; return; }
             form.hidden = true;
             document.getElementById("thanks").hidden = false;
             var gUrl = (x.d && x.d.googleReviewUrl) || googleUrl;
@@ -157,7 +223,7 @@
               };
             }
           })
-          .catch(function () { alert("خطا"); document.getElementById("submitBtn").disabled = false; });
+          .catch(function () { alert(L("fb.err")); document.getElementById("submitBtn").disabled = false; });
       };
     })();
   </script>

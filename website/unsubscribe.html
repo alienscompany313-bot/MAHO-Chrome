@@ -4,24 +4,65 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>لغو عضویت ایمیل | MAHO Market</title>
+  <title data-i18n="un.docTitle">لغو عضویت ایمیل | MAHO Market</title>
+  <script src="js/page-lang.js"></script>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <main style="max-width:520px;margin:48px auto;padding:0 16px;font-family:Tahoma,Arial,sans-serif;line-height:1.8">
-    <h1>لغو دریافت ایمیل‌های تبلیغاتی</h1>
-    <p id="msg">در حال پردازش…</p>
-    <p><a href="/">بازگشت به فروشگاه</a></p>
+    <button type="button" data-lang-toggle class="btn btn-outline">English</button>
+    <h1 data-i18n="un.title">لغو دریافت ایمیل‌های تبلیغاتی</h1>
+    <p id="msg" data-i18n="un.working">در حال پردازش…</p>
+    <p><a href="/" data-i18n="un.back">بازگشت به فروشگاه</a></p>
   </main>
   <script>
     (function () {
+      var LANGPACK = {
+        fa: {
+          "un.docTitle": "لغو عضویت ایمیل | MAHO Market",
+          "un.title": "لغو دریافت ایمیل‌های تبلیغاتی",
+          "un.working": "در حال پردازش…",
+          "un.back": "بازگشت به فروشگاه",
+          "un.bad": "لینک نامعتبر است.",
+          "un.regOk": "تمایل به دریافت ایمیل‌های تبلیغاتی لغو شد. حساب کاربری شما همچنان فعال است.",
+          "un.regFail": "لغو ناموفق بود.",
+          "un.network": "خطا در ارتباط با سرور.",
+          "un.test": "این لینک آزمایشی است و عضویت واقعی را لغو نمی‌کند.",
+          "un.ok": "عضویت شما با موفقیت لغو شد. دیگر ایمیل تبلیغاتی دریافت نخواهید کرد.",
+          "un.fail": "لغو عضویت ناموفق بود. لینک منقضی یا نامعتبر است."
+        },
+        en: {
+          "un.docTitle": "Email Unsubscribe | MAHO Market",
+          "un.title": "Stop Promotional Emails",
+          "un.working": "Working…",
+          "un.back": "Back to the Store",
+          "un.bad": "This link is not valid.",
+          "un.regOk": "Promotional emails were turned off. Your account stays active.",
+          "un.regFail": "Could not turn off promotional emails.",
+          "un.network": "Could not reach the server.",
+          "un.test": "This is a test link and does not unsubscribe a real address.",
+          "un.ok": "You are unsubscribed. You will not receive promotional email.",
+          "un.fail": "Could not unsubscribe. The link has expired or is not valid."
+        }
+      };
+      function L(k) { return window.MAHOPageLang.t(LANGPACK, k); }
+      var statusKey = "un.working";
+      function setMsg(key) { statusKey = key; msg.textContent = L(key); }
+      function bindLang() {
+        window.MAHOPageLang.apply(LANGPACK);
+        document.querySelectorAll("[data-lang-toggle]").forEach(function (btn) {
+          btn.onclick = function () { window.MAHOPageLang.setLang(window.MAHOPageLang.current() === "en" ? "fa" : "en", LANGPACK); };
+        });
+      }
       var params = new URLSearchParams(location.search);
       var email = params.get("email") || "";
       var token = params.get("token") || "";
       var source = params.get("source") || "";
       var msg = document.getElementById("msg");
+      bindLang();
+      document.addEventListener("maho:lang", function () { bindLang(); if (statusKey) msg.textContent = L(statusKey); });
       if (!email) {
-        msg.textContent = "لینک نامعتبر است.";
+        setMsg("un.bad");
         return;
       }
       if (source === "registered") {
@@ -31,17 +72,13 @@
           body: JSON.stringify({ email: email })
         }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
           .then(function (x) {
-            msg.textContent = x.ok
-              ? "تمایل به دریافت ایمیل‌های تبلیغاتی لغو شد. حساب کاربری شما همچنان فعال است."
-              : "لغو ناموفق بود.";
+            setMsg(x.ok ? "un.regOk" : "un.regFail");
           })
-          .catch(function () { msg.textContent = "خطا در ارتباط با سرور."; });
+          .catch(function () { setMsg("un.network"); });
         return;
       }
       if (!token || token === "test") {
-        msg.textContent = token === "test"
-          ? "این لینک آزمایشی است و عضویت واقعی را لغو نمی‌کند."
-          : "لینک نامعتبر است.";
+        setMsg(token === "test" ? "un.test" : "un.bad");
         return;
       }
       fetch("/api/newsletter/unsubscribe", {
@@ -50,11 +87,9 @@
         body: JSON.stringify({ email: email, token: token })
       }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (x) {
-          msg.textContent = x.ok
-            ? "عضویت شما با موفقیت لغو شد. دیگر ایمیل تبلیغاتی دریافت نخواهید کرد."
-            : "لغو عضویت ناموفق بود. لینک منقضی یا نامعتبر است.";
+          setMsg(x.ok ? "un.ok" : "un.fail");
         })
-        .catch(function () { msg.textContent = "خطا در ارتباط با سرور."; });
+        .catch(function () { setMsg("un.network"); });
     })();
   </script>
 </body>

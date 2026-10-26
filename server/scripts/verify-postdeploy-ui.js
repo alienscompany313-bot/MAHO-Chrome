@@ -1,0 +1,32 @@
+﻿"use strict";
+const fs = require("fs");
+const path = require("path");
+const root = path.join(__dirname, "..", "..", "website");
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const main = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
+const admin = fs.readFileSync(path.join(root, "js", "admin-upgrade.js"), "utf8");
+const results = [];
+function check(name, ok) {
+  results.push({ name, ok });
+  console.log((ok ? "PASS" : "FAIL"), name);
+  if (!ok) process.exitCode = 1;
+}
+check("shared pages load absolute stylesheet", html.indexOf('href="/css/styles.css"') >= 0 && html.indexOf('href="css/styles.css"') < 0);
+check("shared pages load absolute scripts", html.indexOf('src="/js/main.js"') >= 0 && html.indexOf('src="/js/upgrade.js"') >= 0);
+check("footer privacy key in both languages", main.indexOf('"footer.link.privacy": "حریم خصوصی"') >= 0 && main.indexOf('"footer.link.privacy": "Privacy Policy"') >= 0);
+check("footer privacy link is translatable", html.indexOf('id="footerPrivacy" data-i18n="footer.link.privacy"') >= 0);
+check("checkout has no visible area field", html.indexOf('data-i18n="addr.area"') < 0);
+check("city comes before street at checkout", html.indexOf('id="co_city"') > 0 && html.indexOf('id="co_city"') < html.indexOf('id="co_street"'));
+check("legacy area is kept in a hidden field", html.indexOf('id="co_area" type="hidden"') >= 0);
+check("clock feature is absent", html.indexOf("kabulClock") < 0 && main.indexOf("kabulClock") < 0);
+check("coupon add does not reload from the server", admin.indexOf("couponsFormLocal()") >= 0);
+check("new links are drafted locally before save", admin.indexOf('id="addLink"') >= 0 && admin.indexOf("paintLinks()") >= 0);
+const css = fs.readFileSync(path.join(root, "css", "styles.css"), "utf8");
+check("account card preview keeps pdf proportions", css.indexOf("#customerCardImg") >= 0 && css.indexOf("aspect-ratio:1016 / 638") >= 0 && css.indexOf("object-fit:contain") >= 0);
+check("product search field exists", html.indexOf('id="productSearch"') >= 0 && main.indexOf("foldSearch") >= 0);
+check("gift checkout is optional", html.indexOf('id="co_gift"') >= 0 && html.indexOf('id="giftBox" hidden') >= 0);
+check("site meta form targets the main panel", admin.indexOf('.admin-panel[data-panel="texts"]') >= 0);
+check("finance totals are clickable", admin.indexOf("data-fin-key") >= 0 && admin.indexOf("showFin") >= 0);
+const failed = results.filter((row) => !row.ok).length;
+console.log("POSTDEPLOY", results.length - failed, "passed", failed, "failed");
+if (failed) process.exit(1);

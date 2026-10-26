@@ -265,6 +265,15 @@ function summarize(db, opts) {
   };
   const orders = [];
   const exceptions = [];
+  const lines = [];
+  function pushLine(key, orderId, amountMinor, extra) {
+    lines.push(Object.assign({
+      key: key,
+      orderId: orderId || "",
+      amountMinor: Math.round(Number(amountMinor) || 0),
+      source: "order",
+    }, extra || {}));
+  }
   (db.orders || []).forEach((order) => {
     if (!order) return;
     if (!inRange(order.date || 0, from, to)) return;
@@ -279,12 +288,18 @@ function summarize(db, opts) {
     orders.push(acc);
     if (acc.cancelled) {
       kpi.canceledOrders += 1;
-      if (acc.tracked) kpi.refundDue += acc.refundDueMinor;
+      pushLine("canceledOrders", order.id, 1);
+      if (acc.tracked) {
+        kpi.refundDue += acc.refundDueMinor;
+        pushLine("refundDue", order.id, acc.refundDueMinor);
+      }
       return;
     }
     if (!acc.tracked) {
       kpi.legacyUnverified += 1;
       kpi.legacyValue += acc.totalMinor;
+      pushLine("legacyUnverified", order.id, 1);
+      pushLine("legacyValue", order.id, acc.totalMinor);
       exceptions.push({ orderId: order.id, kind: "legacy_unverified", amountMinor: acc.totalMinor });
       return;
     }
@@ -295,10 +310,17 @@ function summarize(db, opts) {
     kpi.returns += acc.returnedMinor;
     kpi.outstanding += acc.outstandingMinor;
     kpi.refundDue += acc.refundDueMinor;
-    if (acc.amountDueMinor <= 0 && acc.netCollectedMinor <= 0) kpi.paidOrders += 1;
-    else if (acc.netCollectedMinor <= 0) kpi.unpaidOrders += 1;
-    else if (acc.netCollectedMinor + 1 < acc.amountDueMinor) kpi.partialOrders += 1;
-    else kpi.paidOrders += 1;
+    pushLine("gross", order.id, acc.grossMinor);
+    pushLine("discounts", order.id, acc.itemDiscountMinor + acc.couponMinor);
+    pushLine("net", order.id, Math.max(0, acc.totalMinor));
+    pushLine("adjustments", order.id, acc.creditMinor);
+    pushLine("returns", order.id, acc.returnedMinor);
+    pushLine("outstanding", order.id, acc.outstandingMinor);
+    pushLine("refundDue", order.id, acc.refundDueMinor);
+    if (acc.amountDueMinor <= 0 && acc.netCollectedMinor <= 0) { kpi.paidOrders += 1; pushLine("paidOrders", order.id, 1); }
+    else if (acc.netCollectedMinor <= 0) { kpi.unpaidOrders += 1; pushLine("unpaidOrders", order.id, 1); }
+    else if (acc.netCollectedMinor + 1 < acc.amountDueMinor) { kpi.partialOrders += 1; pushLine("partialOrders", order.id, 1); }
+    else { kpi.paidOrders += 1; pushLine("paidOrders", order.id, 1); }
     if (acc.refundedMinor > acc.collectedMinor) {
       exceptions.push({ orderId: order.id, kind: "refund_exceeds_payment", amountMinor: acc.refundedMinor - acc.collectedMinor });
     }
@@ -312,11 +334,15 @@ function summarize(db, opts) {
     if (channel && !channelMatches(row.channel, channel)) return;
     if (row.type === "refund") {
       kpi.refunds += row.amountMinor;
+      pushLine("refunds", row.orderId, row.amountMinor, { source: "ledger", txnId: row.id || "" });
       return;
     }
     if (row.type !== "payment") return;
     kpi.collected += row.amountMinor;
-    kpi[collectionBucket(row)] += row.amountMinor;
+    const bucket = collectionBucket(row);
+    kpi[bucket] += row.amountMinor;
+    pushLine("collected", row.orderId, row.amountMinor, { source: "ledger", txnId: row.id || "", bucket: bucket });
+    pushLine(bucket, row.orderId, row.amountMinor, { source: "ledger", txnId: row.id || "" });
     const methodName = String(row.method || "manual");
     methods[methodName] = (methods[methodName] || 0) + row.amountMinor;
   });
@@ -324,6 +350,7 @@ function summarize(db, opts) {
     if (!row || row.type !== "refund" || row.status !== "pending") return;
     if (!inRange(row.at, from, to)) return;
     kpi.pendingRefunds += row.amountMinor;
+    pushLine("pendingRefunds", row.orderId, row.amountMinor, { source: "ledger", txnId: row.id || "" });
   });
   kpi.netAfterReturns = Math.max(0, kpi.net - kpi.adjustments);
   kpi.netCash = kpi.collected - kpi.refunds;
@@ -341,10 +368,39 @@ function summarize(db, opts) {
     range: { from: from || null, to: to || null, timezone: "Asia/Kabul" },
     kpi: kpi,
     orders: orders,
+    lines: lines,
     exceptions: exceptions,
     methods: methods,
     reconciled: exceptions.filter((e) => e.kind !== "legacy_unverified").length === 0,
   };
+}
+
+function sumLines(list) {
+  return (list || []).reduce((sum, row) => sum + (Number(row.amountMinor) || 0), 0);
+}
+
+function detailFor(report, key) {
+  const kpi = (report && report.kpi) || {};
+  const lines = (report && report.lines) || [];
+  const name = String(key || "");
+  let picked = [];
+  let sum = 0;
+  if (name === "netCash") {
+    const plus = lines.filter((row) => row.key === "collected");
+    const minus = lines.filter((row) => row.key === "refunds");
+    sum = sumLines(plus) - sumLines(minus);
+    picked = plus.concat(minus.map((row) => Object.assign({}, row, { key: "netCash", amountMinor: -row.amountMinor })));
+  } else if (name === "netAfterReturns") {
+    const net = lines.filter((row) => row.key === "net");
+    const adj = lines.filter((row) => row.key === "adjustments");
+    sum = Math.max(0, sumLines(net) - sumLines(adj));
+    picked = net.concat(adj.map((row) => Object.assign({}, row, { key: "netAfterReturns", amountMinor: -row.amountMinor })));
+  } else {
+    picked = lines.filter((row) => row.key === name);
+    sum = sumLines(picked);
+  }
+  const kpiMinor = Number(kpi[name]) || 0;
+  return { key: name, lines: picked, sumMinor: sum, kpiMinor: kpiMinor, matches: sum === kpiMinor };
 }
 
 function channelMatches(stored, query) {
@@ -532,6 +588,7 @@ module.exports = {
   kabulDayStart,
   kabulParts,
   summarize,
+  detailFor,
   majorKpi,
   orderAccount,
   recordPayment,

@@ -62,6 +62,10 @@ function boot(dataDir) {
       TOKEN_PEPPER: "release-pepper",
       SITE_URL: "http://127.0.0.1:" + PORT,
       ALLOWED_ORIGINS: "",
+      MAHO_MOCK_MAIL: "",
+      SMTP_HOST: "",
+      SMTP_USER: "",
+      SMTP_PASS: "",
     }),
     stdio: ["ignore", "pipe", "pipe"],
   });
