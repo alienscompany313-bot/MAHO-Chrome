@@ -517,7 +517,8 @@ function mountOrderOps(app, ctx) {
   });
 
   app.post("/api/checkout/order-value-discount", (req, res) => {
-    const subtotal = Number(req.body && req.body.subtotal) || 0;
+    const body = req.body || {};
+    const subtotal = Number(body.subtotal != null ? body.subtotal : body.itemsTotal) || 0;
     const fulfillment = (req.body && req.body.fulfillment) || "delivery";
     const ev = evaluateOrderValueDiscount(ctx.db, subtotal, fulfillment);
     res.json(ev);

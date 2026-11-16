@@ -1,0 +1,50 @@
+"use strict";
+const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
+const { PNG } = require("pngjs");
+const jsQR = require("jsqr");
+const numbers = require("../lib/customer-numbers");
+const cards = require("../lib/upgrade/customer-card");
+const portrait = require("../lib/upgrade/customer-card-portrait");
+
+const db = { users: [{ customerNo: "MO000001" }], seqPublicCustomer: 0 };
+const first = numbers.allocateCustomerNo(db);
+const second = numbers.allocateCustomerNo(db);
+assert.strictEqual(first, "20260001");
+assert.strictEqual(second, "20260002");
+assert.strictEqual(db.users[0].customerNo, "MO000001");
+const seen = new Set();
+for (let i = 0; i < 20; i++) seen.add(numbers.allocateCustomerNo(db));
+assert.strictEqual(seen.size, 20);
+  assert.strictEqual(cards.CARD_W, 1016);
+  assert.strictEqual(cards.CARD_H, 638);
+  const biz = require("../lib/business-description");
+  assert.strictEqual(biz.pair({}).fa, "لباس و لوازم بانوان");
+  assert.strictEqual(biz.pair({ content: { brandSub_en: "Atelier Line" } }).en, "Atelier Line");
+  assert.strictEqual(biz.pair({ content: { brandSub_en: "A<B>" } }).en, "AB");
+
+(async () => {
+  const sample = portrait.sampleFor("http://127.0.0.1:4720");
+  const svg = await portrait.renderPortraitSvg(sample);
+  assert(svg.includes("20260001"), "portrait number");
+  assert(svg.includes("CUSTOMER CARD"), "portrait heading");
+  assert((svg.match(/<rect /g) || []).length > 20, "code128 bars");
+  const png = await portrait.renderPortraitPng(sample);
+  const image = PNG.sync.read(png);
+  assert.strictEqual(image.width, portrait.PORTRAIT_W);
+  assert.strictEqual(image.height, portrait.PORTRAIT_H);
+  const code = jsQR(new Uint8ClampedArray(image.data), image.width, image.height);
+  assert(code && code.data.indexOf("20260001") >= 0, "qr decodes sample customer number");
+  const index = fs.readFileSync(path.join(__dirname, "..", "index.js"), "utf8");
+  assert(index.includes("if (!IS_PROD)") && index.includes("/api/dev/customer-card-portrait.png"), "portrait route is development only");
+  const viewer = fs.readFileSync(path.join(__dirname, "..", "..", "website", "js", "panorama.js"), "utf8");
+  assert(viewer.includes("atan(dir.x, dir.z)"), "spherical projection");
+  const main = fs.readFileSync(path.join(__dirname, "..", "..", "website", "js", "main.js"), "utf8");
+  assert(main.includes("MAHOPanorama.mount"), "store viewer uses the sphere");
+  assert(!main.includes("store-panorama-wrap"), "wide-image panorama was removed");
+  console.log("PHASE2_REMAINING_OK");
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

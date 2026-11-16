@@ -25,6 +25,11 @@ function formatKabul(ms) {
   return date.getUTCFullYear() + "-" + pad(date.getUTCMonth() + 1) + "-" + pad(date.getUTCDate()) + "T" + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes());
 }
 
+function safeVideoUrl(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return /^\/uploads\/[a-f0-9]{32}\.(mp4|webm)$/i.test(text) ? text : "";
+}
+
 function blankAd(partial) {
   const src = partial && typeof partial === "object" ? partial : {};
   return {
@@ -37,6 +42,11 @@ function blankAd(partial) {
     description_en: sanitizeText(src.description_en, 400),
     url: safeHttpUrl(src.url),
     imageUrlMobile: typeof src.imageUrlMobile === "string" ? src.imageUrlMobile.slice(0, 500) : "",
+    videoUrl: safeVideoUrl(src.videoUrl),
+    productCode: sanitizeText(src.productCode, 80).replace(/[<>]/g, ""),
+    showName: src.showName !== false,
+    showPrice: src.showPrice !== false,
+    showSpecs: src.showSpecs !== false,
     cta: sanitizeText(src.cta, 80),
     cta_en: sanitizeText(src.cta_en, 80),
     startAt: parseKabul(src.startAt),
@@ -87,6 +97,11 @@ function publicAds(db, now) {
       description: ad.description || "",
       description_en: ad.description_en || "",
       url: ad.url || "",
+      videoUrl: safeVideoUrl(ad.videoUrl),
+      productCode: ad.productCode || "",
+      showName: ad.showName !== false,
+      showPrice: ad.showPrice !== false,
+      showSpecs: ad.showSpecs !== false,
       order: ad.order || 0,
     }));
   return {

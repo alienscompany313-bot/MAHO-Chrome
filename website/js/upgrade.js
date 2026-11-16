@@ -6,6 +6,11 @@
   var promoTimer = null;
   var promoIndex = 0;
   var seenImpressions = {};
+  var homeAdIndex = 0;
+  var homeAdKey = "";
+  var homeAdDrag = null;
+  var homeAdWired = false;
+  var homeAdVisible = true;
 
   function lang() {
     return document.documentElement.lang === "en" ? "en" : "fa";
@@ -85,32 +90,236 @@
     track([row.id]);
   }
 
-  function paintHomePromo() {
-    var box = document.getElementById("homePromo");
-    if (!box) return;
-    var rows = ((site().ads || {}).homepage || []);
-    if (!rows.length) { box.hidden = true; box.innerHTML = ""; if (promoTimer) clearInterval(promoTimer); return; }
-    box.hidden = false;
-    function draw() {
-      var row = rows[promoIndex % rows.length];
-      var title = pick(row, "title", "title_en");
-      var desc = pick(row, "description", "description_en");
-      var cta = pick(row, "cta", "cta_en");
-      var imgSrc = row.imageUrl || "";
-      if (window.matchMedia && window.matchMedia("(max-width: 720px)").matches && row.imageUrlMobile) imgSrc = row.imageUrlMobile;
-      var img = imgSrc ? '<img src="' + imgSrc.replace(/"/g, "") + '" alt="' + (title || "MAHO").replace(/"/g, "") + '" onerror="this.style.display=\'none\'">' : "";
-      var href = row.url ? api.url("/api/ads/go/" + encodeURIComponent(row.id)) : "";
-      var inner = img + '<div class="home-promo-copy"><strong>' + (title || "") + "</strong><div>" + (desc || "") + "</div>" + (cta ? "<span>" + cta + "</span>" : "") + "</div>";
-      var controls = '<div class="promo-nav"><button type="button" data-promo-pause="1" aria-label="' + (lang() === "en" ? "Pause" : "توقف") + '">❚❚</button>';
-      if (rows.length > 1) controls += '<button type="button" data-promo="-1" aria-label="prev">‹</button><button type="button" data-promo="1" aria-label="next">›</button>';
-      controls += "</div>";
-      box.innerHTML = '<div class="container"><div class="home-promo-frame" role="region" aria-roledescription="carousel" aria-label="MAHO">' + (href ? '<a href="' + href + '">' + inner + "</a>" : inner) + controls + "</div></div>";
-      track([row.id]);
+  function esc(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function findAdProduct(code) {
+    var list = window.MAHO_PRODUCTS || [];
+    return list.find(function (item) {
+      return item && String(item.code || "") === String(code || "") && item.enabled !== false && item.active !== false;
+    }) || null;
+  }
+  function adMoney(amount) {
+    var text = Math.round(Number(amount) || 0).toLocaleString("en-US");
+    if (lang() === "fa") text = text.replace(/[0-9]/g, function (d) { return "۰۱۲۳۴۵۶۷۸۹"[d]; });
+    return text + (lang() === "en" ? " AFN" : " افغانی");
+  }
+  function adPrice(product) {
+    if (!product || product.price == null || product.price === "") return "";
+    var price = Number(product.price) || 0;
+    var disc = Number(product.discount) || 0;
+    if (disc > 0 && disc < 100) price = Math.round(price * (1 - disc / 100));
+    return adMoney(price);
+  }
+  function adSpecs(product) {
+    if (!product) return "";
+    var sizes = Array.isArray(product.sizes) ? product.sizes.filter(Boolean).slice(0, 4) : [];
+    var colors = Array.isArray(product.colors) ? product.colors.map(function (c) { return String(c).split("|")[0]; }).filter(Boolean).slice(0, 3) : [];
+    var parts = [];
+    if (sizes.length) parts.push(sizes.join(lang() === "en" ? ", " : "، "));
+    if (colors.length) parts.push(colors.join(lang() === "en" ? ", " : "، "));
+    if (!parts.length) {
+      var text = lang() === "en" ? (product.description_en || product.description || "") : (product.description || product.description_en || "");
+      if (text) parts.push(String(text).slice(0, 80));
     }
-    draw();
-    if (promoTimer) clearInterval(promoTimer);
+    return parts.join(" · ");
+  }
+  function homeAdStep() {
+    var card = document.querySelector("#homeAdsGrid .home-ad-card");
+    var track = document.getElementById("homeAdsGrid");
+    if (!card || !track) return 0;
+    var gap = parseFloat(getComputedStyle(track).columnGap) || parseFloat(getComputedStyle(track).gap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  }
+  function homeAdMax() {
+    var viewport = document.getElementById("homeAdsViewport");
+    var step = homeAdStep();
+    if (!viewport || !step) return 0;
+    var count = document.querySelectorAll("#homeAdsGrid .home-ad-card").length;
+    var visible = Math.max(1, Math.floor((viewport.clientWidth + 8) / step));
+    return Math.max(0, count - visible);
+  }
+  function applyHomeAdTransform(extra) {
+    var track = document.getElementById("homeAdsGrid");
+    if (!track) return;
+    var rtl = document.documentElement.dir === "rtl";
+    var x = ((rtl ? 1 : -1) * homeAdIndex * homeAdStep()) + (extra || 0);
+    track.style.transform = "translate3d(" + x + "px,0,0)";
+  }
+  function updateHomeAdControls() {
+    var prev = document.getElementById("homeAdsPrev");
+    var next = document.getElementById("homeAdsNext");
+    var en = lang() === "en";
+    var max = homeAdMax();
+    if (homeAdIndex > max) homeAdIndex = max;
+    if (prev) { prev.disabled = homeAdIndex <= 0; prev.hidden = max <= 0; prev.setAttribute("aria-label", en ? "Previous advertisements" : "قبلی"); }
+    if (next) { next.disabled = homeAdIndex >= max; next.hidden = max <= 0; next.setAttribute("aria-label", en ? "Next advertisements" : "بعدی"); }
+  }
+  function moveHomeAd(delta) {
+    var max = homeAdMax();
+    var next = Math.max(0, Math.min(max, homeAdIndex + delta));
+    if (next === homeAdIndex) return;
+    homeAdIndex = next;
+    applyHomeAdTransform(0);
+    updateHomeAdControls();
+    syncHomeAdVideo();
+  }
+  function syncHomeAdVideo() {
+    var box = document.getElementById("homeAds");
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (rows.length > 1 && !box.dataset.paused && !reduce) promoTimer = setInterval(function () { promoIndex += 1; draw(); }, 7000);
+    var modal = document.getElementById("qvOverlay") && document.getElementById("qvOverlay").classList.contains("show");
+    var hidden = !box || box.hidden || !homeAdVisible || document.hidden || modal || reduce;
+    var cards = Array.prototype.slice.call(document.querySelectorAll("#homeAdsGrid .home-ad-card"));
+    var visibleEnd = homeAdIndex + Math.max(1, Math.round((document.getElementById("homeAdsViewport") || {}).clientWidth / (homeAdStep() || 1)));
+    var played = false;
+    cards.forEach(function (card, index) {
+      var video = card.querySelector("video");
+      if (!video) return;
+      var inWindow = index >= homeAdIndex && index < visibleEnd;
+      var active = !hidden && inWindow && !played && card.getAttribute("data-video");
+      if (!active) {
+        try { video.pause(); } catch (err) {}
+        if (!inWindow && video.getAttribute("src")) { video.removeAttribute("src"); try { video.load(); } catch (err2) {} }
+        return;
+      }
+      played = true;
+      if (video.getAttribute("src") !== card.getAttribute("data-video")) video.src = card.getAttribute("data-video");
+      video.muted = true;
+      var play = video.play();
+      if (play && play.catch) play.catch(function () {});
+    });
+  }
+  function paintHomePromo() {
+    var box = document.getElementById("homeAds");
+    var grid = document.getElementById("homeAdsGrid");
+    if (!box || !grid) return;
+    var rows = ((site().ads || {}).homepage || []).filter(function (row) {
+      return row && (row.title || row.title_en || row.description || row.description_en || row.imageUrl || row.videoUrl || row.productCode);
+    });
+    var sample = false;
+    if (!rows.length) {
+      if (site().previewAdSample !== true) { box.hidden = true; grid.innerHTML = ""; return; }
+      sample = true;
+      rows = [{
+        sample: true,
+        title: "پیش‌نمایش تبلیغ",
+        title_en: "Advertisement Preview",
+        description: "این کارت فقط در پیش‌نمایش محلی است و تبلیغ ذخیره‌شده نیست.",
+        description_en: "This card is only for the local preview. It is not a saved advertisement.",
+      }];
+    }
+    var key = rows.map(function (row) { return (row.id || "sample") + "|" + (row.productCode || "") + "|" + (row.videoUrl || "") + "|" + (row.imageUrl || ""); }).join(",");
+    if (key !== homeAdKey) {
+      homeAdKey = key;
+      if (homeAdIndex >= rows.length) homeAdIndex = 0;
+    }
+    grid.innerHTML = rows.map(function (row) {
+      var product = row.productCode ? findAdProduct(row.productCode) : null;
+      var showName = row.showName !== false;
+      var name = "";
+      if (showName) name = product ? (lang() === "en" ? (product.name_en || product.name || "") : (product.name || product.name_en || "")) : pick(row, "title", "title_en");
+      var price = row.showPrice !== false && product ? adPrice(product) : "";
+      var specs = row.showSpecs !== false && product ? adSpecs(product) : "";
+      var promo = pick(row, "description", "description_en");
+      var poster = row.imageUrl || (product && ((product.images && product.images[0]) || product.image)) || "";
+      if (window.matchMedia && window.matchMedia("(max-width: 720px)").matches && row.imageUrlMobile) poster = row.imageUrlMobile;
+      var video = /^\/uploads\/[a-f0-9]{32}\.(mp4|webm)$/i.test(row.videoUrl || "") ? row.videoUrl : "";
+      var media = video
+        ? '<video muted playsinline loop preload="none"' + (poster ? ' poster="' + esc(poster) + '"' : "") + "></video>"
+        : (poster ? '<img src="' + esc(poster) + '" alt="' + esc(name || "MAHO") + '">' : '<div class="home-ad-sample"></div>');
+      var shade = '<span class="home-ad-shade">' +
+        (name ? '<span class="home-ad-name">' + esc(name) + "</span>" : "") +
+        (price ? '<span class="home-ad-price">' + esc(price) + "</span>" : "") +
+        (specs ? '<span class="home-ad-specs">' + esc(specs) + "</span>" : "") +
+        (promo ? '<span class="home-ad-promo">' + esc(promo) + "</span>" : "") +
+        "</span>";
+      var hit;
+      if (product) hit = '<button type="button" class="home-ad-hit" data-product-code="' + esc(product.code) + '">';
+      else if (!row.sample && row.url) hit = '<a class="home-ad-hit" href="' + esc(api.url("/api/ads/go/" + encodeURIComponent(row.id))) + '">';
+      else hit = '<div class="home-ad-hit">';
+      var close = product ? "</button>" : (!row.sample && row.url ? "</a>" : "</div>");
+      return '<article class="home-ad-card' + (row.sample ? " is-sample" : "") + '" data-video="' + esc(video) + '">' + hit + '<span class="home-ad-media">' + media + shade + "</span>" + close + "</article>";
+    }).join("");
+    box.hidden = false;
+    wireHomeAds();
+    applyHomeAdTransform(0);
+    updateHomeAdControls();
+    syncHomeAdVideo();
+    if (!sample) track(rows.map(function (row) { return row.id; }));
+  }
+  function wireHomeAds() {
+    if (homeAdWired) return;
+    var viewport = document.getElementById("homeAdsViewport");
+    var prev = document.getElementById("homeAdsPrev");
+    var next = document.getElementById("homeAdsNext");
+    if (!viewport) return;
+    homeAdWired = true;
+    if (prev) prev.addEventListener("click", function () { moveHomeAd(-1); });
+    if (next) next.addEventListener("click", function () { moveHomeAd(1); });
+    viewport.addEventListener("keydown", function (e) {
+      var rtl = document.documentElement.dir === "rtl";
+      if (e.key === "ArrowLeft") { moveHomeAd(rtl ? 1 : -1); e.preventDefault(); }
+      if (e.key === "ArrowRight") { moveHomeAd(rtl ? -1 : 1); e.preventDefault(); }
+    });
+    viewport.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      homeAdDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, axis: "" };
+    });
+    viewport.addEventListener("pointermove", function (e) {
+      if (!homeAdDrag || e.pointerId !== homeAdDrag.id) return;
+      var dx = e.clientX - homeAdDrag.x;
+      var dy = e.clientY - homeAdDrag.y;
+      var track = document.getElementById("homeAdsGrid");
+      if (!homeAdDrag.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (Math.abs(dy) > Math.abs(dx)) { viewport.dataset.suppress = "1"; homeAdDrag = null; return; }
+        homeAdDrag.axis = "x";
+        homeAdDrag.moved = true;
+        if (track) track.style.transition = "none";
+        try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+      applyHomeAdTransform(dx);
+    });
+    function endDrag(e) {
+      if (!homeAdDrag || (e && e.pointerId !== homeAdDrag.id)) return;
+      var dx = e ? e.clientX - homeAdDrag.x : 0;
+      var moved = homeAdDrag.moved;
+      homeAdDrag = null;
+      var track = document.getElementById("homeAdsGrid");
+      if (track) track.style.transition = "";
+      if (moved && Math.abs(dx) > 24) {
+        var rtl = document.documentElement.dir === "rtl";
+        moveHomeAd((rtl ? dx > 0 : dx < 0) ? 1 : -1);
+      } else applyHomeAdTransform(0);
+      if (moved) viewport.dataset.suppress = "1";
+    }
+    viewport.addEventListener("pointerup", endDrag);
+    viewport.addEventListener("pointercancel", endDrag);
+    viewport.addEventListener("click", function (e) {
+      if (viewport.dataset.suppress === "1") {
+        viewport.dataset.suppress = "";
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      var card = e.target.closest && e.target.closest("[data-product-code]");
+      if (!card) return;
+      e.preventDefault();
+      document.dispatchEvent(new CustomEvent("maho:open-product", { detail: { code: card.getAttribute("data-product-code") } }));
+    });
+    if ("IntersectionObserver" in window) {
+      var box = document.getElementById("homeAds");
+      if (box) {
+        new IntersectionObserver(function (entries) {
+          homeAdVisible = entries.some(function (entry) { return entry.isIntersecting; });
+          syncHomeAdVideo();
+        }, { threshold: 0.2 }).observe(box);
+      }
+    }
+    document.addEventListener("visibilitychange", syncHomeAdVideo);
+    window.addEventListener("resize", function () { applyHomeAdTransform(0); updateHomeAdControls(); syncHomeAdVideo(); });
+    var qv = document.getElementById("qvOverlay");
+    if (qv && window.MutationObserver) new MutationObserver(syncHomeAdVideo).observe(qv, { attributes: true, attributeFilter: ["class"] });
   }
 
   function paintListing() {
@@ -487,14 +696,20 @@
     try { cart = JSON.parse(localStorage.getItem("maho_cart") || "[]"); } catch (_) {}
     api.request("/api/coupons/preview", { method: "POST", token: api.getToken("user"), body: { code: code, items: cart } }).then(function (res) {
       window.MAHO_COUPON = res.code;
+      window.MAHO_COUPON_QUOTE = { code: res.code, amount: Number(res.amount) || 0, reason: res.name || res.message || "" };
+      document.dispatchEvent(new CustomEvent("maho:coupon"));
       couponNote((lang() === "en" ? "Coupon applied: " : "کود اعمال شد: ") + res.code + " · " + res.amount);
     }).catch(function (err) {
       window.MAHO_COUPON = "";
+      window.MAHO_COUPON_QUOTE = null;
+      document.dispatchEvent(new CustomEvent("maho:coupon"));
       couponNote((err && err.message) || (lang() === "en" ? "Coupon was not accepted." : "کود پذیرفته نشد."));
     });
   });
   if (removeCoupon) removeCoupon.addEventListener("click", function () {
     window.MAHO_COUPON = "";
+    window.MAHO_COUPON_QUOTE = null;
+    document.dispatchEvent(new CustomEvent("maho:coupon"));
     var input = document.getElementById("co_coupon");
     if (input) input.value = "";
     couponNote(lang() === "en" ? "Coupon removed." : "کود حذف شد.");

@@ -11,6 +11,7 @@ const hours = require("./hours");
 const ads = require("./ads");
 const policies = require("./policies");
 const cards = require("./customer-card");
+const businessDescription = require("../business-description");
 const passkeys = require("./passkeys");
 const notes = require("./notifications");
 const links = require("./links");
@@ -70,6 +71,7 @@ function publicSite(db) {
     footerMapsUrl: meta.footerMapsUrl || "",
     storeHours: db.storeHours,
     ads: ads.publicAds(db),
+    previewAdSample: process.env.NODE_ENV !== "production",
     whyMaho: content.publicWhy(db),
     socials: content.publicSocials(db),
     contactMethods: contacts.publicContactMethods(db),
@@ -376,7 +378,11 @@ function mount(app, ctx) {
     const rows = links.publicLinks(db());
     let qr = "";
     try { qr = await QRCode.toDataURL(siteUrl().replace(/\/+$/, "") + "/links", { margin: 1, width: 280 }); } catch (_) {}
-    res.type("html").send(pages.linksPage(rows, qr, db().linkPage || {}));
+    const page = Object.assign({}, db().linkPage || {});
+    const lines = businessDescription.pair(db().config);
+    if (!page.subtitle || page.subtitle === "لباس و لوازم بانوان") page.subtitle = lines.fa;
+    if (!page.subtitle_en || page.subtitle_en === "Women's clothing & accessories" || page.subtitle_en === "Women's Clothing & Accessories") page.subtitle_en = lines.en;
+    res.type("html").send(pages.linksPage(rows, qr, page));
   });
   app.get("/links/qr.png", async (req, res) => {
     const buf = await linksQr("png");
@@ -423,7 +429,7 @@ function mount(app, ctx) {
     if (!card) return res.status(400).json({ error: "no_customer_number" });
     if (card.status === "revoked") return res.status(403).json({ error: "card_revoked" });
     save();
-    const png = await cards.renderCardPng(req.user, siteUrl());
+    const png = await cards.renderCardPng(req.user, siteUrl(), businessDescription.pair(db().config));
     res.setHeader("Cache-Control", "private, no-store");
     res.setHeader("Content-Disposition", "attachment; filename=\"maho-customer-card.png\"");
     res.type("png").send(png);
@@ -433,7 +439,7 @@ function mount(app, ctx) {
     const card = cards.ensureCard(req.user, pepper());
     if (!card) return res.status(400).json({ error: "no_customer_number" });
     if (card.status === "revoked") return res.status(403).json({ error: "card_revoked" });
-    const png = await cards.renderCardPng(req.user, siteUrl());
+    const png = await cards.renderCardPng(req.user, siteUrl(), businessDescription.pair(db().config));
     const pdf = await cards.renderCardPdf(png);
     res.setHeader("Cache-Control", "private, no-store");
     res.setHeader("Content-Disposition", "attachment; filename=\"maho-customer-card.pdf\"");
@@ -456,7 +462,7 @@ function mount(app, ctx) {
       if (!m || typeof m.customerCard !== "function") {
         return res.status(503).json({ error: "email_unavailable" });
       }
-      const png = await cards.renderCardPng(user, siteUrl());
+      const png = await cards.renderCardPng(user, siteUrl(), businessDescription.pair(db().config));
       const sent = await m.customerCard(user.email, user, png);
       if (!sent) return res.status(503).json({ error: "email_unavailable" });
       user.cardEmailNextAt = Date.now() + 60 * 1000;
@@ -927,7 +933,7 @@ async function onUserVerified(ctx, user) {
   const card = cards.ensureCard(user, ctx.TOKEN_PEPPER);
   if (!card || card.emailedAt) return;
   try {
-    const png = await cards.renderCardPng(user, ctx.SITE_URL || "https://mahomarket.com");
+    const png = await cards.renderCardPng(user, ctx.SITE_URL || "https://mahomarket.com", businessDescription.pair(db().config));
     if (ctx.mail && typeof ctx.mail.customerCard === "function" && user.email) {
       await ctx.mail.customerCard(user.email, user, png);
       user.card.emailedAt = Date.now();

@@ -34,6 +34,8 @@ const { mountOpsSuite } = require("./lib/api-ops-suite");
 const { mountOrderOps } = require("./lib/api-order-ops");
 const { newLineId, normalizeOrderItems, mapOrderStatusToItem } = require("./lib/order-items");
 const { evaluateOrderValueDiscount } = require("./lib/order-discounts");
+const { allocateCustomerNo } = require("./lib/customer-numbers");
+const { ownsOrder, buildReceiptPdf } = require("./lib/order-receipt");
 const { resolvePickupStore, eligiblePickupStores } = require("./lib/store-inventory");
 const { assertPaymentAllowed, assertAtLeastOneEnabled, ensurePaymentMethods, normalizePaymentMethods } = require("./lib/payments");
 const { haversineKm, storeCoords, mapsLink, ensureHttpsUrl } = require("./lib/geo");
@@ -197,6 +199,7 @@ function initMail(siteFallback) {
       const c = cfg.content || {};
       return String(cfg.officialWhatsAppNumber || cfg.whatsapp || c.officialWhatsAppNumber || c.footerPhone || "").trim();
     },
+    getBusinessDescription: () => require("./lib/business-description").pair(db.config),
   });
 }
 
@@ -386,7 +389,7 @@ function hashPw(pw) { return hashPassword(pw); }
 function verifyPw(pw, stored) { return verifyPassword(pw, stored); }
 function genCode() { return randomCode6(); }
 function token() { return sessionToken(); }
-function nextCustomerNo() { db.seqCustomer += 1; return "MO" + String(db.seqCustomer).padStart(6, "0"); }
+function nextCustomerNo() { return allocateCustomerNo(db); }
 function nextOrderNo() { db.seqOrder += 1; return "MAHO-" + String(100000 + db.seqOrder); }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ""));
 function publicUser(u) {
@@ -489,6 +492,27 @@ function scrubIconEntry(ic) {
   }
   /* sprite — id must match built-in symbol names only (alphanumeric) */
   return { id: id, type: "sprite", label: label, label_en: label_en };
+}
+
+function sanitizeHeroVideos(rows) {
+  if (!Array.isArray(rows)) return [];
+  const out = [];
+  rows.slice(0, 12).forEach((row, index) => {
+    if (!row || typeof row !== "object") return;
+    const productCode = String(row.productCode || "").trim().slice(0, 80);
+    const videoUrl = String(row.videoUrl || "").trim();
+    if (!productCode) return;
+    if (videoUrl && !/^\/uploads\/[a-f0-9]{32}\.(mp4|webm)$/i.test(videoUrl)) return;
+    const id = String(row.id || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || ("hv" + index);
+    out.push({
+      id: id,
+      productCode: productCode,
+      videoUrl: videoUrl,
+      enabled: row.enabled === true,
+      order: Number.isFinite(Number(row.order)) ? Number(row.order) : index,
+    });
+  });
+  return out;
 }
 
 function scrubImageFields(obj) {
@@ -612,6 +636,8 @@ try { fs.mkdirSync(UPLOAD_DIR, { recursive: true }); } catch (_) {}
 
 const ALLOWED_MIME = {
   "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/pjpeg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
   "image/gif": ".gif",
@@ -624,10 +650,11 @@ const upload = multer({
       cb(null, crypto.randomBytes(16).toString("hex") + ext);
     },
   }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 8 },
+  limits: { fileSize: 15 * 1024 * 1024, files: 8 },
   fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME[file.mimetype]) return cb(new Error("only jpeg/png/webp/gif allowed"));
-    cb(null, true);
+    const type = String(file.mimetype || "").toLowerCase();
+    if (ALLOWED_MIME[type] || type === "" || type === "application/octet-stream") return cb(null, true);
+    cb(new Error("only jpeg/png/webp/gif allowed"));
   },
 });
 
@@ -691,7 +718,16 @@ app.get("/api/health", (req, res) => res.json({
 
 app.get("/api/catalog", (req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-  res.json({ products: db.products, stores: db.stores, config: publicConfig(db.config), site: upgrade.publicSite(db) });
+  const config = publicConfig(db.config);
+  const hero = require("./lib/hero-cards").publicHero(db.config, db.products, Date.now());
+  config.heroCards = hero.cards;
+  config.heroVideos = hero.legacy;
+  res.json({
+    products: require("./lib/product-videos").publicProducts(db.products),
+    stores: db.stores,
+    config: config,
+    site: upgrade.publicSite(db),
+  });
 });
 
 /* -------------------- SEO: robots + sitemap (public) -------------------- */
@@ -860,8 +896,21 @@ app.get("/api/admin/state", requireAdmin, (req, res) => {
 app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
   const b = scrubImageFields(req.body || {});
   const beforeProducts = db.products;
-  if (Array.isArray(b.products)) db.products = b.products;
+  let nextHeroCards = null;
+  if (b.config && Array.isArray(b.config.heroCards)) {
+    nextHeroCards = require("./lib/hero-cards").sanitizeHeroCards(b.config.heroCards);
+    if (nextHeroCards.error) return res.status(400).json({ error: nextHeroCards.error });
+  }
+  if (Array.isArray(b.products)) {
+    const { sanitizeProductVideos } = require("./lib/product-videos");
+    b.products = b.products.map((product) => {
+      if (!product || typeof product !== "object" || !Array.isArray(product.videos)) return product;
+      return Object.assign({}, product, { videos: sanitizeProductVideos(product.videos) });
+    });
+    db.products = b.products;
+  }
   if (Array.isArray(b.stores)) db.stores = clampStoreCoords(b.stores);
+  const previousCategoryImages = ((db.config && db.config.categories) || []).map((row) => row && row.image).filter(Boolean);
   if (b.config && typeof b.config === "object") {
     if (b.config.paymentMethods) {
       const next = normalizePaymentMethods({ paymentMethods: b.config.paymentMethods, hesab: b.config.hesab || db.config.hesab });
@@ -881,7 +930,10 @@ app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (re
       const clean = {};
       Object.keys(b.config.content).forEach((k) => {
         const v = b.config.content[k];
-        if (typeof v === "string") clean[k] = st(v, 2000);
+        if (typeof v === "string") {
+          const limit = (k === "brandSub" || k === "brandSub_en") ? 120 : 2000;
+          clean[k] = st(v, limit).replace(/[<>]/g, "");
+        }
         else if (Array.isArray(v)) {
           clean[k] = v.map((row) => {
             if (!row || typeof row !== "object") return row;
@@ -910,6 +962,10 @@ app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (re
     if (b.config.officialWhatsAppNumber != null) {
       b.config.officialWhatsAppNumber = sanitizeText(String(b.config.officialWhatsAppNumber), 40);
     }
+    if (nextHeroCards) {
+      b.config.heroCards = nextHeroCards.cards;
+      b.config.heroVideos = require("./lib/hero-cards").legacyFromCards(nextHeroCards.cards);
+    } else if (Array.isArray(b.config.heroVideos)) b.config.heroVideos = sanitizeHeroVideos(b.config.heroVideos);
     db.config = Object.assign({}, db.config, b.config);
   }
   migrateDb(db);
@@ -927,10 +983,71 @@ app.put("/api/admin/catalog", requireAdminAnyPerm(["products", "settings"]), (re
       meta: { outcome: "ok" },
     });
   }
+  const stillUsed = new Set();
+  const rememberUpload = (value) => {
+    if (typeof value !== "string" || !value.startsWith("/uploads/")) return;
+    const name = path.basename(value.split("?")[0]);
+    if (/^[a-f0-9]{32}\.(jpg|jpeg|png|webp|gif)$/i.test(name)) stillUsed.add(name);
+  };
+  const walkUploads = (node) => {
+    if (!node) return;
+    if (typeof node === "string") return rememberUpload(node);
+    if (Array.isArray(node)) return node.forEach(walkUploads);
+    if (typeof node === "object") Object.keys(node).forEach((key) => walkUploads(node[key]));
+  };
+  walkUploads(db.products);
+  walkUploads(db.stores);
+  walkUploads(db.config);
+  previousCategoryImages.forEach((url) => {
+    const name = path.basename(String(url).split("?")[0]);
+    if (!/^[a-f0-9]{32}\.(jpg|jpeg|png|webp|gif)$/i.test(name) || stillUsed.has(name)) return;
+    try { fs.unlinkSync(path.join(UPLOAD_DIR, name)); } catch (_) {}
+  });
   saveDb();
   res.json({ ok: true, products: db.products.length });
 });
 
+const videoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+    filename: (_req, file, cb) => {
+      const ext = file.mimetype === "video/webm" ? ".webm" : ".mp4";
+      cb(null, crypto.randomBytes(16).toString("hex") + ext);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const mime = String(file.mimetype || "").toLowerCase();
+    const name = String(file.originalname || "").toLowerCase();
+    const allowed = mime === "video/mp4" || mime === "video/webm" || mime === "video/quicktime" || /\.(mp4|webm|mov)$/.test(name);
+    if (!allowed) return cb(new Error("only mp4, webm, or mov allowed"));
+    cb(null, true);
+  },
+});
+app.post("/api/admin/upload-video", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
+  videoUpload.single("file")(req, res, (err) => {
+    if (err) return res.status(/file too large/i.test(err.message || "") ? 413 : 400).json({ error: err.message || "upload failed" });
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "no files" });
+    try {
+      const buf = fs.readFileSync(file.path);
+      const inspected = require("./lib/video-meta").inspectVideo(buf);
+      if (inspected.error) {
+        fs.unlinkSync(file.path);
+        return res.status(400).json({ error: inspected.error, maxSeconds: inspected.maxSeconds || 30 });
+      }
+      const ext = inspected.mime === "video/webm" ? ".webm" : ".mp4";
+      const finalName = file.filename.replace(/\.[^.]+$/, "") + ext;
+      if (finalName !== file.filename) fs.renameSync(file.path, path.join(UPLOAD_DIR, finalName));
+      pushAudit(db, { actor: "admin", action: "upload_video", entityType: "file", entityId: finalName, meta: { duration: inspected.duration } });
+      saveDb();
+      res.json({ url: "/uploads/" + finalName, duration: inspected.duration, maxSeconds: 30 });
+    } catch (_) {
+      try { fs.unlinkSync(file.path); } catch (__) {}
+      res.status(400).json({ error: "upload_validation_failed" });
+    }
+  });
+});
 app.post("/api/admin/upload", requireAdminAnyPerm(["products", "settings"]), (req, res) => {
   upload.array("files", 8)(req, res, (err) => {
     if (err) {
@@ -1620,6 +1737,18 @@ app.get("/api/orders", requireUser, (req, res) => {
   });
   res.json({ orders: list });
 });
+app.get("/api/orders/:id/receipt.pdf", async (req, res) => {
+  const session = auth(req);
+  const order = (db.orders || []).find((row) => row && row.id === req.params.id);
+  if (!ownsOrder(order, session)) return res.status(404).json({ error: "not_found" });
+  try {
+    const pdf = await buildReceiptPdf(order);
+    res.setHeader("Content-Disposition", "inline; filename=\"maho-receipt-" + encodeURIComponent(order.id) + ".pdf\"");
+    res.type("pdf").send(pdf);
+  } catch (err) {
+    res.status(500).json({ error: "receipt_failed" });
+  }
+});
 function findOrderForReq(req) {
   const s = auth(req);
   const o = db.orders.find((x) => x.id === req.params.id);
@@ -1739,6 +1868,20 @@ mountProductPage(app, {
   siteUrl: PUBLIC_SITE,
 });
 
+if (!IS_PROD) {
+  app.get("/api/dev/customer-card-portrait.png", async (req, res) => {
+    const portrait = require("./lib/upgrade/customer-card-portrait");
+    const lines = require("./lib/business-description").pair(db.config);
+    const sample = portrait.sampleFor(SITE_URL || "http://127.0.0.1:" + PORT);
+    sample.taglineFa = lines.fa;
+    sample.taglineEn = lines.en;
+    const png = await portrait.renderPortraitPng(sample);
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-MAHO-Card", "portrait-preview");
+    res.type("png").send(png);
+  });
+}
+
 app.get("/catalog", (req, res) => res.sendFile(path.join(WEBSITE_DIR, "index.html")));
 app.use(express.static(WEBSITE_DIR, { extensions: ["html"] }));
 app.use("/downloads", express.static(path.join(ROOT_DIR, "downloads")));
@@ -1746,7 +1889,7 @@ app.get("/icon-192.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-19
 app.get("/icon-512.png", (req, res) => res.sendFile(path.join(ROOT_DIR, "icon-512.png")));
 app.get("/", (req, res) => res.sendFile(path.join(WEBSITE_DIR, "index.html")));
 
-app.listen(PORT, () => {
+function logListening() {
   const instances = Number(process.env.WEB_CONCURRENCY || process.env.MAHO_INSTANCES || 1);
   console.log(
     "MAHO backend on :" + PORT +
@@ -1762,4 +1905,8 @@ app.listen(PORT, () => {
   if (instances > 1) {
     console.warn("MAHO session file is not shared across instances. Keep this service at one instance, or logins will not match between them.");
   }
-});
+}
+/* Local preview only. Unset in production, so the process keeps the existing all-interfaces bind. */
+const BIND_HOST = String(process.env.MAHO_BIND_HOST || "").trim();
+if (BIND_HOST) app.listen(PORT, BIND_HOST, logListening);
+else app.listen(PORT, logListening);

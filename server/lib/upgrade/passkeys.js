@@ -38,16 +38,23 @@ function takeChallenge(db, id) {
   return row;
 }
 
+function domainRpHost(host) {
+  const name = String(host || "").trim().toLowerCase();
+  if (!name || name === "localhost") return "";
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(name) || name.includes(":")) return "";
+  return name;
+}
+
 function rpIDFrom(req, siteUrl) {
   const env = String(process.env.WEBAUTHN_RP_ID || "").trim();
   if (env) return env;
   try {
     if (siteUrl) {
-      const host = new URL(siteUrl).hostname;
-      if (host && host !== "localhost") return host;
+      const host = domainRpHost(new URL(siteUrl).hostname);
+      if (host) return host;
     }
   } catch (_) {}
-  const host = String((req.headers && req.headers.host) || "localhost").split(":")[0];
+  const host = domainRpHost(String((req.headers && req.headers.host) || "").split(":")[0]);
   return host || "localhost";
 }
 
@@ -154,6 +161,11 @@ async function loginOptions(db, req, siteUrl) {
   return { options: options, challengeId: challengeId };
 }
 
+function decodeUserHandle(handle) {
+  const bytes = isoBase64URL.toBuffer(handle);
+  return Buffer.from(bytes).toString("utf8");
+}
+
 function findCredential(db, id) {
   const users = db.users || [];
   for (let i = 0; i < users.length; i++) {
@@ -182,7 +194,7 @@ async function loginVerify(db, body, req, siteUrl) {
   const handle = body && body.credential && body.credential.response && body.credential.response.userHandle;
   if (handle) {
     try {
-      const raw = isoBase64URL.toBuffer(handle).toString("utf8");
+      const raw = decodeUserHandle(handle);
       if (raw && raw !== String(u.id)) return { error: "user_mismatch", status: 400 };
     } catch (_) {}
   }
@@ -216,6 +228,7 @@ function removePasskey(user, id) {
 }
 
 module.exports = {
+  decodeUserHandle,
   ensurePasskeys,
   publicPasskey,
   registrationOptions,

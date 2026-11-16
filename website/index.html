@@ -92,7 +92,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=menu-silver">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
@@ -139,7 +139,7 @@
   <!-- ============ HEADER ============ -->
   <header class="site-header" id="header">
     <div class="container">
-      <a href="#home" class="brand" data-i18n-aria="brand.name" aria-label="ماهو مارکیت">
+      <a href="/" class="brand" data-i18n-aria="brand.name" aria-label="ماهو مارکیت">
         <span class="logo">M</span>
         <span class="brand-text">
           <span class="brand-name" data-i18n="brand.name">ماهو مارکیت</span>
@@ -148,12 +148,17 @@
       </a>
 
       <nav class="main-nav" id="nav" data-i18n-aria="nav.aria" aria-label="ناوبری اصلی">
-        <a href="#home" data-i18n="nav.home">خانه</a>
-        <a href="#categories" data-i18n="nav.categories">دسته‌بندی‌ها</a>
-        <a href="#products" data-i18n="nav.products">محصولات</a>
+        <a href="/" data-i18n="nav.home">خانه</a>
+        <div class="nav-drop">
+          <a href="#categories" data-i18n="nav.categories">دسته‌بندی‌ها</a>
+          <div class="nav-menu" id="navCatMenu"></div>
+        </div>
+        <div class="nav-drop">
+          <a href="#products" data-i18n="nav.products">محصولات</a>
+          <div class="nav-menu" id="navProdMenu"></div>
+        </div>
         <a href="#stores" data-i18n="nav.stores">فروشگاه</a>
-        <a href="#about" data-i18n="nav.about">درباره ما</a>
-        <a href="#contact" data-i18n="nav.contact">تماس</a>
+        <a href="#storeContact" data-i18n="nav.contact">تماس</a>
       </nav>
 
       <div class="header-actions">
@@ -201,20 +206,30 @@
         </div>
 
       </div>
+      <div class="hero-videos" id="heroVideos" hidden>
+        <div class="hero-videos-bar">
+          <button type="button" class="hero-videos-prev" id="heroVideosPrev" aria-label="قبلی">‹</button>
+          <button type="button" class="hero-videos-next" id="heroVideosNext" aria-label="بعدی">›</button>
+        </div>
+        <div class="hero-videos-viewport" id="heroVideosViewport" tabindex="0" aria-roledescription="carousel">
+          <div class="hero-videos-track" id="heroVideosTrack"></div>
+        </div>
+      </div>
     </section>
-
-    <section id="homePromo" class="home-promo" hidden aria-label="MAHO promotions"></section>
 
     <!-- ============ CATEGORIES ============ -->
     <section class="section" id="categories">
       <div class="container">
-        <div class="section-head reveal">
-          <span class="kicker" data-i18n="cats.kicker">دسته‌بندی‌ها</span>
-          <h2 data-i18n="cats.h2">هر آنچه یک خانم لازم دارد</h2>
-          <p data-i18n="cats.p">از پوشاک و شال تا کیف، کفش، اکسسوری و لوازم آرایشی — همه در یک‌جا و دسته‌بندی‌شده.</p>
-        </div>
-        <div class="cat-grid">
-          <!-- filled dynamically from config.showcase / categories -->
+        <div class="cat-carousel" id="catCarousel">
+          <div class="cat-carousel-bar">
+            <button type="button" class="cat-nav" id="catPrev" aria-label="دسته‌های قبلی">‹</button>
+            <button type="button" class="cat-nav" id="catNext" aria-label="دسته‌های بعدی">›</button>
+          </div>
+          <div class="cat-viewport" id="catViewport" tabindex="0" aria-roledescription="carousel">
+            <div class="cat-grid">
+              <!-- filled dynamically from config.showcase / categories -->
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -243,19 +258,14 @@
       </div>
     </section>
 
-    <!-- ============ FEATURES ============ -->
-    <section class="section" id="about">
+    <section class="section home-ads" id="homeAds" hidden>
       <div class="container">
-        <div class="section-head reveal">
-          <span class="kicker" data-i18n="feat.kicker">چرا MAHO</span>
-          <h2 data-i18n="feat.h2">تجربه‌ی خریدی که به آن اعتماد می‌کنید</h2>
-          <p data-i18n="feat.p">تعهد ما فقط فروش نیست؛ ساختن رابطه‌ای بلندمدت بر پایه‌ی اعتماد و کیفیت است.</p>
+        <div class="home-ads-bar">
+          <button type="button" class="home-ads-prev" id="homeAdsPrev" aria-label="قبلی">‹</button>
+          <button type="button" class="home-ads-next" id="homeAdsNext" aria-label="بعدی">›</button>
         </div>
-        <div class="feature-grid">
-          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-shield"/></svg></div><h3 data-i18n="feat1.t">ضمانت اصالت</h3><p data-i18n="feat1.d">تمام کالاها اصل و باکیفیت انتخاب شده‌اند.</p></div>
-          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-truck"/></svg></div><h3 data-i18n="feat2.t">ارسال سریع</h3><p data-i18n="feat2.d">تحویل درب منزل در کوتاه‌ترین زمان در شهر.</p></div>
-          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-refresh"/></svg></div><h3 data-i18n="feat3.t">تعویض آسان</h3><p data-i18n="feat3.d">مهلت تعویض یا بازگشت کالا بدون دردسر.</p></div>
-          <div class="feature reveal"><div class="ico"><svg class="ic"><use href="#i-headphones"/></svg></div><h3 data-i18n="feat4.t">پشتیبانی خوب</h3><p data-i18n="feat4.d">همراه شما پیش و پس از خرید.</p></div>
+        <div class="home-ads-viewport" id="homeAdsViewport" tabindex="0">
+          <div class="home-ads-grid" id="homeAdsGrid"></div>
         </div>
       </div>
     </section>
@@ -305,20 +315,6 @@
       </div>
     </section>
 
-    <!-- ============ CTA / CONTACT ============ -->
-    <section class="section" id="contact">
-      <div class="container">
-        <div class="cta-band reveal">
-          <h2 data-i18n="cta.h2">از تخفیف‌ها و محصولات جدید باخبر شوید</h2>
-          <p data-i18n="cta.p">ایمیل خود را وارد کنید تا پیشنهادهای ویژه‌ی MAHO را دریافت کنید.</p>
-          <form class="newsletter" id="newsletterForm" novalidate>
-            <input type="email" id="emailInput" placeholder="ایمیل شما (example@mail.com)" data-i18n-ph="cta.ph" data-i18n-aria="acct.email" aria-label="ایمیل" required>
-            <button class="btn btn-lg" type="submit" data-i18n="cta.btn">عضویت</button>
-          </form>
-          <div class="form-note" id="formNote" role="status" aria-live="polite"></div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- ============ FOOTER ============ -->
@@ -326,7 +322,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col">
-          <a href="#home" class="brand">
+          <a href="/" class="brand">
             <span class="logo">M</span>
             <span class="brand-text"><span class="brand-name" data-i18n="brand.name">ماهو مارکیت</span><span class="brand-sub" data-i18n="brand.sub">لباس و لوازم بانوان</span></span>
           </a>
@@ -349,12 +345,11 @@
         <div class="footer-col">
           <h4 data-i18n="footer.support">پشتیبانی</h4>
           <button type="button" id="footerContact" class="footer-contact" aria-expanded="false" aria-controls="contactPopover" data-i18n="footer.link.contact">تماس با ما</button>
-          <a href="#about" data-i18n="footer.link.about">درباره‌ی MAHO</a>
           <a href="/terms" id="footerTerms" data-i18n="footer.link.terms">قوانین و شرایط</a>
           <a href="/privacy" id="footerPrivacy" data-i18n="footer.link.privacy">حریم خصوصی</a>
           <a href="#orders" id="footerTrackLink" data-i18n="footer.link.track">پیگیری سفارش</a>
         </div>
-        <div class="footer-col">
+        <div class="footer-col" id="storeContact">
           <h4 data-i18n="footer.contact">تماس</h4>
           <p><svg class="ic"><use href="#i-pin"/></svg> <span data-i18n="footer.addr">کوته سنگی، کابل — مبارک سنتر، منزل ۴، دوکان ۷۴ و ۷۵</span></p>
           <p><svg class="ic"><use href="#i-call"/></svg> <a class="contact-link phone-ltr" id="footerPhoneLink" href="tel:+93791505454"><bdi class="phone-ltr" id="footerPhoneText" dir="ltr">+93791505454</bdi></a></p>
@@ -369,7 +364,27 @@
     </div>
   </footer>
 
+  <div class="hero-post" id="heroPostOverlay" hidden>
+    <div class="hero-post-card" role="dialog" aria-modal="true" aria-labelledby="heroPostTitle">
+      <button type="button" class="modal-x" id="heroPostClose" data-i18n-aria="ui.close" aria-label="بستن">✕</button>
+      <div id="heroPostMedia"></div>
+      <h3 id="heroPostTitle"></h3>
+      <p id="heroPostBody"></p>
+      <p><a id="heroPostLink" hidden></a></p>
+    </div>
+  </div>
+
   <!-- Quick view -->
+  <div id="photoLightbox" class="photo-lightbox" hidden>
+    <button type="button" class="photo-lightbox-x" id="photoLightboxClose" data-i18n-aria="ui.close" aria-label="بستن">✕</button>
+    <button type="button" class="photo-zoom out" id="photoZoomOut" aria-label="-">−</button>
+    <button type="button" class="photo-zoom in" id="photoZoomIn" aria-label="+">+</button>
+    <img id="photoLightboxImg" alt="">
+  </div>
+  <div id="storeViewer" class="store-viewer" hidden>
+    <button type="button" class="store-viewer-x" id="storeViewerClose" data-i18n-aria="ui.close" aria-label="بستن">✕</button>
+    <div class="store-viewer-panel" id="storeViewerPanel"></div>
+  </div>
   <div class="ov" id="qvOverlay">
     <div class="qv-modal" role="dialog" aria-modal="true" data-i18n-aria="qv.dialog" aria-label="جزئیات محصول">
       <button class="modal-x" id="qvClose" data-i18n-aria="ui.close" aria-label="بستن">✕</button>
@@ -419,6 +434,8 @@
         <div class="cart-items">
           <button type="button" class="link-back" id="backToCart" data-i18n="co.back">→ بازگشت به سبد</button>
           <h4 data-i18n="co.title">مشخصات سفارش</h4>
+          <details id="customerDetails" open>
+          <summary data-i18n="co.details">اطلاعات تماس و آدرس</summary>
           <div class="field"><label data-i18n="co.name">نام و تخلص *</label><input id="co_name"></div>
           <div class="field"><label data-i18n="co.phone">نمبر تماس *</label><input id="co_phone" dir="ltr" inputmode="tel"></div>
           <div class="field"><label data-i18n="co.email">ایمیل (برای تایید سفارش)</label><input id="co_email" type="email" dir="ltr"></div>
@@ -429,6 +446,7 @@
           <div class="field"><label data-i18n="addr.street">سرک / کوچه</label><input id="co_street"></div>
           <div class="field"><label data-i18n="addr.house">نمبر خانه</label><input id="co_house" dir="ltr"></div>
           <div class="field"><label data-i18n="addr.zip">زیپ کود (اختیاری)</label><input id="co_zip" dir="ltr"></div>
+          </details>
           <input id="co_area" type="hidden">
           <div class="field" id="couponBox"><label data-i18n="coupon.label">کود تخفیف</label><div style="display:flex;gap:8px"><input id="co_coupon" dir="ltr" autocomplete="off"><button type="button" class="btn btn-outline btn-sm" id="applyCoupon" data-i18n="coupon.apply">اعمال</button><button type="button" class="btn btn-outline btn-sm" id="removeCoupon" data-i18n="coupon.remove">حذف</button></div><p class="qv-msg" id="couponMsg"></p></div>
           <div class="field"><label data-i18n="co.note">یادداشت سفارش</label><input id="co_note" maxlength="500"></div>
@@ -518,13 +536,29 @@
         <div class="cart-foot">
           <div class="cart-total" style="font-size:15px"><span data-i18n="cart.total">مجموع</span><span id="coItemsTotal"></span></div>
           <div class="cart-total" id="coDeliveryRow" hidden style="font-size:15px"><span data-i18n="co.deliveryFee">هزینه دلیوری</span><span id="coDeliveryFee"></span></div>
-          <div class="cart-total" id="coDiscountRow" hidden style="font-size:15px"><span data-i18n="co.orderDiscount">تخفیف مبلغ سفارش</span><span id="coDiscountAmt" style="color:var(--gold,#c8a35f)"></span></div>
+          <div class="cart-total" id="coDiscountRow" hidden style="font-size:15px;flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;gap:8px"><span data-i18n="co.orderDiscount">تخفیف مبلغ سفارش</span><span id="coDiscountAmt" style="color:var(--gold,#c8a35f)"></span></div><p id="coDiscountMeta" class="note"></p></div>
           <div class="cart-total"><span data-i18n="co.grand">مبلغ قابل پرداخت</span><span id="cartTotal2"></span></div>
           <p class="form-note" id="coMinWarn" hidden style="color:var(--red);margin:4px 0"></p>
           <button class="btn btn-lg" id="placeOrder" data-i18n="pay.placeWhatsapp">ثبت سفارش (واتساپ)</button>
         </div>
       </div>
     </aside>
+  </div>
+
+  <div id="regGuide" class="reg-guide" hidden role="dialog" aria-modal="true" aria-labelledby="regGuideTitle">
+    <div class="reg-guide-card">
+      <button type="button" class="modal-x" id="regGuideClose" data-i18n-aria="ui.close" aria-label="بستن">✕</button>
+      <p class="reg-guide-kicker" id="regGuideKicker"></p>
+      <h3 id="regGuideTitle"></h3>
+      <p id="regGuideBody"></p>
+      <div class="reg-demo" id="regDemo" aria-hidden="true"></div>
+      <div class="reg-guide-progress" id="regGuideProgress"></div>
+      <div class="reg-guide-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="regGuidePrev"></button>
+        <button type="button" class="btn btn-outline btn-sm" id="regGuideRestart"></button>
+        <button type="button" class="btn btn-gold btn-sm" id="regGuideNext"></button>
+      </div>
+    </div>
   </div>
 
   <!-- Account modal -->
@@ -537,6 +571,7 @@
             <button class="tab active" id="tabLogin" data-i18n="acct.login">ورود</button>
             <button class="tab" id="tabSignup" data-i18n="acct.signup">ساخت حساب</button>
           </div>
+          <button type="button" class="btn btn-outline" id="regGuideBtn" hidden data-i18n="acct.regGuide">رهنمای ثبت‌نام</button>
           <div id="loginPane">
             <div class="field"><label data-i18n="acct.phone">نمبر تماس یا ایمیل</label><input id="lg_id" dir="ltr"></div>
             <div class="field"><label data-i18n="acct.pass">پسورد</label><input id="lg_pass" type="password" autocomplete="current-password"></div>
@@ -720,6 +755,7 @@
   <div class="share-menu" id="shareMenu" hidden></div>
 
   <script src="/js/api.js"></script>
+  <script src="/js/panorama.js"></script>
   <div id="contactPopover" class="contact-popover" hidden role="dialog" aria-modal="false" aria-labelledby="contactPopoverTitle">
     <button type="button" class="contact-close" id="contactPopoverClose" data-i18n-aria="ui.close" aria-label="بستن">×</button>
     <h3 id="contactPopoverTitle" data-i18n="contact.title">تماس با ماهو مارکیت</h3>
@@ -727,7 +763,7 @@
     <div id="contactPopoverOptions"></div>
   </div>
   <script src="/js/catalog-page.js"></script>
-  <script src="/js/main.js"></script>
-  <script src="/js/upgrade.js"></script>
+  <script src="/js/main.js?v=stock-label"></script>
+  <script src="/js/upgrade.js?v=ads-fix"></script>
 </body>
 </html>

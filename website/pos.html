@@ -64,7 +64,7 @@
   </div>
 
   <div class="top no-print" id="appTop" hidden>
-    <div class="brand">MAHO POS <small id="who">—</small></div>
+    <div class="brand">MAHO POS <small id="posBiz"></small><small id="who">—</small></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <span class="muted" style="color:#ccc" id="shiftInfo">شیفت: —</span>
       <button type="button" class="btn btn-ghost btn-sm" data-lang-toggle>English</button>
@@ -242,6 +242,19 @@
     function paintShift(){ $("#shiftInfo").textContent = shiftId ? (L("pos.shiftOpen")+shiftId) : L("pos.shiftIdle"); }
     function paintCashier(){ if($("#cashierLine")) $("#cashierLine").textContent = L("pos.cashier")+(cashierName||"—"); }
     function paintGate(){ if(gateKey && $("#gateMsg")) $("#gateMsg").textContent = L(gateKey); }
+    var posBizConfig = null;
+    function paintBiz(){
+      var c = (posBizConfig && posBizConfig.content) || {};
+      var en = window.MAHOPageLang && MAHOPageLang.current()==="en";
+      var text = en ? (String(c.brandSub_en||"").trim() || "Women's Clothing & Accessories") : (String(c.brandSub||"").trim() || "لباس و لوازم بانوان");
+      if($("#posBiz")) $("#posBiz").textContent = text;
+    }
+    function loadBiz(){
+      return fetch("/api/catalog", { headers: { Accept: "application/json" } }).then(function(r){ return r.json(); }).then(function(d){
+        posBizConfig = (d && d.config) || {};
+        paintBiz();
+      }).catch(function(){ paintBiz(); });
+    }
     function bindLang(){
       MAHOPageLang.apply(LANGPACK);
       document.querySelectorAll("[data-lang-toggle]").forEach(function(btn){
@@ -253,6 +266,7 @@
     paintCashier();
     document.addEventListener("maho:lang", function(){
       bindLang();
+      paintBiz();
       paintShift(); paintCashier(); paintGate();
       if(!$("#app").hidden){ renderCart(); loadCatalog(); refreshSales(); if(loadedSale) paintReturnItems(); }
     });
@@ -280,7 +294,7 @@
     function openApp(){
       $("#gate").style.display="none";
       $("#appTop").hidden=false; $("#app").hidden=false;
-      requirePos().then(function(){ refreshSales(); loadCatalog(); $("#scanInput").focus(); }).catch(function(e){
+      requirePos().then(function(){ refreshSales(); loadCatalog(); loadBiz(); $("#scanInput").focus(); }).catch(function(e){
         $("#gate").style.display="flex"; $("#appTop").hidden=true; $("#app").hidden=true;
         gateKey=/no_pos|forbidden|403/i.test((e&&e.message)||"") ? "pos.noPos" : "pos.noAccess";
         paintGate();

@@ -203,6 +203,21 @@
     }
     @media(min-width:901px){.sidebar-toggle{display:none}}
     @media(max-width:640px){.grid2{grid-template-columns:1fr}.hide-sm{display:none}.acc-head{font-size:12px}}
+    .hero-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;max-height:380px;overflow:auto;margin:8px 0}
+    .hero-card-pick{display:block;width:100%;text-align:start;border:2px solid var(--line);border-radius:12px;background:#fff;padding:6px;cursor:pointer;font:inherit;color:inherit}
+    .hero-card-pick.is-on{border-color:var(--gold);background:#fff8ea}
+    .hero-card-pick.is-taken{opacity:.55;cursor:default}
+    .hero-card-pick img,.hero-card-pick .ph{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#1a1509;display:block}
+    .hero-card-pick b{display:block;font-size:13px;line-height:1.35;margin-top:4px}
+    .hc-row{border:1px solid var(--line);border-radius:12px;padding:8px;margin:8px 0;background:#fff}
+    .hc-top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+    .hc-preview{width:92px;height:122px;object-fit:cover;border-radius:10px;background:#1a1509}
+    .hc-fields{flex:1;min-width:220px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .pv-row{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:8px;margin:8px 0;background:#fff}
+    .pv-row video{width:120px;height:160px;background:#111;border-radius:8px;object-fit:cover}
+    .pv-meta{flex:1;min-width:0}
+    .pv-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+    #f_videoProgress progress{width:min(240px,100%)}
   </style>
 </head>
 <body>
@@ -304,7 +319,6 @@
         <div class="side-group-label">محتوا و لینک‌ها</div>
         <button type="button" class="side-link" data-panel="texts" data-perm="settings"><span class="si" aria-hidden="true"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>متن‌های سایت</span></button>
         <button type="button" class="side-link" data-panel="contacts" data-perm="settings"><span class="si" aria-hidden="true"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h3l1 4-2 1a12 12 0 0 0 6 6l1-2 4 1v3a2 2 0 0 1-2 2A16 16 0 0 1 5 5a2 2 0 0 1 2-2z"/></svg></span><span>روش‌های تماس</span></button>
-        <button type="button" class="side-link" data-panel="why" data-perm="settings"><span class="si" aria-hidden="true"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7-7 9-4-2-7-4.5-7-9V6z"/></svg></span><span>چرا MAHO</span></button>
         <button type="button" class="side-link" data-panel="links" data-perm="settings"><span class="si" aria-hidden="true"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span>صفحه لینک‌ها</span></button>
         <button type="button" class="side-link" data-panel="stores" data-perm="settings"><span class="si" aria-hidden="true"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l8-6 8 6v9H4z"/><path d="M10 19v-5h4v5"/></svg></span><span>فروشگاه‌ها</span></button>
         <div class="side-group-label">قوانین</div>
@@ -338,7 +352,7 @@
     <!-- CATEGORIES -->
     <div class="card admin-panel" data-panel="categories">
       <div class="row-between">
-        <div><h2>کتگوری‌ها</h2><div class="sub">افزودن، ویرایش نام فارسی/انگلیسی، ترتیب، فعال/غیرفعال، آیکن و حذف. شناسه‌ی کتگوری ثابت می‌ماند تا محصولات جدا نشوند.</div></div>
+        <div><h2>کتگوری‌ها</h2><div class="sub">نام فارسی و انگلیسی، آیکن، تصویر، ترتیب و وضعیت هر کتگوری در همین بخش مدیریت می‌شود. شناسه ثابت می‌ماند تا محصولات جدا نشوند.</div></div>
         <button class="btn btn-gold" id="addCatBtn">+ افزودن کتگوری</button>
       </div>
       <div id="catRows"></div>
@@ -752,21 +766,10 @@
     <!-- SITE TEXTS -->
     <div class="card admin-panel" data-panel="texts">
       <h2>متن‌های سایت</h2>
-      <div class="sub">متن‌های قابل ویرایش صفحهٔ اصلی و فوتر. بخش دسته‌بندی‌ها نیز از اینجا قابل تغییر است.</div>
-      <h3 style="font-size:15px;margin:12px 0 6px">بخش دسته‌بندی‌ها (صفحه اصلی)</h3>
-      <div class="grid2">
-        <div class="field"><label>Kicker (فارسی)</label><input id="scats_kicker" placeholder="دسته‌بندی‌ها"></div>
-        <div class="field"><label>Kicker (English)</label><input id="scats_kicker_en" dir="ltr"></div>
-        <div class="field"><label>عنوان (فارسی)</label><input id="scats_title"></div>
-        <div class="field"><label>عنوان (English)</label><input id="scats_title_en" dir="ltr"></div>
-        <div class="field"><label>توضیح (فارسی)</label><input id="scats_lead"></div>
-        <div class="field"><label>توضیح (English)</label><input id="scats_lead_en" dir="ltr"></div>
-      </div>
+      <div class="sub">متن‌های قابل ویرایش صفحهٔ اصلی و فوتر.</div>
       <h3 style="font-size:15px;margin:12px 0 6px">هیرو و برند</h3>
-      <div class="sub">متن‌های دیده‌شده در سایت (سربرگ، صفحه‌ی اصلی و فوتر). هر خانه را خالی بگذارید تا متن پیش‌فرض بماند.</div>
+      <div class="sub">متن‌های دیده‌شده در سایت (صفحه‌ی اصلی و فوتر). توضیح کوتاه فعالیت فروشگاه از بخش تنظیمات ویرایش می‌شود. هر خانه را خالی بگذارید تا متن پیش‌فرض بماند.</div>
       <div class="grid2">
-        <div class="field"><label>زیرعنوان برند (فارسی)</label><input id="c_brandSub"></div>
-        <div class="field"><label>زیرعنوان برند (English)</label><input id="c_brandSub_en" dir="ltr"></div>
         <div class="field"><label>عنوان بزرگ صفحه (فارسی)</label><input id="c_heroTitle"></div>
         <div class="field"><label>عنوان بزرگ صفحه (English)</label><input id="c_heroTitle_en" dir="ltr"></div>
         <div class="field"><label>توضیح زیر عنوان (فارسی)</label><input id="c_heroLead"></div>
@@ -797,45 +800,7 @@
         <input id="c_tiktok">
       </div>
 
-      <h3 style="margin:14px 0 6px;font-size:16px">کارت‌های شناور روی هیدر</h3>
-      <div class="sub">سه کارت کوچکی که روی تصویر سربرگ شناورند. متن هر کارت را تغییر بدهید و اندازه‌ی کلی آن‌ها را تنظیم کنید.</div>
-      <div class="field" style="max-width:340px">
-        <label>اندازه‌ی کارت‌ها: <b id="heroScaleVal">۱۰۰٪</b></label>
-        <input id="c_heroScale" type="range" min="0.7" max="1.3" step="0.05" value="1" style="width:100%">
-      </div>
-      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
-        <b>کارت ۱</b>
-        <div class="grid2">
-          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc1_tag"></div>
-          <div class="field"><label>برچسب (English)</label><input id="c_hc1_tag_en" dir="ltr"></div>
-          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc1_title"></div>
-          <div class="field"><label>عنوان (English)</label><input id="c_hc1_title_en" dir="ltr"></div>
-          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc1_sub"></div>
-          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc1_sub_en" dir="ltr"></div>
-        </div>
-      </div>
-      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
-        <b>کارت ۲</b>
-        <div class="grid2">
-          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc2_tag"></div>
-          <div class="field"><label>برچسب (English)</label><input id="c_hc2_tag_en" dir="ltr"></div>
-          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc2_title"></div>
-          <div class="field"><label>عنوان (English)</label><input id="c_hc2_title_en" dir="ltr"></div>
-          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc2_sub"></div>
-          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc2_sub_en" dir="ltr"></div>
-        </div>
-      </div>
-      <div style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px">
-        <b>کارت ۳</b>
-        <div class="grid2">
-          <div class="field"><label>برچسب (فارسی)</label><input id="c_hc3_tag"></div>
-          <div class="field"><label>برچسب (English)</label><input id="c_hc3_tag_en" dir="ltr"></div>
-          <div class="field"><label>عنوان (فارسی)</label><input id="c_hc3_title"></div>
-          <div class="field"><label>عنوان (English)</label><input id="c_hc3_title_en" dir="ltr"></div>
-          <div class="field"><label>زیرعنوان (فارسی)</label><input id="c_hc3_sub"></div>
-          <div class="field"><label>زیرعنوان (English)</label><input id="c_hc3_sub_en" dir="ltr"></div>
-        </div>
-      </div>
+      <p class="sub">کارت‌های شناور قدیمی روی صفحهٔ فروشگاه نیستند. متن ذخیره‌شدهٔ آن‌ها هنگام ذخیرهٔ بقیهٔ تنظیمات پاک نمی‌شود.</p>
 
       <div class="card-foot"><button class="btn btn-gold" id="saveBtnContent">ذخیره تغییرات</button></div>
     </div>
@@ -855,15 +820,17 @@
       <div id="contactMethodsAdmin"></div>
     </div>
 
-    <div class="card admin-panel" data-panel="why">
-      <h2>چرا MAHO</h2>
-      <p class="sub">عنوان، توضیح و کارت‌های بخش «چرا MAHO» در صفحهٔ اصلی. این فرم داخل محتواست، نه داخل منوی کناری.</p>
-      <div id="whyAdmin"></div>
-    </div>
-
     <div class="card admin-panel" data-panel="settings">
       <h2>تنظیمات سایت</h2>
-      <div class="sub">لوگو، نمبر واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
+      <div class="sub">لوگو، توضیح فعالیت، نمبر واتساپ سفارش، اطلاعات پرداخت و ایمیل.</div>
+
+      <h3 style="margin:8px 0 6px;font-size:16px">Business Description / توضیحات فعالیت فروشگاه</h3>
+      <p class="sub">همین توضیح کوتاه در سربرگ، هیرو، کارت‌های تازه‌ساخته، ایمیل‌ها، POS و صفحهٔ لینک‌ها خوانده می‌شود. خانهٔ خالی، متن تأییدشدهٔ فعلی را نگه می‌دارد.</p>
+      <div class="grid2">
+        <div class="field"><label>Dari Description</label><input id="c_brandSub" maxlength="120" placeholder="لباس و لوازم بانوان"></div>
+        <div class="field"><label>English Description</label><input id="c_brandSub_en" maxlength="120" dir="ltr" placeholder="Women's Clothing &amp; Accessories"></div>
+      </div>
+      <p class="note" id="bizDescMsg" role="status"></p>
 
       <div class="field">
         <label>لوگوی سایت (اختیاری)</label>
@@ -890,6 +857,24 @@
       <div class="field"><label>فاصله تعویض اسلاید (ثانیه)</label><input id="cfg_hero_interval" type="number" min="2" value="5" dir="ltr"></div>
       <div id="heroSlidesBox"></div>
       <button type="button" class="btn btn-outline btn-sm" id="addHeroSlideBtn">+ افزودن اسلاید</button>
+
+      <h3 style="margin:18px 0 6px;font-size:16px">کارت‌های هیرو</h3>
+      <p class="sub">کارت‌های عمودی همان ردیف هیرو هستند: محصول یا پست مستقل. زمان‌بندی اختیاری است. اگر تاریخ خالی باشد، کارت فعال همیشه دیده می‌شود. منطقهٔ زمانی: آسیا/کابل (UTC+4:30).</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button type="button" class="btn btn-outline btn-sm" id="heroCardAddProducts">افزودن محصول</button>
+        <button type="button" class="btn btn-outline btn-sm" id="heroCardAddPost">پست مستقل</button>
+      </div>
+      <div id="heroCardPicker" hidden>
+        <div class="field"><label for="heroCardSearch">جستجوی محصول</label><input id="heroCardSearch" placeholder="نام، کود یا قیمت" autocomplete="off"></div>
+        <div id="heroCardGrid" class="hero-card-grid"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-gold btn-sm" id="heroCardAddSelected">افزودن محصولات انتخاب‌شده</button>
+          <button type="button" class="btn btn-outline btn-sm" id="heroCardPickerClose">بستن</button>
+        </div>
+      </div>
+      <div id="heroVideoList"></div>
+      <button type="button" class="btn btn-outline btn-sm" id="heroVideoSave">ذخیره کارت‌های هیرو</button>
+      <p class="note" id="heroVideoMsg"></p>
 
       <div class="field"><label>نمبر واتساپ برای سفارش (مثلاً 0700123456)</label><input id="cfg_whatsapp" dir="ltr" placeholder="0700123456"></div>
 
@@ -1057,6 +1042,14 @@
         <div id="f_imgPreview" class="img-previews"></div>
         <p class="note">اولین عکس، عکس اصلی است؛ عکس‌ها خودکار کوچک می‌شوند.</p>
       </div>
+      <div class="field" id="f_videosWrap">
+        <label for="f_video">ویدیوهای کوتاه محصول</label>
+        <input type="file" id="f_video" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov">
+        <div id="f_videoProgress" hidden><progress id="f_videoProgressBar" max="100" value="0"></progress> <span id="f_videoProgressText"></span></div>
+        <p class="note" id="f_videoMsg" role="status"></p>
+        <div id="f_videoList"></div>
+        <p class="note">MP4 یا WebM، حداکثر ۳۰ ثانیه و ۸ مگابایت. MOV فقط وقتی پذیرفته می‌شود که همین مرورگر بتواند آن را پخش کند؛ این سرور ویدیو را تبدیل نمی‌کند. پوستر را از عکس محصول انتخاب کنید یا از خود ویدیو بسازید. عکس‌های فعلی محصول دست نخورده می‌مانند.</p>
+      </div>
       <div class="field" style="margin-top:8px">
         <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer">
           <input type="checkbox" id="f_hasColors"> این محصول رنگ دارد
@@ -1108,6 +1101,9 @@
         <div class="field"><label>Longitude (طول جغرافیایی)</label><input id="st_lng" dir="ltr" inputmode="decimal" placeholder="مثلاً 69.1205"></div>
       </div>
       <p class="note" id="st_coordNote">لینک نقشه فقط برای دکمه‌ی «مشاهده روی نقشه» است. فاصله و قیمت دلیوری فقط از Latitude و Longitude محاسبه می‌شود (−۹۰…۹۰ و −۱۸۰…۱۸۰).</p>
+      <div class="field"><label>عکس‌های فروشگاه (هر خط یک نشانی)</label><textarea id="st_photos" rows="3" dir="ltr"></textarea><input id="st_photos_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></div>
+      <div class="field"><label>تصویر ۳۶۰ درجه (هر خط یک نشانی)</label><textarea id="st_panoramas" rows="2" dir="ltr"></textarea><input id="st_panoramas_file" type="file" accept="image/jpeg,image/png,image/webp"></div>
+      <div class="field"><label>ویدیو (هر خط یک نشانی mp4/webm)</label><textarea id="st_videos" rows="2" dir="ltr"></textarea><input id="st_videos_file" type="file" accept="video/mp4,video/webm"></div>
       <p class="note" id="storeMsg" style="color:var(--red);min-height:18px"></p>
       <div class="modal-foot">
         <button class="btn btn-outline" id="storeCancelBtn">لغو</button>
@@ -1193,7 +1189,7 @@
     var icon=function(id){return iconVisual(id,"ic");};
     function parseList(v){ return String(v||"").split(/[,،]/).map(function(x){return x.trim()}).filter(Boolean); }
 
-    var state={products:[],stores:[],config:{}}, editIndex=-1, storeEditIndex=-1, dirty=false, modalImages=[];
+    var state={products:[],stores:[],config:{}}, editIndex=-1, storeEditIndex=-1, dirty=false, modalImages=[], modalVideos=[], modalVideoBusy=false;
     var iconPickTarget=null; /* id of hidden input to fill */
 
     var toastTimer;
@@ -1720,6 +1716,173 @@
       config.bank=config.bank||{}; config.emailjs=config.emailjs||{};
       return {products:products,stores:stores,config:config};
     }
+    function splitWhen(value){
+      var text=String(value||""); var cut=text.indexOf("T");
+      if(cut<0) return {date:"", time:""};
+      return {date:text.slice(0, cut), time:text.slice(cut+1, cut+6)};
+    }
+    function blankHeroCard(partial){
+      var row=partial||{};
+      var start=(row.startDate!=null || row.startTime!=null) ? {date:row.startDate||"", time:row.startTime||""} : splitWhen(row.startAt);
+      var end=(row.endDate!=null || row.endTime!=null) ? {date:row.endDate||"", time:row.endTime||""} : splitWhen(row.endAt);
+      return {
+        id: row.id || ("hc"+Date.now().toString(36)+Math.floor(Math.random()*1000).toString(36)),
+        type: row.type==="post" ? "post" : "product",
+        productCode: row.productCode||"",
+        videoId: row.videoId||"",
+        videoUrl: row.videoUrl||"",
+        imageUrl: row.imageUrl||"",
+        title: row.title||"",
+        title_en: row.title_en||"",
+        description: row.description||"",
+        description_en: row.description_en||"",
+        url: row.url||"",
+        cta: row.cta||"",
+        cta_en: row.cta_en||"",
+        enabled: row.enabled===true,
+        startDate: start.date,
+        startTime: start.time,
+        endDate: end.date,
+        endTime: end.time,
+        order: Number(row.order)||0
+      };
+    }
+    function schedulePair(date, time){
+      date=String(date||"").trim(); time=String(time||"").trim();
+      if(!date && !time) return "";
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return "INVALID";
+      var ms=Date.parse(date+"T"+time+":00Z");
+      if(!isFinite(ms)) return "INVALID";
+      var d=new Date(ms);
+      if(d.getUTCFullYear()!==Number(date.slice(0,4)) || (d.getUTCMonth()+1)!==Number(date.slice(5,7)) || d.getUTCDate()!==Number(date.slice(8,10))) return "INVALID";
+      return date+"T"+time;
+    }
+    function heroCardError(list){
+      var rows=list||[];
+      for(var i=0;i<rows.length;i++){
+        var start=schedulePair(rows[i].startDate, rows[i].startTime);
+        var end=schedulePair(rows[i].endDate, rows[i].endTime);
+        if(start==="INVALID" || end==="INVALID") return "تاریخ و ساعت را با هم وارد کنید، یا هر دو را خالی بگذارید. منطقهٔ زمانی آسیا/کابل (UTC+4:30) است.";
+        if(start && end && end<=start) return "زمان پایان باید بعد از زمان شروع باشد.";
+      }
+      return "";
+    }
+    function heroWhenLabel(row){
+      var start=schedulePair(row.startDate, row.startTime);
+      var end=schedulePair(row.endDate, row.endTime);
+      if(start==="INVALID" || end==="INVALID") return "تاریخ و ساعت ناقص است";
+      if(!start && !end) return "بدون زمان — تا وقتی فعال است دیده می‌شود";
+      return (start?("از "+start.replace("T"," ")+" "):"")+(end?("تا "+end.replace("T"," ")):"")+" (کابل)";
+    }
+    function packHeroCards(list){
+      return (list||[]).slice(0, 24).map(function(row, i){
+        var start=schedulePair(row.startDate, row.startTime);
+        var end=schedulePair(row.endDate, row.endTime);
+        return {
+          id: row.id, type: row.type==="post"?"post":"product",
+          productCode: row.type==="post"?"":(row.productCode||""),
+          videoId: row.videoId||"", videoUrl: row.videoUrl||"", imageUrl: row.imageUrl||"",
+          title: row.title||"", title_en: row.title_en||"",
+          description: row.description||"", description_en: row.description_en||"",
+          url: row.url||"", cta: row.cta||"", cta_en: row.cta_en||"",
+          enabled: row.enabled===true,
+          startAt: start==="INVALID"?"":start,
+          endAt: end==="INVALID"?"":end,
+          order: i
+        };
+      });
+    }
+    function heroVideoProduct(code){
+      return (state.products||[]).find(function(p){ return p && String(p.code||"")===String(code||""); });
+    }
+    function heroClip(row){
+      if(row.videoUrl) return row.videoUrl;
+      if(row.type!=="product") return "";
+      var product=heroVideoProduct(row.productCode);
+      var videos=(product&&product.videos)||[];
+      var chosen=row.videoId ? videos.filter(function(v){ return v && v.id===row.videoId; })[0] : null;
+      var primary=videos.filter(function(v){ return v && v.primary; })[0] || videos[0];
+      return (chosen&&chosen.videoUrl) || (primary&&primary.videoUrl) || "";
+    }
+    function heroStill(row){
+      if(row.imageUrl) return row.imageUrl;
+      var product=row.type==="product" ? heroVideoProduct(row.productCode) : null;
+      var videos=(product&&product.videos)||[];
+      var chosen=row.videoId ? videos.filter(function(v){ return v && v.id===row.videoId; })[0] : null;
+      var primary=videos.filter(function(v){ return v && v.primary; })[0] || videos[0];
+      return (chosen&&chosen.poster) || (primary&&primary.poster) || (product&&product.images&&product.images[0]) || (product&&product.image) || "";
+    }
+    function heroCardHtml(row, i){
+      var product=row.type==="product" ? heroVideoProduct(row.productCode) : null;
+      var name=row.type==="post" ? (row.title||"پست مستقل") : (product ? (product.name||product.name_en||row.productCode) : "محصول پیدا نشد");
+      var clip=heroClip(row), still=heroStill(row);
+      var preview=clip ? '<video class="hc-preview" muted playsinline preload="metadata" src="'+esc(clip)+'"'+(still?' poster="'+esc(still)+'"':"")+'></video>' : (still?'<img class="hc-preview" alt="" src="'+esc(still)+'">':'<span class="hc-preview"></span>');
+      var schedule='<label>شروع<input data-field="startDate" type="date" value="'+esc(row.startDate)+'"></label><label>ساعت<input data-field="startTime" type="time" value="'+esc(row.startTime)+'"></label><label>پایان<input data-field="endDate" type="date" value="'+esc(row.endDate)+'"></label><label>ساعت<input data-field="endTime" type="time" value="'+esc(row.endTime)+'"></label>';
+      var actions='<div class="pv-actions"><button type="button" class="btn btn-outline btn-sm hc-up">بالا</button><button type="button" class="btn btn-outline btn-sm hc-down">پایین</button><button type="button" class="btn btn-outline btn-sm hc-del">حذف</button></div>';
+      var kind=row.type==="post"?'<span class="note">پست مستقل</span>':'<span class="note">محصول · '+esc(row.productCode||"")+'</span>';
+      var body="";
+      if(row.type==="post"){
+        body='<input data-field="title" placeholder="عنوان" value="'+esc(row.title)+'"><input data-field="title_en" dir="ltr" placeholder="Title" value="'+esc(row.title_en)+'">'+
+          '<input data-field="description" placeholder="توضیح" value="'+esc(row.description)+'"><input data-field="description_en" dir="ltr" placeholder="Description" value="'+esc(row.description_en)+'">'+
+          '<input data-field="url" dir="ltr" placeholder="https:// یا /مسیر" value="'+esc(row.url)+'"><input data-field="cta" placeholder="متن دکمه" value="'+esc(row.cta)+'">'+
+          '<input data-field="cta_en" dir="ltr" placeholder="Button" value="'+esc(row.cta_en)+'"><span></span>'+
+          '<label class="note">عکس<input class="hc-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label><label class="note">ویدیو<input class="hc-video" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"></label>';
+      } else {
+        var videos=(product&&product.videos)||[];
+        var options='<option value="">خودکار: ویدیوی اصلی، وگرنه عکس</option>';
+        videos.forEach(function(v){
+          var selected=(row.videoId&&row.videoId===v.id) || (!row.videoId && row.videoUrl && row.videoUrl===v.videoUrl);
+          options+='<option value="id:'+esc(v.id)+'"'+(selected?' selected':'')+'>'+(v.primary?'ویدیوی اصلی':'ویدیوی محصول')+(v.duration?(' · '+v.duration+'ث'):'')+'</option>';
+        });
+        if(row.videoUrl && !videos.some(function(v){ return v && v.videoUrl===row.videoUrl; })) options+='<option value="url:'+esc(row.videoUrl)+'" selected>ویدیوی ذخیره‌شدهٔ همین کارت</option>';
+        body='<label style="grid-column:1/-1">ویدیو<select data-field="videoChoice">'+options+'</select></label><p class="note" style="grid-column:1/-1;margin:0">ویدیو از خود محصول خوانده می‌شود و فایل دوباره کپی نمی‌شود. اگر ویدیو نباشد، عکس محصول نشان داده می‌شود.</p>';
+      }
+      return '<div class="hc-row" data-i="'+i+'"><div class="hc-top">'+preview+'<div style="flex:1;min-width:180px"><b>'+esc(name)+'</b><div>'+kind+' · '+(row.enabled?'فعال':'غیرفعال')+'</div><label><input data-field="enabled" type="checkbox"'+(row.enabled?' checked':'')+'> فعال</label><div class="note hc-when">'+esc(heroWhenLabel(row))+'</div>'+actions+'</div></div><div class="hc-fields">'+body+schedule+'</div></div>';
+    }
+    function renderHeroCards(rows){
+      var box=$("#heroVideoList"); if(!box) return;
+      var list=(Array.isArray(rows)?rows:[]).map(blankHeroCard);
+      list.sort(function(a,b){ return (Number(a.order)||0)-(Number(b.order)||0); });
+      list.forEach(function(row, i){ row.order=i; });
+      window._heroCards=list;
+      box.dataset.ready="1";
+      box.innerHTML=list.map(heroCardHtml).join("") || '<p class="note">هنوز کارتی نیست. محصول را تصویری انتخاب کنید یا یک پست مستقل بسازید.</p>';
+    }
+    function renderHeroPicker(){
+      var grid=$("#heroCardGrid"); if(!grid) return;
+      var q=String(($("#heroCardSearch")&&$("#heroCardSearch").value)||"").trim().toLowerCase();
+      var taken={};
+      (window._heroCards||[]).forEach(function(row){ if(row.type==="product" && row.productCode) taken[row.productCode]=true; });
+      var selected=window._heroPick||{};
+      var rows=(state.products||[]).filter(function(p){
+        if(!p) return false;
+        var blob=((p.name||"")+" "+(p.name_en||"")+" "+(p.code||"")+" "+(p.price==null?"":p.price)).toLowerCase();
+        return !q || blob.indexOf(q)>=0;
+      });
+      grid.innerHTML=rows.map(function(p){
+        var code=String(p.code||"");
+        var thumb=(p.images&&p.images[0])||p.image||"";
+        var on=!!selected[code], already=!!taken[code];
+        var status=(p.enabled===false||p.active===false)?"غیرفعال":(Number(p.stock)===0?"ناموجود":"فعال");
+        return '<button type="button" class="hero-card-pick'+(on?' is-on':'')+(already?' is-taken':'')+'" data-pick-code="'+esc(code)+'"'+(already?' disabled':'')+'>'+
+          (thumb?'<img src="'+esc(thumb)+'" alt="">':'<span class="ph"></span>')+
+          '<b>'+esc(p.name||p.name_en||"محصول")+'</b><span class="note">'+esc(p.price==null?"":String(p.price))+' AFN · '+esc(status)+(already?' · قبلاً اضافه شده':'')+'</span></button>';
+      }).join("") || '<p class="note">محصولی پیدا نشد.</p>';
+    }
+    function syncHeroField(e){
+      var rowEl=e.target.closest&&e.target.closest(".hc-row"); if(!rowEl||!window._heroCards) return;
+      var row=window._heroCards[parseInt(rowEl.getAttribute("data-i"),10)]; if(!row) return;
+      var key=e.target.getAttribute("data-field"); if(!key) return;
+      if(key==="videoChoice"){
+        var val=e.target.value||"";
+        if(val.indexOf("id:")===0){ row.videoId=val.slice(3); row.videoUrl=""; }
+        else if(val.indexOf("url:")===0){ row.videoId=""; row.videoUrl=val.slice(4); }
+        else { row.videoId=""; row.videoUrl=""; }
+      } else row[key]=e.target.type==="checkbox"?!!e.target.checked:e.target.value;
+      var label=rowEl.querySelector(".hc-when"); if(label) label.textContent=heroWhenLabel(row);
+      var flag=rowEl.querySelector("b"); if(flag && key==="title") flag.textContent=row.title||"پست مستقل";
+      setDirty(true);
+    }
     function fillConfig(){
       var c=state.config||{};
       $("#orderApprovalMode").value=c.orderApproval||"manual";
@@ -1756,6 +1919,7 @@
       });
       if($("#cfg_hero_interval")) $("#cfg_hero_interval").value=(c.heroSliderIntervalSec!=null?c.heroSliderIntervalSec:5);
       renderHeroSlidesAdmin(c.heroSlides||[]);
+      renderHeroCards(Array.isArray(c.heroCards) ? c.heroCards : (c.heroVideos||[]).map(function(row){ return { type:"product", id:row.id, productCode:row.productCode, videoUrl:row.videoUrl, enabled:row.enabled===true, order:row.order }; }));
       var hb=c.hesabBanner||{};
       if($("#cfg_hsb_enabled")) $("#cfg_hsb_enabled").value=hb.enabled?"yes":"no";
       if($("#cfg_hsb_link")) $("#cfg_hsb_link").value=hb.link||"";
@@ -1769,7 +1933,10 @@
       var hp=$("#heroPreview"); if(hp){ if(c.heroImage){ hp.src=c.heroImage; hp.style.display="inline-block"; } else { hp.removeAttribute("src"); hp.style.display="none"; } }
     }
     function collectConfig(){
-      var _cats=(state.config&&Array.isArray(state.config.categories))?state.config.categories:[];
+      var prevConfig=state.config||{};
+      var heroReady=!!(document.getElementById("heroVideoList") && document.getElementById("heroVideoList").dataset.ready==="1");
+      var heroPacked=heroReady ? packHeroCards(window._heroCards||[]) : null;
+      var _cats=(prevConfig&&Array.isArray(prevConfig.categories))?prevConfig.categories:[];
       var _sc=(state.config&&Array.isArray(state.config.showcase))?state.config.showcase:[];
       var _icons=(state.config&&Array.isArray(state.config.icons))?state.config.icons:[];
       state.config={
@@ -1801,14 +1968,14 @@
           qrUrl:(state.config&&state.config.hesab&&state.config.hesab.qrUrl)||"",
           showOnSite:true
         },
-        sectionCats:{
+        sectionCats: ($("#scats_kicker") || $("#scats_title") || $("#scats_lead")) ? {
           kicker:($("#scats_kicker")&&$("#scats_kicker").value.trim())||"",
           kicker_en:($("#scats_kicker_en")&&$("#scats_kicker_en").value.trim())||"",
           title:($("#scats_title")&&$("#scats_title").value.trim())||"",
           title_en:($("#scats_title_en")&&$("#scats_title_en").value.trim())||"",
           lead:($("#scats_lead")&&$("#scats_lead").value.trim())||"",
           lead_en:($("#scats_lead_en")&&$("#scats_lead_en").value.trim())||""
-        },
+        } : (prevConfig.sectionCats || undefined),
         delivery:{enabled:$("#cfg_delivery_enabled").value!=="no",perKm:Number($("#cfg_delivery_perkm").value)||0,freeKm:Number($("#cfg_delivery_freekm").value)||0,urgentFee:Number($("#cfg_delivery_urgent").value)||0,minOrder:Number($("#cfg_delivery_min").value)||0,maxKm:Number($("#cfg_delivery_max").value)||0,outOfRangePolicy:($("#cfg_delivery_oor")&&$("#cfg_delivery_oor").value)||"warn",proofPhotoRequired:($("#cfg_delivery_proof")&&$("#cfg_delivery_proof").value==="yes"),gpsRequired:false,timeslots:(state.config&&state.config.delivery&&state.config.delivery.timeslots)||[]},
         paymentMethods:{
           whatsapp:{enabled:$("#pay_whatsapp")?$("#pay_whatsapp").value!=="no":true},
@@ -1817,6 +1984,8 @@
           card:{enabled:$("#pay_card")?$("#pay_card").value!=="no":true}
         },
         heroSlides: collectHeroSlides(),
+        heroCards: heroPacked || (Array.isArray(prevConfig.heroCards) ? prevConfig.heroCards : undefined),
+        heroVideos: heroPacked ? heroPacked.filter(function(row){ return row.type==="product" && row.videoUrl; }).map(function(row, i){ return { id:row.id, productCode:row.productCode, videoUrl:row.videoUrl, enabled:row.enabled===true, order:i }; }) : (prevConfig.heroVideos||[]),
         heroSliderIntervalSec: Number($("#cfg_hero_interval")&&$("#cfg_hero_interval").value)||5,
         hesabBanner:{
           enabled: $("#cfg_hsb_enabled")&&$("#cfg_hsb_enabled").value==="yes",
@@ -1833,10 +2002,8 @@
       };
       if(window.MAHOApi) MAHOApi.setConfiguredUrl(state.config.apiUrl||"");
     }
-    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","officialWhatsAppNumber","instagram","telegram","whatsappLink","facebook","tiktok",
-      "hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en",
-      "hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en",
-      "hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
+    var CONTENT_IDS=["brandSub","brandSub_en","heroTitle","heroTitle_en","heroLead","heroLead_en","footerDesc","footerDesc_en","footerAddr","footerAddr_en","footerPhone","footerEmail","officialWhatsAppNumber","instagram","telegram","whatsappLink","facebook","tiktok"];
+    var LEGACY_HERO_KEYS=["heroScale","hc1_tag","hc1_tag_en","hc1_title","hc1_title_en","hc1_sub","hc1_sub_en","hc2_tag","hc2_tag_en","hc2_title","hc2_title_en","hc2_sub","hc2_sub_en","hc3_tag","hc3_tag_en","hc3_title","hc3_title_en","hc3_sub","hc3_sub_en"];
     function faPct(v){ return String(Math.round((parseFloat(v)||1)*100)).replace(/[0-9]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹"[d]})+"٪"; }
     function fillContent(){
       var c=(state.config&&state.config.content)||{}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.value=c[k]||""; });
@@ -1847,17 +2014,21 @@
       var box=$("#statsRows");
       if(box){
         box.innerHTML=[0,1,2,3].map(function(i){ var s=stats[i]||{}; return '<div class="grid2" style="border-bottom:1px dashed var(--line);padding-bottom:6px;margin-bottom:6px">'+
-          '<div class="field"><label>عدد '+(i+1)+'</label><input id="stat'+i+'_value" type="number" dir="ltr" value="'+esc(s.value)+'"></div>'+
+          '<div class="field"><label>مقدار '+(i+1)+' (عدد یا متن مثل 24/7)</label><input id="stat'+i+'_value" type="text" dir="ltr" value="'+esc(s.value)+'"></div>'+
+          '<label><input id="stat'+i+'_enabled" type="checkbox"'+(s.enabled===false?"":" checked")+'> نمایش</label>'+
           '<div class="field"><label>برچسب (فارسی)</label><input id="stat'+i+'_label" value="'+esc(s.label)+'"></div>'+
           '<div class="field"><label>برچسب (English)</label><input id="stat'+i+'_label_en" dir="ltr" value="'+esc(s.label_en)+'"></div></div>'; }).join("");
-        [0,1,2,3].forEach(function(i){ ["value","label","label_en"].forEach(function(k){ var el=$("#stat"+i+"_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); }); });
+        [0,1,2,3].forEach(function(i){ ["value","label","label_en"].forEach(function(k){ var el=$("#stat"+i+"_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); }); var en=$("#stat"+i+"_enabled"); if(en) en.addEventListener("change",function(){ setDirty(true); }); });
       }
     }
     function collectContent(){
-      var c={}; CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} });
+      var prev=(state.config&&state.config.content)||{};
+      var c={};
+      LEGACY_HERO_KEYS.forEach(function(k){ if(prev[k]!=null && String(prev[k]).trim()) c[k]=prev[k]; });
+      CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el){var v=el.value.trim(); if(v) c[k]=v;} });
       var hs=$("#c_heroScale"); if(hs && hs.value && parseFloat(hs.value)!==1) c.heroScale=hs.value;
       var stats=[];
-      [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:(val!==""?Number(val):""),label:lab,label_en:laben}; else stats[i]=null; });
+      [0,1,2,3].forEach(function(i){ var v=$("#stat"+i+"_value"),l=$("#stat"+i+"_label"),le=$("#stat"+i+"_label_en"),en=$("#stat"+i+"_enabled"); var val=v?v.value.trim():"",lab=l?l.value.trim():"",laben=le?le.value.trim():""; if(val||lab||laben) stats[i]={value:val,label:lab,label_en:laben,enabled:!(en&&en.checked===false)}; else stats[i]=null; });
       if(stats.some(function(x){return x;})) c.stats=stats;
       if(!state.config) state.config={}; state.config.content=c;
       if(c.officialWhatsAppNumber) state.config.officialWhatsAppNumber=c.officialWhatsAppNumber;
@@ -2299,6 +2470,13 @@
           +'</div>'
           +'<label class="toggle-en"><input type="checkbox" class="c-enabled"'+(en?" checked":"")+'> فعال</label>'
           +'<button class="btn btn-danger btn-sm c-del" type="button" title="حذف کتگوری">حذف</button>'
+          +'<div class="field" style="width:100%;margin:0"><label>تصویر کتگوری (JPEG، PNG یا WebP)</label>'
+          +'<input type="hidden" class="c-image" value="'+esc(c.image||"")+'">'
+          +(c.image?'<img class="c-image-preview" alt="" src="'+esc(c.image)+'" style="width:120px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:6px 0">':'')
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+          +'<input class="c-image-file" type="file" accept="image/jpeg,image/png,image/webp">'
+          +'<button type="button" class="btn btn-outline btn-sm c-image-remove"'+(c.image?"":" disabled")+'>حذف تصویر</button>'
+          +'<span class="c-image-status note" style="margin:0"></span></div></div>'
           +'<div class="note" style="width:100%;margin:0">شناسه ثابت: <code dir="ltr">'+esc(c.key||"")+'</code></div>'
           +'</div>';
       }).join("");
@@ -2312,7 +2490,10 @@
         var iconv=(row.querySelector(".c-icon")||{}).value||"gift";
         var key=row.getAttribute("data-key")||slugKey(name||name_en);
         var enEl=row.querySelector(".c-enabled");
-        arr.push({key:key,name:name,name_en:name_en,icon:iconv,order:i,enabled:enEl?!!enEl.checked:true});
+        var image=((row.querySelector(".c-image")||{}).value||"").trim();
+        if(image.indexOf("/uploads/")!==0 || /\.svg(\?|$)/i.test(image) || image.indexOf("..")>=0) image="";
+        var prev=(state.config.categories||[]).filter(function(item){return item&&item.key===key;})[0]||{};
+        arr.push(Object.assign({}, prev, {key:key,name:name,name_en:name_en,icon:iconv,order:i,enabled:enEl?!!enEl.checked:true,image:image}));
       });
       state.config.categories=arr;
     }
@@ -2633,6 +2814,13 @@
       $("#f_price").value=p.price!=null?p.price:""; $("#f_old").value=p.old!=null?p.old:""; $("#f_discount").value=(p.discount!=null&&p.discount!==0)?p.discount:"";
       $("#f_badge").value=p.badge||""; $("#f_badgeText").value=p.badgeText||"";
       modalImages=(p.images&&p.images.slice())||(p.image?[p.image]:[]); $("#f_image").value=""; updateImgPreview();
+      modalVideos=(Array.isArray(p.videos)?p.videos:[]).map(function(row, i){
+        return { id: row.id||("pv"+i), videoUrl: row.videoUrl||"", poster: row.poster||"", primary: row.primary===true, duration: row.duration||null, order: i };
+      }).filter(function(row){ return /^\/uploads\/[a-f0-9]{32}\.(mp4|webm)$/i.test(row.videoUrl); });
+      if(modalVideos.length && !modalVideos.some(function(row){ return row.primary; })) modalVideos[0].primary=true;
+      if($("#f_video")) $("#f_video").value="";
+      if($("#f_videoMsg")) $("#f_videoMsg").textContent="";
+      renderProductVideos();
       var hasColors = !!(p.hasColors === true || (Array.isArray(p.colors) && p.colors.length));
       var hasSizes = !!(p.hasSizes === true || (Array.isArray(p.sizes) && p.sizes.length));
       $("#f_hasColors").checked = hasColors;
@@ -2659,6 +2847,162 @@
         updateImgPreview(); setDirty(true); toast("آپلود شد ✓");
         e.target.value="";
       }).catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); e.target.value=""; });
+    });
+    function videoErrorText(code){
+      var map={
+        video_too_long:"ویدیو باید ۳۰ ثانیه یا کوتاه‌تر باشد.",
+        duration_unreadable:"مدت ویدیو از فایل خوانده نشد. آن را به MP4 معمولی صادر کنید.",
+        mov_unsupported:"این MOV در مرورگر قابل پخش نیست و سرور آن را تبدیل نمی‌کند. لطفاً MP4 بفرستید.",
+        invalid_video_signature:"امضای فایل ویدیو معتبر نیست.",
+        "only mp4, webm, or mov allowed":"فقط MP4، WebM یا MOV پذیرفته می‌شود.",
+        "file too large":"حجم ویدیو باید کمتر از ۸ مگابایت باشد."
+      };
+      return map[code] || ("آپلود ویدیو ناموفق بود"+(code?(": "+code):"."));
+    }
+    function setVideoMsg(text, ok){
+      var el=$("#f_videoMsg"); if(!el) return;
+      el.style.color=ok?"var(--green)":"var(--red)";
+      el.textContent=text||"";
+    }
+    function showVideoProgress(pct){
+      var box=$("#f_videoProgress"); if(!box) return;
+      box.hidden=false;
+      if($("#f_videoProgressBar")) $("#f_videoProgressBar").value=pct||0;
+      if($("#f_videoProgressText")) $("#f_videoProgressText").textContent=(pct||0)+"%";
+    }
+    function hideVideoProgress(){ var box=$("#f_videoProgress"); if(box) box.hidden=true; }
+    function readFileDuration(file){
+      return new Promise(function(resolve, reject){
+        var url=URL.createObjectURL(file);
+        var video=document.createElement("video");
+        video.preload="metadata"; video.muted=true; video.playsInline=true;
+        var done=false;
+        function finish(err, value){ if(done) return; done=true; URL.revokeObjectURL(url); if(err) reject(err); else resolve(value); }
+        video.onloadedmetadata=function(){
+          if(!isFinite(video.duration) || video.duration<=0) finish(new Error("duration_unreadable"));
+          else finish(null, video.duration);
+        };
+        video.onerror=function(){ finish(new Error("mov_unsupported")); };
+        video.src=url;
+      });
+    }
+    function acceptShortVideo(file){
+      var type=String(file.type||"").toLowerCase();
+      var name=String(file.name||"").toLowerCase();
+      if(type!=="video/mp4" && type!=="video/webm" && type!=="video/quicktime" && !/\.(mp4|webm|mov)$/.test(name)) return Promise.reject(new Error("only mp4, webm, or mov allowed"));
+      if(file.size>8*1024*1024) return Promise.reject(new Error("file too large"));
+      return readFileDuration(file).then(function(duration){
+        if(duration>30.05) throw new Error("video_too_long");
+        return duration;
+      });
+    }
+    function renderProductVideos(){
+      var box=$("#f_videoList"); if(!box) return;
+      box.innerHTML=modalVideos.map(function(row, i){
+        var urls=modalImages.slice();
+        if(row.poster && urls.indexOf(row.poster)<0) urls.unshift(row.poster);
+        var options='<option value="">بدون پوستر</option>'+urls.map(function(src){
+          return '<option value="'+esc(src)+'"'+(src===row.poster?" selected":"")+'>'+esc(String(src).split("/").pop())+"</option>";
+        }).join("");
+        return '<div class="pv-row" data-i="'+i+'"><video muted playsinline controls preload="metadata" src="'+esc(row.videoUrl)+'"'+(row.poster?' poster="'+esc(row.poster)+'"':"")+'></video><div class="pv-meta">'+
+          '<label><input type="radio" name="pvPrimary" class="pv-primary"'+(row.primary?" checked":"")+'> ویدیوی اصلی</label>'+
+          '<div class="note">'+(row.duration?("مدت: "+row.duration+" ثانیه"):"مدت ثبت نشده")+'</div>'+
+          '<label>پوستر <select class="pv-poster">'+options+'</select></label>'+
+          '<div class="pv-actions"><button type="button" class="btn btn-outline btn-sm pv-poster-make">ساخت پوستر از ویدیو</button><button type="button" class="btn btn-outline btn-sm pv-up">بالا</button><button type="button" class="btn btn-outline btn-sm pv-down">پایین</button><button type="button" class="btn btn-outline btn-sm pv-del">حذف</button></div>'+
+          '<label class="note">جایگزینی <input class="pv-replace" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"></label></div></div>';
+      }).join("") || '<p class="note">هنوز ویدیویی برای این محصول ثبت نشده است.</p>';
+    }
+    function captureVideoPoster(url){
+      return new Promise(function(resolve, reject){
+        var video=document.createElement("video");
+        video.muted=true; video.playsInline=true; video.preload="auto";
+        video.onerror=function(){ reject(new Error("poster")); };
+        video.onloadeddata=function(){
+          var draw=function(){
+            try{
+              var canvas=document.createElement("canvas");
+              var w=video.videoWidth||360, h=video.videoHeight||480;
+              var scale=Math.min(1, 480/Math.max(w, h));
+              canvas.width=Math.max(1, Math.round(w*scale));
+              canvas.height=Math.max(1, Math.round(h*scale));
+              canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(function(blob){
+                if(!blob) reject(new Error("poster"));
+                else resolve(new File([blob], "poster.jpg", { type:"image/jpeg" }));
+              }, "image/jpeg", 0.86);
+            }catch(err){ reject(err); }
+          };
+          var target=Math.min(0.2, (video.duration||1)/2);
+          if(target<=0.05) draw();
+          else { video.onseeked=draw; try{ video.currentTime=target; }catch(err){ draw(); } }
+        };
+        video.src=url;
+      });
+    }
+    function storeProductVideo(file, index){
+      modalVideoBusy=true;
+      setVideoMsg("در حال بررسی ویدیو…", true);
+      showVideoProgress(0);
+      acceptShortVideo(file).then(function(duration){
+        setVideoMsg("در حال آپلود…", true);
+        uploadVideoFile(file, function(url, meta){
+          modalVideoBusy=false; hideVideoProgress();
+          if(!url){ setVideoMsg(videoErrorText(meta&&meta.error), false); return; }
+          var row={ id:(index>=0 && modalVideos[index] && modalVideos[index].id) || ("pv"+Date.now()), videoUrl:url, poster:index>=0 && modalVideos[index] ? (modalVideos[index].poster||"") : "", primary:index>=0 ? !!modalVideos[index].primary : modalVideos.length===0, duration:(meta&&meta.duration)||Math.round(duration*100)/100, order:index>=0?index:modalVideos.length };
+          if(index>=0) modalVideos[index]=row; else modalVideos.push(row);
+          if(!modalVideos.some(function(item){ return item.primary; }) && modalVideos[0]) modalVideos[0].primary=true;
+          renderProductVideos(); setDirty(true);
+          setVideoMsg(index>=0?"ویدیو جایگزین شد. ذخیره محصول را بزنید.":"ویدیو آمادهٔ ذخیره است. ذخیره محصول را بزنید.", true);
+        }, showVideoProgress);
+      }).catch(function(err){
+        modalVideoBusy=false; hideVideoProgress();
+        setVideoMsg(videoErrorText(err&&err.message), false);
+      });
+    }
+    if($("#f_video")) $("#f_video").addEventListener("change", function(e){
+      var file=e.target.files&&e.target.files[0]; e.target.value="";
+      if(!file) return;
+      if(modalVideos.length>=8){ setVideoMsg("حداکثر ۸ ویدیو برای هر محصول.", false); return; }
+      storeProductVideo(file, -1);
+    });
+    if($("#f_videoList")) $("#f_videoList").addEventListener("click", function(e){
+      var rowEl=e.target.closest(".pv-row"); if(!rowEl) return;
+      var i=parseInt(rowEl.getAttribute("data-i"), 10);
+      if(e.target.classList.contains("pv-del")){
+        if(!confirm("این ویدیو از محصول حذف شود؟")) return;
+        modalVideos.splice(i, 1);
+        if(modalVideos.length && !modalVideos.some(function(row){ return row.primary; })) modalVideos[0].primary=true;
+        renderProductVideos(); setDirty(true); setVideoMsg("ویدیو از فهرست برداشته شد. ذخیره محصول را بزنید.", true); return;
+      }
+      if(e.target.classList.contains("pv-up") && i>0){ var up=modalVideos[i-1]; modalVideos[i-1]=modalVideos[i]; modalVideos[i]=up; renderProductVideos(); setDirty(true); return; }
+      if(e.target.classList.contains("pv-down") && i<modalVideos.length-1){ var down=modalVideos[i+1]; modalVideos[i+1]=modalVideos[i]; modalVideos[i]=down; renderProductVideos(); setDirty(true); return; }
+      if(e.target.classList.contains("pv-poster-make")){
+        var src=modalVideos[i] && modalVideos[i].videoUrl; if(!src) return;
+        setVideoMsg("در حال ساخت پوستر…", true);
+        captureVideoPoster(src).then(function(file){
+          uploadImageFile(file, function(url){
+            if(!url){ setVideoMsg("ساخت پوستر ناموفق بود.", false); return; }
+            modalVideos[i].poster=url; renderProductVideos(); setDirty(true);
+            setVideoMsg("پوستر آماده است. ذخیره محصول را بزنید.", true);
+          });
+        }).catch(function(){ setVideoMsg("از این ویدیو پوستر ساخته نشد. یک عکس را به‌عنوان پوستر انتخاب کنید.", false); });
+      }
+    });
+    if($("#f_videoList")) $("#f_videoList").addEventListener("change", function(e){
+      var rowEl=e.target.closest(".pv-row"); if(!rowEl) return;
+      var i=parseInt(rowEl.getAttribute("data-i"), 10);
+      if(e.target.classList.contains("pv-primary")){
+        modalVideos.forEach(function(row, n){ row.primary=n===i; });
+        setDirty(true); return;
+      }
+      if(e.target.classList.contains("pv-poster")){
+        if(modalVideos[i]) modalVideos[i].poster=e.target.value||"";
+        setDirty(true); return;
+      }
+      if(e.target.classList.contains("pv-replace")){
+        var file=e.target.files&&e.target.files[0]; e.target.value="";
+        if(file) storeProductVideo(file, i);
+      }
     });
     $("#f_badge").onchange=toggleBadgeText;
     function onOptionToggle(which){
@@ -2761,6 +3105,10 @@
       if(badge==="new"){ p.badge="new"; p.badgeText="جدید"; p.badgeText_en="New"; }
       else if(badge==="sale"){ p.badge="sale"; p.badgeText=$("#f_badgeText").value.trim()||"تخفیف"; p.badgeText_en=(toEn(p.badgeText).replace("٪","%").replace("تخفیف","off")).trim()||"Sale"; }
       if(modalImages.length) p.images=modalImages.slice();
+      if(modalVideoBusy){ $("#modalMsg").textContent="صبر کنید تا آپلود ویدیو تمام شود."; return; }
+      p.videos=modalVideos.map(function(row, i){
+        return { id: row.id, videoUrl: row.videoUrl, poster: row.poster||"", primary: !!row.primary, duration: row.duration||null, order: i };
+      });
       if(editIndex>=0){
         /* preserve unrelated fields (cost, lowStock, sku, ...) */
         var prev = state.products[editIndex] || {};
@@ -2788,6 +3136,9 @@
       $("#st_map").value=s.map||s.mapUrl||"";
       $("#st_lat").value=(s.lat!=null?s.lat:"");
       $("#st_lng").value=(s.lng!=null?s.lng:"");
+      $("#st_photos").value=(s.photos||[]).join("\n");
+      $("#st_panoramas").value=(s.panoramas||[]).join("\n");
+      $("#st_videos").value=(s.videos||[]).join("\n");
       $("#storeOverlay").classList.add("show");
       updateStoreCoordNote();
     }
@@ -2853,17 +3204,42 @@
         $("#storeMsg").textContent="لینک Google Maps باید با http(s) شروع شود.";
         return;
       }
+      if(storeUploadBusy>0){ $("#storeMsg").style.color="#b26a00"; $("#storeMsg").textContent="آپلود هنوز تمام نشده است. پس از پایان آپلود دوباره «ذخیره فروشگاه» را بزنید."; return; }
+      var photos=splitStoreMedia("st_photos","image");
+      var pans=splitStoreMedia("st_panoramas","image");
+      var vids=splitStoreMedia("st_videos","video");
+      var rejected=photos.bad.concat(pans.bad, vids.bad);
+      if(rejected.length){
+        $("#storeMsg").style.color="#b26a00";
+        $("#storeMsg").textContent="این نشانی‌ها ذخیره نشدند. عکس باید JPEG/PNG/WebP/GIF و ویدیو باید MP4 یا WebM باشد: "+rejected.join("، ");
+        return;
+      }
       var prev=storeEditIndex>=0 ? (state.stores[storeEditIndex]||{}) : {};
       var s=Object.assign({}, prev, {
         name:name, name_en:$("#st_name_en").value.trim(),
         area:$("#st_area").value.trim(), area_en:$("#st_area_en").value.trim(),
         hours:$("#st_hours").value.trim(), hours_en:$("#st_hours_en").value.trim(),
         phone:$("#st_phone").value.trim(), phone_en:$("#st_phone_en").value.trim(),
-        map:mapVal
+        map:mapVal,
+        photos: photos.ok,
+        panoramas: pans.ok,
+        videos: vids.ok
       });
       if(latRaw!==""&&lngRaw!==""){ s.lat=String(parseFloat(toEn(latRaw))); s.lng=String(parseFloat(toEn(lngRaw))); }
       if(storeEditIndex>=0) state.stores[storeEditIndex]=s; else state.stores.push(s);
-      renderStoreTable(); setDirty(true); closeStore();
+      $("#storeMsg").style.color="#b9b3a6";
+      $("#storeMsg").textContent="در حال ذخیره روی سرور…";
+      $("#storeOkBtn").disabled=true;
+      persistCatalog(function(){
+        $("#storeOkBtn").disabled=false;
+        renderStoreTable();
+        toast("فروشگاه روی سرور ذخیره شد ✓");
+        closeStore();
+      }, function(err){
+        $("#storeOkBtn").disabled=false;
+        $("#storeMsg").style.color="#ff9d9d";
+        $("#storeMsg").textContent="ذخیره نشد: "+((err&&err.message)||err);
+      });
     };
 
     /* ---------- config field listeners + logo ---------- */
@@ -2891,6 +3267,65 @@
       MAHOApi.adminUpload([file]).then(function(res){ done((res.urls&&res.urls[0])||res.url||null); })
         .catch(function(err){ alert("آپلود ناموفق: "+((err&&err.message)||err)); done(null); });
     }
+    function uploadVideoFile(file, done, onProgress){
+      if(!window.MAHOApi || !MAHOApi.getToken("admin")){ alert("ابتدا وارد سرور شوید."); done(null, { error:"admin auth required" }); return; }
+      var xhr=new XMLHttpRequest();
+      xhr.open("POST", "/api/admin/upload-video");
+      xhr.setRequestHeader("Authorization", "Bearer "+MAHOApi.getToken("admin"));
+      xhr.upload.onprogress=function(ev){
+        if(onProgress && ev.lengthComputable) onProgress(Math.round(ev.loaded/ev.total*100));
+      };
+      xhr.onload=function(){
+        var data={};
+        try{ data=JSON.parse(xhr.responseText||"{}"); }catch(e){}
+        if(xhr.status>=200 && xhr.status<300 && data.url){ done(data.url, data); return; }
+        var code=(data&&data.error)||"upload_validation_failed";
+        if(xhr.status===413) code="file too large";
+        alert(videoErrorText(code));
+        done(null, data||{ error:code });
+      };
+      xhr.onerror=function(){ alert("آپلود ویدیو ناموفق بود."); done(null, { error:"network" }); };
+      var fd=new FormData(); fd.append("file", file);
+      xhr.send(fd);
+    }
+    function bindStoreUpload(inputId, textId, video){
+      var input=$(inputId); if(!input) return;
+      input.addEventListener("change", function(e){
+        var f=e.target.files&&e.target.files[0]; if(!f) return;
+        var limit=video?8*1024*1024:15*1024*1024;
+        if(/hei[cf]/i.test(f.type||"") || /\.hei[cf]$/i.test(f.name||"")){
+          $("#storeMsg").style.color="#ff9d9d";
+          $("#storeMsg").textContent="فایل HEIC پذیرفته نمی‌شود. آن را به JPEG یا PNG تبدیل کنید.";
+          e.target.value=""; return;
+        }
+        if(f.size>limit){
+          $("#storeMsg").style.color="#ff9d9d";
+          $("#storeMsg").textContent=video?"حجم ویدیو باید کمتر از ۸ مگابایت باشد.":"حجم تصویر باید کمتر از ۱۵ مگابایت باشد.";
+          e.target.value=""; return;
+        }
+        storeUploadBusy++;
+        $("#storeMsg").style.color="#b9b3a6";
+        $("#storeMsg").textContent="در حال آپلود… ذخیره را تا پایان آپلود نزنید.";
+        var finish=function(url){
+          storeUploadBusy=Math.max(0, storeUploadBusy-1);
+          e.target.value="";
+          if(!url || String(url).indexOf("/uploads/")!==0){
+            $("#storeMsg").style.color="#ff9d9d";
+            $("#storeMsg").textContent="آپلود ناموفق بود. فایل باید JPEG، PNG، WebP یا GIF معتبر باشد.";
+            return;
+          }
+          var box=$(textId);
+          box.value=(box.value?box.value.replace(/\s+$/,"")+"\n":"")+url;
+          $("#storeMsg").style.color="#2e7d32";
+          $("#storeMsg").textContent="فایل آپلود شد. برای ثبت دائمی «ذخیره فروشگاه» را بزنید.";
+          setDirty(true);
+        };
+        if(video) uploadVideoFile(f, finish); else uploadImageFile(f, finish);
+      });
+    }
+    bindStoreUpload("#st_photos_file","#st_photos");
+    bindStoreUpload("#st_panoramas_file","#st_panoramas");
+    bindStoreUpload("#st_videos_file","#st_videos", true);
     $("#cfg_logo").addEventListener("change",function(e){
       var f=e.target.files[0]; if(!f)return;
       toast("آپلود لوگو…");
@@ -2929,6 +3364,15 @@
         cats.forEach(function(c,idx){c.order=idx;});
         renderCats(); fillCatSelect(); setDirty(true); return;
       }
+      var removeImage=e.target.closest(".c-image-remove");
+      if(removeImage){
+        var imageRow=removeImage.closest(".cat-row"); if(!imageRow) return;
+        var current=((imageRow.querySelector(".c-image")||{}).value||"");
+        if(!current) return;
+        if(!confirm("تصویر این کتگوری حذف شود؟")) return;
+        imageRow.querySelector(".c-image").value="";
+        collectCats(); renderCats(); fillCatSelect(); setDirty(true); return;
+      }
       var del=e.target.closest(".c-del"); if(!del) return;
       var row=del.closest(".cat-row"); if(!row) return;
       collectCats();
@@ -2940,7 +3384,28 @@
       cats.splice(i,1); cats.forEach(function(x,idx){x.order=idx;}); renderCats(); fillCatSelect(); setDirty(true);
     });
     $("#catRows").addEventListener("input",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
-    $("#catRows").addEventListener("change",function(){ collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true); });
+    $("#catRows").addEventListener("change",function(e){
+      var fileInput=e.target.closest&&e.target.closest(".c-image-file");
+      if(fileInput){
+        var file=fileInput.files&&fileInput.files[0];
+        var row=fileInput.closest(".cat-row");
+        var status=row&&row.querySelector(".c-image-status");
+        if(!file||!row) return;
+        if(!/^image\/(jpeg|png|webp)$/.test(file.type)){ if(status) status.textContent="فقط JPEG، PNG یا WebP پذیرفته می‌شود."; fileInput.value=""; return; }
+        if(file.size>5*1024*1024){ if(status) status.textContent="حجم تصویر باید کمتر از ۵ مگابایت باشد."; fileInput.value=""; return; }
+        if(status) status.textContent="در حال آپلود…";
+        fileInput.disabled=true;
+        uploadImageFile(file, function(url){
+          fileInput.disabled=false;
+          fileInput.value="";
+          if(!url || String(url).indexOf("/uploads/")!==0){ if(status) status.textContent="آپلود تصویر ناموفق بود."; return; }
+          row.querySelector(".c-image").value=url;
+          collectCats(); renderCats(); setDirty(true);
+        });
+        return;
+      }
+      collectCats(); fillCatSelect(); if($("#scRows")){ collectShowcase(); renderShowcaseAdmin(); } setDirty(true);
+    });
     $("#saveBtnCats").onclick=function(){ collectCats(); saveAll(); };
 
     /* ---------- icons ---------- */
@@ -3022,27 +3487,63 @@
     $("#saveBtnShowcase").onclick=function(){ collectShowcase(); saveAll(); };
 
     /* ---------- save / export / import / reset ---------- */
-    function saveAll(){
-      if(document.querySelector("#catRows .cat-row")) collectCats();
-      if(document.querySelector("#iconRows .icon-admin-row")) collectIcons();
-      if(document.querySelector("#scRows .sc-row")) collectShowcase();
-      if(document.querySelector("#tsRows .ts-row")) collectTs();
-      collectConfig(); collectContent();
+    function splitStoreMedia(id, kind){
+      var lines=($(id).value||"").split(/\n+/).map(function(line){return line.trim();}).filter(Boolean);
+      var ok=[], bad=[];
+      lines.forEach(function(url){
+        var local=url.indexOf("/uploads/")===0 && url.indexOf("..")<0;
+        var remote=/^https:\/\//i.test(url);
+        var image=/\.(jpe?g|png|webp|gif)(\?|$)/i.test(url);
+        var video=/\.(mp4|webm)(\?|$)/i.test(url);
+        var pass=kind==="video" ? ((local||remote)&&video) : (local||(remote&&image));
+        if(pass) ok.push(url); else bad.push(url);
+      });
+      return {ok:ok.slice(0,12), bad:bad};
+    }
+    var storeUploadBusy=0;
+    function persistCatalog(onOk, onErr){
       var pm=state.config.paymentMethods||{};
       var anyPay=["whatsapp","hesab","bank","card"].some(function(k){ return pm[k] && pm[k].enabled!==false; });
-      if(!anyPay){ alert("حداقل یک روش پرداخت باید فعال باشد."); return; }
+      if(!anyPay){
+        var err=new Error("حداقل یک روش پرداخت باید فعال باشد.");
+        if(onErr) onErr(err); else alert(err.message);
+        return;
+      }
       state=scrubLocalImages(state);
       requireBackend(function(){
         MAHOApi.adminSaveCatalog(state).then(function(){
           try{ localStorage.setItem(DATA_KEY, JSON.stringify(state)); }catch(e){}
           setDirty(false);
           setApiNote("روی سرور ذخیره شد ✓", true);
-          toast("روی سرور ذخیره شد ✓");
+          var biz=$("#bizDescMsg");
+          if(biz && document.querySelector('.admin-panel[data-panel="settings"].active')) biz.textContent="توضیحات فعالیت ذخیره شد.";
+          if(onOk) onOk(); else toast("روی سرور ذخیره شد ✓");
         }).catch(function(err){
           setApiNote("ذخیره ناموفق: "+((err&&err.message)||err), false);
-          alert("ذخیره روی سرور ناموفق بود: "+((err&&err.message)||err));
+          if(onErr) onErr(err); else alert("ذخیره روی سرور ناموفق بود: "+((err&&err.message)||err));
         });
       });
+    }
+    function businessDescError(){
+      var fa=($("#c_brandSub")&&$("#c_brandSub").value.trim())||"";
+      var en=($("#c_brandSub_en")&&$("#c_brandSub_en").value.trim())||"";
+      var msg=$("#bizDescMsg");
+      if(fa.length>120||en.length>120){ if(msg) msg.textContent="توضیح فعالیت حداکثر ۱۲۰ حرف است."; return "توضیح فعالیت حداکثر ۱۲۰ حرف است."; }
+      if(/[<>]/.test(fa+en)){ if(msg) msg.textContent="در توضیح فعالیت از نویسه‌های < و > استفاده نکنید."; return "در توضیح فعالیت از نویسه‌های < و > استفاده نکنید."; }
+      if(msg) msg.textContent="";
+      return "";
+    }
+    function saveAll(){
+      var bizErr=businessDescError();
+      if(bizErr){ setApiNote(bizErr, false); alert(bizErr); return; }
+      var heroErr=document.getElementById("heroVideoList") && document.getElementById("heroVideoList").dataset.ready==="1" ? heroCardError(window._heroCards||[]) : "";
+      if(heroErr){ var heroMsg=$("#heroVideoMsg"); if(heroMsg) heroMsg.textContent=heroErr; alert(heroErr); return; }
+      if(document.querySelector("#catRows .cat-row")) collectCats();
+      if(document.querySelector("#iconRows .icon-admin-row")) collectIcons();
+      if(document.querySelector("#scRows .sc-row")) collectShowcase();
+      if(document.querySelector("#tsRows .ts-row")) collectTs();
+      collectConfig(); collectContent();
+      persistCatalog();
     }
     $("#saveBtn").onclick=saveAll; $("#saveBtnFloat").onclick=saveAll; $("#saveBtnSettings").onclick=saveAll; $("#saveBtnContent").onclick=saveAll;
     CONTENT_IDS.forEach(function(k){ var el=$("#c_"+k); if(el) el.addEventListener("input",function(){ setDirty(true); }); });
@@ -3248,6 +3749,106 @@
         window._heroSlides=collectHeroSlides();
         if(window._heroSlides[i]) window._heroSlides[i].url=url;
         renderHeroSlidesAdmin(window._heroSlides); setDirty(true); toast("اسلاید آپلود شد ✓");
+      });
+    });
+    if($("#heroCardAddProducts")) $("#heroCardAddProducts").addEventListener("click", function(){
+      window._heroPick={};
+      var box=$("#heroCardPicker"); if(box) box.hidden=false;
+      renderHeroPicker();
+    });
+    if($("#heroCardPickerClose")) $("#heroCardPickerClose").addEventListener("click", function(){
+      var box=$("#heroCardPicker"); if(box) box.hidden=true;
+    });
+    if($("#heroCardSearch")) $("#heroCardSearch").addEventListener("input", renderHeroPicker);
+    if($("#heroCardGrid")) $("#heroCardGrid").addEventListener("click", function(e){
+      var btn=e.target.closest("[data-pick-code]"); if(!btn || btn.disabled) return;
+      var code=btn.getAttribute("data-pick-code");
+      window._heroPick=window._heroPick||{};
+      window._heroPick[code]=!window._heroPick[code];
+      renderHeroPicker();
+    });
+    if($("#heroCardAddSelected")) $("#heroCardAddSelected").addEventListener("click", function(){
+      var rows=window._heroCards||[];
+      var added=0;
+      Object.keys(window._heroPick||{}).forEach(function(code){
+        if(!window._heroPick[code]) return;
+        if(rows.some(function(row){ return row.type==="product" && row.productCode===code; })) return;
+        if(rows.length>=24) return;
+        rows.push(blankHeroCard({ type:"product", productCode:code, enabled:true, order:rows.length }));
+        added++;
+      });
+      if(!added){ var msg=$("#heroVideoMsg"); if(msg) msg.textContent="محصول تازه‌ای انتخاب نشد."; return; }
+      renderHeroCards(rows);
+      window._heroPick={};
+      renderHeroPicker();
+      setDirty(true);
+      var note=$("#heroVideoMsg"); if(note) note.textContent="محصول‌ها به فهرست اضافه شدند. ذخیره کارت‌های هیرو را بزنید.";
+    });
+    if($("#heroCardAddPost")) $("#heroCardAddPost").addEventListener("click", function(){
+      var rows=window._heroCards||[];
+      if(rows.length>=24){ alert("حداکثر ۲۴ کارت می‌توانید داشته باشید."); return; }
+      rows.push(blankHeroCard({ type:"post", enabled:false, order:rows.length }));
+      renderHeroCards(rows); setDirty(true);
+      var msg=$("#heroVideoMsg"); if(msg) msg.textContent="پست مستقل اضافه شد. عنوان و عکس یا ویدیو را کامل کنید، سپس فعال و ذخیره کنید.";
+    });
+    if($("#heroVideoList")){
+      $("#heroVideoList").addEventListener("input", syncHeroField);
+      $("#heroVideoList").addEventListener("change", function(e){
+        syncHeroField(e);
+        var rowEl=e.target.closest&&e.target.closest(".hc-row"); if(!rowEl) return;
+        var i=parseInt(rowEl.getAttribute("data-i"),10);
+        var row=(window._heroCards||[])[i]; if(!row) return;
+        if(e.target.classList.contains("hc-image")){
+          var image=e.target.files&&e.target.files[0]; e.target.value="";
+          if(!image) return;
+          uploadImageFile(image, function(url){
+            if(!url) return;
+            row.imageUrl=url; renderHeroCards(window._heroCards); setDirty(true);
+            var msg=$("#heroVideoMsg"); if(msg) msg.textContent="عکس پست آماده است. ذخیره را بزنید.";
+          });
+        }
+        if(e.target.classList.contains("hc-video")){
+          var file=e.target.files&&e.target.files[0]; e.target.value="";
+          if(!file) return;
+          var msg=$("#heroVideoMsg"); if(msg) msg.textContent="در حال بررسی ویدیو…";
+          acceptShortVideo(file).then(function(){
+            if(msg) msg.textContent="در حال آپلود ویدیو…";
+            uploadVideoFile(file, function(url){
+              if(!url){ if(msg) msg.textContent="آپلود ویدیو ناموفق بود."; return; }
+              row.videoUrl=url; renderHeroCards(window._heroCards); setDirty(true);
+              if(msg) msg.textContent="ویدیوی پست آماده است. ذخیره را بزنید.";
+            });
+          }).catch(function(err){ if(msg) msg.textContent=videoErrorText(err&&err.message); });
+        }
+      });
+      $("#heroVideoList").addEventListener("click", function(e){
+        var rowEl=e.target.closest(".hc-row"); if(!rowEl) return;
+        var rows=window._heroCards||[];
+        var i=parseInt(rowEl.getAttribute("data-i"),10);
+        if(e.target.classList.contains("hc-del")){
+          if(!confirm("این کارت حذف شود؟")) return;
+          rows.splice(i, 1); renderHeroCards(rows); setDirty(true); return;
+        }
+        if(e.target.classList.contains("hc-up") && i>0){ var up=rows[i-1]; rows[i-1]=rows[i]; rows[i]=up; renderHeroCards(rows); setDirty(true); return; }
+        if(e.target.classList.contains("hc-down") && i<rows.length-1){ var down=rows[i+1]; rows[i+1]=rows[i]; rows[i]=down; renderHeroCards(rows); setDirty(true); }
+      });
+    }
+    if($("#heroVideoSave")) $("#heroVideoSave").addEventListener("click", function(){
+      var err=heroCardError(window._heroCards||[]);
+      var msg=$("#heroVideoMsg");
+      if(err){ if(msg) msg.textContent=err; return; }
+      if(!state.config) state.config={};
+      var packed=packHeroCards(window._heroCards||[]);
+      state.config.heroCards=packed;
+      state.config.heroVideos=packed.filter(function(row){ return row.type==="product" && row.videoUrl; }).map(function(row, i){ return { id:row.id, productCode:row.productCode, videoUrl:row.videoUrl, enabled:row.enabled===true, order:i }; });
+      var btn=$("#heroVideoSave"); btn.disabled=true;
+      persistCatalog(function(){
+        btn.disabled=false;
+        if(msg) msg.textContent="کارت‌های هیرو ذخیره شد.";
+        toast("کارت‌های هیرو ذخیره شد ✓");
+      }, function(saveErr){
+        btn.disabled=false;
+        if(msg) msg.textContent="ذخیره نشد: "+((saveErr&&saveErr.message)||saveErr||"");
       });
     });
     if($("#cfg_hsb_img")) $("#cfg_hsb_img").addEventListener("change",function(e){

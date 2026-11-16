@@ -357,9 +357,23 @@ async function main() {
     assert(pdfRes.status === 200 && pdfRes.raw.slice(0, 4).toString() === "%PDF", "public pdf");
     ok("policy draft, notify, and pdf");
 
+    const passkeysLib = require("../lib/upgrade/passkeys");
+    const { isoBase64URL } = require("@simplewebauthn/server/helpers");
+    const sampleId = "f998e81e-6f11-427c-994d-e5f926f45064";
+    const sampleHandle = isoBase64URL.fromBuffer(Buffer.from(sampleId, "utf8"));
+    assert(passkeysLib.decodeUserHandle(sampleHandle) === sampleId, "user handle decodes to the account id");
+    assert(passkeysLib.decodeUserHandle(isoBase64URL.fromBuffer(Buffer.from("other-user", "utf8"))) !== sampleId, "a different user handle does not match");
+    ok("passkey user handle decodes to the account id");
+
     const pass = await req("POST", "/api/auth/passkey/login", { body: { challengeId: "missing", credential: { id: "none" } } });
     assert(pass.status === 400 && !pass.data.token, "failed passkey does not create a session");
     ok("passkey failure creates no session");
+
+    const pkOpts = await req("POST", "/api/auth/passkey/login-options", { body: {} });
+    assert(pkOpts.status === 200 && pkOpts.data.options && pkOpts.data.options.rpId === "localhost", "an IP site URL is not used as the passkey RP ID");
+    const pkAgain = await req("POST", "/api/auth/passkey/login", { body: { challengeId: pkOpts.data.challengeId, credential: { id: "none" } } });
+    assert(pkAgain.status === 400 && !pkAgain.data.token, "a consumed challenge cannot be reused");
+    ok("passkey challenge uses a domain RP ID and is single use");
 
     const links = await req("PUT", "/api/admin/links", { token: admin, body: { subtitle: "ماه", subtitle_en: "MAHO", links: [
       { kind: "instagram", label: "اینستاگرام", label_en: "Instagram", url: "https://instagram.com/mahomarket", enabled: true },
