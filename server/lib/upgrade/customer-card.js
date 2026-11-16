@@ -246,9 +246,12 @@ function goldIcon(cx, cy, kind) {
   return `<circle cx="${cx}" cy="${cy}" r="16" fill="#c8a35f"/>${body}`;
 }
 
-async function renderCardSvg(user, siteUrl) {
+async function renderCardSvg(user, siteUrl, description) {
   const card = user.card;
   const url = verifyUrl(siteUrl, card.token);
+  const lines = description || {};
+  const tagFa = esc(String(lines.fa || "لباس و لوازم بانوان").slice(0, 120)).replace(/&/g, "&amp;");
+  const tagEn = esc(String(lines.en || "Women's Clothing & Accessories").slice(0, 120)).replace(/&/g, "&amp;");
   const qr = await QRCode.toBuffer(url, {
     type: "png",
     errorCorrectionLevel: "M",
@@ -278,8 +281,8 @@ async function renderCardSvg(user, siteUrl) {
   <line x1="330" y1="132" x2="470" y2="132" stroke="#c8a35f" stroke-width="1.4"/>
   <polygon points="494,126 500,132 494,138 488,132" fill="#c8a35f"/>
   <line x1="518" y1="132" x2="658" y2="132" stroke="#c8a35f" stroke-width="1.4"/>
-  <text x="494" y="164" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="18" fill="#2c261c">لباس و لوازم بانوان</text>
-  <text x="494" y="186" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="11" letter-spacing="1.1" fill="#6d6456">WOMEN'S CLOTHING &amp; ACCESSORIES</text>
+  <text x="494" y="164" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="18" fill="#2c261c">${tagFa}</text>
+  <text x="494" y="186" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="11" letter-spacing="1.1" fill="#6d6456">${tagEn}</text>
   <g font-family="Tahoma, sans-serif">
     ${goldIcon(236, 250, "person")}
     <text x="262" y="232" font-size="12" fill="#6d6456">نام / Name</text>
@@ -311,9 +314,9 @@ async function renderCardSvg(user, siteUrl) {
 </svg>`;
 }
 
-async function renderCardPng(user, siteUrl) {
+async function renderCardPng(user, siteUrl, description) {
   const { Resvg } = require("@resvg/resvg-js");
-  const svg = await renderCardSvg(user, siteUrl);
+  const svg = await renderCardSvg(user, siteUrl, description);
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: CARD_W },
     font: { defaultFontFamily: "Tahoma", sansSerifFamily: "Tahoma" },

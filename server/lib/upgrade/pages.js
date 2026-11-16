@@ -32,7 +32,7 @@ function linksPage(rows, qrDataUri, meta) {
     : "";
   const page = meta || {};
   const subFa = page.subtitle || "لباس و لوازم بانوان";
-  const subEn = page.subtitle_en || "Women's clothing & accessories";
+  const subEn = page.subtitle_en || "Women's Clothing & Accessories";
   return shell("لینک‌های ماهو مارکیت | MAHO MARKET",
     "<div class=\"card\" style=\"text-align:center\"><img src=\"/assets/brand/maho-logo.jpg\" alt=\"MAHO\" width=\"180\" height=\"180\" style=\"width:180px;height:auto\">" +
     "<h1>ماهو مارکیت</h1><p dir=\"ltr\" style=\"letter-spacing:1px;font-weight:800\">MAHO MARKET</p><p>" + esc(subFa) + "</p><p dir=\"ltr\">" + esc(subEn) + "</p>" +

@@ -94,7 +94,7 @@ function supportContactText(storePhone, lang) {
   return "سؤالی دارید؟ با ما از طریق support@mahomarket.com" + (phone ? " یا شماره تماس فروشگاه (" + phone + ")" : " یا شماره تماس فروشگاه") + " ارتباط بگیرید.";
 }
 
-function brandWrap({ title, preheader, bodyHtml, siteUrl, logoUrl, storePhone, lang }) {
+function brandWrap({ title, preheader, bodyHtml, siteUrl, logoUrl, storePhone, lang, businessFa, businessEn }) {
   const brand = "#c8a35f";
   const dark = "#141414";
   const isEn = lang === "en";
@@ -104,7 +104,10 @@ function brandWrap({ title, preheader, bodyHtml, siteUrl, logoUrl, storePhone, l
   const phoneLine = storePhone
     ? `<div>${isEn ? "Store phone" : "تماس فروشگاه"}: <span dir="ltr">${escapeHtml(storePhone)}</span></div>`
     : "";
-  const tagline = isEn ? "MAHO Market — Women's fashion & essentials" : "MAHO Market — لباس و لوازم بانوان";
+  const savedLine = isEn ? (businessEn || "") : (businessFa || "");
+  const tagline = savedLine
+    ? ("MAHO Market — " + escapeHtml(savedLine))
+    : (isEn ? "MAHO Market — Women's Clothing &amp; Accessories" : "MAHO Market — لباس و لوازم بانوان");
   const supportLbl = isEn ? "Support" : "پشتیبانی";
   return `<!DOCTYPE html>
 <html lang="${isEn ? "en" : "fa"}" dir="${isEn ? "ltr" : "rtl"}">
@@ -208,9 +211,16 @@ function orderTotalsBlock(order, lang) {
   const shipLbl = isEn ? "Delivery fee" : "هزینه ارسال";
   const grandLbl = isEn ? "Grand total" : "مبلغ نهایی";
   const align = isEn ? "left" : "right";
+  const snap = order.discountSnapshot || {};
+  const code = snap.replacedByCoupon || snap.name || "";
+  const reason = order.discountMessage || (snap.name && snap.name !== code ? snap.name : "") || "";
+  const discountDetail = [code, reason].filter(Boolean).join(" — ");
+  const discountRow = discount > 0
+    ? `<tr><td style="padding:4px 16px;text-align:${align}">${discLbl}${discountDetail ? " · " + escapeHtml(discountDetail) : ""}</td><td style="padding:4px 16px;text-align:left;direction:ltr">− ${moneyAf(discount, lang)}</td></tr>`
+    : "";
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;margin:18px 0 8px;border:1px solid #e6e0d4;border-radius:12px;background:#fbf8f1">
 <tr><td style="padding:14px 16px 4px;text-align:${align}">${itemsLbl}</td><td style="padding:14px 16px 4px;text-align:left;direction:ltr">${moneyAf(itemsTotal, lang)}</td></tr>
-<tr><td style="padding:4px 16px;text-align:${align}">${discLbl}</td><td style="padding:4px 16px;text-align:left;direction:ltr">${discount ? ("− " + moneyAf(discount, lang)) : "—"}</td></tr>
+${discountRow}
 <tr><td style="padding:4px 16px;text-align:${align}">${shipLbl}</td><td style="padding:4px 16px;text-align:left;direction:ltr">${fee ? moneyAf(fee, lang) : (isEn ? "Free" : "رایگان")}</td></tr>
 <tr><td style="padding:12px 16px 16px;font-weight:800;font-size:17px;color:#141414;border-top:1px solid #e6e0d4;text-align:${align}">${grandLbl}</td><td style="padding:12px 16px 16px;text-align:left;direction:ltr;font-weight:800;font-size:17px;color:#141414;border-top:1px solid #e6e0d4">${moneyAf(total, lang)}</td></tr>
 </table>`;
@@ -330,7 +340,13 @@ function buildMailer(opts) {
     : () => opts.officialWhatsApp || opts.whatsapp || "";
 
   function wrap(args) {
-    return brandWrap(Object.assign({ storePhone: getStorePhone(), lang: args.lang || "fa" }, args));
+    const lines = typeof opts.getBusinessDescription === "function" ? opts.getBusinessDescription() : null;
+    return brandWrap(Object.assign({
+      storePhone: getStorePhone(),
+      lang: args.lang || "fa",
+      businessFa: lines && lines.fa,
+      businessEn: lines && lines.en,
+    }, args));
   }
 
   function send(to, subject, html, text, extra) {

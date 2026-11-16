@@ -6,6 +6,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "preview": "node scripts/local-preview.js",
+    "preview:status": "node scripts/local-preview.js status",
+    "preview:stop": "node scripts/local-preview.js stop",
     "test:smoke": "node scripts/smoke-features.js"
   },
   "engines": {

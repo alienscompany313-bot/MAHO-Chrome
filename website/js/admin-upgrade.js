@@ -134,6 +134,8 @@
       id: ad.id, enabled: !!val("enabled"), title: val("title") || "", title_en: val("title_en") || "",
       description: val("description") || "", description_en: val("description_en") || "",
       url: val("url") || "", imageUrl: val("imageUrl") || "", imageUrlMobile: val("imageUrlMobile") || "",
+      videoUrl: val("videoUrl") || "", productCode: val("productCode") || "",
+      showName: val("showName") !== false, showPrice: val("showPrice") !== false, showSpecs: val("showSpecs") !== false,
       cta: val("cta") || "", cta_en: val("cta_en") || "",
       startAt: start || null,
       endAt: end || null,
@@ -145,6 +147,25 @@
     ["announcement", "homepage", "listing"].forEach(function (name) {
       window._ads[name] = (window._ads[name] || []).map(function (ad, i) { return readAd(name, i, ad); });
     });
+  }
+  function adProductLabel(code) {
+    var list = window._adProducts || [];
+    var hit = list.find(function (p) { return p && String(p.code || "") === String(code || ""); });
+    if (!hit) return code || "";
+    return (hit.name || hit.name_en || "محصول") + (hit.code ? " — " + hit.code : "");
+  }
+  function homepageExtras(name, ad, i) {
+    var code = ad.productCode || "";
+    return '<input data-area="' + name + '" data-i="' + i + '" data-k="videoUrl" value="' + esc(ad.videoUrl || "") + '" placeholder="ویدیو MP4/WebM" dir="ltr">' +
+      '<input type="file" accept="video/mp4,video/webm,.mp4,.webm" data-ad-file="videoUrl" data-area="' + name + '" data-i="' + i + '">' +
+      (ad.videoUrl ? '<video muted playsinline controls preload="metadata" src="' + esc(ad.videoUrl) + '" style="width:140px;height:180px;background:#111;border-radius:12px;object-fit:cover"></video>' : "") +
+      '<input data-ad-find="' + name + '" data-i="' + i + '" placeholder="جستجوی محصول" value="">' +
+      '<div class="ad-product-picks" data-picks="' + name + '" data-i="' + i + '"></div>' +
+      '<input type="hidden" data-area="' + name + '" data-i="' + i + '" data-k="productCode" value="' + esc(code) + '">' +
+      '<div class="note">محصول انتخاب‌شده: ' + esc(adProductLabel(code) || "هیچ") + "</div>" +
+      '<label><input type="checkbox" data-area="' + name + '" data-i="' + i + '" data-k="showName"' + (ad.showName !== false ? " checked" : "") + "> نام محصول</label> " +
+      '<label><input type="checkbox" data-area="' + name + '" data-i="' + i + '" data-k="showPrice"' + (ad.showPrice !== false ? " checked" : "") + "> قیمت</label> " +
+      '<label><input type="checkbox" data-area="' + name + '" data-i="' + i + '" data-k="showSpecs"' + (ad.showSpecs !== false ? " checked" : "") + "> مشخصات</label>";
   }
   function renderAds() {
     var box = document.getElementById("adsAdmin");
@@ -161,9 +182,13 @@
           '<input data-area="' + name + '" data-i="' + i + '" data-k="title" value="' + esc(ad.title || "") + '" placeholder="عنوان">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="title_en" value="' + esc(ad.title_en || "") + '" placeholder="Title" dir="ltr">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="description" value="' + esc(ad.description || "") + '" placeholder="توضیح">' +
+          '<input data-area="' + name + '" data-i="' + i + '" data-k="description_en" value="' + esc(ad.description_en || "") + '" placeholder="Description" dir="ltr">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="url" value="' + esc(ad.url || "") + '" placeholder="https://" dir="ltr">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="imageUrl" value="' + esc(ad.imageUrl || "") + '" placeholder="تصویر دسکتاپ" dir="ltr">' +
+          '<input type="file" accept="image/jpeg,image/png,image/webp" data-ad-file="imageUrl" data-area="' + name + '" data-i="' + i + '">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="imageUrlMobile" value="' + esc(ad.imageUrlMobile || "") + '" placeholder="تصویر موبایل" dir="ltr">' +
+          '<input type="file" accept="image/jpeg,image/png,image/webp" data-ad-file="imageUrlMobile" data-area="' + name + '" data-i="' + i + '">' +
+          (name === "homepage" ? homepageExtras(name, ad, i) : "") +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="cta" value="' + esc(ad.cta || "") + '" placeholder="متن دکمه">' +
           '<input data-area="' + name + '" data-i="' + i + '" data-k="cta_en" value="' + esc(ad.cta_en || "") + '" placeholder="Button" dir="ltr">' +
           '<div class="grid2"><div class="field"><label>شروع (کابل)</label><input type="datetime-local" data-area="' + name + '" data-i="' + i + '" data-k="startAt" value="' + esc(kabulInput(ad.startAt)) + '" dir="ltr"></div>' +
@@ -171,15 +196,42 @@
           '<div class="note">بازدید ' + (ad.impressions || 0) + " · کلیک " + (ad.clicks || 0) + "</div></div>";
       }).join("") + '<button type="button" class="btn btn-outline btn-sm" data-add-ad="' + name + '">+ مورد</button> <button type="button" class="btn btn-gold btn-sm" data-save-ad="' + name + '">ذخیره</button>';
     }
-    box.innerHTML = "<p class=\"sub\">سه جای جدا: بنر صفحه اصلی، نوار اعلان، و کارت بین محصولات. تاریخ شروع و پایان به وقت کابل است. آگهی حذف‌شده، غیرفعال، یا خارج از بازه روی سایت دیده نمی‌شود.</p><div id=\"adPreview\" class=\"note\" hidden></div>" +
+    box.innerHTML = "<p class=\"sub\">کارت‌های «بنر صفحه اصلی» عمودی‌اند و چند کارت با هم در یک ردیف افقی دیده می‌شوند. نام، قیمت و مشخصات روی خود عکس یا ویدیو می‌آیند. نوار اعلان و کارت بین محصولات جدا هستند. تاریخ‌ها به وقت کابل است.</p><div id=\"adPreview\" class=\"note\" hidden></div>" +
       area("announcement", "نوار اعلان") + area("homepage", "بنر صفحه اصلی") + area("listing", "کارت بین محصولات");
   }
   function adsForm() {
     var box = document.getElementById("adsAdmin");
     if (!box) return;
-    call("/api/admin/ads").then(function (data) { window._ads = data; renderAds(); }).catch(function (e) { box.textContent = e.message || "خطا"; });
+    var products = window._adProducts ? Promise.resolve(window._adProducts) : fetch("/api/catalog", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      window._adProducts = (d.products || []).filter(function (p) { return p && p.code && p.enabled !== false && p.active !== false; });
+      return window._adProducts;
+    }).catch(function () { window._adProducts = []; return []; });
+    Promise.all([call("/api/admin/ads"), products]).then(function (all) { window._ads = all[0]; renderAds(); }).catch(function (e) { box.textContent = e.message || "خطا"; });
   }
+  document.addEventListener("input", function (e) {
+    var input = e.target;
+    if (!input || !input.getAttribute || input.getAttribute("data-ad-find") == null) return;
+    var q = String(input.value || "").trim().toLowerCase();
+    var picks = input.parentNode.querySelector('.ad-product-picks[data-i="' + input.getAttribute("data-i") + '"]');
+    if (!picks) return;
+    if (!q) { picks.innerHTML = ""; return; }
+    var matches = (window._adProducts || []).filter(function (p) {
+      return ((p.name || "") + " " + (p.name_en || "") + " " + (p.code || "")).toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 6);
+    picks.innerHTML = matches.map(function (p) {
+      return '<button type="button" class="btn btn-outline btn-sm" data-ad-pick="' + esc(p.code) + '" data-area="' + esc(input.getAttribute("data-ad-find")) + '" data-i="' + esc(input.getAttribute("data-i")) + '">' + esc((p.name || p.name_en || "محصول") + " — " + p.code) + "</button>";
+    }).join("") || '<span class="note">محصولی پیدا نشد.</span>';
+  });
   document.addEventListener("click", function (e) {
+    var pick = e.target.getAttribute && e.target.getAttribute("data-ad-pick");
+    if (pick && window._ads) {
+      syncAdsFromDom();
+      var areaName = e.target.getAttribute("data-area");
+      var at = parseInt(e.target.getAttribute("data-i"), 10);
+      if (window._ads[areaName] && window._ads[areaName][at]) window._ads[areaName][at].productCode = pick;
+      renderAds();
+      return;
+    }
     var add = e.target.getAttribute && e.target.getAttribute("data-add-ad");
     if (add && window._ads) {
       syncAdsFromDom();
@@ -209,13 +261,19 @@
         var endAt = typeof ad.endAt === "number" ? ad.endAt : kabulMs(ad.endAt);
         var live = ad.enabled && (!startAt || now >= startAt) && (!endAt || now <= endAt);
         slot.hidden = false;
-        slot.innerHTML = "<strong>پیش‌نمایش " + esc(preview) + "</strong> — " + (live ? "اگر ذخیره شود روی سایت دیده می‌شود" : "روی سایت دیده نمی‌شود") +
-          "<div>" + esc(ad.title || ad.title_en || "") + "</div><div>" + esc(ad.description || "") + "</div>" +
-          (ad.imageUrl ? '<img alt="" src="' + esc(ad.imageUrl) + '" style="max-width:220px;border-radius:8px">' : "");
+        var media = ad.videoUrl
+          ? '<video muted playsinline preload="metadata" src="' + esc(ad.videoUrl) + '"' + (ad.imageUrl ? ' poster="' + esc(ad.imageUrl) + '"' : "") + ' style="width:100%;height:100%;object-fit:cover"></video>'
+          : (ad.imageUrl ? '<img alt="" src="' + esc(ad.imageUrl) + '" style="width:100%;height:100%;object-fit:cover">' : '<div style="width:100%;height:100%;background:#1a1509"></div>');
+        slot.innerHTML = "<strong>پیش‌نمایش کارت عمودی</strong> — " + (live ? "اگر ذخیره شود روی سایت دیده می‌شود" : "روی سایت دیده نمی‌شود") +
+          '<div style="position:relative;width:180px;aspect-ratio:3/4;border-radius:16px;overflow:hidden;margin-top:8px;background:#1a1509">' + media +
+          '<div style="position:absolute;inset:0 0 auto 0;padding:10px 10px 28px;background:linear-gradient(to bottom,rgba(17,17,17,.78),transparent);color:#fffdf8">' +
+          '<div style="font-weight:800">' + esc(ad.title || ad.title_en || ad.productCode || "") + "</div>" +
+          '<div style="font-size:12px">' + esc(ad.description || "") + "</div></div></div>";
       }
     }
     var removeAd = e.target.getAttribute && e.target.getAttribute("data-ad-delete");
     if (removeAd && window._ads) {
+      if (!window.confirm("این تبلیغ حذف شود؟")) return;
       syncAdsFromDom();
       var drop = window._ads[removeAd] || [];
       drop.splice(parseInt(e.target.getAttribute("data-i"), 10), 1);
@@ -226,6 +284,12 @@
     if (save && window._ads) {
       syncAdsFromDom();
       var items = window._ads[save] || [];
+      var badDate = items.some(function (ad) {
+        var startAt = typeof ad.startAt === "number" ? ad.startAt : kabulMs(ad.startAt);
+        var endAt = typeof ad.endAt === "number" ? ad.endAt : kabulMs(ad.endAt);
+        return startAt && endAt && endAt < startAt;
+      });
+      if (badDate) { alert("تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد."); return; }
       call("/api/admin/ads/" + save, { method: "PUT", body: { items: items } }).then(function () { alert("ذخیره شد"); adsForm(); }).catch(function (err) { alert(err.message || "خطا"); });
     }
   });
@@ -454,7 +518,6 @@
       if (id === "coupons") couponsForm();
       if (id === "finance") financeForm();
       if (id === "customers") customerStatusForm();
-      if (id === "why") whyForm();
       if (id === "contacts") contactForm();
       if (id === "texts") socialForm();
     });
@@ -774,106 +837,34 @@
       adminLangTimer = setTimeout(function () { if (window.MAHOApplyAdminLang) window.MAHOApplyAdminLang(true); }, 40);
     }).observe(document.body, { childList: true, subtree: true, characterData: true });
   }
-  function whyForm() {
-    var box = document.getElementById("whyAdmin");
-    if (!box) return;
-    call("/api/admin/why-maho").then(function (data) {
-      var why = data.whyMaho || {};
-      var cards = why.cards || [];
-      box.innerHTML = '<label><input type="checkbox" id="whyOn"' + (why.enabled !== false ? " checked" : "") + "> نمایش بخش</label>" +
-        '<div class="field"><label>بالانویس فارسی</label><input id="whyKicker" value="' + esc(why.kicker || "") + '"></div>' +
-        '<div class="field"><label>Eyebrow</label><input id="whyKickerEn" dir="ltr" value="' + esc(why.kicker_en || "") + '"></div>' +
-        '<div class="field"><label>عنوان فارسی</label><input id="whyHeading" value="' + esc(why.heading || "") + '"></div>' +
-        '<div class="field"><label>Heading</label><input id="whyHeadingEn" dir="ltr" value="' + esc(why.heading_en || "") + '"></div>' +
-        '<div class="field"><label>توضیح فارسی</label><textarea id="whyDesc" rows="3">' + esc(why.description || "") + "</textarea></div>" +
-        '<div class="field"><label>Description</label><textarea id="whyDescEn" rows="3" dir="ltr">' + esc(why.description_en || "") + "</textarea></div>" +
-        '<div id="whyCards">' + cards.map(function (card, i) {
-          return '<div class="field" data-why-card="' + i + '"><label><input type="checkbox" data-k="enabled"' + (card.enabled !== false ? " checked" : "") + "> کارت " + (i + 1) + "</label>" +
-            '<input data-k="icon" value="' + esc(card.icon || "") + '" placeholder="icon" dir="ltr">' +
-            '<input data-k="title" value="' + esc(card.title || "") + '" placeholder="عنوان">' +
-            '<input data-k="title_en" value="' + esc(card.title_en || "") + '" dir="ltr">' +
-            '<input data-k="description" value="' + esc(card.description || "") + '">' +
-            '<input data-k="description_en" value="' + esc(card.description_en || "") + '" dir="ltr">' +
-            '<button type="button" data-why-remove="' + i + '">حذف کارت</button></div>';
-        }).join("") + '</div><button type="button" class="btn btn-outline btn-sm" id="whyAdd">+ کارت</button> <button type="button" class="btn btn-gold btn-sm" id="whySave">ذخیره</button>';
-      function readCards() {
-        return Array.prototype.map.call(box.querySelectorAll("[data-why-card]"), function (row, i) {
-          function val(k) {
-            var el = row.querySelector('[data-k="' + k + '"]');
-            if (!el) return "";
-            return el.type === "checkbox" ? el.checked : el.value;
-          }
-          return { id: (cards[i] && cards[i].id) || "", icon: val("icon"), enabled: val("enabled"), order: i, title: val("title"), title_en: val("title_en"), description: val("description"), description_en: val("description_en") };
-        });
-      }
-      document.getElementById("whyAdd").onclick = function () {
-        cards = readCards();
-        cards.push({ icon: "shield", enabled: true, title: "", title_en: "", description: "", description_en: "" });
-        why.cards = cards;
-        box.innerHTML = "";
-        data.whyMaho = Object.assign(why, { cards: cards });
-        window._whyDraft = data.whyMaho;
-        whyFormFrom(window._whyDraft);
-      };
-      document.getElementById("whySave").onclick = function () {
-        call("/api/admin/why-maho", { method: "PUT", body: {
-          enabled: document.getElementById("whyOn").checked,
-          kicker: document.getElementById("whyKicker").value,
-          kicker_en: document.getElementById("whyKickerEn").value,
-          heading: document.getElementById("whyHeading").value,
-          heading_en: document.getElementById("whyHeadingEn").value,
-          description: document.getElementById("whyDesc").value,
-          description_en: document.getElementById("whyDescEn").value,
-          cards: readCards()
-        } }).then(function () { alert("ذخیره شد"); whyForm(); }).catch(function (e) { alert(e.message || "خطا"); });
-      };
-      box.querySelectorAll("[data-why-remove]").forEach(function (btn) {
-        btn.onclick = function () {
-          var next = readCards();
-          next.splice(parseInt(btn.getAttribute("data-why-remove"), 10), 1);
-          window._whyDraft = { enabled: document.getElementById("whyOn").checked, kicker: document.getElementById("whyKicker").value, kicker_en: document.getElementById("whyKickerEn").value, heading: document.getElementById("whyHeading").value, heading_en: document.getElementById("whyHeadingEn").value, description: document.getElementById("whyDesc").value, description_en: document.getElementById("whyDescEn").value, cards: next };
-          whyFormFrom(window._whyDraft);
-        };
-      });
-    }).catch(function (e) { box.textContent = e.message || "خطا"; });
-  }
-  function whyFormFrom(draft) {
-    window._whyDraft = draft;
-    var box = document.getElementById("whyAdmin");
-    if (!box) return;
-    call("/api/admin/why-maho").then(function () {
-      box.dataset.local = "1";
-    });
-    var data = { whyMaho: draft };
-    var why = data.whyMaho;
-    var cards = why.cards || [];
-    box.innerHTML = '<label><input type="checkbox" id="whyOn"' + (why.enabled !== false ? " checked" : "") + "> نمایش بخش</label>" +
-      '<div class="field"><label>بالانویس فارسی</label><input id="whyKicker" value="' + esc(why.kicker || "") + '"></div>' +
-      '<div class="field"><label>Eyebrow</label><input id="whyKickerEn" dir="ltr" value="' + esc(why.kicker_en || "") + '"></div>' +
-      '<div class="field"><label>عنوان فارسی</label><input id="whyHeading" value="' + esc(why.heading || "") + '"></div>' +
-      '<div class="field"><label>Heading</label><input id="whyHeadingEn" dir="ltr" value="' + esc(why.heading_en || "") + '"></div>' +
-      '<div class="field"><label>توضیح فارسی</label><textarea id="whyDesc" rows="3">' + esc(why.description || "") + "</textarea></div>" +
-      '<div class="field"><label>Description</label><textarea id="whyDescEn" rows="3" dir="ltr">' + esc(why.description_en || "") + "</textarea></div>" +
-      '<div id="whyCards">' + cards.map(function (card, i) {
-        return '<div class="field" data-why-card="' + i + '"><label><input type="checkbox" data-k="enabled"' + (card.enabled !== false ? " checked" : "") + "> کارت</label>" +
-          '<input data-k="icon" value="' + esc(card.icon || "") + '" dir="ltr">' +
-          '<input data-k="title" value="' + esc(card.title || "") + '">' +
-          '<input data-k="title_en" value="' + esc(card.title_en || "") + '" dir="ltr">' +
-          '<input data-k="description" value="' + esc(card.description || "") + '">' +
-          '<input data-k="description_en" value="' + esc(card.description_en || "") + '" dir="ltr"></div>';
-      }).join("") + '</div><button type="button" class="btn btn-gold btn-sm" id="whySave">ذخیره</button>';
-    document.getElementById("whySave").onclick = function () {
-      var next = Array.prototype.map.call(box.querySelectorAll("[data-why-card]"), function (row, i) {
-        function val(k) { var el = row.querySelector('[data-k="' + k + '"]'); return el.type === "checkbox" ? el.checked : el.value; }
-        return { icon: val("icon"), enabled: val("enabled"), order: i, title: val("title"), title_en: val("title_en"), description: val("description"), description_en: val("description_en") };
-      });
-      call("/api/admin/why-maho", { method: "PUT", body: {
-        enabled: document.getElementById("whyOn").checked, kicker: document.getElementById("whyKicker").value, kicker_en: document.getElementById("whyKickerEn").value,
-        heading: document.getElementById("whyHeading").value, heading_en: document.getElementById("whyHeadingEn").value,
-        description: document.getElementById("whyDesc").value, description_en: document.getElementById("whyDescEn").value, cards: next
-      } }).then(function () { alert("ذخیره شد"); whyForm(); });
-    };
-  }
+  document.addEventListener("change", function (e) {
+    var input = e.target;
+    if (!input || !input.getAttribute || !input.getAttribute("data-ad-file")) return;
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var area = input.getAttribute("data-area");
+    var index = input.getAttribute("data-i");
+    var key = input.getAttribute("data-ad-file");
+    var video = key === "videoUrl";
+    if (video && file.type !== "video/mp4" && file.type !== "video/webm" && !/\.(mp4|webm)$/i.test(file.name || "")) {
+      alert("فقط MP4 یا WebM پذیرفته می‌شود.");
+      input.value = "";
+      return;
+    }
+    if (video && file.size > 8 * 1024 * 1024) { alert("حجم ویدیو باید کمتر از ۸ مگابایت باشد."); input.value = ""; return; }
+    var body = new FormData();
+    body.append(video ? "file" : "files", file);
+    fetch(video ? "/api/admin/upload-video" : "/api/admin/upload", { method: "POST", headers: { Authorization: "Bearer " + token() }, body: body })
+      .then(function (res) { return res.json().then(function (data) { if (!res.ok) throw new Error((data && data.error) || "upload"); return data; }); })
+      .then(function (data) {
+        var url = (data && (data.url || (data.urls && data.urls[0]))) || "";
+        var field = document.querySelector('[data-area="' + area + '"][data-i="' + index + '"][data-k="' + key + '"]');
+        if (field) field.value = url;
+        syncAdsFromDom();
+        renderAds();
+      })
+      .catch(function (err) { alert(err.message || "تصویر ذخیره نشد"); });
+  });
   function socialForm() {
     var host = document.querySelector('.admin-panel[data-panel="texts"]');
     if (!host) return;
